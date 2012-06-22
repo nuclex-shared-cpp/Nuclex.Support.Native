@@ -38,6 +38,15 @@
     <Filter Include="Source\Containers">
       <UniqueIdentifier>{f51d8079-9c73-4aa2-b8d9-fef4005e2924}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\Text">
+      <UniqueIdentifier>{67896040-62a2-400b-8bd2-03359692b86f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Text">
+      <UniqueIdentifier>{0dc46226-443a-495e-a888-6351d5f3986c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Text\Utf8">
+      <UniqueIdentifier>{4a3230c2-ab3a-4c79-a6b5-b09811867657}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include=".\Include\Nuclex\Support\Threading\MemoryBarrier.h">
@@ -61,9 +70,6 @@
     <ClCompile Include="Source\Threading\Atomic.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
-    <ClCompile Include=".\Source\Lexical.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include=".\Source\Threading\WindowsThreadPool.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
@@ -75,6 +81,12 @@
     </ClCompile>
     <ClCompile Include=".\Source\Any.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include=".\Source\Text\StringConverter.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include=".\Source\Text\Lexical.cpp">
+      <Filter>Source\Text</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -102,9 +114,6 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include=".\Include\Nuclex\Support\Lexical.h">
-      <Filter>Include</Filter>
-    </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Variant.h">
       <Filter>Include\Containers</Filter>
     </ClInclude>
@@ -122,6 +131,21 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\Atomic.h">
       <Filter>Include\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Utf8\unchecked.h">
+      <Filter>Source\Text\Utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Utf8\checked.h">
+      <Filter>Source\Text\Utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Utf8\core.h">
+      <Filter>Source\Text\Utf8</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\Text\StringConverter.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\Text\Lexical.h">
+      <Filter>Include\Text</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

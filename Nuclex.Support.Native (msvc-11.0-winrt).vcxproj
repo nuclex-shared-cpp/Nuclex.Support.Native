@@ -141,6 +141,7 @@
       <SDLCheck />
       <StringPooling>true</StringPooling>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PreprocessorDefinitions>_WINDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -160,6 +161,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <StringPooling>true</StringPooling>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PreprocessorDefinitions>_WINDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -174,6 +176,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <SDLCheck />
       <StringPooling>true</StringPooling>
+      <PreprocessorDefinitions>_WINDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -192,6 +195,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <StringPooling>true</StringPooling>
+      <PreprocessorDefinitions>_WINDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -206,6 +210,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <SDLCheck />
       <StringPooling>true</StringPooling>
+      <PreprocessorDefinitions>_WINDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -224,6 +229,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <StringPooling>true</StringPooling>
+      <PreprocessorDefinitions>_WINDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -237,13 +243,14 @@
     <ClCompile Include=".\Source\Threading\ThreadPool.cpp" />
     <ClCompile Include=".\Source\Events\Event.cpp" />
     <ClCompile Include=".\Source\Any.cpp" />
-    <ClCompile Include=".\Source\Lexical.cpp" />
+    <ClCompile Include=".\Source\Text\Lexical.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
     <ClCompile Include="Source\Threading\Atomic.cpp" />
     <ClCompile Include=".\Source\Threading\WindowsThreadPool.cpp" />
     <ClCompile Include=".\Source\Threading\WinRTThreadPool.cpp" />
     <ClCompile Include="Source\Threading\Mutex.cpp" />
+    <ClCompile Include=".\Source\Text\StringConverter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\Include\Nuclex\Support\Config.h" />
@@ -256,11 +263,15 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Atomic.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Events\Event.h" />
-    <ClInclude Include=".\Include\Nuclex\Support\Lexical.h" />
+    <ClInclude Include=".\Include\Nuclex\Support\Text\Lexical.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Variant.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Mutex.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Thread.h" />
     <ClInclude Include=".\Include\Nuclex\Support\VariantType.h" />
+    <ClInclude Include="Source\Text\Utf8\checked.h" />
+    <ClInclude Include="Source\Text\Utf8\core.h" />
+    <ClInclude Include="Source\Text\Utf8\unchecked.h" />
+    <ClInclude Include=".\Include\Nuclex\Support\Text\StringConverter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

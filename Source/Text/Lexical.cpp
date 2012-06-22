@@ -21,11 +21,11 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "Nuclex/Support/Lexical.h"
+#include "Nuclex/Support/Text/Lexical.h"
 
 #include <stdlib.h>
 
-namespace Nuclex { namespace Support {
+namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -55,4 +55,4 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+}}} // namespace Nuclex::Support::Text

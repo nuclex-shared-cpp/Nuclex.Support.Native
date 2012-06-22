@@ -18,13 +18,14 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_LEXICAL_H
-#define NUCLEX_SUPPORT_LEXICAL_H
+#ifndef NUCLEX_SUPPORT_TEXT_LEXICAL_H
+#define NUCLEX_SUPPORT_TEXT_LEXICAL_H
 
+#include "../Config.h"
 #include <sstream>
 #include <string>
 
-namespace Nuclex { namespace Support {
+namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -34,7 +35,7 @@ namespace Nuclex { namespace Support {
   /// <param name="from">Value that will be converted</param>
   /// <returns>The value converted to the specified type</returns>
   template<typename TTarget, typename TSource>
-  TTarget lexical_cast(const TSource &from) {
+  inline TTarget lexical_cast(const TSource &from) {
     std::stringstream stringStream;
     stringStream << from;
 
@@ -49,31 +50,31 @@ namespace Nuclex { namespace Support {
   /// <summary>Converts a floating point value into a string</summary>
   /// <param name="from">Floating point value that will be converted</param>
   /// <returns>A string containing the printed floating point value</returns>
-  template<> std::string lexical_cast<>(const float &from);
+  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const float &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> float lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API float lexical_cast<>(const std::string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a double precision floating point value into a string</summary>
   /// <param name="from">Double precision Floating point value that will be converted</param>
   /// <returns>A string containing the printed double precision floating point value</returns>
-  template<> std::string lexical_cast<>(const double &from);
+  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const double &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> double lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API double lexical_cast<>(const std::string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+}}} // namespace Nuclex::Support::Text
 
-#endif // NUCLEX_SUPPORT_LEXICAL_H
+#endif // NUCLEX_SUPPORT_TEXT_LEXICAL_H
