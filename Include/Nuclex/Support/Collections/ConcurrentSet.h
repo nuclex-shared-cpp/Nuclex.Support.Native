@@ -18,14 +18,17 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-// If the library is compiled as a DLL, this ensures symbols are exported
-#define NUCLEX_SUPPORT_SOURCE 1
+#ifndef NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTSET_H
+#define NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTSET_H
 
-#include "Nuclex/Support/Collections/ConcurrentMap.h"
+#include "../Config.h"
 
-// --------------------------------------------------------------------------------------------- //
+namespace Nuclex { namespace Support { namespace Collections {
 
-// This file is only here to guarantee that its associated header has no hidden
-// dependencies and can be included on its own
+  // ------------------------------------------------------------------------------------------- //
 
-// --------------------------------------------------------------------------------------------- //
+  // ------------------------------------------------------------------------------------------- //
+
+}}} // namespace Nuclex::Support::Collections
+
+#endif // NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTSET_H

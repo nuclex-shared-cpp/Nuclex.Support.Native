@@ -109,6 +109,9 @@
     <ClCompile Include="Source\Services\ServiceContainer.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
+    <ClCompile Include=".\Source\Collections\ConcurrentSet.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\Include\Nuclex\Support\Config.h">
@@ -128,9 +131,6 @@
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Events\Event.h">
       <Filter>Include\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h">
-      <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h">
       <Filter>Include\Collections</Filter>
@@ -173,6 +173,12 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h">
       <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\Collections\ConcurrentQueue.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\Collections\ConcurrentSet.h">
+      <Filter>Include\Collections</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
