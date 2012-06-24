@@ -71,7 +71,7 @@ namespace Nuclex { namespace Support {
 
       /// <summary>Returns the type stored in the wrapper</summary>
       /// <returns>The type the wrapper is storing</returns>
-      public: const std::type_info &GetType() const { return *typeid(TValue); }
+      public: const std::type_info &GetType() const { return typeid(TValue); }
 
       /// <summary>Retrieves the value stored in the value holder</summary>
       /// <returns>The value stored in the value holder</returns>
@@ -106,6 +106,7 @@ namespace Nuclex { namespace Support {
       delete this->valueHolder;
       this->valueHolder = nullptr; // In case clone throws
       this->valueHolder = other.valueHolder->Clone();
+      return *this;
     }
 
     /// <summary>Retrieves the value stored in the any</summary>

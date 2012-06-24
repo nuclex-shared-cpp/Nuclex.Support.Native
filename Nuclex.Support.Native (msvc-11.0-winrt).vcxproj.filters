@@ -41,6 +41,12 @@
     <Filter Include="Source\Text\Utf8">
       <UniqueIdentifier>{4a3230c2-ab3a-4c79-a6b5-b09811867657}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\Services">
+      <UniqueIdentifier>{4a570210-8320-4555-ae7e-bedc7058561e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Services">
+      <UniqueIdentifier>{e5dc41a9-6601-43df-ab85-793f6575a5b6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include=".\Include\Nuclex\Support\Threading\MemoryBarrier.h">
@@ -96,6 +102,12 @@
     </ClCompile>
     <ClCompile Include=".\Source\Threading\Thread.cpp">
       <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services\ServiceProvider.cpp">
+      <Filter>Source\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services\ServiceContainer.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +167,12 @@
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\Services\ServiceContainer.h">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h">
+      <Filter>Include\Services</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
