@@ -24,6 +24,7 @@ License along with this library
 #include "../Config.h"
 
 #include <functional>
+#include <memory>
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -38,15 +39,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Stops all threads and frees all resources used</summary>
     public: NUCLEX_SUPPORT_API virtual ~ThreadPool() {}
 
-    /// <summary>Retrieves the default thread pool for the system</summary>
+    /// <summary>Create a default thread pool for the system</summary>
     /// <returns>The default thread pool on the current system</returns>
-    /// <remarks>
-    ///   This method always returns the same thread pool and essentially makes
-    ///   the class behave like a singleton. It shouldn't be used a such, however.
-    ///   To keep testatility, always pass the thread pool to objects that require
-    ///   it like you would any other service, preferrably by constructor injection.
-    /// </remarks>
-    public: NUCLEX_SUPPORT_API static ThreadPool &GetSystemDefault();
+    public: NUCLEX_SUPPORT_API static std::shared_ptr<ThreadPool> CreateSystemDefault();
 
     /// <summary>Returns the maximum number of tasks that can run in parallel</summary>
     /// <returns>The maximum number of tasks that can be executed in parallel</returns>

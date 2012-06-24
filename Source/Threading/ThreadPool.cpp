@@ -37,23 +37,20 @@ namespace Nuclex { namespace Support { namespace Threading {
 
 #if defined(NUCLEX_SUPPORT_WIN32)
 
-  ThreadPool &ThreadPool::GetSystemDefault() {
-    static WindowsThreadPool defaultThreadPool;
-    return defaultThreadPool;
+  std::shared_ptr<ThreadPool> ThreadPool::CreateSystemDefault() {
+    return std::shared_ptr<ThreadPool>(new WindowsThreadPool());
   }
 
 #elif defined(NUCLEX_SUPPORT_WINRT)
 
-  ThreadPool &ThreadPool::GetSystemDefault() {
-    static WinRTThreadPool defaultThreadPool;
-    return defaultThreadPool;
+  std::shared_ptr<ThreadPool> ThreadPool::CreateSystemDefault() {
+    return std::shared_ptr<ThreadPool>(new WinRTThreadPool());
   }
 
 #else
 
-  ThreadPool &ThreadPool::GetSystemDefault() {
-    static LinuxThreadPool defaultThreadPool;
-    return defaultThreadPool;
+  std::shared_ptr<ThreadPool> ThreadPool::CreateSystemDefault() {
+    return std::shared_ptr<ThreadPool>(new LinuxThreadPool());
   }
 
 #endif
