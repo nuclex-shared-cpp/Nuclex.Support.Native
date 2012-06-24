@@ -18,23 +18,14 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_THREADING_ATOMIC_H
-#define NUCLEX_SUPPORT_THREADING_ATOMIC_H
+// If the library is compiled as a DLL, this ensures symbols are exported
+#define NUCLEX_SUPPORT_SOURCE 1
 
-namespace Nuclex { namespace Support { namespace Threading {
+#include "Nuclex/Support/Threading/Thread.h"
 
-  // ------------------------------------------------------------------------------------------- //
+// --------------------------------------------------------------------------------------------- //
 
-  /// <summary>Provides a value that can be modified in a thread-safe manner</summary>
-  template<typename TValue>
-  class Atomic {
+// This file is only here to guarantee that its associated header has no hidden
+// dependencies and can be included on its own
 
-    // TODO: Implement atomic type
-
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-}}} // namespace Nuclex::Support::Threading
-
-#endif // NUCLEX_SUPPORT_THREADING_ATOMIC_H
+// --------------------------------------------------------------------------------------------- //

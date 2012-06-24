@@ -31,7 +31,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Uses the Win32 ThreadPool API to distribute work over many threads</summary>
+  /// <summary>Uses the WinRT ThreadPool to distribute work over many threads</summary>
   class WinRTThreadPool : public ThreadPool {
 
     /// <summary>Initializes a new windows thread pool</summary>
@@ -51,17 +51,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       const std::function<void()> &task, std::size_t count = 1
     );
 
-    /// <summary>Determines if at least the specified Windows version is running</summary>
-    /// <param name="major">Major version number, eg. 6 for Windows Vista</param>
-    /// <param name="minor">Minor version number, eg. 1 for Windows 7</param>
-    /// <returns>True if the user is running at least that Windows version</returns>
-    private: static bool isAtLeastWindowsVersion(int major, int minor);
-
     private: WinRTThreadPool(const WinRTThreadPool &);
     private: WinRTThreadPool &operator =(const WinRTThreadPool &);
-
-    /// <summary>Whether the new thread pool API introduced with Vista will be used</summary>
-    private: bool useNewThreadPoolApi;
 
   };
 

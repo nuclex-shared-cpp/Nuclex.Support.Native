@@ -168,13 +168,19 @@
     <ClCompile Include=".\Source\Threading\ThreadPool.cpp" />
     <ClCompile Include=".\Source\Events\Event.cpp" />
     <ClCompile Include=".\Source\Any.cpp" />
-    <ClCompile Include=".\Source\Lexical.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
+    <ClCompile Include="Source\Text\Lexical.cpp" />
+    <ClCompile Include="Source\Text\StringConverter.cpp" />
     <ClCompile Include="Source\Threading\Atomic.cpp" />
     <ClCompile Include=".\Source\Threading\WindowsThreadPool.cpp" />
     <ClCompile Include=".\Source\Threading\WinRTThreadPool.cpp" />
+    <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />
+    <ClCompile Include="Source\Threading\MemoryBarrier.cpp" />
     <ClCompile Include="Source\Threading\Mutex.cpp" />
+    <ClCompile Include="Source\Threading\Thread.cpp" />
+    <ClCompile Include="Source\Variant.cpp" />
+    <ClCompile Include="Source\VariantType.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\Include\Nuclex\Support\Config.h" />
@@ -185,6 +191,8 @@
     <ClInclude Include=".\Include\Nuclex\Support\Any.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Atomic.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Events\Event.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Lexical.h" />
@@ -192,6 +200,9 @@
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Mutex.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Thread.h" />
     <ClInclude Include=".\Include\Nuclex\Support\VariantType.h" />
+    <ClInclude Include="Source\Text\Utf8\checked.h" />
+    <ClInclude Include="Source\Text\Utf8\core.h" />
+    <ClInclude Include="Source\Text\Utf8\unchecked.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -246,11 +246,16 @@
     <ClCompile Include=".\Source\Text\Lexical.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
-    <ClCompile Include="Source\Threading\Atomic.cpp" />
     <ClCompile Include=".\Source\Threading\WindowsThreadPool.cpp" />
     <ClCompile Include=".\Source\Threading\WinRTThreadPool.cpp" />
+    <ClCompile Include="Source\Threading\Atomic.cpp" />
+    <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />
+    <ClCompile Include="Source\Threading\MemoryBarrier.cpp" />
     <ClCompile Include="Source\Threading\Mutex.cpp" />
     <ClCompile Include=".\Source\Text\StringConverter.cpp" />
+    <ClCompile Include="Source\Variant.cpp" />
+    <ClCompile Include="Source\VariantType.cpp" />
+    <ClCompile Include=".\Source\Threading\Thread.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\Include\Nuclex\Support\Config.h" />

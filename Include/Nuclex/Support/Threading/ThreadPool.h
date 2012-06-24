@@ -40,6 +40,12 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Retrieves the default thread pool for the system</summary>
     /// <returns>The default thread pool on the current system</returns>
+    /// <remarks>
+    ///   This method always returns the same thread pool and essentially makes
+    ///   the class behave like a singleton. It shouldn't be used a such, however.
+    ///   To keep testatility, always pass the thread pool to objects that require
+    ///   it like you would any other service, preferrably by constructor injection.
+    /// </remarks>
     public: NUCLEX_SUPPORT_API static ThreadPool &GetSystemDefault();
 
     /// <summary>Returns the maximum number of tasks that can run in parallel</summary>

@@ -21,6 +21,9 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_THREADING_MEMORYBARRIER_H
 #define NUCLEX_SUPPORT_THREADING_MEMORYBARRIER_H
 
+// This is not how the design will look in the end. Don't use.
+#if 0
+
 #if defined(_MSC_VER)
 
   // ------------------------------------------------------------------------------------------- //
@@ -53,6 +56,8 @@ License along with this library
   #define NUCLEX_STORAGE_WRITE_MEMORY_BARRIER {}
 
   // ------------------------------------------------------------------------------------------- //
+
+#endif
 
 #endif
 

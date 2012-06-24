@@ -151,7 +151,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // If we exited before all items were queued, an error has occurred
       if(count > 0) {
-        while(count > 1) { // Some works items may already be running, can't assign
+        while(count > 1) { // Some work items may already be running, can't assign
           ::InterlockedDecrement(&countedTask->second);
           --count;
         }

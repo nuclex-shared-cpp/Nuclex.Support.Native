@@ -32,12 +32,6 @@
     <Filter Include="Include\Events">
       <UniqueIdentifier>{72787724-f69c-443b-9742-b9d40258b634}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Include\Containers">
-      <UniqueIdentifier>{1fe32fc4-7fdc-43e8-a67e-5e2f7dccc5a8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Containers">
-      <UniqueIdentifier>{f51d8079-9c73-4aa2-b8d9-fef4005e2924}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Include\Text">
       <UniqueIdentifier>{67896040-62a2-400b-8bd2-03359692b86f}</UniqueIdentifier>
     </Filter>
@@ -67,9 +61,6 @@
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Threading\Atomic.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
     <ClCompile Include=".\Source\Threading\WindowsThreadPool.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
@@ -87,6 +78,24 @@
     </ClCompile>
     <ClCompile Include=".\Source\Text\Lexical.cpp">
       <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Variant.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VariantType.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\Atomic.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\LinuxThreadPool.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\MemoryBarrier.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include=".\Source\Threading\Thread.cpp">
+      <Filter>Source\Threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -114,17 +123,11 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include=".\Include\Nuclex\Support\Variant.h">
-      <Filter>Include\Containers</Filter>
-    </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Any.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Mutex.h">
       <Filter>Include\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include=".\Include\Nuclex\Support\VariantType.h">
-      <Filter>Include\Containers</Filter>
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Thread.h">
       <Filter>Include\Threading</Filter>
@@ -146,6 +149,12 @@
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Text\Lexical.h">
       <Filter>Include\Text</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\Variant.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\VariantType.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
