@@ -71,6 +71,12 @@ namespace Nuclex { namespace Support { namespace Services {
       return this->services.size();
     }
 
+    // Unhide the templated Get method from the service provider
+    using ServiceProvider::Get;
+
+    // Unhide the templated TryGet method fro mthe service provider
+    using ServiceProvider::TryGet;
+
     /// <summary>Adds a service to the container</summary>
     /// <typeparam name="TService">Interface under which the service will be added</typeparam>
     /// <param name="service">Service that will be responsible for the interface</param>

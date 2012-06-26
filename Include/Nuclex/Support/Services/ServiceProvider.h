@@ -47,7 +47,8 @@ namespace Nuclex { namespace Support { namespace Services {
     ///   The specified service as a shared_ptr wrapped in an <see cref="Any" />
     /// </returns>
     public: template<typename TService> const std::shared_ptr<TService> &Get() {
-      return Get(typeid(TService)).Get<TService>();
+      typedef std::shared_ptr<TService> ServicePointer;
+      return Get(typeid(TService)).Get<ServicePointer>();
     }
 
     /// <summary>Tries to look up the specified service</summary>
@@ -55,9 +56,11 @@ namespace Nuclex { namespace Support { namespace Services {
     /// <param name="service">Shared pointer that will receive the service if found</param>
     /// <returns>True if the specified service was found and retrieved</returns>
     public: template<typename TService> bool TryGet(std::shared_ptr<TService> &service) {
+      typedef std::shared_ptr<TService> ServicePointer;
+
       Any serviceAsAny;
       if(TryGet(typeid(TService), serviceAsAny)) {
-        service = serviceAsAny.Get<TService>();
+        service = serviceAsAny.Get<ServicePointer>();
         return true;
       } else {
         service.reset();

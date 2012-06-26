@@ -24,73 +24,6 @@ License along with this library
 // --------------------------------------------------------------------------------------------- //
 
 /// \mainpage
-/// <para>
-///   The Nuclex.Storage.Native library completely abstracts the file system from your
-///   application and lets you access files and folders through a unified interface that
-///   stays the same regardless of what system your game is running on. It follows a very
-///   simple interface, allows for multi-threaded access to files and can seamlessly access
-///   compressed files inside .zip archive as if they were plain files.
-/// </para>
-/// <list>
-///   <item>
-///     <description>
-///       You are completely abstracted from details such as the target system's file API and
-///       path separators. This ensures you don't have to rewrite file system interop each
-///       time you port an application to a different platform.<br /><br />
-///     </description>
-///   </item>
-///   <item>
-///     <description>
-///       Using the BinaryReader and BinaryWriter classes will also isolate you from issues
-///       arising from endian issues, automatically flipping the bytes as required with
-///       the smallest overhead possible on each platform.<br /><br />
-///     </description>
-///   </item>
-///   <item>
-///     <description>
-///       Transparently access .zip archives (and any other archive for which you implement
-///       a ContainerFileCodec) as if they were plain folders. No prior extraction or different
-///       methods to use, a resource loader won't even notice whether the data comes from
-///       a file in a .zip archive or a plain file. The built-in .zip decompressor supports
-///       fast, multi-threaded random access to compressed data.<br /><br />
-///     </description>
-///   </item>
-///   <item>
-///     <description>
-///       File access is simplified by getting rid of Open() and Close() calls - simply read
-///       from a file and write to a file by calling the ReadAt() or WriteAt() methods.
-///       If the implementation requires it, file handles will be created as needed.
-///       Games normally read from packaged files, where opening a packaged file is a no-op
-///       and would only cause more management work for multi-threaded accesses.<br /><br />
-///     </description>
-///   </item>
-///   <item>
-///     <description>
-///       Files can be read from multiple threads without any synchronization issues. Because
-///       there is no file-global cursor dictating where the next read or write will occur,
-///       any number of threads can safely access a file simultaneously.<br /><br />
-///     </description>
-///   </item>
-///   <item>
-///     <description>
-///       The SerializationManager enables you to write separate serializers, keeping
-///       your classes free from serialization code (if you wish) and enabling you to load
-///       and save arbitrary classes even if they were designed without knowledge of
-///       the load/save system.<br /><br />
-///     </description>
-///   </item>
-/// </list>
-/// <para>
-///   From the file manager, you can access the file system starting at 5 entry paths.
-///   These are: <strong>Install</strong> - the directory your game has been installed
-///   in. Always read-only. <strong>SaveGame</strong> - a directory where you can store saved
-///   games, mapping either to the operating system's "Saved Games" directory, if available,
-///   or using whatever is common on the target system. <strong>Personal</strong> - personal
-///   data of the player, stored in the local user profile or in the cloud.
-///   <strong>Local</strong> - for data that is only relevant to the machine the application
-///   is running on, such as the selected hardware devices. <strong>Temporary</strong> -
-///   a local for you to cache things like compiled shaders or scripting language byte-codes.
-/// </para>
 
 // --------------------------------------------------------------------------------------------- //
 
@@ -101,6 +34,30 @@ License along with this library
   #define NUCLEX_SUPPORT_WIN32 1
 #else
   #define NUCLEX_SUPPORT_LINUX 1
+#endif
+
+// --------------------------------------------------------------------------------------------- //
+
+// C++ language features
+#if defined(_MSC_VER) && (_MSC_VER >= 1700) // Visual Studio 2012 has the C++11 features we use
+  #define NUCLEX_SUPPORT_CXX11
+#elif defined(__GNUG__) && ((__GNUC__ * 1000 * __GNUC_MINOR) >= 4007) // GCC 4.7 has, too
+  #define NUCLEX_SUPPORT_CXX11
+#else
+  #define NUCLEX_SUPPORT_CXX03
+#endif
+
+// --------------------------------------------------------------------------------------------- //
+
+// Endianness detection
+#if defined(_MSC_VER) // MSVC is always little endian, including Windows on ARM
+  #define NUCLEX_SUPPORT_LITTLE_ENDIAN
+#elif defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) // GCC
+  #define NUCLEX_SUPPORT_LITTLE_ENDIAN
+#elif defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) // GCC
+  #define NUCLEX_SUPPORT_BIG_ENDIAN
+#else
+  #error Could not determine whether platform is big or little endian
 #endif
 
 // --------------------------------------------------------------------------------------------- //
@@ -129,17 +86,17 @@ License along with this library
   #else
     #if defined(NUCLEX_SUPPORT_SOURCE)
       #define NUCLEX_SUPPORT_API __attribute__ ((visibility ("default")))
-      // Make hidden the default visibility so only tagged symbols are exported
-      // This only applies when compiling Nuclex.Storage.Native, so we don't infect
-      // any code merely using the library with this line.
-      //#pragma GCC visibility push(hidden)
     #else
-      // If you use -fvisibility=hidden or the same pragma as above anywhere in GCC,
-      // exception handling and RTTI would break because GCC would immediately forget
-      // all type infos encountered without this. See http://gcc.gnu.org/wiki/Visibility
+      // If you use -fvisibility=hidden in GCC, exception handling and RTTI would break 
+      // if visibility wasn't set during export _and_ import because GCC would immediately
+      // forget all type infos encountered. See http://gcc.gnu.org/wiki/Visibility
       #define NUCLEX_SUPPORT_API __attribute__ ((visibility ("default")))
     #endif
   #endif
+
+#else
+
+  #error Unknown compiler, please implement shared library macros for your system
 
 #endif
 

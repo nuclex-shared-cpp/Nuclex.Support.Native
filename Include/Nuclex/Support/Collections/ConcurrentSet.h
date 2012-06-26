@@ -22,10 +22,81 @@ License along with this library
 #define NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTSET_H
 
 #include "../Config.h"
+#include <atomic>
+
+#if !defined(NUCLEX_SUPPORT_CXX11)
+  #error This class requires C++11 support
+#endif
 
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
+
+  template<typename TElement>
+  class ConcurrentSet {
+
+    #pragma region struct Node
+
+    /// <summary>Stores a list entry</summary>
+    private: struct Node {
+      /// <summary>Initializes a new list node</summary>
+      /// <param name="element">Element the node will carry</param>
+      public: Node(const TElement &element) :
+        Next(nullptr),
+        ReferenceCount(1),
+        Element(element) {}
+
+      /// <summary>Points to the next element in the list</summary>
+      public: std::atomic<Node *> Next;
+      // <summary>Number of references that exist to this node</summary>
+      //public: std::atomic_size_t ReferenceCount;
+      /// <summary>Stores the element itself</summary>
+      public: TElement Element;
+    };
+
+    #pragma endregion // struct Node
+
+    /// <summary>Initializes a new set</summary>
+    public: ConcurrentSet() :
+      head(nullptr) {}
+
+    /// <summary>Adds an element to the set</summary>
+    /// <param name="element">Element that will be added to the set</param>
+    public: void Add(const TElement &element) {
+      Node *newNode = new Node(element);
+
+      // Acquire the current list head so it can be replaced
+      Node *currentHead = this->head.load(std::memory_order_acquire);
+
+      bool wasExchanged;
+      do {
+        // If we successfully replace the list head (and nobody snatched it away),
+        // the next pointer needs to point to the old head node.
+        newNode->Next.store(std::memory_order_release);
+
+        // Only replace the head if it was still what we prepared the new node for.
+        // If the head was replaced by something else in the meantime, it will be
+        // stored in currentHead, so we can try again in the next loop.
+        wasExchanged = this->head.compare_exchange_strong(
+          currentHead, nodeToInsert, std::memory_order_acq_rel
+        );
+      } while(!wasExchanged);
+
+      ++count;
+    }
+
+    /// <summary>Removes the specified 
+    public: bool Remove(const TElement &element) {
+      // Uh-oh. I don't have the slightest clue how I could safely delete the node
+      // 
+    }
+
+    /// <summary>First node in the linked list</summary>
+    private: std::atomic<Node *> head;
+    /// <summary>Stores the approximate number of elements in the list</summary>
+    private: std::atomic_size_t count;
+
+  };
 
   // ------------------------------------------------------------------------------------------- //
 
