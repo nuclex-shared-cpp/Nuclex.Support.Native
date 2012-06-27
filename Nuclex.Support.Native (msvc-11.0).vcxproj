@@ -163,20 +163,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include=".\Include\Nuclex\Support\Threading\MemoryBarrier.h" />
     <ClCompile Include=".\Source\Config.cpp" />
     <ClCompile Include=".\Source\Threading\ThreadPool.cpp" />
     <ClCompile Include=".\Source\Events\Event.cpp" />
     <ClCompile Include=".\Source\Any.cpp" />
+    <ClCompile Include=".\Source\Threading\ReaderWriterLock.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
+    <ClCompile Include="Source\Collections\ConcurrentSet.cpp" />
+    <ClCompile Include="Source\Events\EventSubscriber.cpp" />
     <ClCompile Include="Source\Text\Lexical.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
-    <ClCompile Include="Source\Threading\Atomic.cpp" />
     <ClCompile Include=".\Source\Threading\WindowsThreadPool.cpp" />
     <ClCompile Include=".\Source\Threading\WinRTThreadPool.cpp" />
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />
-    <ClCompile Include="Source\Threading\MemoryBarrier.cpp" />
     <ClCompile Include="Source\Threading\Mutex.cpp" />
     <ClCompile Include="Source\Threading\Thread.cpp" />
     <ClCompile Include="Source\Variant.cpp" />
@@ -189,17 +189,18 @@
     <ClInclude Include=".\Include\Nuclex\Support\Threading\WindowsThreadPool.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Threading\WinRTThreadPool.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Any.h" />
+    <ClInclude Include=".\Include\Nuclex\Support\Events\EventSubscriber.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentSet.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h" />
-    <ClInclude Include="Include\Nuclex\Support\Threading\Atomic.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Events\Event.h" />
-    <ClInclude Include=".\Include\Nuclex\Support\Lexical.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Variant.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Mutex.h" />
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Thread.h" />
     <ClInclude Include=".\Include\Nuclex\Support\VariantType.h" />
+    <ClInclude Include=".\Include\Nuclex\Support\Threading\ReaderWriterLock.h" />
     <ClInclude Include="Source\Text\Utf8\checked.h" />
     <ClInclude Include="Source\Text\Utf8\core.h" />
     <ClInclude Include="Source\Text\Utf8\unchecked.h" />

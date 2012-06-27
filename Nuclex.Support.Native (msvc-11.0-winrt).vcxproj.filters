@@ -49,9 +49,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include=".\Include\Nuclex\Support\Threading\MemoryBarrier.h">
-      <Filter>Include\Threading</Filter>
-    </ClCompile>
     <ClCompile Include=".\Source\Config.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -91,13 +88,7 @@
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Threading\Atomic.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\MemoryBarrier.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include=".\Source\Threading\Thread.cpp">
@@ -111,6 +102,12 @@
     </ClCompile>
     <ClCompile Include=".\Source\Collections\ConcurrentSet.cpp">
       <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Events\EventSubscriber.cpp">
+      <Filter>Source\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\ReaderWriterLock.cpp">
+      <Filter>Source\Threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,9 +139,6 @@
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Thread.h">
-      <Filter>Include\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Threading\Atomic.h">
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Source\Text\Utf8\unchecked.h">
@@ -179,6 +173,12 @@
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Collections\ConcurrentSet.h">
       <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\EventSubscriber.h">
+      <Filter>Include\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Threading\ReaderWriterLock.h">
+      <Filter>Include\Threading</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

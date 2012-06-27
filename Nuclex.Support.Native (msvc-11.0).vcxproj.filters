@@ -43,9 +43,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include=".\Include\Nuclex\Support\Threading\MemoryBarrier.h">
-      <Filter>Include\Threading</Filter>
-    </ClCompile>
     <ClCompile Include=".\Source\Config.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -60,9 +57,6 @@
     </ClCompile>
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp">
       <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\Atomic.cpp">
-      <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include=".\Source\Threading\WindowsThreadPool.cpp">
       <Filter>Source\Threading</Filter>
@@ -91,11 +85,17 @@
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Threading\MemoryBarrier.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Threading\Thread.cpp">
       <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\ConcurrentSet.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include=".\Source\Threading\ReaderWriterLock.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Events\EventSubscriber.cpp">
+      <Filter>Source\Events</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -123,9 +123,6 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include=".\Include\Nuclex\Support\Lexical.h">
-      <Filter>Include</Filter>
-    </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Any.h">
       <Filter>Include</Filter>
     </ClInclude>
@@ -133,9 +130,6 @@
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Threading\Thread.h">
-      <Filter>Include\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Threading\Atomic.h">
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Variant.h">
@@ -158,6 +152,15 @@
     </ClInclude>
     <ClInclude Include="Source\Text\Utf8\unchecked.h">
       <Filter>Source\Text\Utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentSet.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\Threading\ReaderWriterLock.h">
+      <Filter>Include\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\Events\EventSubscriber.h">
+      <Filter>Include\Events</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
