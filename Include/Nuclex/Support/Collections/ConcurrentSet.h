@@ -87,14 +87,36 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Removes the specified 
     public: bool Remove(const TElement &element) {
+      this->threadCount.fetch_add(1, std::memory_order_acquire);
+
+      Node *currentHead = this->head.load(std::memory_order_acquire);
+      if(currentHead->Element == element) {
+        for(;;) {
+          //this->head.fetch_add();
+        }
+      }
       // Uh-oh. I don't have the slightest clue how I could safely delete the node
       // 
+      // 1. Increment thread count
+      // 2. Find element to remove
+      // 3. Replace previous node's next pointer (CAS loop)
+      // 4. Add removed element to garbage list
+      // 5. Decrement thread count
+      // 6. If thread count was 0, guarantee that no thread was accessing any node
+      //    contained in the garbage list at the time of the call
+      // 6a. Replace garbage head with garbage next (CAS)
+      // 6b. If CAS failed, return (another thread is adding to the garbage)
+      //     If CAS succeeded, delete extracted garbage node, go to 6a.
     }
 
     /// <summary>First node in the linked list</summary>
     private: std::atomic<Node *> head;
+    /// <summary>Garbage list, to be freed when the last thread leaves</summary>
+    private: std::atomic<Node *> garbage;
     /// <summary>Stores the approximate number of elements in the list</summary>
     private: std::atomic_size_t count;
+    /// <summary>Number of threads currently using the set</summary>
+    private: std::atomic_size_t threadCount;
 
   };
 
