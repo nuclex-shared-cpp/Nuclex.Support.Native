@@ -41,6 +41,12 @@
     <Filter Include="Source\Text\Utf8">
       <UniqueIdentifier>{a7cf84bc-7542-4782-a578-96386275c1a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Services">
+      <UniqueIdentifier>{ef2e34bc-46a1-4a6d-b4b0-6a25ff0a6bc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Services">
+      <UniqueIdentifier>{4cb257eb-a9cd-4ca0-ad26-b4628096cc0e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include=".\Source\Config.cpp">
@@ -96,6 +102,15 @@
     </ClCompile>
     <ClCompile Include="Source\Events\EventSubscriber.cpp">
       <Filter>Source\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services\ServiceContainer.cpp">
+      <Filter>Source\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services\ServiceProvider.cpp">
+      <Filter>Source\Services</Filter>
+    </ClCompile>
+    <ClCompile Include=".\Source\Services\LazyServiceInjector.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +176,15 @@
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Events\EventSubscriber.h">
       <Filter>Include\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceContainer.h">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include=".\Include\Nuclex\Support\Services\LazyServiceInjector.h">
+      <Filter>Include\Services</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

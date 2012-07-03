@@ -85,6 +85,9 @@ namespace Nuclex { namespace Support { namespace Services {
       const std::type_info &serviceType, Any &service
     ) const = 0;
 
+    //private: ServiceProvider(const ServiceProvider &);
+    //private: ServiceProvider &operator =(const ServiceProvider &);
+
   };
 
   // ------------------------------------------------------------------------------------------- //
