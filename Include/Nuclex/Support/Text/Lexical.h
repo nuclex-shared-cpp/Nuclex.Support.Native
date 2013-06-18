@@ -29,7 +29,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Extracts the value stored in the any</summary>
+  /// <summary>Lexically casts between a string and non-string data type</summary>
   /// <typeparam name="TTarget">Type into which the value will be converted</typeparam>
   /// <typeparam name="TSource">Type that will be converted</typeparam>
   /// <param name="from">Value that will be converted</param>
@@ -37,6 +37,24 @@ namespace Nuclex { namespace Support { namespace Text {
   template<typename TTarget, typename TSource>
   inline TTarget lexical_cast(const TSource &from) {
     std::stringstream stringStream;
+    stringStream << from;
+
+    TTarget to;
+    stringStream >> to;
+
+    return to;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Lexically casts between a wide string and non-string data type</summary>
+  /// <typeparam name="TTarget">Type into which the value will be converted</typeparam>
+  /// <typeparam name="TSource">Type that will be converted</typeparam>
+  /// <param name="from">Value that will be converted</param>
+  /// <returns>The value converted to the specified type</returns>
+  template<typename TTarget, typename TSource>
+  inline TTarget wlexical_cast(const TSource &from) {
+    std::wstringstream stringStream;
     stringStream << from;
 
     TTarget to;

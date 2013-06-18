@@ -18,10 +18,10 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_CONTAINERS_VARIANTTYPE_H
-#define NUCLEX_SUPPORT_CONTAINERS_VARIANTTYPE_H
+#ifndef NUCLEX_SUPPORT_VARIANTTYPE_H
+#define NUCLEX_SUPPORT_VARIANTTYPE_H
 
-namespace Nuclex { namespace Support { namespace Containers {
+namespace Nuclex { namespace Support {
 
   namespace VariantType {
 
@@ -35,36 +35,36 @@ namespace Nuclex { namespace Support { namespace Containers {
       /// <summary>An unsigned 8 bit integer is being stored</summary>
       Uint8 = 2,
       /// <summary>A signed 8 bit integer is being stored</summary>
-      Int8 = 2,
+      Int8 = 3,
       /// <summary>An unsigned 16 bit integer is being stored</summary>
-      Uint16 = 2,
+      Uint16 = 4,
       /// <summary>A signed 16 bit integer is being stored</summary>
-      Int16 = 2,
+      Int16 = 5,
       /// <summary>An unsigned 32 bit integer is being stored</summary>
-      Uint32 = 2,
+      Uint32 = 6,
       /// <summary>A signed 32 bit integer is being stored</summary>
-      Int32 = 2,
+      Int32 = 7,
       /// <summary>An unsigned 64 bit integer is being stored</summary>
-      Uint64 = 2,
+      Uint64 = 8,
       /// <summary>A signed 64 bit integer is being stored</summary>
-      Int64 = 2,
+      Int64 = 9,
       /// <summary>A floating point value is being stored</summary>
-      Float = 2,
+      Float = 10,
       /// <summary>A double precision floating point value is being stored</summary>
-      Double = 2,
+      Double = 11,
       /// <summary>A string is being stored</summary>
-      String = 2,
+      String = 12,
       /// <summary>A wide character string is being stored</summary>
-      WString = 2,
-      /// <summary>A pointer to void is being stored</summary>
-      VoidPointer = 2,
+      WString = 13,
       /// <summary>An arbitrary type is being stored</summary>
-      Any = 2,
+      Any = 14,
+      /// <summary>A pointer to void is being stored</summary>
+      VoidPointer = 15
 
     };
 
   } // namespace VariantType
 
-}}} // namespace Nuclex::Support::Containers
+}} // namespace Nuclex::Support
 
-#endif // NUCLEX_SUPPORT_CONTAINERS_VARIANTTYPE_H
+#endif // NUCLEX_SUPPORT_VARIANTTYPE_H

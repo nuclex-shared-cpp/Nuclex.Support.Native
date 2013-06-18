@@ -21,7 +21,11 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_VARIANT_H
 #define NUCLEX_SUPPORT_VARIANT_H
 
-#include <typeinfo>
+#include "Any.h"
+#include "VariantType.h"
+
+#include <cstdint>
+#include <string>
 
 namespace Nuclex { namespace Support {
 
@@ -36,6 +40,393 @@ namespace Nuclex { namespace Support {
   /// </remarks>
   class Variant {
 
+    /// <summary>Initializes a new, empty variant</summary>
+    public: Variant() : type(VariantType::Empty) {}
+
+    /// <summary>Initializes a variant to a boolean value</summary>
+    /// <param name="booleanValue">Boolean value the variant will hold</param>
+    public: Variant(bool booleanValue) :
+      type(VariantType::Boolean), booleanValue(booleanValue) {}
+
+    /// <summary>Initializes a variant to an unsigned 8 bit integer value</summary>
+    /// <param name="uint8Value">Unsigned 8 bit integer value the variant will hold</param>
+    public: Variant(std::uint8_t uint8Value) :
+      type(VariantType::Uint8), uint8Value(uint8Value) {}
+
+    /// <summary>Initializes a variant to a signed 8 bit integer value</summary>
+    /// <param name="int8Value">Signed 8 bit integer value the variant will hold</param>
+    public: Variant(std::int8_t int8Value) :
+      type(VariantType::Int8), int8Value(int8Value) {}
+
+    /// <summary>Initializes a variant to an unsigned 16 bit integer value</summary>
+    /// <param name="uint16Value">Unsigned 16 bit integer value the variant will hold</param>
+    public: Variant(std::uint16_t uint16Value) :
+      type(VariantType::Uint16), uint16Value(uint16Value) {}
+
+    /// <summary>Initializes a variant to a signed 16 bit integer value</summary>
+    /// <param name="int16Value">Signed 16 bit integer value the variant will hold</param>
+    public: Variant(std::int16_t int16Value) :
+      type(VariantType::Int16), int16Value(int16Value) {}
+
+    /// <summary>Initializes a variant to an unsigned 32 bit integer value</summary>
+    /// <param name="uint32Value">Unsigned 32 bit integer value the variant will hold</param>
+    public: Variant(std::uint32_t uint32Value) :
+      type(VariantType::Uint32), uint32Value(uint32Value) {}
+
+    /// <summary>Initializes a variant to a signed 32 bit integer value</summary>
+    /// <param name="int32Value">Signed 32 bit integer value the variant will hold</param>
+    public: Variant(std::int32_t int32Value) :
+      type(VariantType::Int32), int32Value(int32Value) {}
+
+    /// <summary>Initializes a variant to an unsigned 64 bit integer value</summary>
+    /// <param name="uint64Value">Unsigned 64 bit integer value the variant will hold</param>
+    public: Variant(std::uint64_t uint64Value) :
+      type(VariantType::Uint64), uint64Value(uint64Value) {}
+
+    /// <summary>Initializes a variant to a signed 64 bit integer value</summary>
+    /// <param name="int64Value">Signed 64 bit integer value the variant will hold</param>
+    public: Variant(std::int64_t int64Value) :
+      type(VariantType::Int64), int64Value(int64Value) {}
+
+    /// <summary>Initializes a variant to a floating point value</summary>
+    /// <param name="floatValue">Floating point value the variant will hold</param>
+    public: Variant(float floatValue) :
+      type(VariantType::Float), floatValue(floatValue) {}
+
+    /// <summary>Initializes a variant to a double precision floating point value</summary>
+    /// <param name="doubleValue">
+    ///   Double precision floating point value the variant will hold
+    /// </param>
+    public: Variant(double doubleValue) :
+      type(VariantType::Double), doubleValue(doubleValue) {}
+
+    /// <summary>Initializes a variant to hold a string</summary>
+    /// <param name="stringValue">String that the variant will hold</param>
+    public: Variant(const std::string &stringValue) :
+      type(VariantType::String), stringValue(new std::string(stringValue)) {}
+
+    /// <summary>Initializes a variant to hold a wide string</summary>
+    /// <param name="wstringValue">Wide string that the variant will hold</param>
+    public: Variant(const std::wstring &wstringValue) :
+      type(VariantType::WString), wstringValue(new std::wstring(wstringValue)) {}
+
+    /// <summary>Initializes a variant to hold an opaquely typed value</summary>
+    /// <param name="anyValue">Opaquely typed value the variant will hold</param>
+    public: Variant(const Any &anyValue) :
+      type(VariantType::Any), anyValue(new Any(anyValue)) {}
+
+    /// <summary>Initializes a variant to hold a void pointer</summary>
+    /// <param name="pointerValue">Pointer that the variant will hold</param>
+    public: Variant(void *pointerValue) :
+      type(VariantType::VoidPointer), pointerValue(pointerValue) {}
+
+    /// <summary>Initializes the variant as a copy of another variant</summary>
+    /// <param name="other">Other variant that will be copied</param>
+    public: Variant(const Variant &other);
+
+    /// <summary>Destroys the variant and frees any memory used</summary>
+    public: ~Variant() {
+      switch(this->type) {
+        case VariantType::String: { delete this->stringValue; break; }
+        case VariantType::WString: { delete this->wstringValue; break; }
+        case VariantType::Any: { delete this->anyValue; break; }
+      }
+    }
+
+    /// <summary>Checks whether the variant is currently not holding a value</summary>
+    /// <returns>True if the variant is empty</returns>
+    public: bool IsEmpty() const {
+      return (this->type == VariantType::Empty);
+    }
+
+    /// <summary>Returns the value held by the variant as a boolean</summary>
+    /// <returns>The variant's value as a boolean</returns>
+    /// <remarks>
+    ///   Integer or floating point values will be true if they are any value other than
+    ///   zero, strings will be lexically casted and objects will be true if they are
+    ///   not null pointers.
+    /// </remarks>
+    public: bool ToBoolean() const;
+
+    /// <summary>Returns the value held by the variant as an unsigned 8 bit integer</summary>
+    /// <returns>The variant's value as an unsigned 8 bit integer</returns>
+    public: std::uint8_t ToUint8() const;
+
+    /// <summary>Returns the value held by the variant as a signed 8 bit integer</summary>
+    /// <returns>The variasnt's value as a signed 8 bit integer</returns>
+    public: std::int8_t ToInt8() const;
+
+    /// <summary>Returns the value held by the variant as an unsigned 16 bit integer</summary>
+    /// <returns>The variant's value as an unsigned 16 bit integer</returns>
+    public: std::uint16_t ToUint16() const;
+
+    /// <summary>Returns the value held by the variant as a signed 16 bit integer</summary>
+    /// <returns>The variasnt's value as a signed 16 bit integer</returns>
+    public: std::int16_t ToInt16() const;
+
+    /// <summary>Returns the value held by the variant as an unsigned 32 bit integer</summary>
+    /// <returns>The variant's value as an unsigned 32 bit integer</returns>
+    public: std::uint32_t ToUint32() const;
+
+    /// <summary>Returns the value held by the variant as a signed 32 bit integer</summary>
+    /// <returns>The variasnt's value as a signed 32 bit integer</returns>
+    public: std::int32_t ToInt32() const;
+
+    /// <summary>Returns the value held by the variant as an unsigned 64 bit integer</summary>
+    /// <returns>The variant's value as an unsigned 64 bit integer</returns>
+    public: std::uint64_t ToUint64() const;
+
+    /// <summary>Returns the value held by the variant as a signed 64 bit integer</summary>
+    /// <returns>The variasnt's value as a signed 64 bit integer</returns>
+    public: std::int64_t ToInt64() const;
+
+    /// <summary>Returns the value held by the variant as a floating point value</summary>
+    /// <returns>The variasnt's value as a floating point value</returns>
+    public: float ToFloat() const;
+
+    /// <summary>
+    ///   Returns the value held by the variant as a double precision floating point value
+    /// </summary>
+    /// <returns>The variasnt's value as a double precision floating point value</returns>
+    public: double ToDouble() const;
+
+    /// <summary>Returns the value held by the variant as a string</summary>
+    /// <returns>The variasnt's value as a string</returns>
+    public: std::string ToString() const;
+
+    /// <summary>Returns the value held by the variant as a wide string</summary>
+    /// <returns>The variasnt's value as a wide string</returns>
+    public: std::wstring ToWString() const;
+
+    /// <summary>Returns the value held by the variant as an opaquely typed value</summary>
+    /// <returns>The variasnt's value as an opaquely typed value</returns>
+    public: Any ToAny() const;
+
+    /// <summary>Returns the value held by the variant as a void pointer</summary>
+    /// <returns>The variasnt's value as a void pointer</returns>
+    public: void *ToVoidPointer() const;
+
+    /// <summary>Checks whether the variant is holding a numeric value</summary>
+    /// <returns>True if the variant is holding a numeric value</returns>
+    public: bool IsNumber() const {
+      switch(this->type) {
+        case VariantType::Uint8:
+        case VariantType::Int8:
+        case VariantType::Uint16:
+        case VariantType::Int16:
+        case VariantType::Uint32:
+        case VariantType::Int32:
+        case VariantType::Uint64:
+        case VariantType::Int64:
+        case VariantType::Float:
+        case VariantType::Double: {
+          return true;
+        }
+        default: { return false; }
+      }
+    }
+
+    /// <summary>Checks whether the variant is holding a string</summary>
+    /// <returns>True if the variant is holding a string</returns>
+    public: bool IsString() const {
+      switch(this->type) {
+        case VariantType::String:
+        case VariantType::WString: {
+          return true;
+        }
+        default: { return false; }
+      }
+    }
+
+    /// <summary>Retrieves the type that is currently stored by the variant</summary>
+    /// <returns>The type stored by the variant</returns>
+    public: VariantType::Enum GetType() const {
+      return this->type;
+    }
+
+    /// <summary>Assigns a boolean value to the variant</summary>
+    /// <param name="booleanValue">Boolean that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(bool booleanValue) {
+      free();
+      this->booleanValue = booleanValue;
+      this->type = VariantType::Boolean;
+    }
+
+    /// <summary>Assigns an unsigned 8 bit integer value to the variant</summary>
+    /// <param name="uint8Value">Unsigned 8 bit integer value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(std::uint8_t uint8Value) {
+      free();
+      this->uint8Value = uint8Value;
+      this->type = VariantType::Uint8;
+    }
+
+    /// <summary>Assigns a signed 8 bit integer value to the variant</summary>
+    /// <param name="int8Value">Signed 8 bit integer value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(std::int8_t int8Value) {
+      free();
+      this->int8Value = int8Value;
+      this->type = VariantType::Int8;
+    }
+
+    /// <summary>Assigns an unsigned 16 bit integer value to the variant</summary>
+    /// <param name="uint16Value">Unsigned 16 bit integer value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(std::uint16_t uint16Value) {
+      free();
+      this->uint16Value = uint16Value;
+      this->type = VariantType::Uint16;
+    }
+
+    /// <summary>Assigns a signed 16 bit integer value to the variant</summary>
+    /// <param name="int16Value">Signed 16 bit integer value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(std::int16_t int16Value) {
+      free();
+      this->int16Value = int16Value;
+      this->type = VariantType::Int16;
+    }
+
+    /// <summary>Assigns an unsigned 32 bit integer value to the variant</summary>
+    /// <param name="uint32Value">Unsigned 32 bit integer value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(std::uint32_t uint32Value) {
+      free();
+      this->uint32Value = uint32Value;
+      this->type = VariantType::Uint32;
+    }
+
+    /// <summary>Assigns a signed 32 bit integer value to the variant</summary>
+    /// <param name="int32Value">Signed 32 bit integer value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(std::int32_t int32Value) {
+      free();
+      this->int32Value = int32Value;
+      this->type = VariantType::Int32;
+    }
+
+    /// <summary>Assigns an unsigned 64 bit integer value to the variant</summary>
+    /// <param name="uint64Value">Unsigned 64 bit integer value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(std::uint64_t uint64Value) {
+      free();
+      this->uint64Value = uint64Value;
+      this->type = VariantType::Uint64;
+    }
+
+    /// <summary>Assigns a signed 64 bit integer value to the variant</summary>
+    /// <param name="int64Value">Signed 64 bit integer value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(std::int64_t int64Value) {
+      free();
+      this->int64Value = int64Value;
+      this->type = VariantType::Int64;
+    }
+
+    /// <summary>Assigns a floating point value to the variant</summary>
+    /// <param name="floatValue">Floating point value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(float floatValue) {
+      free();
+      this->floatValue = floatValue;
+      this->type = VariantType::Float;
+    }
+
+    /// <summary>Assigns a double precision floating point value to the variant</summary>
+    /// <param name="doubleValue">
+    ///   Double precision floating point value that will be assigned
+    /// </param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(double doubleValue) {
+      free();
+      this->doubleValue = doubleValue;
+      this->type = VariantType::Double;
+    }
+
+    /// <summary>Assigns a string to the variant</summary>
+    /// <param name="stringValue">String that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(const std::string &stringValue) {
+      free();
+      this->stringValue = new std::string(stringValue);
+      this->type = VariantType::String;
+    }
+
+    /// <summary>Assigns a wide string to the variant</summary>
+    /// <param name="wstringValue">Wide string that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(const std::wstring &wstringValue) {
+      free();
+      this->wstringValue = new std::wstring(wstringValue);
+      this->type = VariantType::WString;
+    }
+
+    /// <summary>Assigns an opaquely typed value to the variant</summary>
+    /// <param name="anyValue">Opaquely types value that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(const Any &anyValue) {
+      free();
+      this->anyValue = new Any(anyValue);
+      this->type = VariantType::Any;
+    }
+
+    /// <summary>Assigns a pointer to the variant</summary>
+    /// <param name="pointerValue">Pointer that will be assigned</param>
+    /// <returns>The variant itself</returns>
+    public: Variant &operator =(void *pointerValue) {
+      free();
+      this->pointerValue = pointerValue;
+      this->type = VariantType::VoidPointer;
+    }
+
+    /// <summary>Frees all memory used by the variant</summary>
+    private: void free() {
+      switch(this->type) {
+        case VariantType::String: { delete this->stringValue; break; }
+        case VariantType::WString: { delete this->wstringValue; break; }
+        case VariantType::Any: { delete this->anyValue; break; }
+      }
+    }
+
+    /// <summary>Type of value that the variant is holding</summary>
+    private: VariantType::Enum type;
+    /// <summary>Value held by the variant</summary>
+    private: union {
+      /// <summary>Boolean value, if the variant is holding that type</summary>
+      bool booleanValue;
+      /// <summary>Unsigned 8 bit integer value, if the variant is holding that type</summary>
+      std::uint8_t uint8Value;
+      /// <summary>Signed 8 bit integer value, if the variant is holding that type</summary>
+      std::int8_t int8Value;
+      /// <summary>Unsigned 16 bit integer value, if the variant is holding that type</summary>
+      std::uint16_t uint16Value;
+      /// <summary>Signed 16 bit integer value, if the variant is holding that type</summary>
+      std::int16_t int16Value;
+      /// <summary>Unsigned 32 bit integer value, if the variant is holding that type</summary>
+      std::uint32_t uint32Value;
+      /// <summary>Signed 32 bit integer value, if the variant is holding that type</summary>
+      std::int32_t int32Value;
+      /// <summary>Unsigned 64 bit integer value, if the variant is holding that type</summary>
+      std::uint64_t uint64Value;
+      /// <summary>Signed 64 bit integer value, if the variant is holding that type</summary>
+      std::int64_t int64Value;
+      /// <summary>Floating point value, if the variant is holding that type</summary>
+      float floatValue;
+      /// <summary>
+      ///   Double precision floating point value, if the variant is holding that type
+      /// </summary>
+      double doubleValue;
+      /// <summary>String value, if the variant is holding that type</summary>
+      std::string *stringValue;
+      /// <summary>Wide string value, if the variant is holding that type</summary>
+      std::wstring *wstringValue;
+      /// <summary>Opaque value of an arbitrary type, if the variant is holding that</summary>
+      Any *anyValue;
+      /// <summary>Void pointer value, if the variant is holding that type</summary>
+      void *pointerValue;
+    };
 
   };
 
