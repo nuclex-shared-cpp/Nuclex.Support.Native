@@ -112,6 +112,9 @@
     <ClCompile Include=".\Source\Services\LazyServiceInjector.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Collections\Variegator.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\Include\Nuclex\Support\Config.h">
@@ -185,6 +188,9 @@
     </ClInclude>
     <ClInclude Include=".\Include\Nuclex\Support\Services\LazyServiceInjector.h">
       <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h">
+      <Filter>Include\Collections</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
