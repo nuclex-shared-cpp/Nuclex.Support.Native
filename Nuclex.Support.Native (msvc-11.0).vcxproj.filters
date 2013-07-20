@@ -115,6 +115,12 @@
     <ClCompile Include="Source\Collections\Variegator.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Collections\Collection.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\IndexedCollection.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\Include\Nuclex\Support\Config.h">
@@ -190,6 +196,12 @@
       <Filter>Include\Services</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\IndexedCollection.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
   </ItemGroup>

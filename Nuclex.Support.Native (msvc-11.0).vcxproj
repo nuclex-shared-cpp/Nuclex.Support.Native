@@ -169,9 +169,11 @@
     <ClCompile Include=".\Source\Any.cpp" />
     <ClCompile Include=".\Source\Threading\ReaderWriterLock.cpp" />
     <ClCompile Include=".\Source\Services\LazyServiceInjector.cpp" />
+    <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentSet.cpp" />
+    <ClCompile Include="Source\Collections\IndexedCollection.cpp" />
     <ClCompile Include="Source\Collections\Variegator.cpp" />
     <ClCompile Include="Source\Events\EventSubscriber.cpp" />
     <ClCompile Include="Source\Services\ServiceContainer.cpp" />
@@ -197,6 +199,8 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentSet.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\IndexedCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceContainer.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h" />

@@ -25,8 +25,8 @@ License along with this library
 #include <random>
 
 #include <vector>
-#include <set>
-#include <map>
+#include <unordered_set>
+#include <unordered_map>
 
 namespace Nuclex { namespace Support { namespace Collections {
 
@@ -77,13 +77,14 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Removes all entries from the variegator</summary>
     /// <remarks>
-    ///   This is mainly useful if you are storing smart pointers to the values and need
+    ///   This is mainly useful if you are storing smart pointers to values of substantial
+    ///   size (eg. audio clips instead of just resource proxies or paths) and need to
     ///   reclaim memory.
     /// </remarks>
     public: void Clear() {
       this->values.clear();
-      freeHistory();
 
+      freeHistory();
       this->historyFull = false;
       this->historyTailIndex = 0;
     }
@@ -94,10 +95,21 @@ namespace Nuclex { namespace Support { namespace Collections {
       return this->values.empty();
     }
 
+    /// <summary>Returns the number of values in the variegator</summary>
+    /// <returns>The number of values stored in the variegator</returns>
+    /// <remarks>
+    ///   If the same value is added with different keys (a situation that doesn't make
+    ///   sense because such reuse should be covered by specifying multiple keys in
+    ///   a query), it will be counted multiple times.
+    /// </remarks>
+    public: std::size_t GetSize() const {
+      return this->values.size();
+    }
+
     /// <summary>
     ///   Insert a new value that can be returned when requesting the specified key
     /// </summary>
-    /// <param name="key">Key of the value that will be inserted<param>
+    /// <param name="key">Key of the value that will be inserted</param>
     /// <param name="value">Value that will be inserted under the provided key</param>
     public: void Insert(const TKey &key, const TValue &value) {
       this->values.insert(ValueMap::value_type(key, value));
@@ -124,7 +136,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: template<typename TInputIterator> TValue Get(
       TInputIterator first, std::size_t count = 1
     ) const {
-      std::set<TValue> candidates;
+      std::unordered_set<TValue> candidates;
 
       while(count > 0) {
         std::pair<ValueMap::const_iterator, ValueMap::const_iterator> valueRange =
@@ -162,7 +174,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: template<typename TInputIterator> TValue Get(
       TInputIterator first, TInputIterator onePastLast
     ) const {
-      std::set<TValue> candidates;
+      std::unordered_set<TValue> candidates;
 
       while(first != onePastLast) {
         std::pair<ValueMap::const_iterator, ValueMap::const_iterator> valueRange =
@@ -188,7 +200,8 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   Set containing the candidats values to consider. Will be destroyed.
     /// </param>
     /// <returns>The least recently used candidate value or a random one</returns>
-    private: TValue destructivePickCandidateValue(std::set<TValue> &candidates) const {
+    private: TValue destructivePickCandidateValue(std::unordered_set<TValue> &candidates) const {
+      //removeRuleDeviatingValues(candidates);
       removeRecentlyUsedValues(candidates);
 
       switch(candidates.size()) {
@@ -202,7 +215,7 @@ namespace Nuclex { namespace Support { namespace Collections {
           std::uniform_int_distribution<std::size_t> distributor(0, candidates.size() - 1);
           std::size_t index = distributor(this->randomNumberGenerator);
           
-          std::set<TValue>::const_iterator iterator = candidates.begin();
+          std::unordered_set<TValue>::const_iterator iterator = candidates.begin();
           while(index > 0) {
             ++iterator;
             --index;
@@ -234,7 +247,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <remarks>
     ///   Stops removing values when there's only 1 value left in the set
     /// </remarks>
-    private: void removeRecentlyUsedValues(std::set<TValue> &candidates) const {
+    private: void removeRecentlyUsedValues(std::unordered_set<TValue> &candidates) const {
       if(candidates.size() <= 1) {
         return;
       }
@@ -301,7 +314,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     private: Variegator &operator =(const Variegator &);
 
     /// <summary>Map by which potential values can be looked up via their key</summary>
-    private: typedef std::multimap<TKey, TValue> ValueMap;
+    private: typedef std::unordered_multimap<TKey, TValue> ValueMap;
 
     /// <summary>Stores the entries the variegator can select from by their keys</summary>
     private: ValueMap values;

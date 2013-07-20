@@ -21,6 +21,7 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_VARIANT_H
 #define NUCLEX_SUPPORT_VARIANT_H
 
+#include "Config.h"
 #include "Any.h"
 #include "VariantType.h"
 
@@ -41,91 +42,91 @@ namespace Nuclex { namespace Support {
   class Variant {
 
     /// <summary>Initializes a new, empty variant</summary>
-    public: Variant() : type(VariantType::Empty) {}
+    public: NUCLEX_SUPPORT_API Variant() : type(VariantType::Empty) {}
 
     /// <summary>Initializes a variant to a boolean value</summary>
     /// <param name="booleanValue">Boolean value the variant will hold</param>
-    public: Variant(bool booleanValue) :
+    public: NUCLEX_SUPPORT_API Variant(bool booleanValue) :
       type(VariantType::Boolean), booleanValue(booleanValue) {}
 
     /// <summary>Initializes a variant to an unsigned 8 bit integer value</summary>
     /// <param name="uint8Value">Unsigned 8 bit integer value the variant will hold</param>
-    public: Variant(std::uint8_t uint8Value) :
+    public: NUCLEX_SUPPORT_API Variant(std::uint8_t uint8Value) :
       type(VariantType::Uint8), uint8Value(uint8Value) {}
 
     /// <summary>Initializes a variant to a signed 8 bit integer value</summary>
     /// <param name="int8Value">Signed 8 bit integer value the variant will hold</param>
-    public: Variant(std::int8_t int8Value) :
+    public: NUCLEX_SUPPORT_API Variant(std::int8_t int8Value) :
       type(VariantType::Int8), int8Value(int8Value) {}
 
     /// <summary>Initializes a variant to an unsigned 16 bit integer value</summary>
     /// <param name="uint16Value">Unsigned 16 bit integer value the variant will hold</param>
-    public: Variant(std::uint16_t uint16Value) :
+    public: NUCLEX_SUPPORT_API Variant(std::uint16_t uint16Value) :
       type(VariantType::Uint16), uint16Value(uint16Value) {}
 
     /// <summary>Initializes a variant to a signed 16 bit integer value</summary>
     /// <param name="int16Value">Signed 16 bit integer value the variant will hold</param>
-    public: Variant(std::int16_t int16Value) :
+    public: NUCLEX_SUPPORT_API Variant(std::int16_t int16Value) :
       type(VariantType::Int16), int16Value(int16Value) {}
 
     /// <summary>Initializes a variant to an unsigned 32 bit integer value</summary>
     /// <param name="uint32Value">Unsigned 32 bit integer value the variant will hold</param>
-    public: Variant(std::uint32_t uint32Value) :
+    public: NUCLEX_SUPPORT_API Variant(std::uint32_t uint32Value) :
       type(VariantType::Uint32), uint32Value(uint32Value) {}
 
     /// <summary>Initializes a variant to a signed 32 bit integer value</summary>
     /// <param name="int32Value">Signed 32 bit integer value the variant will hold</param>
-    public: Variant(std::int32_t int32Value) :
+    public: NUCLEX_SUPPORT_API Variant(std::int32_t int32Value) :
       type(VariantType::Int32), int32Value(int32Value) {}
 
     /// <summary>Initializes a variant to an unsigned 64 bit integer value</summary>
     /// <param name="uint64Value">Unsigned 64 bit integer value the variant will hold</param>
-    public: Variant(std::uint64_t uint64Value) :
+    public: NUCLEX_SUPPORT_API Variant(std::uint64_t uint64Value) :
       type(VariantType::Uint64), uint64Value(uint64Value) {}
 
     /// <summary>Initializes a variant to a signed 64 bit integer value</summary>
     /// <param name="int64Value">Signed 64 bit integer value the variant will hold</param>
-    public: Variant(std::int64_t int64Value) :
+    public: NUCLEX_SUPPORT_API Variant(std::int64_t int64Value) :
       type(VariantType::Int64), int64Value(int64Value) {}
 
     /// <summary>Initializes a variant to a floating point value</summary>
     /// <param name="floatValue">Floating point value the variant will hold</param>
-    public: Variant(float floatValue) :
+    public: NUCLEX_SUPPORT_API Variant(float floatValue) :
       type(VariantType::Float), floatValue(floatValue) {}
 
     /// <summary>Initializes a variant to a double precision floating point value</summary>
     /// <param name="doubleValue">
     ///   Double precision floating point value the variant will hold
     /// </param>
-    public: Variant(double doubleValue) :
+    public: NUCLEX_SUPPORT_API Variant(double doubleValue) :
       type(VariantType::Double), doubleValue(doubleValue) {}
 
     /// <summary>Initializes a variant to hold a string</summary>
     /// <param name="stringValue">String that the variant will hold</param>
-    public: Variant(const std::string &stringValue) :
+    public: NUCLEX_SUPPORT_API Variant(const std::string &stringValue) :
       type(VariantType::String), stringValue(new std::string(stringValue)) {}
 
     /// <summary>Initializes a variant to hold a wide string</summary>
     /// <param name="wstringValue">Wide string that the variant will hold</param>
-    public: Variant(const std::wstring &wstringValue) :
+    public: NUCLEX_SUPPORT_API Variant(const std::wstring &wstringValue) :
       type(VariantType::WString), wstringValue(new std::wstring(wstringValue)) {}
 
     /// <summary>Initializes a variant to hold an opaquely typed value</summary>
     /// <param name="anyValue">Opaquely typed value the variant will hold</param>
-    public: Variant(const Any &anyValue) :
+    public: NUCLEX_SUPPORT_API Variant(const Any &anyValue) :
       type(VariantType::Any), anyValue(new Any(anyValue)) {}
 
     /// <summary>Initializes a variant to hold a void pointer</summary>
     /// <param name="pointerValue">Pointer that the variant will hold</param>
-    public: Variant(void *pointerValue) :
+    public: NUCLEX_SUPPORT_API Variant(void *pointerValue) :
       type(VariantType::VoidPointer), pointerValue(pointerValue) {}
 
     /// <summary>Initializes the variant as a copy of another variant</summary>
     /// <param name="other">Other variant that will be copied</param>
-    public: Variant(const Variant &other);
+    public: NUCLEX_SUPPORT_API Variant(const Variant &other);
 
     /// <summary>Destroys the variant and frees any memory used</summary>
-    public: ~Variant() {
+    public: NUCLEX_SUPPORT_API ~Variant() {
       switch(this->type) {
         case VariantType::String: { delete this->stringValue; break; }
         case VariantType::WString: { delete this->wstringValue; break; }
@@ -135,7 +136,7 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Checks whether the variant is currently not holding a value</summary>
     /// <returns>True if the variant is empty</returns>
-    public: bool IsEmpty() const {
+    public: NUCLEX_SUPPORT_API bool IsEmpty() const {
       return (this->type == VariantType::Empty);
     }
 
@@ -146,69 +147,69 @@ namespace Nuclex { namespace Support {
     ///   zero, strings will be lexically casted and objects will be true if they are
     ///   not null pointers.
     /// </remarks>
-    public: bool ToBoolean() const;
+    public: NUCLEX_SUPPORT_API bool ToBoolean() const;
 
     /// <summary>Returns the value held by the variant as an unsigned 8 bit integer</summary>
     /// <returns>The variant's value as an unsigned 8 bit integer</returns>
-    public: std::uint8_t ToUint8() const;
+    public: NUCLEX_SUPPORT_API std::uint8_t ToUint8() const;
 
     /// <summary>Returns the value held by the variant as a signed 8 bit integer</summary>
     /// <returns>The variasnt's value as a signed 8 bit integer</returns>
-    public: std::int8_t ToInt8() const;
+    public: NUCLEX_SUPPORT_API std::int8_t ToInt8() const;
 
     /// <summary>Returns the value held by the variant as an unsigned 16 bit integer</summary>
     /// <returns>The variant's value as an unsigned 16 bit integer</returns>
-    public: std::uint16_t ToUint16() const;
+    public: NUCLEX_SUPPORT_API std::uint16_t ToUint16() const;
 
     /// <summary>Returns the value held by the variant as a signed 16 bit integer</summary>
     /// <returns>The variasnt's value as a signed 16 bit integer</returns>
-    public: std::int16_t ToInt16() const;
+    public: NUCLEX_SUPPORT_API std::int16_t ToInt16() const;
 
     /// <summary>Returns the value held by the variant as an unsigned 32 bit integer</summary>
     /// <returns>The variant's value as an unsigned 32 bit integer</returns>
-    public: std::uint32_t ToUint32() const;
+    public: NUCLEX_SUPPORT_API std::uint32_t ToUint32() const;
 
     /// <summary>Returns the value held by the variant as a signed 32 bit integer</summary>
     /// <returns>The variasnt's value as a signed 32 bit integer</returns>
-    public: std::int32_t ToInt32() const;
+    public: NUCLEX_SUPPORT_API std::int32_t ToInt32() const;
 
     /// <summary>Returns the value held by the variant as an unsigned 64 bit integer</summary>
     /// <returns>The variant's value as an unsigned 64 bit integer</returns>
-    public: std::uint64_t ToUint64() const;
+    public: NUCLEX_SUPPORT_API std::uint64_t ToUint64() const;
 
     /// <summary>Returns the value held by the variant as a signed 64 bit integer</summary>
     /// <returns>The variasnt's value as a signed 64 bit integer</returns>
-    public: std::int64_t ToInt64() const;
+    public: NUCLEX_SUPPORT_API std::int64_t ToInt64() const;
 
     /// <summary>Returns the value held by the variant as a floating point value</summary>
     /// <returns>The variasnt's value as a floating point value</returns>
-    public: float ToFloat() const;
+    public: NUCLEX_SUPPORT_API float ToFloat() const;
 
     /// <summary>
     ///   Returns the value held by the variant as a double precision floating point value
     /// </summary>
     /// <returns>The variasnt's value as a double precision floating point value</returns>
-    public: double ToDouble() const;
+    public: NUCLEX_SUPPORT_API double ToDouble() const;
 
     /// <summary>Returns the value held by the variant as a string</summary>
     /// <returns>The variasnt's value as a string</returns>
-    public: std::string ToString() const;
+    public: NUCLEX_SUPPORT_API std::string ToString() const;
 
     /// <summary>Returns the value held by the variant as a wide string</summary>
     /// <returns>The variasnt's value as a wide string</returns>
-    public: std::wstring ToWString() const;
+    public: NUCLEX_SUPPORT_API std::wstring ToWString() const;
 
     /// <summary>Returns the value held by the variant as an opaquely typed value</summary>
     /// <returns>The variasnt's value as an opaquely typed value</returns>
-    public: Any ToAny() const;
+    public: NUCLEX_SUPPORT_API Any ToAny() const;
 
     /// <summary>Returns the value held by the variant as a void pointer</summary>
     /// <returns>The variasnt's value as a void pointer</returns>
-    public: void *ToVoidPointer() const;
+    public: NUCLEX_SUPPORT_API void *ToVoidPointer() const;
 
     /// <summary>Checks whether the variant is holding a numeric value</summary>
     /// <returns>True if the variant is holding a numeric value</returns>
-    public: bool IsNumber() const {
+    public: NUCLEX_SUPPORT_API bool IsNumber() const {
       switch(this->type) {
         case VariantType::Uint8:
         case VariantType::Int8:
@@ -228,7 +229,7 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Checks whether the variant is holding a string</summary>
     /// <returns>True if the variant is holding a string</returns>
-    public: bool IsString() const {
+    public: NUCLEX_SUPPORT_API bool IsString() const {
       switch(this->type) {
         case VariantType::String:
         case VariantType::WString: {
@@ -240,98 +241,108 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Retrieves the type that is currently stored by the variant</summary>
     /// <returns>The type stored by the variant</returns>
-    public: VariantType::Enum GetType() const {
+    public: NUCLEX_SUPPORT_API VariantType::Enum GetType() const {
       return this->type;
     }
 
     /// <summary>Assigns a boolean value to the variant</summary>
     /// <param name="booleanValue">Boolean that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(bool booleanValue) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(bool booleanValue) {
       free();
       this->booleanValue = booleanValue;
       this->type = VariantType::Boolean;
+      return *this;
     }
 
     /// <summary>Assigns an unsigned 8 bit integer value to the variant</summary>
     /// <param name="uint8Value">Unsigned 8 bit integer value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(std::uint8_t uint8Value) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(std::uint8_t uint8Value) {
       free();
       this->uint8Value = uint8Value;
       this->type = VariantType::Uint8;
+      return *this;
     }
 
     /// <summary>Assigns a signed 8 bit integer value to the variant</summary>
     /// <param name="int8Value">Signed 8 bit integer value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(std::int8_t int8Value) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(std::int8_t int8Value) {
       free();
       this->int8Value = int8Value;
       this->type = VariantType::Int8;
+      return *this;
     }
 
     /// <summary>Assigns an unsigned 16 bit integer value to the variant</summary>
     /// <param name="uint16Value">Unsigned 16 bit integer value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(std::uint16_t uint16Value) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(std::uint16_t uint16Value) {
       free();
       this->uint16Value = uint16Value;
       this->type = VariantType::Uint16;
+      return *this;
     }
 
     /// <summary>Assigns a signed 16 bit integer value to the variant</summary>
     /// <param name="int16Value">Signed 16 bit integer value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(std::int16_t int16Value) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(std::int16_t int16Value) {
       free();
       this->int16Value = int16Value;
       this->type = VariantType::Int16;
+      return *this;
     }
 
     /// <summary>Assigns an unsigned 32 bit integer value to the variant</summary>
     /// <param name="uint32Value">Unsigned 32 bit integer value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(std::uint32_t uint32Value) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(std::uint32_t uint32Value) {
       free();
       this->uint32Value = uint32Value;
       this->type = VariantType::Uint32;
+      return *this;
     }
 
     /// <summary>Assigns a signed 32 bit integer value to the variant</summary>
     /// <param name="int32Value">Signed 32 bit integer value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(std::int32_t int32Value) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(std::int32_t int32Value) {
       free();
       this->int32Value = int32Value;
       this->type = VariantType::Int32;
+      return *this;
     }
 
     /// <summary>Assigns an unsigned 64 bit integer value to the variant</summary>
     /// <param name="uint64Value">Unsigned 64 bit integer value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(std::uint64_t uint64Value) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(std::uint64_t uint64Value) {
       free();
       this->uint64Value = uint64Value;
       this->type = VariantType::Uint64;
+      return *this;
     }
 
     /// <summary>Assigns a signed 64 bit integer value to the variant</summary>
     /// <param name="int64Value">Signed 64 bit integer value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(std::int64_t int64Value) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(std::int64_t int64Value) {
       free();
       this->int64Value = int64Value;
       this->type = VariantType::Int64;
+      return *this;
     }
 
     /// <summary>Assigns a floating point value to the variant</summary>
     /// <param name="floatValue">Floating point value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(float floatValue) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(float floatValue) {
       free();
       this->floatValue = floatValue;
       this->type = VariantType::Float;
+      return *this;
     }
 
     /// <summary>Assigns a double precision floating point value to the variant</summary>
@@ -339,46 +350,51 @@ namespace Nuclex { namespace Support {
     ///   Double precision floating point value that will be assigned
     /// </param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(double doubleValue) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(double doubleValue) {
       free();
       this->doubleValue = doubleValue;
       this->type = VariantType::Double;
+      return *this;
     }
 
     /// <summary>Assigns a string to the variant</summary>
     /// <param name="stringValue">String that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(const std::string &stringValue) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(const std::string &stringValue) {
       free();
       this->stringValue = new std::string(stringValue);
       this->type = VariantType::String;
+      return *this;
     }
 
     /// <summary>Assigns a wide string to the variant</summary>
     /// <param name="wstringValue">Wide string that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(const std::wstring &wstringValue) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(const std::wstring &wstringValue) {
       free();
       this->wstringValue = new std::wstring(wstringValue);
       this->type = VariantType::WString;
+      return *this;
     }
 
     /// <summary>Assigns an opaquely typed value to the variant</summary>
     /// <param name="anyValue">Opaquely types value that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(const Any &anyValue) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(const Any &anyValue) {
       free();
       this->anyValue = new Any(anyValue);
       this->type = VariantType::Any;
+      return *this;
     }
 
     /// <summary>Assigns a pointer to the variant</summary>
     /// <param name="pointerValue">Pointer that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: Variant &operator =(void *pointerValue) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(void *pointerValue) {
       free();
       this->pointerValue = pointerValue;
       this->type = VariantType::VoidPointer;
+      return *this;
     }
 
     /// <summary>Frees all memory used by the variant</summary>
