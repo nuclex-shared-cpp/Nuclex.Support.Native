@@ -48,6 +48,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>An index that is never given to any item in the collection</summary>
     public: static const std::size_t InvalidIndex = std::size_t(-1);
 
+    /// <summary>Frees all memory used by the collection</summary>
+    public: virtual ~IndexedCollection() {}
+
     /// <summary>Determines the index of the specified item in the collection</summary>
     /// <param name="value">Item whose index will be determined</param>
     /// <returns>The index of the specified item</returns>
@@ -71,7 +74,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Inserts the specified item at a specified index</summary>
     /// <param name="index">Index at which the item will be inserted</param>
     /// <param name="value">Item that will be inserted into the collection</param>
-    public: virtual void Insert(std::size_t index, const TValue &value) = 0;
+    public: virtual void InsertAt(std::size_t index, const TValue &value) = 0;
 
     /// <summary>Removes the item at the specified index from the collection</summary>
     /// <param name="index">Index at which the item will be removed</param>

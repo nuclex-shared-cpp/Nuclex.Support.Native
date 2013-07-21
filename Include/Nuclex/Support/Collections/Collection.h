@@ -72,6 +72,9 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     #pragma endregion // class Enumerator
 
+    /// <summary>Frees all memory used by the collection</summary>
+    public: virtual ~Collection() {}
+
     /// <summary>Adds the specified item to the collection</summary>
     /// <param name="item">Item that will be added to the collection</param>
     public: virtual void Add(const TValue &item) = 0;
@@ -80,6 +83,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="item">Item that will be removed from the collection</param>
     /// <returns>True if the item existed in the collection and was removed</returns>
     public: virtual bool Remove(const TValue &item) = 0;
+
+    /// <summary>Removes all items from the collection</summary>
+    public: virtual void Clear();
 
     /// <summary>Checks if the collection contains the specified item</summary>
     /// <param name="item">Item the collection will be checked for</param>

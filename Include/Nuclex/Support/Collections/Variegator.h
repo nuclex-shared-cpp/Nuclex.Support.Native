@@ -165,7 +165,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// </param>
     /// <remarks>
     ///   In many cases, you have generic situations (such as 'detected-player-stealing',
-    ///   'observed-hostile-action') and specified situations (such as
+    ///   'observed-hostile-action') and specific situations (such as
     ///   'detected-player-stealing-from-beggar', 'observed-hostile-action-on-cop')
     ///   where a values from both pools should be considered. This method allows you
     ///   to specify any number of keys, creating a greater set of values the variegator

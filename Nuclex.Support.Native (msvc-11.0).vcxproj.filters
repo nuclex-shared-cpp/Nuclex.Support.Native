@@ -204,5 +204,11 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\IndexedCollection.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ObservableCollection.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ObservableIndexedCollection.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

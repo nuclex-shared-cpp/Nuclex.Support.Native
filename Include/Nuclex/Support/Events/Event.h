@@ -26,7 +26,7 @@ namespace Nuclex { namespace Support { namespace Events {
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TArgument1>
-  class Event1{
+  class Event1 {
 
     
 

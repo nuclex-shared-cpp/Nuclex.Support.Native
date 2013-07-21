@@ -201,6 +201,8 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentSet.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\IndexedCollection.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ObservableCollection.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ObservableIndexedCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceContainer.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h" />
