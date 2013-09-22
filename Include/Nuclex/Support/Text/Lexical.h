@@ -21,7 +21,8 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_TEXT_LEXICAL_H
 #define NUCLEX_SUPPORT_TEXT_LEXICAL_H
 
-#include "../Config.h"
+#include "Nuclex/Support/Config.h"
+
 #include <sstream>
 #include <string>
 
@@ -90,6 +91,24 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
   template<> NUCLEX_SUPPORT_API double lexical_cast<>(const std::string &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+#if defined(HAVE_ITOA)
+  /// <summary>Converts an integer value into a string</summary>
+  /// <param name="from">Integer value that will be converted</param>
+  /// <returns>A string containing the printed integer value</returns>
+  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const int &from);
+#endif
+
+  // ------------------------------------------------------------------------------------------- //
+
+#if defined(HAVE_ATOI)
+  /// <summary>Converts a string into an integer value</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The integer value parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API int lexical_cast<>(const std::string &from);
+#endif
 
   // ------------------------------------------------------------------------------------------- //
 

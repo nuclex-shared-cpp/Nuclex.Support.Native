@@ -62,6 +62,12 @@ License along with this library
 
 // --------------------------------------------------------------------------------------------- //
 
+// Standard library features
+#define HAVE_ATOI 1
+#define HAVE_ITOA 1
+
+// --------------------------------------------------------------------------------------------- //
+
 // Decides whether symbols are imported from a dll (client app) or exported to
 // a dll (Nuclex.Storage.Native library). The NUCLEX_SUPPORT_SOURCE symbol is defined by
 // all source files of the library, so you don't have to worry about a thing.

@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Text/Lexical.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -52,6 +52,23 @@ namespace Nuclex { namespace Support { namespace Text {
   template<> double lexical_cast<>(const std::string &from) {
     return ::atof(from.c_str());
   }
+
+  // ------------------------------------------------------------------------------------------- //
+
+#if defined(HAVE_ITOA)
+  template<> std::string lexical_cast<>(const int &from) {
+    char characters[21]; // Max number of characters in exotic 64 bit integer platform
+    return std::string(::itoa(from, characters, 10));
+  }
+#endif
+
+  // ------------------------------------------------------------------------------------------- //
+
+#if defined(HAVE_ATOI)
+  template<> int lexical_cast<>(const std::string &from) {
+    return ::atoi(from.c_str());
+  }
+#endif
 
   // ------------------------------------------------------------------------------------------- //
 
