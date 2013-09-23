@@ -22,6 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_TEXT_LEXICAL_H
 
 #include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Text/StringConverter.h"
 
 #include <sstream>
 #include <string>
@@ -43,12 +44,23 @@ namespace Nuclex { namespace Support { namespace Text {
     TTarget to;
     stringStream >> to;
 
+    if(stringStream.fail() || stringStream.bad()) {
+      std::string message("Could not convert from \"");
+      stringStream >> message;
+      message.append("\" (");
+      message.append(typeid(TSource).name());
+      message.append(") to (");
+      message.append(typeid(TTarget).name());
+      message.append(")");
+      throw std::invalid_argument(message.c_str());
+    }
+
     return to;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Lexically casts between a wide string and non-string data type</summary>
+  /// <summary>Lexically casts between a string and non-string data type</summary>
   /// <typeparam name="TTarget">Type into which the value will be converted</typeparam>
   /// <typeparam name="TSource">Type that will be converted</typeparam>
   /// <param name="from">Value that will be converted</param>
@@ -61,6 +73,21 @@ namespace Nuclex { namespace Support { namespace Text {
     TTarget to;
     stringStream >> to;
 
+    if(stringStream.fail() || stringStream.bad()) {
+      std::string message("Could not convert from \"");
+      {
+        std::wstring value;
+        stringStream >> value;
+        message.append(StringConverter::Utf8FromWideChar(value));
+      }
+      message.append("\" (");
+      message.append(typeid(TSource).name());
+      message.append(") to (");
+      message.append(typeid(TTarget).name());
+      message.append(")");
+      throw std::invalid_argument(message.c_str());
+    }
+
     return to;
   }
 
@@ -69,28 +96,28 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <summary>Converts a floating point value into a string</summary>
   /// <param name="from">Floating point value that will be converted</param>
   /// <returns>A string containing the printed floating point value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const float &from);
+  template<> std::string lexical_cast<>(const float &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API float lexical_cast<>(const std::string &from);
+  template<> float lexical_cast<>(const std::string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a double precision floating point value into a string</summary>
   /// <param name="from">Double precision Floating point value that will be converted</param>
   /// <returns>A string containing the printed double precision floating point value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const double &from);
+  template<> std::string lexical_cast<>(const double &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API double lexical_cast<>(const std::string &from);
+  template<> double lexical_cast<>(const std::string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -98,16 +125,23 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <summary>Converts an integer value into a string</summary>
   /// <param name="from">Integer value that will be converted</param>
   /// <returns>A string containing the printed integer value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const int &from);
+  template<> std::string lexical_cast<>(const int &from);
 #endif
 
   // ------------------------------------------------------------------------------------------- //
 
-#if defined(HAVE_ATOI)
   /// <summary>Converts a string into an integer value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The integer value parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API int lexical_cast<>(const std::string &from);
+  template<> int lexical_cast<>(const std::string &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+#if defined(HAVE_ULTOA)
+  /// <summary>Converts an unsigned long value into a string</summary>
+  /// <param name="from">Unsigned long value that will be converted</param>
+  /// <returns>A string containing the printed unsigned long value</returns>
+  template<> std::string lexical_cast<>(const unsigned long &from);
 #endif
 
   // ------------------------------------------------------------------------------------------- //

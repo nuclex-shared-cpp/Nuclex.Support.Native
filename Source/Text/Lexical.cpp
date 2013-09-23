@@ -37,7 +37,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> float lexical_cast<>(const std::string &from) {
-    return static_cast<float>(::atof(from.c_str()));
+    return std::stof(from);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -50,7 +50,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> double lexical_cast<>(const std::string &from) {
-    return ::atof(from.c_str());
+    return std::stod(from);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -64,9 +64,16 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-#if defined(HAVE_ATOI)
   template<> int lexical_cast<>(const std::string &from) {
-    return ::atoi(from.c_str());
+    return std::stoi(from);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+#if defined(HAVE_ULTOA)
+  template<> std::string lexical_cast<>(const unsigned long &from) {
+    char characters[21];
+    return std::string(::ultoa(from, characters, 10));
   }
 #endif
 
