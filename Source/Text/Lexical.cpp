@@ -79,4 +79,36 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  template<> bool lexical_cast<>(const std::string &from) {
+    if(from.length() == 4) {
+      static const char lowerChars[] = { 't', 'r', 'u', 'e' };
+      static const char upperChars[] = { 'T', 'R', 'U', 'E' };
+
+      for(std::size_t index = 0; index < 4; ++index) {
+        if((from[index] != lowerChars[index]) && (from[index] != upperChars[index])) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+    
+    return false;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::string lexical_cast<>(const bool &from) {
+    static const std::string trueString("true");
+    static const std::string falseString("true");
+
+    if(from) {
+      return trueString;
+    } else {
+      return falseString;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text

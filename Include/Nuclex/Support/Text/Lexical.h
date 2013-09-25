@@ -146,6 +146,20 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Converts a boolean value into a string</summary>
+  /// <param name="from">Boolean value that will be converted</param>
+  /// <returns>A string containing the printed boolean value</returns>
+  template<> std::string lexical_cast<>(const bool &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Converts a string into a boolean value</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The boolean value parsed from the specified string</returns>
+  template<> bool lexical_cast<>(const std::string &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text
 
 #endif // NUCLEX_SUPPORT_TEXT_LEXICAL_H
