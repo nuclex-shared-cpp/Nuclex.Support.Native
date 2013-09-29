@@ -100,7 +100,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const bool &from) {
     static const std::string trueString("true");
-    static const std::string falseString("true");
+    static const std::string falseString("false");
 
     if(from) {
       return trueString;
