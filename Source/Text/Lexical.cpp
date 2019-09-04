@@ -30,8 +30,15 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::string lexical_cast<>(const float &from) {
+#if defined(HAVE_GCVT)
     char characters[_CVTBUFSIZE];
+    #pragma warning(push)
+    #pragma warning(disable:4996) // Use _gcvt_s() - ignored, _CVTBUFSIZE covers any integer
     return std::string(::_gcvt(from, 0, characters));
+    #pragma warning(pop)
+#else
+    return std::to_string(from);
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -43,8 +50,15 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::string lexical_cast<>(const double &from) {
+#if defined(HAVE_GCVT)
     char characters[_CVTBUFSIZE];
+    #pragma warning(push)
+    #pragma warning(disable:4996) // Use _gcvt_s() - ignored, _CVTBUFSIZE covers any integer
     return std::string(::_gcvt(from, 0, characters));
+    #pragma warning(pop)
+#else
+    return std::to_string(from);
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -55,12 +69,17 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-#if defined(HAVE_ITOA)
   template<> std::string lexical_cast<>(const int &from) {
+#if defined(HAVE_ITOA)
     char characters[21]; // Max number of characters in exotic 64 bit integer platform
-    return std::string(::itoa(from, characters, 10));
-  }
+    #pragma warning(push)
+    #pragma warning(disable:4996) // Use _gcvt_s() - ignored, _CVTBUFSIZE covers any integer
+    return std::string(::_itoa(from, characters, 10));
+    #pragma warning(pop)
+#else
+    return std::to_string(from);
 #endif
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -70,12 +89,17 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-#if defined(HAVE_ULTOA)
   template<> std::string lexical_cast<>(const unsigned long &from) {
+#if defined(HAVE_ULTOA)
     char characters[21];
-    return std::string(::ultoa(from, characters, 10));
-  }
+    #pragma warning(push)
+    #pragma warning(disable:4996) // Use _gcvt_s() - ignored, _CVTBUFSIZE covers any integer
+    return std::string(::_ultoa(from, characters, 10));
+    #pragma warning(pop)
+#else
+    return std::to_string(from);
 #endif
+  }
 
   // ------------------------------------------------------------------------------------------- //
 

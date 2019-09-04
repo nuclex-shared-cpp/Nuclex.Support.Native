@@ -18,8 +18,8 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_TEXT_STRINGCONVERTER_H
-#define NUCLEX_SUPPORT_TEXT_STRINGCONVERTER_H
+#ifndef NUCLEX_SUPPORT_TEXT_COMMANDLINE_H
+#define NUCLEX_SUPPORT_TEXT_COMMANDLINE_H
 
 #include "../Config.h"
 
@@ -29,22 +29,22 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Helps converting strings between different formats</summary>
-  class StringConverter {
+  /// <summary>Stores a command line parameter string in a code-friendly format</summary>
+  /// <remarks>
+  ///   This class can be used to prepare command lines when executing external programs
+  ///   and to parse the command line passed to the running program by the operating system.
+  ///   The command line is a simple parameter collection that can either be processed directly
+  ///   or be used to build more complex command line binding systems on top of.
+  /// </remarks>
+  class CommandLine {
 
-    /// <summary>Converts an UTF-8 string into a wide char string</summary>
-    /// <param name="utf8String">UTF-8 string that will be converted</param>
-    /// <returns>A wide char version of the provided ansi string</returns>
-    public: NUCLEX_SUPPORT_API static std::wstring Utf16FromUtf8(
-      const std::string &utf8String
-    );
+    /// <summary>Initializes a new, empty command line</summary>
+    public: NUCLEX_SUPPORT_API CommandLine();
+    /// <summary>Releases all resources owned by the command line</summary>
+    public: NUCLEX_SUPPORT_API ~CommandLine();
 
-    /// <summary>Converts a wide char string into an UTF-8 string</summary>
-    /// <param name="wideCharString">Wide char string that will be converted</param>
-    /// <returns>An UTF-8 version of the provided wide char string</returns>
-    public: NUCLEX_SUPPORT_API static std::string Utf8FromUtf16(
-      const std::wstring &wideCharString
-    );
+    /// <summary>Parses a parameter string into a command line container</summary>
+    public: CommandLine Parse(const std::string &parameterString)
 
   };
 
@@ -52,4 +52,4 @@ namespace Nuclex { namespace Support { namespace Text {
 
 }}} // namespace Nuclex::Support::Text
 
-#endif // NUCLEX_SUPPORT_TEXT_STRINGCONVERTER_H
+#endif // NUCLEX_SUPPORT_TEXT_COMMANDLINE_H

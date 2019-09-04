@@ -131,6 +131,7 @@ namespace Nuclex { namespace Support {
         case VariantType::String: { delete this->stringValue; break; }
         case VariantType::WString: { delete this->wstringValue; break; }
         case VariantType::Any: { delete this->anyValue; break; }
+        default: {} // Avoids compiler warnings about unhandled enum members
       }
     }
 
@@ -403,6 +404,7 @@ namespace Nuclex { namespace Support {
         case VariantType::String: { delete this->stringValue; break; }
         case VariantType::WString: { delete this->wstringValue; break; }
         case VariantType::Any: { delete this->anyValue; break; }
+        default: {} // Avoids compiler warnings about unhandled enum members
       }
     }
 

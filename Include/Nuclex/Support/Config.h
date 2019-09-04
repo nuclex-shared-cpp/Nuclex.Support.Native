@@ -63,6 +63,7 @@ License along with this library
 // --------------------------------------------------------------------------------------------- //
 
 // Standard library features
+#define HAVE_GCVT 1
 #define HAVE_ITOA 1
 #define HAVE_ULTOA 1
 

@@ -29,39 +29,39 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::wstring StringConverter::WideCharFromUtf8(const std::string &utf8String) {
+  std::wstring StringConverter::Utf16FromUtf8(const std::string &utf8String) {
     if(utf8String.empty()) {
       return std::wstring();
     }
 
-    // We guess that we need as many wide characters as we needed UTF-8 characters
+    // We guess that we need as many UTF-16 characters as we needed UTF-8 characters
     // based on the assumption that most text will only use ascii characters.
-    std::vector<wchar_t> wideCharacters;
-    wideCharacters.reserve(utf8String.length());
+    std::vector<wchar_t> utf16Characters;
+    utc16Characters.reserve(utf8String.length());
 
     // Do the conversions. If the vector was too short, it will be grown in factors
     // of 2 usually (depending on the standard library implementation)
-    utf8::utf8to16(utf8String.begin(), utf8String.end(), std::back_inserter(wideCharacters));
+    utf8::utf8to16(utf8String.begin(), utf8String.end(), std::back_inserter(utf16Characters));
 
-    return std::wstring(&wideCharacters[0], wideCharacters.size());
+    return std::wstring(&utf16Characters[0], utf16Characters.size());
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string StringConverter::Utf8FromWideChar(const std::wstring &wideCharString) {
-    if(wideCharString.empty()) {
+  std::string StringConverter::Utf8FromUtf16(const std::wstring &utf16String) {
+    if(utf16String.empty()) {
       return std::string();
     }
 
-    // We guess that we need as many UTF-8 characters as we needed wide characters
+    // We guess that we need as many UTF-8 characters as we needed UTF-16 characters
     // based on the assumption that most text will only use ascii characters.
     std::vector<char> utf8Characters;
-    utf8Characters.reserve(wideCharString.length());
+    utf8Characters.reserve(utf16String.length());
 
     // Do the conversions. If the vector was too short, it will be grown in factors
     // of 2 usually (depending on the standard library implementation)
     utf8::utf16to8(
-      wideCharString.begin(), wideCharString.end(), std::back_inserter(utf8Characters)
+      utf16String.begin(), utf16String.end(), std::back_inserter(utf8Characters)
     );
 
     return std::string(&utf8Characters[0], utf8Characters.size());

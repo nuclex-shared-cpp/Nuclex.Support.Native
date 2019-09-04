@@ -383,7 +383,7 @@ namespace Nuclex { namespace Support {
       case VariantType::Double: { return Text::lexical_cast<std::string>(this->doubleValue); }
       case VariantType::String: { return *this->stringValue; }
       case VariantType::WString: {
-        return Text::StringConverter::Utf8FromWideChar(*this->wstringValue);
+        return Text::StringConverter::Utf8FromUtf16(*this->wstringValue);
       }
       case VariantType::Any: { return emptyString; }
       case VariantType::VoidPointer: {
@@ -416,7 +416,7 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return Text::wlexical_cast<std::wstring>(this->floatValue); }
       case VariantType::Double: { return Text::wlexical_cast<std::wstring>(this->doubleValue); }
       case VariantType::String: {
-        return Text::StringConverter::WideCharFromUtf8(*this->stringValue);
+        return Text::StringConverter::Utf16FromUtf8(*this->stringValue);
       }
       case VariantType::WString: { return *this->wstringValue; }
       case VariantType::Any: { return emptyString; }

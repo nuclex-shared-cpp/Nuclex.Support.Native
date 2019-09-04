@@ -78,7 +78,7 @@ namespace Nuclex { namespace Support { namespace Text {
       {
         std::wstring value;
         stringStream >> value;
-        message.append(StringConverter::Utf8FromWideChar(value));
+        message.append(StringConverter::Utf8FromUtf16(value));
       }
       message.append("\" (");
       message.append(typeid(TSource).name());
@@ -96,67 +96,63 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <summary>Converts a floating point value into a string</summary>
   /// <param name="from">Floating point value that will be converted</param>
   /// <returns>A string containing the printed floating point value</returns>
-  template<> std::string lexical_cast<>(const float &from);
+  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const float &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> float lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API float lexical_cast<>(const std::string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a double precision floating point value into a string</summary>
   /// <param name="from">Double precision Floating point value that will be converted</param>
   /// <returns>A string containing the printed double precision floating point value</returns>
-  template<> std::string lexical_cast<>(const double &from);
+  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const double &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> double lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API double lexical_cast<>(const std::string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
-#if defined(HAVE_ITOA)
   /// <summary>Converts an integer value into a string</summary>
   /// <param name="from">Integer value that will be converted</param>
   /// <returns>A string containing the printed integer value</returns>
-  template<> std::string lexical_cast<>(const int &from);
-#endif
+  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const int &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into an integer value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The integer value parsed from the specified string</returns>
-  template<> int lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API int lexical_cast<>(const std::string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
-#if defined(HAVE_ULTOA)
   /// <summary>Converts an unsigned long value into a string</summary>
   /// <param name="from">Unsigned long value that will be converted</param>
   /// <returns>A string containing the printed unsigned long value</returns>
-  template<> std::string lexical_cast<>(const unsigned long &from);
-#endif
+  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const unsigned long &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a boolean value into a string</summary>
   /// <param name="from">Boolean value that will be converted</param>
   /// <returns>A string containing the printed boolean value</returns>
-  template<> std::string lexical_cast<>(const bool &from);
+  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const bool &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a boolean value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The boolean value parsed from the specified string</returns>
-  template<> bool lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API bool lexical_cast<>(const std::string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
