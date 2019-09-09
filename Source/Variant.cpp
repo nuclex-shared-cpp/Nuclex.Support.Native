@@ -27,6 +27,7 @@ License along with this library
 
 namespace {
 
+  /// Message used in the exception thrown when the variant is of an unknown type
   std::string InvalidVariantTypeExceptionMessage("Invalid variant type");
 
 } // anonymous namespace
@@ -49,8 +50,16 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return this->int64Value != 0; }
       case VariantType::Float: { return this->floatValue != 0.0f; }
       case VariantType::Double: { return this->doubleValue != 0.0; }
-      case VariantType::String: { return Text::lexical_cast<bool>(*this->stringValue); }
-      case VariantType::WString: { return Text::wlexical_cast<bool>(*this->wstringValue); }
+      case VariantType::String: {
+        return Text::lexical_cast<bool>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
+      }
+      case VariantType::WString: {
+        return Text::wlexical_cast<bool>(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
+      }
       case VariantType::Any: { return true; }
       case VariantType::VoidPointer: { return this->pointerValue != nullptr; }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
@@ -74,16 +83,22 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return static_cast<std::uint8_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::uint8_t>(this->doubleValue); }
       case VariantType::String: {
-        return Text::lexical_cast<std::uint8_t>(*this->stringValue);
+        return Text::lexical_cast<std::uint8_t>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
         return static_cast<std::uint8_t>(
-          Text::wlexical_cast<std::uint16_t>(*this->wstringValue)
+          Text::wlexical_cast<int>(
+            *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+          )
         );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return reinterpret_cast<std::uint8_t>(this->pointerValue);
+        return static_cast<std::uint8_t>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+        );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -106,16 +121,22 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return static_cast<std::int8_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::int8_t>(this->doubleValue); }
       case VariantType::String: {
-        return Text::lexical_cast<std::int8_t>(*this->stringValue);
+        return Text::lexical_cast<std::int8_t>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
         return static_cast<std::int8_t>(
-          Text::wlexical_cast<std::int16_t>(*this->wstringValue)
+          Text::wlexical_cast<int>(
+            *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+          )
         );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return reinterpret_cast<std::int8_t>(this->pointerValue);
+        return static_cast<std::int8_t>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+          );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -138,14 +159,20 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return static_cast<std::uint16_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::uint16_t>(this->doubleValue); }
       case VariantType::String: {
-        return Text::lexical_cast<std::uint16_t>(*this->stringValue);
+        return Text::lexical_cast<std::uint16_t>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
-        return Text::wlexical_cast<std::uint16_t>(*this->wstringValue);
+        return Text::wlexical_cast<std::uint16_t>(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return reinterpret_cast<std::uint16_t>(this->pointerValue);
+        return static_cast<std::uint16_t>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+        );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -168,14 +195,20 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return static_cast<std::int16_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::int16_t>(this->doubleValue); }
       case VariantType::String: {
-        return Text::lexical_cast<std::int16_t>(*this->stringValue);
+        return Text::lexical_cast<std::int16_t>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
-        return Text::wlexical_cast<std::int16_t>(*this->wstringValue);
+        return Text::wlexical_cast<std::int16_t>(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return reinterpret_cast<std::int16_t>(this->pointerValue);
+        return static_cast<std::int16_t>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+        );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -198,14 +231,20 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return static_cast<std::uint32_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::uint32_t>(this->doubleValue); }
       case VariantType::String: {
-        return Text::lexical_cast<std::uint32_t>(*this->stringValue);
+        return Text::lexical_cast<std::uint32_t>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
-        return Text::wlexical_cast<std::uint32_t>(*this->wstringValue);
+        return Text::wlexical_cast<std::uint32_t>(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return reinterpret_cast<std::uint32_t>(this->pointerValue);
+        return static_cast<std::uint32_t>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+        );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -228,14 +267,20 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return static_cast<std::int32_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::int32_t>(this->doubleValue); }
       case VariantType::String: {
-        return Text::lexical_cast<std::int32_t>(*this->stringValue);
+        return Text::lexical_cast<std::int32_t>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
-        return Text::wlexical_cast<std::int32_t>(*this->wstringValue);
+        return Text::wlexical_cast<std::int32_t>(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return reinterpret_cast<std::int32_t>(this->pointerValue);
+        return static_cast<std::int32_t>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+        );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -258,14 +303,20 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return static_cast<std::uint64_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::uint64_t>(this->doubleValue); }
       case VariantType::String: {
-        return Text::lexical_cast<std::uint64_t>(*this->stringValue);
+        return Text::lexical_cast<std::uint64_t>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
-        return Text::wlexical_cast<std::uint64_t>(*this->wstringValue);
+        return Text::wlexical_cast<std::uint64_t>(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return reinterpret_cast<std::uint64_t>(this->pointerValue);
+        return static_cast<std::uint64_t>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+        );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -288,14 +339,20 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return static_cast<std::int64_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::int64_t>(this->doubleValue); }
       case VariantType::String: {
-        return Text::lexical_cast<std::int64_t>(*this->stringValue);
+        return Text::lexical_cast<std::int64_t>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
-        return Text::wlexical_cast<std::int64_t>(*this->wstringValue);
+        return Text::wlexical_cast<std::int64_t>(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return reinterpret_cast<std::int64_t>(this->pointerValue);
+        return static_cast<std::int64_t>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+        );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -318,14 +375,20 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return this->floatValue; }
       case VariantType::Double: { return static_cast<float>(this->doubleValue); }
       case VariantType::String: {
-        return Text::lexical_cast<float>(*this->stringValue);
+        return Text::lexical_cast<float>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
-        return Text::wlexical_cast<float>(*this->wstringValue);
+        return Text::wlexical_cast<float>(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return static_cast<float>(reinterpret_cast<std::uintptr_t>(this->pointerValue));
+        return static_cast<float>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+        );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -348,14 +411,20 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return static_cast<double>(this->floatValue); }
       case VariantType::Double: { return this->doubleValue; }
       case VariantType::String: {
-        return Text::lexical_cast<double>(*this->stringValue);
+        return Text::lexical_cast<double>(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
       case VariantType::WString: {
-        return Text::wlexical_cast<double>(*this->wstringValue);
+        return Text::wlexical_cast<double>(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
       }
       case VariantType::Any: { return 0; }
       case VariantType::VoidPointer: {
-        return static_cast<double>(reinterpret_cast<std::uintptr_t>(this->pointerValue));
+        return static_cast<double>(
+          reinterpret_cast<std::uintptr_t>(this->pointerValue)
+        );
       }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
@@ -381,9 +450,13 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return Text::lexical_cast<std::string>(this->int64Value); }
       case VariantType::Float: { return Text::lexical_cast<std::string>(this->floatValue); }
       case VariantType::Double: { return Text::lexical_cast<std::string>(this->doubleValue); }
-      case VariantType::String: { return *this->stringValue; }
+      case VariantType::String: {
+        return *reinterpret_cast<const std::string *>(this->stringValueBytes);
+      }
       case VariantType::WString: {
-        return Text::StringConverter::Utf8FromUtf16(*this->wstringValue);
+        return Text::StringConverter::Utf8FromUtf16(
+          *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+        );
       }
       case VariantType::Any: { return emptyString; }
       case VariantType::VoidPointer: {
@@ -416,9 +489,13 @@ namespace Nuclex { namespace Support {
       case VariantType::Float: { return Text::wlexical_cast<std::wstring>(this->floatValue); }
       case VariantType::Double: { return Text::wlexical_cast<std::wstring>(this->doubleValue); }
       case VariantType::String: {
-        return Text::StringConverter::Utf16FromUtf8(*this->stringValue);
+        return Text::StringConverter::Utf16FromUtf8(
+          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+        );
       }
-      case VariantType::WString: { return *this->wstringValue; }
+      case VariantType::WString: {
+        return *reinterpret_cast<const std::wstring *>(this->wstringValueBytes);
+      }
       case VariantType::Any: { return emptyString; }
       case VariantType::VoidPointer: {
         return Text::wlexical_cast<std::wstring>(
@@ -445,10 +522,15 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return Any(this->int64Value); }
       case VariantType::Float: { return Any(this->floatValue); }
       case VariantType::Double: { return Any(this->doubleValue); }
-      case VariantType::String: { return Any(*this->stringValue); }
-      case VariantType::WString: { return Any(*this->wstringValue); }
-      case VariantType::Any: { return this->anyValue; }
-      case VariantType::VoidPointer: { return this->pointerValue; }
+      case VariantType::String: {
+        return Any(*reinterpret_cast<const std::string *>(this->stringValueBytes));
+      }
+      case VariantType::WString: {
+        return Any(*reinterpret_cast<const std::wstring *>(this->wstringValueBytes));
+      }
+      case VariantType::Any: {
+        return *reinterpret_cast<const Any *>(this->anyValueBytes);
+      }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
   }
@@ -458,15 +540,33 @@ namespace Nuclex { namespace Support {
   void *Variant::ToVoidPointer() const {
     switch(this->type) {
       case VariantType::Empty: { return nullptr; }
-      case VariantType::Boolean: { return reinterpret_cast<void *>(this->booleanValue); }
-      case VariantType::Uint8: { return reinterpret_cast<void *>(this->uint8Value); }
-      case VariantType::Int8: { return reinterpret_cast<void *>(this->int8Value); }
-      case VariantType::Uint16: { return reinterpret_cast<void *>(this->uint16Value); }
-      case VariantType::Int16: { return reinterpret_cast<void *>(this->int16Value); }
-      case VariantType::Uint32: { return reinterpret_cast<void *>(this->uint32Value); }
-      case VariantType::Int32: { return reinterpret_cast<void *>(this->int32Value); }
-      case VariantType::Uint64: { return reinterpret_cast<void *>(this->uint64Value); }
-      case VariantType::Int64: { return reinterpret_cast<void *>(this->int64Value); }
+      case VariantType::Boolean: {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->booleanValue));
+      }
+      case VariantType::Uint8: {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->uint8Value));
+      }
+      case VariantType::Int8: {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->int8Value));
+      }
+      case VariantType::Uint16: {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->uint16Value));
+      }
+      case VariantType::Int16: {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->int16Value));
+      }
+      case VariantType::Uint32: {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->uint32Value));
+      }
+      case VariantType::Int32: {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->int32Value));
+      }
+      case VariantType::Uint64: {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->uint64Value));
+      }
+      case VariantType::Int64: {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->int64Value));
+      }
       case VariantType::Float: {
         return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->floatValue));
       }
@@ -474,15 +574,70 @@ namespace Nuclex { namespace Support {
         return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->doubleValue));
       }
       case VariantType::String: {
-        return reinterpret_cast<void *>(Text::lexical_cast<std::uintptr_t>(this->stringValue));
+        return reinterpret_cast<void *>(
+          Text::lexical_cast<std::uintptr_t>(
+            *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          )
+        );
       }
       case VariantType::WString: {
-        return reinterpret_cast<void *>(Text::wlexical_cast<std::uintptr_t>(this->wstringValue));
+        return reinterpret_cast<void *>(
+          Text::wlexical_cast<std::uintptr_t>(
+            *reinterpret_cast<const std::wstring *>(this->wstringValueBytes)
+          )
+        );
       }
-      case VariantType::Any: { return this->anyValue; }
+      case VariantType::Any: {
+        return nullptr;
+      }
       case VariantType::VoidPointer: { return this->pointerValue; }
       default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
     }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  Variant &Variant::operator =(const Variant &other) {
+    free();
+
+    // Change type to 'empty' temporarily in case the copy throws an exception
+    this->type = VariantType::Empty;
+
+    switch(other.type) {
+      case VariantType::Empty: { return *this; } // Nothing more to do
+      case VariantType::Boolean: { this->booleanValue = other.booleanValue; break; }
+      case VariantType::Uint8: { this->uint8Value = other.uint8Value; break; }
+      case VariantType::Int8: { this->int8Value = other.int8Value; break; }
+      case VariantType::Uint16: { this->uint16Value = other.uint16Value; break; }
+      case VariantType::Int16: { this->int16Value = other.int16Value; break; }
+      case VariantType::Uint32: { this->uint32Value = other.uint32Value; break; }
+      case VariantType::Int32: { this->int32Value = other.int32Value; break; }
+      case VariantType::Uint64: { this->uint64Value = other.uint64Value; break; }
+      case VariantType::Int64: { this->int64Value = other.int64Value; break; }
+      case VariantType::Float: { this->floatValue = other.floatValue; break; }
+      case VariantType::Double: { this->doubleValue = other.doubleValue; break; }
+      case VariantType::String: {
+        new(this->stringValueBytes) std::string(
+          *reinterpret_cast<const std::string *>(other.stringValueBytes)
+        );
+      }
+      case VariantType::WString: {
+        new(this->wstringValueBytes) std::wstring(
+          *reinterpret_cast<const std::wstring *>(other.wstringValueBytes)
+        );
+      }
+      case VariantType::Any: {
+        new(this->anyValueBytes) Any(
+          *reinterpret_cast<const Any *>(other.anyValueBytes)
+        );
+      }
+      case VariantType::VoidPointer: { this->pointerValue = other.pointerValue; break; }
+      default: { throw std::runtime_error(InvalidVariantTypeExceptionMessage); }
+    }
+
+    this->type = other.type;
+
+    return *this;
   }
 
   // ------------------------------------------------------------------------------------------- //

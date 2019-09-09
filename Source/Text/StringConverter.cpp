@@ -37,7 +37,7 @@ namespace Nuclex { namespace Support { namespace Text {
     // We guess that we need as many UTF-16 characters as we needed UTF-8 characters
     // based on the assumption that most text will only use ascii characters.
     std::vector<wchar_t> utf16Characters;
-    utc16Characters.reserve(utf8String.length());
+    utf16Characters.reserve(utf8String.length());
 
     // Do the conversions. If the vector was too short, it will be grown in factors
     // of 2 usually (depending on the standard library implementation)
