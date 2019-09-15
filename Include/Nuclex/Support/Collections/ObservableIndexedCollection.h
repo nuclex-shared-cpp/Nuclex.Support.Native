@@ -46,8 +46,10 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Frees all memory used by the observable collection</summary>
     public: virtual ~ObservableIndexedCollection() {}
 
-    private: ObservableIndexedCollection(const ObservableIndexedCollection &);
-    private: ObservableIndexedCollection &operator =(const ObservableIndexedCollection &);
+    private: ObservableIndexedCollection(const ObservableIndexedCollection &) = delete;
+    private: ObservableIndexedCollection &operator =(
+      const ObservableIndexedCollection &
+    ) = delete;
 
   };
 

@@ -92,7 +92,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: bool TryLock() { return this->mutex.try_lock(); }
 
     /// <summary>Leavesthe mutex</summary>
-    public: void Unlock() { this->mutex->unlock(); }
+    public: void Unlock() { this->mutex.unlock(); }
 
     /// <summary>C++11 mutex the implementation is based on</summary>
     private: std::mutex mutex;

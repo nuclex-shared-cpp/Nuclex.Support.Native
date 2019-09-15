@@ -37,7 +37,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <summary>Releases all resources owned by the command line</summary>
     public: NUCLEX_SUPPORT_API virtual ~CommandLineArgument();
 
-    public: NUCLEX_SUPPORT_API virtual std::string GetRaw() = 0 const;
+    public: NUCLEX_SUPPORT_API virtual std::string GetRaw() const = 0;
 
     /// <summary>Retrieves the initiator characters of this argument</summary>
     /// <returns>The characters used to initiate the argument</returns>
@@ -51,7 +51,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual std::string GetInitiator() = 0 const;
+    public: NUCLEX_SUPPORT_API virtual std::string GetInitiator() const = 0;
 
     /// <summary>Retrieves the name of the argument</summary>
     /// <returns>The name of the command line argument</returns>
@@ -59,11 +59,15 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   Name of the argument, if it was passed as an option. Loose arguments (such as
     ///   a filename or simple command) do not have names. 
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual std::string GetName() = 0 const;
+    public: NUCLEX_SUPPORT_API virtual std::string GetName() const = 0;
 
+    /// <summary>Retrieves the associator between the argument and its value</summary>
+    /// <returns>The character sequence used to associate a value with the argument</returns>
+    public: NUCLEX_SUPPORT_API virtual std::string GetAssociator() const = 0;
 
-    /// <summary>Parses a parameter string into a command line container</summary>
-    public: CommandLine Parse(const std::string &parameterString)
+    /// <summary>Retrieves the value of the argument</summary>
+    /// <returns>The value specified on the command line</returns>
+    public: NUCLEX_SUPPORT_API virtual std::string GetValue() const = 0;
 
   };
 

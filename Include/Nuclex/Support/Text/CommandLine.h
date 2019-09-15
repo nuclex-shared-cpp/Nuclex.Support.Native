@@ -43,8 +43,9 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <summary>Releases all resources owned by the command line</summary>
     public: NUCLEX_SUPPORT_API ~CommandLine();
 
-    /// <summary>Parses a parameter string into a command line container</summary>
-    public: NUCLEX_SUPPORT_API CommandLine Parse(const std::string &parameterString)
+    /// <summary>Parses a the command line parameter from a string</summary>
+    /// <param name="parameterString">String containing the command line parameters</param>
+    public: NUCLEX_SUPPORT_API CommandLine Parse(const std::string &parameterString);
 
   };
 

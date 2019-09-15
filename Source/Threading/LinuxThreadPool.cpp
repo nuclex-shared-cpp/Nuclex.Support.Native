@@ -26,6 +26,7 @@ License along with this library
 #if defined(NUCLEX_SUPPORT_LINUX)
 
 #include <stdexcept>
+#include <algorithm>
 
 #include <unistd.h>
 
@@ -47,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       throw std::runtime_error("Could not determine number of processors online");
     }
 
-    return std::max(static_cast<std::size_t>(result), 1);
+    return std::max(static_cast<std::size_t>(result), std::size_t(1));
   }
 
   // ------------------------------------------------------------------------------------------- //

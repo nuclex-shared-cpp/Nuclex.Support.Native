@@ -51,8 +51,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       const std::function<void()> &task, std::size_t count = 1
     );
 
-    private: LinuxThreadPool(const WinRTThreadPool &);
-    private: LinuxThreadPool &operator =(const WinRTThreadPool &);
+    private: LinuxThreadPool(const LinuxThreadPool &);
+    private: LinuxThreadPool &operator =(const LinuxThreadPool &);
 
   };
 

@@ -30,14 +30,15 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::string lexical_cast<>(const float &from) {
-#if defined(HAVE_GCVT)
+#if defined(NUCLEX_SUPPORT_WIN32)
     char characters[_CVTBUFSIZE];
     #pragma warning(push)
     #pragma warning(disable:4996) // Use _gcvt_s() - ignored, _CVTBUFSIZE covers any integer
-    return std::string(::_gcvt(from, 0, characters));
+    return std::string(::_gcvt(from, 100, characters));
     #pragma warning(pop)
 #else
-    return std::to_string(from);
+    char characters[256];
+    return std::string(::gcvt(from, 100, characters));
 #endif
   }
 
@@ -50,14 +51,15 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::string lexical_cast<>(const double &from) {
-#if defined(HAVE_GCVT)
+#if defined(NUCLEX_SUPPORT_WIN32)
     char characters[_CVTBUFSIZE];
     #pragma warning(push)
     #pragma warning(disable:4996) // Use _gcvt_s() - ignored, _CVTBUFSIZE covers any integer
-    return std::string(::_gcvt(from, 0, characters));
+    return std::string(::_gcvt(from, 200, characters));
     #pragma warning(pop)
 #else
-    return std::to_string(from);
+    char characters[512];
+    return std::string(::gcvt(from, 100, characters));
 #endif
   }
 
@@ -70,13 +72,15 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::string lexical_cast<>(const int &from) {
-#if defined(HAVE_ITOA)
+#if defined(NUCLEX_SUPPORT_WIN32)
     char characters[21]; // Max number of characters in exotic 64 bit integer platform
     #pragma warning(push)
     #pragma warning(disable:4996) // Use _gcvt_s() - ignored, _CVTBUFSIZE covers any integer
     return std::string(::_itoa(from, characters, 10));
     #pragma warning(pop)
 #else
+    //char characters[21]; // Max number of characters in exotic 64 bit integer platform
+    //return std::string(::itoa(from, characters, 10));
     return std::to_string(from);
 #endif
   }
@@ -90,7 +94,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::string lexical_cast<>(const unsigned long &from) {
-#if defined(HAVE_ULTOA)
+#if defined(NUCLEX_SUPPORT_WIN32)
     char characters[21];
     #pragma warning(push)
     #pragma warning(disable:4996) // Use _gcvt_s() - ignored, _CVTBUFSIZE covers any integer

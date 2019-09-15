@@ -22,11 +22,14 @@ License along with this library
 #define NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTSET_H
 
 #include "../Config.h"
+
+#if !defined(NUCLEX_SUPPORT_CXX14)
+  #error This class requires C++14 support
+#endif
+
 #include <atomic>
 
-#if !defined(NUCLEX_SUPPORT_CXX11)
-  #error This class requires C++11 support
-#endif
+#if 0
 
 namespace Nuclex { namespace Support { namespace Collections {
 
@@ -123,5 +126,7 @@ namespace Nuclex { namespace Support { namespace Collections {
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections
+
+#endif // 0
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTSET_H

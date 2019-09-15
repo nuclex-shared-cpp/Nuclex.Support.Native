@@ -96,7 +96,7 @@ namespace Nuclex { namespace Support { namespace Services {
       /// </param>
       /// <returns>True if the service was found and removed</returns>
       public: bool Remove(const std::type_info &serviceType) {
-        ServiceContainer::Remove(serviceType);
+        return ServiceContainer::Remove(serviceType);
       }
 
     };

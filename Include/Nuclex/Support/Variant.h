@@ -408,15 +408,15 @@ namespace Nuclex { namespace Support {
     private: void free() {
       switch(this->type) {
         case VariantType::String: {
-          delete reinterpret_cast<std::string *>(this->stringValueBytes);
+          reinterpret_cast<std::string *>(this->stringValueBytes)->~basic_string();
           break;
         }
         case VariantType::WString: {
-          delete reinterpret_cast<std::wstring *>(this->wstringValueBytes);
+          reinterpret_cast<std::wstring *>(this->wstringValueBytes)->~basic_string();
           break;
         }
         case VariantType::Any: {
-          delete reinterpret_cast<Any *>(this->anyValueBytes);
+          reinterpret_cast<Any *>(this->anyValueBytes)->~Any();
           break;
         }
         default: {} // Avoids compiler warnings about unhandled enum members

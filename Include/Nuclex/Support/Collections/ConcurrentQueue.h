@@ -70,7 +70,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
 #else
 
-  #error Please implement ConcurrentQueue for your compiler
+  //#error Please implement ConcurrentQueue for your compiler
 
 #endif
 

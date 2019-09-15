@@ -39,12 +39,14 @@ License along with this library
 // --------------------------------------------------------------------------------------------- //
 
 // C++ language features
-#if defined(_MSC_VER) && (_MSC_VER >= 1700) // Visual Studio 2012 has the C++11 features we use
-  #define NUCLEX_SUPPORT_CXX11
-#elif defined(__GNUG__) && ((__GNUC__ * 1000 * __GNUC_MINOR) >= 4007) // GCC 4.7 has, too
-  #define NUCLEX_SUPPORT_CXX11
+#if defined(_MSC_VER) && (_MSC_VER >= 1900) // Visual Studio 2015 has the C++14 features we use
+  #define NUCLEX_SUPPORT_CXX14 1
+#elif defined(__clang__) && defined(__cplusplus) && (__cplusplus >= 201402)
+  #define NUCLEX_SUPPORT_CXX14 1
+#elif (defined(__GNUC__) || defined(__GNUG__)) && defined(__cplusplus) && (__cplusplus >= 201402)
+  #define NUCLEX_SUPPORT_CXX14 1
 #else
-  #define NUCLEX_SUPPORT_CXX03
+  #error The Nuclex.Pixels.Native library requires a C++14 compiler
 #endif
 
 // --------------------------------------------------------------------------------------------- //
@@ -70,7 +72,7 @@ License along with this library
 // --------------------------------------------------------------------------------------------- //
 
 // Decides whether symbols are imported from a dll (client app) or exported to
-// a dll (Nuclex.Storage.Native library). The NUCLEX_SUPPORT_SOURCE symbol is defined by
+// a dll (Nuclex.Support.Native library). The NUCLEX_SUPPORT_SOURCE symbol is defined by
 // all source files of the library, so you don't have to worry about a thing.
 #if defined(_MSC_VER)
 

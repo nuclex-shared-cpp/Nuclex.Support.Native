@@ -65,8 +65,8 @@ namespace Nuclex { namespace Support { namespace Collections {
       /// </remarks>
       public: const TValue &Get();
 
-      private: Enumerator(const Enumerator &);
-      private: Enumerator &operator =(const Enumerator &);
+      private: Enumerator(const Enumerator &) = delete;
+      private: Enumerator &operator =(const Enumerator &) = delete;
 
     };
 
@@ -85,7 +85,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: virtual bool Remove(const TValue &item) = 0;
 
     /// <summary>Removes all items from the collection</summary>
-    public: virtual void Clear();
+    public: virtual void Clear() = 0;
 
     /// <summary>Checks if the collection contains the specified item</summary>
     /// <param name="item">Item the collection will be checked for</param>
@@ -100,8 +100,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <returns>True if the collection is empty</returns>
     public: virtual bool IsEmpty() const = 0;
 
-    private: Collection(const Collection &);
-    private: Collection &operator =(const Collection &);
+    protected: Collection() {}
+    private: Collection(const Collection &) = delete;
+    private: Collection &operator =(const Collection &) = delete;
 
   };
 

@@ -65,13 +65,13 @@ namespace Nuclex { namespace Support {
 
       /// <summary>Creates a clone of the instance, also copying the value</summary>
       /// <returns>The cloned instance</returns>
-      public: ValueHolder *Clone() const {
+      public: ValueHolder *Clone() const override {
         return new ValueHolder<TValue>(this->value);
       }
 
       /// <summary>Returns the type stored in the wrapper</summary>
       /// <returns>The type the wrapper is storing</returns>
-      public: const std::type_info &GetType() const { return typeid(TValue); }
+      public: const std::type_info &GetType() const override { return typeid(TValue); }
 
       /// <summary>Retrieves the value stored in the value holder</summary>
       /// <returns>The value stored in the value holder</returns>
@@ -117,7 +117,7 @@ namespace Nuclex { namespace Support {
 
       const std::type_info &type = typeid(TValue);
       if(type != valueHolder->GetType()) {
-        throw std::bad_cast("Type is different from the value stored by the any");
+        throw std::bad_cast(); // "Type is different from the value stored by the 'Any' instance"
       }
 
       return static_cast<TValueHolder *>(this->valueHolder)->Get();

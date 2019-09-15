@@ -440,8 +440,12 @@ namespace Nuclex { namespace Support {
     switch(this->type) {
       case VariantType::Empty: { return emptyString; }
       case VariantType::Boolean: { return this->booleanValue ? trueString : falseString; }
-      case VariantType::Uint8: { return Text::lexical_cast<std::string>(this->uint8Value); }
-      case VariantType::Int8: { return Text::lexical_cast<std::string>(this->int8Value); }
+      case VariantType::Uint8: {
+        return Text::lexical_cast<std::string>(static_cast<std::uint16_t>(this->uint8Value));
+      }
+      case VariantType::Int8: {
+        return Text::lexical_cast<std::string>(static_cast<std::int16_t>(this->int8Value));
+      }
       case VariantType::Uint16: { return Text::lexical_cast<std::string>(this->uint16Value); }
       case VariantType::Int16: { return Text::lexical_cast<std::string>(this->int16Value); }
       case VariantType::Uint32: { return Text::lexical_cast<std::string>(this->uint32Value); }

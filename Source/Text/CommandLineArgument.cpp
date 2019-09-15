@@ -35,4 +35,4 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Storage::Helpers
+}}} // namespace Nuclex::Support::Text
