@@ -19,19 +19,18 @@ License along with this library
 #pragma endregion // CPL License
 
 // If the library is compiled as a DLL, this ensures symbols are exported
-#define NUCLEX_SUPPORT_SOURCE 1
+#define NUCLEX_GEOMETRY_SOURCE 1
 
-#include "Nuclex/Support/Text/CommandLine.h"
+#include "Nuclex/Support/Text/StringConverter.h"
+
+#include <cmath>
+#include <clocale>
+
+#include <gtest/gtest.h>
 
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
-
-  CommandLine::CommandLine() {}
-
-  // ------------------------------------------------------------------------------------------- //
-
-  CommandLine::~CommandLine() {}
 
   // ------------------------------------------------------------------------------------------- //
 

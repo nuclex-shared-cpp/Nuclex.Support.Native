@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2013 Nuclex Development Labs
+Copyright (C) 2002-2019 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -32,16 +32,16 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <summary>Helps converting strings between different formats</summary>
   class StringConverter {
 
-    /// <summary>Converts an UTF-8 string into a wide char string</summary>
+    /// <summary>Converts a UTF-8 string into a wide char string</summary>
     /// <param name="utf8String">UTF-8 string that will be converted</param>
-    /// <returns>A wide char version of the provided ansi string</returns>
+    /// <returns>A UTF-16 version of the provided ansi string</returns>
     public: NUCLEX_SUPPORT_API static std::wstring Utf16FromUtf8(
       const std::string &utf8String
     );
 
-    /// <summary>Converts a wide char string into an UTF-8 string</summary>
+    /// <summary>Converts a wide char string into a UTF-8 string</summary>
     /// <param name="wideCharString">Wide char string that will be converted</param>
-    /// <returns>An UTF-8 version of the provided wide char string</returns>
+    /// <returns>A UTF-8 version of the provided UTF-16 string</returns>
     public: NUCLEX_SUPPORT_API static std::string Utf8FromUtf16(
       const std::wstring &wideCharString
     );
