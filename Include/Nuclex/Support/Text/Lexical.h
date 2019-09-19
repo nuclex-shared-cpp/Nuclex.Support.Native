@@ -51,28 +51,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   </para>
   /// </remarks>
   template<typename TTarget>
-  inline TTarget lexical_cast(const char *from) {
-#if defined(NUCLEX_SUPPORT_NO_IOSTREAMS)
-    #error Unable to convert between these types without relying on iostreams
-#else
-    std::stringstream stringStream;
-    stringStream << from;
-
-    TTarget to;
-    stringStream >> to;
-
-    if(stringStream.fail() || stringStream.bad()) {
-      std::string message("Could not convert from \"");
-      stringStream >> message;
-      message.append("\" (const cchar *) to (");
-      message.append(typeid(TTarget).name());
-      message.append(")");
-      throw std::invalid_argument(message.c_str());
-    }
-
-    return to;
-#endif
-  }
+  inline TTarget lexical_cast(const char *from) = delete;
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -94,33 +73,72 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   </para>
   /// </remarks>
   template<typename TTarget, typename TSource>
-  inline TTarget lexical_cast(const TSource &from) {
-#if defined(NUCLEX_SUPPORT_NO_IOSTREAMS)
-    #error Unable to convert between these types without relying on iostreams
-#else
-    std::stringstream stringStream;
-    stringStream << from;
+  inline TTarget lexical_cast(const TSource &from) = delete;
 
-    TTarget to;
-    stringStream >> to;
+  // ------------------------------------------------------------------------------------------- //
 
-    if(stringStream.fail() || stringStream.bad()) {
-      std::string message("Could not convert from \"");
-      stringStream >> message;
-      message.append("\" (");
-      message.append(typeid(TSource).name());
-      message.append(") to (");
-      message.append(typeid(TTarget).name());
-      message.append(")");
-      throw std::invalid_argument(message.c_str());
-    }
-
-    return to;
-#endif
+  /// <summary>Lexically casts from a string to a non-string data type</summary>
+  /// <typeparam name="TTarget">Type into which the string will be converted</typeparam>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The value converted to the specified string</returns>
+  /// <remarks>
+  ///   <para>
+  ///     This cast offers a portable way to convert between numeric and string types without
+  ///     resorting to cumbersome sprintf() constructs or relying on deprecated and functions
+  ///     such as gcvt() or itoa(). 
+  ///   </para>
+  ///   <para>
+  ///     Lexical casts are guaranteed to completely ignore system locale and any other
+  ///     localization settings. Primitive types can be converted without pulling in iostreams
+  ///     (which is a bit of a heavyweight part of the SC++L).
+  ///   </para>
+  /// </remarks>
+  template<typename TTarget>
+  inline TTarget wlexical_cast(const wchar_t *from) {
+    return lexical_cast<TTarget>(StringConverter::Utf8FromUtf16(from));
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if 1 // Wide character stuff is a dead-end idea of Win32, use StringConverter for this.
+
+  namespace Private {
+
+    /// <summary>Performs a lexical_cast but converts the string between UTF-8 and UTF-16</summary>
+    /// <typeparam name="TTarget">Target type for the lexical cast</typeparam>
+    /// <typeparam name="TSource">Source type for the lexical cast</typeparam>
+    template<typename TTarget, typename TSource>
+    struct LexicalCastWithConversionHelper {
+      /// <summary>Casts from the source type to the target type</summary>
+      /// <param name="from">Value that will be cast from or to a UTF-16 string</param>
+      /// <returns>Resulting UTF-16 string or value</returns>
+      inline static TTarget _(const TSource &from) = delete;
+    };
+
+    /// <summary>Performs a lexical_cast but converts the source string to UTF-16</summary>
+    /// <typeparam name="TTarget">Target type for the lexical cast</typeparam>
+    template<typename TTarget>
+    struct LexicalCastWithConversionHelper<TTarget, std::wstring> {
+      /// <summary>Casts from a UTF-16 string to the target type</summary>
+      /// <param name="from">UTF-16 string that will be cast to the target type</param>
+      /// <returns>The resulting value</returns>
+      inline static TTarget _(const std::wstring &from) {
+        return lexical_cast<TTarget>(StringConverter::Utf8FromUtf16(from));
+      }      
+    };
+
+    /// <summary>Performs a lexical_cast but converts the resulting string to UTF-16</summary>
+    /// <typeparam name="TSource">Source type for the lexical cast</typeparam>
+    template<typename TSource>
+    struct LexicalCastWithConversionHelper<std::wstring, TSource> {
+      /// <summary>Casts from the source type to a UTF-16 string</summary>
+      /// <param name="from">Value that will be cast to a UTF-16 string</param>
+      /// <returns>Resulting UTF-16 string</returns>
+      inline static std::wstring _(const TSource &from) {
+        return StringConverter::Utf16FromUtf8(lexical_cast<std::string>(from));
+      }      
+    };
+
+  } // namespace Private
+
   /// <summary>Lexically casts between a string and non-string data type</summary>
   /// <typeparam name="TTarget">Type into which the value will be converted</typeparam>
   /// <typeparam name="TSource">Type that will be converted</typeparam>
@@ -140,34 +158,9 @@ namespace Nuclex { namespace Support { namespace Text {
   /// </remarks>
   template<typename TTarget, typename TSource>
   inline TTarget wlexical_cast(const TSource &from) {
-#if defined(NUCLEX_SUPPORT_NO_IOSTREAMS)
-    #error Unable to convert between these types without relying on iostreams
-#else
-    std::wstringstream stringStream;
-    stringStream << from;
-
-    TTarget to;
-    stringStream >> to;
-
-    if(stringStream.fail() || stringStream.bad()) {
-      std::string message("Could not convert from \"");
-      {
-        std::wstring value;
-        stringStream >> value;
-        message.append(StringConverter::Utf8FromUtf16(value));
-      }
-      message.append("\" (");
-      message.append(typeid(TSource).name());
-      message.append(") to (");
-      message.append(typeid(TTarget).name());
-      message.append(")");
-      throw std::invalid_argument(message.c_str());
-    }
-
-    return to;
-#endif
+    return Private::LexicalCastWithConversionHelper<TTarget, TSource>::_(from);
   }
-#endif
+
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a boolean value into a string</summary>

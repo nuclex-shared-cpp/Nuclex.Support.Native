@@ -280,7 +280,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int32_t(-1246989881), uint64Variant.ToInt32());
     EXPECT_EQ(std::uint64_t(11111111111111111111ULL), uint64Variant.ToUint64());
     EXPECT_EQ(std::int64_t(-7335632962598440505LL), uint64Variant.ToInt64());
-    EXPECT_EQ(float(1.11111104e+19f), uint64Variant.ToFloat());
+    EXPECT_EQ(float(1.11111115e+19f), uint64Variant.ToFloat());
     EXPECT_EQ(double(11111111111111111111.0), uint64Variant.ToDouble());
     EXPECT_EQ(std::string("11111111111111111111"), uint64Variant.ToString());
     EXPECT_EQ(std::wstring(L"11111111111111111111"), uint64Variant.ToWString());

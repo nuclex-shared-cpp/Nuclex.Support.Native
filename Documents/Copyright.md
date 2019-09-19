@@ -52,3 +52,14 @@ the Apache 2.0 license (http://www.apache.org/licenses/LICENSE-2.0)
 
 If you distribute binaries compiled from this library, you do not have to
 do anything, but an acknowledgement of the original author would be nice.
+
+
+UTF-8, UTF-16, UTF-32 Converter: Boost Software License
+-------------------------------------------------------
+
+Conversion between UTF-8 and UTF-16 is provided through the UTF-8 for C++
+library. It is written by Nemanja Trifunovic and licensed under the
+Boost Software License (https://www.boost.org/users/license.html)
+
+If you distribute binaries compiled from this library, you do not have to
+do anything, but an acknowledgement of the original author would be nice.
