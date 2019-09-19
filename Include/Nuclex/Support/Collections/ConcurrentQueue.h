@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2013 Nuclex Development Labs
+Copyright (C) 2002-2019 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -20,6 +20,9 @@ License along with this library
 
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
 #define NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
+
+// https://github.com/rigtorp/awesome-lockfree
+// https://github.com/mpoeter/xenium
 
 #include "../Config.h"
 

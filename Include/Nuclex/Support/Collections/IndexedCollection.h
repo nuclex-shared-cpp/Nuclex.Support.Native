@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2013 Nuclex Development Labs
+Copyright (C) 2002-2019 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -20,6 +20,8 @@ License along with this library
 
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_INDEXEDCOLLECTION_H
 #define NUCLEX_SUPPORT_COLLECTIONS_INDEXEDCOLLECTION_H
+
+#include "Nuclex/Support/Config.h"
 
 #include "Collection.h"
 
@@ -46,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Collections {
   class IndexedCollection : public Collection<TValue> {
 
     /// <summary>An index that is never given to any item in the collection</summary>
-    public: static const std::size_t InvalidIndex = std::size_t(-1);
+    public: static const std::size_t InvalidIndex;
 
     /// <summary>Frees all memory used by the collection</summary>
     public: virtual ~IndexedCollection() {}
@@ -86,6 +88,11 @@ namespace Nuclex { namespace Support { namespace Collections {
     private: IndexedCollection &operator =(const IndexedCollection &) = delete;
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TValue>
+  const std::size_t IndexedCollection<TValue>::InvalidIndex = std::size_t(-1);
 
   // ------------------------------------------------------------------------------------------- //
 

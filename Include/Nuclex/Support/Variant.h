@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2013 Nuclex Development Labs
+Copyright (C) 2002-2019 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -36,8 +36,9 @@ namespace Nuclex { namespace Support {
   /// <remarks>
   ///   Whatever you do, only use this to interface with scripting languages or where
   ///   it really makes sense. C++ is not a dynamically typed language and a template-based
-  ///   design is always a better choice. If you need to design interfaces that accept
-  ///   arbitrary types, consider the <see cref="Any" /> class instead.
+  ///   design is always a better choice. If you need to design interfaces that pass
+  ///   changing types to internal implementations, consider
+  ///   the <see cref="Any" /> class instead.
   /// </remarks>
   class Variant {
 
