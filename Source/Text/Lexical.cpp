@@ -65,6 +65,10 @@ License along with this library
 // Vitaut https://github.com/fmtlib/fmt
 //   o Fastest
 //
+// Erthink https://github.com/leo-yuriev/erthink
+//   o Faster
+//   o Handles signed and 64 bit integers
+//
 
 namespace Nuclex { namespace Support { namespace Text {
 

@@ -17,19 +17,6 @@
 
 #pragma once
 
-#ifdef _MSC_VER
-#if defined(_MSC_VER)
-#define _STL_WARNING_LEVEL 3
-#endif
-#pragma warning(push, 1)
-#pragma warning(disable : 4548) /* expression before comma has no effect;      \
-                                   expected expression with side - effect */
-#pragma warning(disable : 4530) /* C++ exception handler used, but unwind      \
-                                   semantics are not enabled. Specify /EHsc */
-#pragma warning(disable : 4577) /* 'noexcept' used with no exception handling  \
-                                   mode specified; termination on exception    \
-                                   is not guaranteed. Specify /EHsc */
-#endif
 #if defined(__KERNEL__) || !defined(__cplusplus) || __cplusplus < 201103L
 #include <assert.h>
 #include <stddef.h>
@@ -38,9 +25,6 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#endif
-#ifdef _MSC_VER
-#pragma warning(pop)
 #endif
 
 #ifndef __GNUC_PREREQ
