@@ -111,6 +111,7 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp14</LanguageStandard>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,6 +128,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\References\gtest\Include\</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp14</LanguageStandard>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +151,7 @@
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp14</LanguageStandard>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -173,6 +176,7 @@
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp14</LanguageStandard>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -219,6 +223,7 @@
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentSet.cpp" />
+    <ClCompile Include="Source\Collections\DynamicArray.cpp" />
     <ClCompile Include="Source\Collections\IndexedCollection.cpp" />
     <ClCompile Include="Source\Collections\Variegator.cpp" />
     <ClCompile Include="Source\Events\Event.cpp" />
@@ -226,8 +231,18 @@
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp" />
     <ClCompile Include="Source\Services\ServiceContainer.cpp" />
     <ClCompile Include="Source\Services\ServiceProvider.cpp" />
-    <ClCompile Include="Tests\AnyTests.cpp" />
-    <ClCompile Include="Tests\VariantTests.cpp" />
+    <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp" />
+    <ClInclude Include="Source\Text\Dragon4\Dragon4.h" />
+    <ClInclude Include="Source\Text\Dragon4\Math.h" />
+    <ClCompile Include="Source\Text\Dragon4\PrintFloat.cpp" />
+    <ClInclude Include="Source\Text\Dragon4\PrintFloat.h" />
+    <ClInclude Include="Source\Text\Dragon4\Standard.h" />
+    <ClCompile Include="Source\Text\Dragon4\Math.cpp" />
+    <ClInclude Include="Source\Text\Erthink\erthink.h" />
+    <ClInclude Include="Source\Text\Erthink\erthink_arch.h" />
+    <ClInclude Include="Source\Text\Erthink\erthink_defs.h" />
+    <ClInclude Include="Source\Text\Erthink\erthink_misc.h" />
+    <ClInclude Include="Source\Text\Erthink\erthink_u2a.h" />
     <ClInclude Include="Source\Text\Utf8\checked.h" />
     <ClInclude Include="Source\Text\Utf8\core.h" />
     <ClInclude Include="Source\Text\Utf8\unchecked.h" />
@@ -246,6 +261,21 @@
     <ClCompile Include="Source\Config.cpp" />
     <ClCompile Include="Source\Variant.cpp" />
     <ClCompile Include="Source\VariantType.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Documents\Copyright.md" />
+    <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf" />
+    <None Include="Documents\Florian Loitsch - Printing Floating-Point Numbers Quickly and Accurately with Integers.pdf" />
+    <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf" />
+    <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp" />
+    <ClCompile Include="Tests\Events\EventTests.cpp" />
+    <ClCompile Include="Tests\AnyTests.cpp" />
+    <ClCompile Include="Tests\Text\LexicalTest.cpp" />
+    <ClCompile Include="Tests\Text\StringConverterTest.cpp" />
+    <ClCompile Include="Tests\VariantTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Nuclex.Support.Native.def" />

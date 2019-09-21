@@ -47,6 +47,16 @@
     <Filter Include="Include\Threading">
       <UniqueIdentifier>{24180d59-543e-4527-9fb6-ec853983543e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Text\Dragon4">
+      <UniqueIdentifier>{f43ef6f6-b7be-4ad0-afab-0ed118b69cca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Text\Erthink">
+      <UniqueIdentifier>{49b9907f-256d-49bf-93e9-692d25ed43ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documents">
+      <UniqueIdentifier>{c58695d4-9cc1-47b4-8c0c-d930830ae758}</UniqueIdentifier>
+      <Extensions>md;txt;pdf</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Any.cpp">
@@ -126,6 +136,18 @@
     </ClCompile>
     <ClCompile Include="Source\Text\CommandLineArgument.cpp">
       <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\DynamicArray.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Dragon4\Math.cpp">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Dragon4\PrintFloat.cpp">
+      <Filter>Source\Text\Dragon4</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -222,10 +244,52 @@
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLineArgument.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Text\Dragon4\Dragon4.h">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Dragon4\Math.h">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Dragon4\PrintFloat.h">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Dragon4\Standard.h">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Erthink\erthink.h">
+      <Filter>Source\Text\Erthink</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Erthink\erthink_arch.h">
+      <Filter>Source\Text\Erthink</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Erthink\erthink_defs.h">
+      <Filter>Source\Text\Erthink</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Erthink\erthink_misc.h">
+      <Filter>Source\Text\Erthink</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Erthink\erthink_u2a.h">
+      <Filter>Source\Text\Erthink</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Nuclex.Support.Native.def">
       <Filter>Resources</Filter>
+    </None>
+    <None Include="Documents\Copyright.md">
+      <Filter>Documents</Filter>
+    </None>
+    <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf">
+      <Filter>Documents</Filter>
+    </None>
+    <None Include="Documents\Florian Loitsch - Printing Floating-Point Numbers Quickly and Accurately with Integers.pdf">
+      <Filter>Documents</Filter>
+    </None>
+    <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf">
+      <Filter>Documents</Filter>
+    </None>
+    <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf">
+      <Filter>Documents</Filter>
     </None>
   </ItemGroup>
 </Project>
