@@ -283,6 +283,12 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  template<> float lexical_cast<>(const char *from) {
+    return std::stof(std::string(from));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   template<> float lexical_cast<>(const std::string &from) {
     return std::stof(from);
   }
@@ -296,6 +302,12 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     return std::string(static_cast<const char *>(characters), static_cast<std::size_t>(length));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> double lexical_cast<>(const char *from) {
+    return std::stod(std::string(from));
   }
 
   // ------------------------------------------------------------------------------------------- //

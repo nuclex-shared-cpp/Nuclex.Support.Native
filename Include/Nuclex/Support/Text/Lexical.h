@@ -358,6 +358,13 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <summary>Converts a string into a floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API float lexical_cast<>(const char *from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Converts a string into a floating point value</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The floating point value parsed from the specified string</returns>
   template<> NUCLEX_SUPPORT_API float lexical_cast<>(const std::string &from);
 
   // ------------------------------------------------------------------------------------------- //
@@ -366,6 +373,13 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Double precision Floating point value that will be converted</param>
   /// <returns>A string containing the printed double precision floating point value</returns>
   template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const double &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Converts a string into a floating point value</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The floating point value parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API double lexical_cast<>(const char *from);
 
   // ------------------------------------------------------------------------------------------- //
 

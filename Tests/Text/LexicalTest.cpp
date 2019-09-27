@@ -248,6 +248,40 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(LexicalTest, CanConvertFloatToString) {
+    std::string text = lexical_cast<std::string>(float(0.0009765625f));
+    EXPECT_EQ(text, "0.0009765625");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalTest, CanConvertStringToFloat) {
+    float value = lexical_cast<float>("0.0009765625");
+    EXPECT_EQ(value, float(0.0009765625));
+
+    value = lexical_cast<float>(std::string("0.0009765625"));
+    EXPECT_EQ(value, float(0.0009765625));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalTest, CanConvertDoubleToString) {
+    std::string text = lexical_cast<std::string>(double(0.00000190735));
+    EXPECT_EQ(text, "0.00000190735");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalTest, CanConvertStringToDouble) {
+    double value = lexical_cast<double>("0.00000190735");
+    EXPECT_EQ(value, double(0.00000190735));
+
+    value = lexical_cast<double>(std::string("0.00000190735"));
+    EXPECT_EQ(value, double(0.00000190735));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(LexicalTest, FloatToStringIsLocaleIndependent) {
     std::setlocale(LC_NUMERIC, "de_DE.UTF-8");
     std::string text = lexical_cast<std::string>(0.125f);
