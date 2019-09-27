@@ -40,10 +40,10 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Converts a wide char string into a UTF-8 string</summary>
-    /// <param name="wideCharString">Wide char string that will be converted</param>
+    /// <param name="utf16String">Wide char string that will be converted</param>
     /// <returns>A UTF-8 version of the provided UTF-16 string</returns>
     public: NUCLEX_SUPPORT_API static std::string Utf8FromUtf16(
-      const std::wstring &wideCharString
+      const std::wstring &utf16String
     );
 
   };

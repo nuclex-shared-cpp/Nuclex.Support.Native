@@ -303,9 +303,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Nuclex.Support.Native.def">
-      <Filter>Source</Filter>
-    </None>
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf">
       <Filter>Documents</Filter>
     </None>
@@ -320,6 +317,9 @@
     </None>
     <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf">
       <Filter>Documents</Filter>
+    </None>
+    <None Include="Nuclex.Support.Native.def">
+      <Filter>Resources</Filter>
     </None>
     <None Include="Nuclex.Support.Native.def">
       <Filter>Resources</Filter>

@@ -64,19 +64,12 @@ License along with this library
 
 // --------------------------------------------------------------------------------------------- //
 
-// Standard library features
-#define HAVE_GCVT 1
-#define HAVE_ITOA 1
-#define HAVE_ULTOA 1
-
-// --------------------------------------------------------------------------------------------- //
-
 // Decides whether symbols are imported from a dll (client app) or exported to
 // a dll (Nuclex.Support.Native library). The NUCLEX_SUPPORT_SOURCE symbol is defined by
 // all source files of the library, so you don't have to worry about a thing.
 #if defined(_MSC_VER)
 
-  #if defined(NUCLEX_SUPPORT_STATICLIB)
+  #if defined(NUCLEX_SUPPORT_STATICLIB) || defined(NUCLEX_SUPPORT_EXECUTABLE)
     #define NUCLEX_SUPPORT_API
   #else
     #if defined(NUCLEX_SUPPORT_SOURCE)
@@ -90,7 +83,7 @@ License along with this library
 
 #elif defined(__GNUC__)
 
-  #if defined(NUCLEX_SUPPORT_STATICLIB)
+  #if defined(NUCLEX_SUPPORT_STATICLIB) || defined(NUCLEX_SUPPORT_EXECUTABLE)
     #define NUCLEX_SUPPORT_API
   #else
     #if defined(NUCLEX_SUPPORT_SOURCE)

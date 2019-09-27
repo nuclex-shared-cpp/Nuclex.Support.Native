@@ -26,10 +26,6 @@ License along with this library
 
 #include <string>
 
-#if !defined(NUCLEX_SUPPORT_NO_IOSTREAMS)
-#include <sstream>
-#endif
-
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //

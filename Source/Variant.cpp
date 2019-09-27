@@ -25,6 +25,8 @@ License along with this library
 #include "Nuclex/Support/Text/Lexical.h"
 #include "Nuclex/Support/Text/StringConverter.h"
 
+#include <stdexcept>
+
 namespace {
 
   /// Message used in the exception thrown when the variant is of an unknown type
