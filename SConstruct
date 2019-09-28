@@ -9,39 +9,18 @@ nuclex = importlib.import_module('nuclex')
 
 # ----------------------------------------------------------------------------------------------- #
 
-universal_target_name = 'Nuclex.Support.Native'
-universal_tests_target_name = universal_target_name + ".Tests"
-
-# ----------------------------------------------------------------------------------------------- #
-
+# Standard C/C++ build environment with Nuclex extension methods
 common_environment = nuclex.create_cplusplus_environment()
 
+# Compile the main library
 library_environment = common_environment.Clone()
-compile_library = library_environment.build_library(universal_target_name)
+library_artifacts = library_environment.build_library('Nuclex.Support.Native')
 
-
-
-#compile_library_and_tests = library_environment.build_library_with_tests(
-#    universal_target_name, universal_tests_target_name
-#)
-
-#unit_test_environment = common_environment.Clone()
-#unit_test_environment.compile_executable(
-#)
-#run_unit_tests = unit_test_environment.run_unit_tests(
-#    universal_tests_target_name
-#)
+# Compile the unit test executable
+unit_test_environment = common_environment.Clone()
+unit_test_environment.add_preprocessor_constant('NUCLEX_SUPPORT_EXECUTABLE')
+unit_test_artifacts = unit_test_environment.build_unit_tests(
+    'Nuclex.Support.Native.Tests'
+)
 
 # ----------------------------------------------------------------------------------------------- #
-
-# Dependencies
-#Depends(run_unit_tests, compile_library_and_tests)
-
-# ----------------------------------------------------------------------------------------------- #
-
-# Always run the unit tests
-#AlwaysBuild(run_unit_tests)
-
-
-# List exported symbols:
-#nm --defined-only -D --demangle ./libNuclexSupportNative.so
