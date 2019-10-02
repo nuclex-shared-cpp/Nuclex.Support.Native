@@ -71,4 +71,44 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  std::wstring StringConverter::Utf32FromUtf8(const std::string &utf8String) {
+    if(utf8String.empty()) {
+      return std::wstring();
+    }
+
+    // We guess that we need as many UTF-32 characters as we needed UTF-8 characters
+    // based on the assumption that most text will only use ascii characters.
+    std::vector<wchar_t> utf32Characters;
+    utf32Characters.reserve(utf8String.length());
+
+    // Do the conversions. If the vector was too short, it will be grown in factors
+    // of 2 usually (depending on the standard library implementation)
+    utf8::utf8to32(utf8String.begin(), utf8String.end(), std::back_inserter(utf32Characters));
+
+    return std::wstring(&utf32Characters[0], utf32Characters.size());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string StringConverter::Utf8FromUtf32(const std::wstring &utf32String) {
+    if(utf32String.empty()) {
+      return std::string();
+    }
+
+    // We guess that we need as many UTF-8 characters as we needed UTF-32 characters
+    // based on the assumption that most text will only use ascii characters.
+    std::vector<char> utf8Characters;
+    utf8Characters.reserve(utf32String.length());
+
+    // Do the conversions. If the vector was too short, it will be grown in factors
+    // of 2 usually (depending on the standard library implementation)
+    utf8::utf32to8(
+      utf32String.begin(), utf32String.end(), std::back_inserter(utf8Characters)
+    );
+
+    return std::string(&utf8Characters[0], utf8Characters.size());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text
