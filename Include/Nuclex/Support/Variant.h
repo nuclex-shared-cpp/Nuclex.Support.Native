@@ -244,7 +244,7 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Retrieves the type that is currently stored by the variant</summary>
     /// <returns>The type stored by the variant</returns>
-    public: NUCLEX_SUPPORT_API VariantType::Enum GetType() const {
+    public: NUCLEX_SUPPORT_API VariantType GetType() const {
       return this->type;
     }
 
@@ -425,7 +425,7 @@ namespace Nuclex { namespace Support {
     }
 
     /// <summary>Type of value that the variant is holding</summary>
-    private: VariantType::Enum type;
+    private: VariantType type;
     /// <summary>Value held by the variant</summary>
     private: union {
       /// <summary>Boolean value, if the variant is holding that type</summary>

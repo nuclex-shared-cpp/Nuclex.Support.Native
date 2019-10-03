@@ -24,12 +24,14 @@ You can not:
 - Modify the source code of this library and keep the changes to yourself
   while sharing the compiled binaries with someone else / the world.
 
+- Sue anyone for issues you have with this code. 
+
 
 Third-Party Code
 ================
 
-This library also embeds some carefully selected third-party code which
-falls under its own licenses, listed below
+This library also embeds carefully selected third-party code which falls
+under its own licenses, listed below
 
 
 Dragon 4 String Formatter: ZLib License

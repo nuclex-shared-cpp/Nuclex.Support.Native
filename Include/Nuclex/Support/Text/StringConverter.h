@@ -21,7 +21,7 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_TEXT_STRINGCONVERTER_H
 #define NUCLEX_SUPPORT_TEXT_STRINGCONVERTER_H
 
-#include "../Config.h"
+#include "Nuclex/Support/Config.h"
 
 #include <string>
 
