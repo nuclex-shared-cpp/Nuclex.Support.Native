@@ -121,7 +121,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint8_t lexical_cast<>(const char *from) {
-    return static_cast<std::uint8_t>(std::strtoul(from, nullptr, 10));
+    if(from == nullptr) {
+      return 0;
+    } else {
+      return static_cast<std::uint8_t>(std::strtoul(from, nullptr, 10));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -141,7 +145,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int8_t lexical_cast<>(const char *from) {
-    return static_cast<std::int8_t>(std::strtol(from, nullptr, 10));
+    if(from == nullptr) {
+      return 0;
+    } else {
+      return static_cast<std::int8_t>(std::strtol(from, nullptr, 10));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -161,7 +169,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint16_t lexical_cast<>(const char *from) {
-    return static_cast<std::uint16_t>(std::strtoul(from, nullptr, 10));
+    if(from == nullptr) {
+      return 0;
+    } else {
+      return static_cast<std::uint16_t>(std::strtoul(from, nullptr, 10));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -181,7 +193,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int16_t lexical_cast<>(const char *from) {
-    return static_cast<std::int16_t>(std::strtol(from, nullptr, 10));
+    if(from == nullptr) {
+      return 0;
+    } else {
+      return static_cast<std::int16_t>(std::strtol(from, nullptr, 10));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -201,7 +217,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint32_t lexical_cast<>(const char *from) {
-    return static_cast<std::uint32_t>(std::strtoul(from, nullptr, 10));
+    if(from == nullptr) {
+      return 0U;
+    } else {
+      return static_cast<std::uint32_t>(std::strtoul(from, nullptr, 10));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -221,7 +241,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int32_t lexical_cast<>(const char *from) {
-    return static_cast<std::int32_t>(std::strtol(from, nullptr, 10));
+    if(from == nullptr) {
+      return 0;
+    } else {
+      return static_cast<std::int32_t>(std::strtol(from, nullptr, 10));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -241,7 +265,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint64_t lexical_cast<>(const char *from) {
-    return static_cast<std::uint64_t>(std::strtoull(from, nullptr, 10));
+    if(from == nullptr) {
+      return 0ULL;
+    } else {
+      return static_cast<std::uint64_t>(std::strtoull(from, nullptr, 10));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -261,7 +289,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int64_t lexical_cast<>(const char *from) {
-    return static_cast<std::int64_t>(std::strtoll(from, nullptr, 10));
+    if(from == nullptr) {
+      return 0LL;
+    } else {
+      return static_cast<std::int64_t>(std::strtoll(from, nullptr, 10));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

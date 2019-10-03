@@ -59,7 +59,7 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Selects the appropriate conversion for the compiler's wchar_t</summary>
+  /// <summary>Provides conversion methods between UTF-8 and UTF-16</summary>
   template<>
   struct StringConverterCharWidthHelper<sizeof(char16_t)> {
 
@@ -109,7 +109,7 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Selects the appropriate conversion for the compiler's wchar_t</summary>
+  /// <summary>Provides conversion methods between UTF-8 and UTF-32</summary>
   template<>
   struct StringConverterCharWidthHelper<sizeof(char32_t)> {
 
