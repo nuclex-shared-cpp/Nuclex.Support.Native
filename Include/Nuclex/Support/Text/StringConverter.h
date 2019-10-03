@@ -29,61 +29,6 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  namespace Private {
-
-    /// <summary>Selects the appropriate conversion for the compiler's wchar_t</summary>
-    template<std::size_t WCharWidth>
-    struct StringConverterCharWidthHelper {
-      /// <summary>Converts a UTF-8 string into a wide (UTF-16 or UTF-32) string</summary>
-      /// <param name="utf8String">UTF-8 string that will be converted</param>
-      /// <returns>A wide version of the provided UTF-8 string</returns>
-      /// <remarks>
-      ///   Assumes std::wstring has to carry either UTF-16 or UTF-32 based on the size of
-      ///   the compiler's wchar_t, thereby matching the default encoding used by your compiler
-      ///   and the defaults of any wide-character APIs on your platform.
-      /// </remarks>
-      inline static std::wstring WideFromUtf8(const std::string &from) = delete;
-      /// <summary>Converts a wide (UTF-16 or UTF-32) string into a UTF-8 string</summary>
-      /// <param name="wideString">Wide string that will be converted</param>
-      /// <returns>A UTF-8 version of the provided wide string</returns>
-      /// <remarks>
-      ///   Assumes the std::wstring is carrying either UTF-16 or UTF-32 based on the size of
-      ///   the compiler's wchar_t, thereby matching the default encoding used by your compiler
-      ///   when you write L&quot;Hello&quot; in your code.
-      /// </remarks>
-      inline static std::string Utf8FromWide(const std::wstring &from) = delete;
-    };
-
-    /// <summary>Selects the appropriate conversion for the compiler's wchar_t</summary>
-    template<>
-    struct StringConverterCharWidthHelper<sizeof(char16_t)> {
-      /// <summary>Converts a UTF-8 string into a wide (UTF-16 or UTF-32) string</summary>
-      /// <param name="utf8String">UTF-8 string that will be converted</param>
-      /// <returns>A wide version of the provided UTF-8 string</returns>
-      inline static std::wstring WideFromUtf8(const std::string &from);
-      /// <summary>Converts a wide (UTF-16 or UTF-32) string into a UTF-8 string</summary>
-      /// <param name="wideString">Wide string that will be converted</param>
-      /// <returns>A UTF-8 version of the provided wide string</returns>
-      inline static std::string Utf8FromWide(const std::wstring &from);
-    };
-
-    /// <summary>Selects the appropriate conversion for the compiler's wchar_t</summary>
-    template<>
-    struct StringConverterCharWidthHelper<sizeof(char32_t)> {
-      /// <summary>Converts a UTF-8 string into a wide (UTF-16 or UTF-32) string</summary>
-      /// <param name="utf8String">UTF-8 string that will be converted</param>
-      /// <returns>A wide version of the provided UTF-8 string</returns>
-      inline static std::wstring WideFromUtf8(const std::string &from);
-      /// <summary>Converts a wide (UTF-16 or UTF-32) string into a UTF-8 string</summary>
-      /// <param name="wideString">Wide string that will be converted</param>
-      /// <returns>A UTF-8 version of the provided wide string</returns>
-      inline static std::string Utf8FromWide(const std::wstring &from);
-    };
-
-  } // namespace Private
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Converts strings between explicitly specified UTF-formats</summary>
   /// <remarks>
   ///   <para>
@@ -131,9 +76,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   the compiler's wchar_t, thereby matching the default encoding used by your compiler
     ///   and the defaults of any wide-character APIs on your platform.
     /// </remarks>
-    public: inline static std::wstring WideFromUtf8(const std::string &from) {
-      return Private::StringConverterCharWidthHelper<sizeof(wchar_t)>::WideFromUtf8(from);
-    }
+    public: NUCLEX_SUPPORT_API static std::wstring WideFromUtf8(const std::string &from);
 
     /// <summary>Converts a wide (UTF-16 or UTF-32) string into a UTF-8 string</summary>
     /// <param name="wideString">Wide string that will be converted</param>
@@ -143,14 +86,12 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   the compiler's wchar_t, thereby matching the default encoding used by your compiler
     ///   when you write L&quot;Hello&quot; in your code.
     /// </remarks>
-    public: inline static std::string Utf8FromWide(const std::wstring &from) {
-      return Private::StringConverterCharWidthHelper<sizeof(wchar_t)>::Utf8FromWide(from);
-    }
+    public: NUCLEX_SUPPORT_API static std::string Utf8FromWide(const std::wstring &from);
 
     /// <summary>Converts a UTF-8 string into a UTF-16 string</summary>
     /// <param name="utf8String">UTF-8 string that will be converted</param>
     /// <returns>A UTF-16 version of the provided UTF-8 string</returns>
-    public: NUCLEX_SUPPORT_API static std::wstring Utf16FromUtf8(
+    public: NUCLEX_SUPPORT_API static std::u16string Utf16FromUtf8(
       const std::string &utf8String
     );
 
@@ -158,13 +99,13 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="utf16String">UTF-16 string that will be converted</param>
     /// <returns>A UTF-8 version of the provided UTF-16 string</returns>
     public: NUCLEX_SUPPORT_API static std::string Utf8FromUtf16(
-      const std::wstring &utf16String
+      const std::u16string &utf16String
     );
 
     /// <summary>Converts a UTF-8 string into a UTF-32 string</summary>
     /// <param name="utf8String">UTF-8 string that will be converted</param>
     /// <returns>A UTF-32 version of the provided UTF-8 string</returns>
-    public: NUCLEX_SUPPORT_API static std::wstring Utf32FromUtf8(
+    public: NUCLEX_SUPPORT_API static std::u32string Utf32FromUtf8(
       const std::string &utf8String
     );
 
@@ -172,40 +113,10 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="utf16String">UTF-32 string that will be converted</param>
     /// <returns>A UTF-8 version of the provided UTF-32 string</returns>
     public: NUCLEX_SUPPORT_API static std::string Utf8FromUtf32(
-      const std::wstring &utf32String
+      const std::u32string &utf32String
     );
 
   };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  namespace Private {
-
-    inline std::wstring StringConverterCharWidthHelper<sizeof(char16_t)>::WideFromUtf8(
-      const std::string &from
-    ) {
-      return StringConverter::Utf16FromUtf8(from);
-    }
-
-    inline std::string StringConverterCharWidthHelper<sizeof(char16_t)>::Utf8FromWide(
-      const std::wstring &from
-    ) {
-      return StringConverter::Utf8FromUtf16(from);
-    }
-
-    inline std::wstring StringConverterCharWidthHelper<sizeof(char32_t)>::WideFromUtf8(
-      const std::string &from
-    ) {
-      return StringConverter::Utf32FromUtf8(from);
-    }
-
-    inline std::string StringConverterCharWidthHelper<sizeof(char32_t)>::Utf8FromWide(
-      const std::wstring &from
-    ) {
-      return StringConverter::Utf8FromUtf32(from);
-    }
-
-  } // namespace Private
 
   // ------------------------------------------------------------------------------------------- //
 

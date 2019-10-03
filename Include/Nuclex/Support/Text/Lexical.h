@@ -91,7 +91,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// </remarks>
   template<typename TTarget>
   inline TTarget wlexical_cast(const wchar_t *from) {
-    return lexical_cast<TTarget>(StringConverter::Utf8FromUtf16(from));
+    return lexical_cast<TTarget>(StringConverter::Utf8FromWide(from));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -117,7 +117,7 @@ namespace Nuclex { namespace Support { namespace Text {
       /// <param name="from">UTF-16 string that will be cast to the target type</param>
       /// <returns>The resulting value</returns>
       inline static TTarget _(const std::wstring &from) {
-        return lexical_cast<TTarget>(StringConverter::Utf8FromUtf16(from));
+        return lexical_cast<TTarget>(StringConverter::Utf8FromWide(from));
       }      
     };
 
@@ -129,7 +129,7 @@ namespace Nuclex { namespace Support { namespace Text {
       /// <param name="from">Value that will be cast to a UTF-16 string</param>
       /// <returns>Resulting UTF-16 string</returns>
       inline static std::wstring _(const TSource &from) {
-        return StringConverter::Utf16FromUtf8(lexical_cast<std::string>(from));
+        return StringConverter::WideFromUtf8(lexical_cast<std::string>(from));
       }      
     };
 
