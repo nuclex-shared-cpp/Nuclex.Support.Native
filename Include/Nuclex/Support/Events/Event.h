@@ -21,10 +21,34 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_EVENTS_EVENT_H
 #define NUCLEX_SUPPORT_EVENTS_EVENT_H
 
+#include <vector>
+#include <functional>
+
 namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
+  // Prototype, required for variable argument template
+  template<typename> class Event;
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Manages a list of subscribers that receive callback when the event fires</summary>
+  template<typename TReturn, typename... TArguments>
+  class Event<TReturn(TArguments...)> {
+
+    /// <summary>Type of value that will be returned by event subscribers</summary>
+    public: typedef TReturn SubscriberReturnType;
+    /// <summary>Method signature for the callbacks notified through this event</summary>
+    public: typedef TReturn CallbackType(TArguments...);
+    /// <summary>Type of functions that can subscribe to this event</summary>
+    public: typedef std::function<TReturn(TArguments...)> SubscriberType;
+    /// <summary>Type the will be returned by the event itself</summary>
+    public: typedef typename std::conditional<
+      std::is_void<TReturn>::value, std::vector<TReturn>, void
+    >::type EventReturnType;
+
+  };
 
   // ------------------------------------------------------------------------------------------- //
 

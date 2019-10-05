@@ -60,7 +60,7 @@ namespace {
     // Check for -inf
     if(length >= 4) {
       startsWithMinusInf = (
-        (text[0] == '-') &&
+        ((text[0] == '+') || (text[0] == '-')) &&
         ((text[1] == 'i') || (text[1] == 'I')) &&
         ((text[2] == 'n') || (text[2] == 'N')) &&
         ((text[3] == 'f') || (text[3] == 'F'))
@@ -83,6 +83,19 @@ namespace {
     return (startsWithInf || startsWithMinusInf);
   }
 
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Checks if a string starts with a minus character</summary>
+  /// <param name="text">String that will be checked for starting with a minus</param>
+  /// <returns>True if the string starts with a minus character, false otherwise</returns>
+  bool textStartsWithMinus(const std::string &text) {
+    if(text.size() >= 1) {
+      return text[0] == '-';
+    } else {
+      return false;
+    }
+  }
+    
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -319,6 +332,7 @@ namespace Nuclex { namespace Support { namespace Text {
     EXPECT_TRUE(textStartsWithInfOrMinusInf(text));
 
     text = lexical_cast<std::string>(-std::numeric_limits<float>::infinity());
+    EXPECT_TRUE(textStartsWithMinus(text));
     EXPECT_TRUE(textStartsWithInfOrMinusInf(text));
   }
 
@@ -327,6 +341,14 @@ namespace Nuclex { namespace Support { namespace Text {
   TEST(LexicalTest, FloattoStringOutputCanBeLong) {
     const float PI = 3.14159265358979323846264338327950288419716939937510582097494459230781640628f;
     std::string text = lexical_cast<std::string>(PI);
+
+    // Why this number and this many decimals? Floating point numbers can only represent
+    // certain values exactly (specifically binary fractions, i.e. 1/1024 or 5/4096 but not
+    // the numbers between them).
+    //
+    // This is the number of decimals after which adding decimals that selects the closest
+    // respresentable float (for round-trip parsing) and adding more decimals would not
+    // actually change the resulting floating point value.
     EXPECT_EQ(text, "3.1415927");
   }
 
@@ -369,6 +391,7 @@ namespace Nuclex { namespace Support { namespace Text {
     EXPECT_TRUE(textStartsWithInfOrMinusInf(text));
 
     text = lexical_cast<std::string>(-std::numeric_limits<double>::infinity());
+    EXPECT_TRUE(textStartsWithMinus(text));
     EXPECT_TRUE(textStartsWithInfOrMinusInf(text));
   }
 
@@ -377,6 +400,14 @@ namespace Nuclex { namespace Support { namespace Text {
   TEST(LexicalTest, DoubletoStringOutputCanBeLong) {
     const double PI = 3.14159265358979323846264338327950288419716939937510582097494459230781640628;
     std::string text = lexical_cast<std::string>(PI);
+
+    // Why this number and this many decimals? Floating point numbers can only represent
+    // certain values exactly (specifically binary fractions, i.e. 1/1024 or 5/4096 but not
+    // the numbers between them).
+    //
+    // This is the number of decimals after which adding decimals that selects the closest
+    // respresentable float (for round-trip parsing) and adding more decimals would not
+    // actually change the resulting double-precision floating point value.
     EXPECT_EQ(text, "3.141592653589793");
   }
 

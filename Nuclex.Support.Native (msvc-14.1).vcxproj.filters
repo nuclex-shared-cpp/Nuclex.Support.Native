@@ -271,6 +271,9 @@
     <ClInclude Include="Source\Text\Erthink\erthink_u2a.h">
       <Filter>Source\Text\Erthink</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h">
+      <Filter>Include\Events</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Nuclex.Support.Native.def">
