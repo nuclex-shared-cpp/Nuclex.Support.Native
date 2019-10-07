@@ -39,14 +39,36 @@ namespace Nuclex { namespace Support { namespace Events {
   template<typename TResult, typename... TArguments>
   class Delegate<TResult(TArguments...)> {
 
+#if 0
+    /// <summary>Type of value that will be returned by event subscribers</summary>
+    //public: typedef TResult ReturnType;
+    /// <summary>Method signature for the callbacks notified through this event</summary>
+    //public: typedef TResult CallbackType(TArguments...);
+    /// <summary>Type that is returned by the delegate</summary>
+    //public: typedef TResult ReturnType;
+    //using Thunk = RT(*)(void*, Args&&...);
+    //public: typedef TResult(*)(TArguments...) FreeFunctionType;
+#endif
+
     /// <summary>Creates a delegate that will invoke the specified free function</summary>
     /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
     /// <returns>A delegate that invokes the specified free</returns>
-    public: template <TResult(*TMethod)(TArguments...)>
+    public: template<TResult(*TMethod)(TArguments...)>
     static Delegate FromFreeFunction() {
       Delegate result;
       result.instance = nullptr;
       result.method = &Delegate::callFreeFunction<TMethod>;
+      return result;
+    }
+
+    /// <summary>Creates a delegate that will invoke the specified free function</summary>
+    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <returns>A delegate that invokes the specified free</returns>
+    public: template <class TClass, TResult(TClass::*TMethod)(TArguments...)>
+    static Delegate FromObjectMethod(TClass *instance) {
+      Delegate result;
+      result.instance = reinterpret_cast<void *>(instance);
+      result.method = &Delegate::callObjectMethod<TClass, TMethod>;
       return result;
     }
 
@@ -64,27 +86,24 @@ namespace Nuclex { namespace Support { namespace Events {
     private: typedef TResult (Delegate::*CallWrapperType)(TArguments...);
 
     /// <summary>Call wrapper that invokes a free function</summary>
-    private: template <TResult(*TMethod)(TArguments...)>
+    /// <typeparam name="TFreeFunction">Function that will be invoked</typeparam>
+    private: template<TResult(*TFreeFunction)(TArguments...)>
     TResult callFreeFunction(TArguments... arguments) {
-      return (TMethod)(arguments...);
+      return (TFreeFunction)(arguments...);
+    }
+
+    /// <summary>Call wrapper that invokes a free function</summary>
+    /// <typeparam name="TFreeFunction">Function that will be invoked</typeparam>
+    private: template<typename TClass, TResult(TClass::*TObjectMethod)(TArguments...)>
+    TResult callObjectMethod(TArguments... arguments) {
+      TClass *typedInstance = reinterpret_cast<TClass *>(this->instance);
+      return (typedInstance->*TObjectMethod)(arguments...);
     }
 
     /// <summary>Instance on which the callback will take place, if applicable<summary>
     private: void *instance;
     /// <summary>Address of the call wrapper that will call the subscribed method</summary>
     private: CallWrapperType method;
-
-
-#if 0
-    /// <summary>Type of value that will be returned by event subscribers</summary>
-    //public: typedef TResult ReturnType;
-    /// <summary>Method signature for the callbacks notified through this event</summary>
-    //public: typedef TResult CallbackType(TArguments...);
-    /// <summary>Type that is returned by the delegate</summary>
-    //public: typedef TResult ReturnType;
-    //using Thunk = RT(*)(void*, Args&&...);
-    //public: typedef TResult(*)(TArguments...) FreeFunctionType;
-#endif
 
   };
 
