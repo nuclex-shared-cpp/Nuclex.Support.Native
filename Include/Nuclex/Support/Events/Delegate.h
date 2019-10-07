@@ -39,6 +39,43 @@ namespace Nuclex { namespace Support { namespace Events {
   template<typename TResult, typename... TArguments>
   class Delegate<TResult(TArguments...)> {
 
+    /// <summary>Creates a delegate that will invoke the specified free function</summary>
+    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <returns>A delegate that invokes the specified free</returns>
+    public: template <TResult(*TMethod)(TArguments...)>
+    static Delegate FromFreeFunction() {
+      Delegate result;
+      result.instance = nullptr;
+      result.method = &Delegate::callFreeFunction<TMethod>;
+      return result;
+    }
+
+    // This can be made more efficient, I believe. Store a pointer to a method
+    // of /this/ class, a clever compiler could just do a single 'jmp' without
+    // massaging function prolog/epilog or parameters in the slightest.
+    public: TResult operator()(TArguments... arguments) {
+      return (this->*method)(arguments...);
+    }
+
+    /// <summary>Constructs an uninitialized delegate, for internal use only<summary>
+    private: Delegate() {}
+
+    /// <summary>Type of the call wrappers that invoke the target method</summary>
+    private: typedef TResult (Delegate::*CallWrapperType)(TArguments...);
+
+    /// <summary>Call wrapper that invokes a free function</summary>
+    private: template <TResult(*TMethod)(TArguments...)>
+    TResult callFreeFunction(TArguments... arguments) {
+      return (TMethod)(arguments...);
+    }
+
+    /// <summary>Instance on which the callback will take place, if applicable<summary>
+    private: void *instance;
+    /// <summary>Address of the call wrapper that will call the subscribed method</summary>
+    private: CallWrapperType method;
+
+
+#if 0
     /// <summary>Type of value that will be returned by event subscribers</summary>
     //public: typedef TResult ReturnType;
     /// <summary>Method signature for the callbacks notified through this event</summary>
@@ -47,34 +84,7 @@ namespace Nuclex { namespace Support { namespace Events {
     //public: typedef TResult ReturnType;
     //using Thunk = RT(*)(void*, Args&&...);
     //public: typedef TResult(*)(TArguments...) FreeFunctionType;
-
-    using CallWrapperPointerType = TResult(*)(void *instance, TArguments...);
-
-    public: template <TResult(*TMethod)(TArguments...)>
-    static Delegate ToFreeFunction() {
-      Delegate result;
-      result.instance = nullptr;
-      result.method = CallFreeFunction<TMethod>;
-      return result;
-    }
-
-    // This can be made more efficient, I believe. Store a pointer to a method
-    // of /this/ class, a clever compiler could just do a single 'jmp' without
-    // massaging function prolog/epilog or parameters in the slightest.
-    public: TResult operator()(TArguments... arguments) const {
-      return (*method)(instance, arguments...);
-    }
-
-    /// <summary>Call wrapper that invokes a free function</summary>
-    template <TResult(*TMethod)(TArguments...)>
-    static TResult CallFreeFunction(void *, TArguments... arguments) {
-      return (TMethod)(arguments...);
-    }
-
-    /// <summary>Instance on which the callback will take place, if applicable<summary>
-    private: void *instance;
-    /// <summary>Address of the call wrapper that will call the subscribed method</summary>
-    private: CallWrapperPointerType method;
+#endif
 
   };
 
