@@ -41,7 +41,7 @@ namespace {
         ((text[0] == 'n') || (text[0] == 'N')) &&
         ((text[1] == 'a') || (text[1] == 'A')) &&
         ((text[2] == 'n') || (text[2] == 'N'))
-        );
+      );
     } else {
       return false;
     }
