@@ -34,21 +34,29 @@ namespace Nuclex { namespace Support { namespace Events {
   /// <typeparam name="TResult">Type that will be returned from the method</typeparam>
   /// <typeparam name="TArguments">Types of the arguments accepted by the callback</typeparam>
   /// <remarks>
-  ///   This is essentially the same as std::function (and a bit of std::bind for this pointer
-  ///   capture), but designed for 
+  ///   <para>
+  ///     A delegate is in principle a glorified function pointer, one that can invoke plain
+  ///     free functions as well as object methods (capturing the 'this' pointer of the instance
+  ///     the method is to be called on) or lamba expressions.
+  ///   </para>
+  ///   <para>
+  ///     If you're up-to-speed in modern C++, it's essentially like std::function with
+  ///     a little bit of std::bind mixed in for the 'this' pointer capture. But unlike
+  ///     std::function, it is identity-comparable (i.e. you can check if two delegates are
+  ///     invoking the exact same free function, object method or lambda expression).
+  ///   </para>
+  ///   <para>
+  ///     This makes delegates useful to implement subscriptions in publisher/subscriber
+  ///     systems (aka. signals/slots) that can be unregistered without magic handles.
+  ///   </para>
+  /// </remarks>
   template<typename TResult, typename... TArguments>
   class Delegate<TResult(TArguments...)> {
 
-#if 0
-    /// <summary>Type of value that will be returned by event subscribers</summary>
-    //public: typedef TResult ReturnType;
+    /// <summary>Type of value that will be returned by the delegate</summary>
+    public: typedef TResult ResultType;
     /// <summary>Method signature for the callbacks notified through this event</summary>
-    //public: typedef TResult CallbackType(TArguments...);
-    /// <summary>Type that is returned by the delegate</summary>
-    //public: typedef TResult ReturnType;
-    //using Thunk = RT(*)(void*, Args&&...);
-    //public: typedef TResult(*)(TArguments...) FreeFunctionType;
-#endif
+    public: typedef TResult CallType(TArguments...);
 
     /// <summary>Creates a delegate that will invoke the specified free function</summary>
     /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
@@ -62,9 +70,10 @@ namespace Nuclex { namespace Support { namespace Events {
     }
 
     /// <summary>Creates a delegate that will invoke the specified free function</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
     /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
     /// <returns>A delegate that invokes the specified free</returns>
-    public: template <class TClass, TResult(TClass::*TMethod)(TArguments...)>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...)>
     static Delegate FromObjectMethod(TClass *instance) {
       Delegate result;
       result.instance = reinterpret_cast<void *>(instance);
@@ -72,15 +81,36 @@ namespace Nuclex { namespace Support { namespace Events {
       return result;
     }
 
-    // This can be made more efficient, I believe. Store a pointer to a method
-    // of /this/ class, a clever compiler could just do a single 'jmp' without
-    // massaging function prolog/epilog or parameters in the slightest.
+    /// <summary>Initializes a new delegate as copy of an existing delegate</summary>
+    /// <param name="other">Existing delegate that will be copied</param>
+    public: Delegate(const Delegate &other) = default;
+
+    /// <summary>Initializes a new delegate by taking over an existing delegate</summary>
+    /// <param name="other">Existing delegate that will be taken over</param>
+    public: Delegate(Delegate &&other) = default;
+
+    /// <summary>Frees all resources owned by the delegate</summary>
+    public: ~Delegate() = default;
+
+    /// <summary>Constructs an uninitialized delegate, for internal use only<summary>
+    private: Delegate() = default;
+
+    /// <summary>Invokes the delegate</summary>
+    /// <param name="arguments">Arguments as defined by the call signature</param>
+    /// <returns>The value returned by the called delegate, if any</returns>
     public: TResult operator()(TArguments... arguments) {
       return (this->*method)(arguments...);
     }
 
-    /// <summary>Constructs an uninitialized delegate, for internal use only<summary>
-    private: Delegate() {}
+    /// <summary>Makes this delegate a copy of another delegate</summary>
+    /// <param name="other">Other delegate that will be copied</param>
+    /// <returns>This delegate</returns>
+    public: Delegate &operator =(const Delegate &other) = default;
+
+    /// <summary>Lets this delegate take over another delegate</summary>
+    /// <param name="other">Other delegate that will be taken over</param>
+    /// <returns>This delegate</returns>
+    public: Delegate &operator =(Delegate &&other) = default;
 
     /// <summary>Type of the call wrappers that invoke the target method</summary>
     private: typedef TResult (Delegate::*CallWrapperType)(TArguments...);
@@ -93,6 +123,7 @@ namespace Nuclex { namespace Support { namespace Events {
     }
 
     /// <summary>Call wrapper that invokes a free function</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
     /// <typeparam name="TFreeFunction">Function that will be invoked</typeparam>
     private: template<typename TClass, TResult(TClass::*TObjectMethod)(TArguments...)>
     TResult callObjectMethod(TArguments... arguments) {
@@ -106,6 +137,10 @@ namespace Nuclex { namespace Support { namespace Events {
     private: CallWrapperType method;
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  // Add construction methods akin to std::make_pair(), std::make_shared() etc. here
 
   // ------------------------------------------------------------------------------------------- //
 

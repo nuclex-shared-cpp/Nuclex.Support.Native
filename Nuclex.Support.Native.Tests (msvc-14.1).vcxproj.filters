@@ -179,6 +179,9 @@
     <ClCompile Include="Tests\Events\EventTests.cpp">
       <Filter>Tests\Events</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Events\Delegate.cpp">
+      <Filter>Source\Events</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -300,6 +303,9 @@
     </ClInclude>
     <ClInclude Include="Source\Text\Erthink\erthink_u2a.h">
       <Filter>Source\Text\Erthink</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h">
+      <Filter>Include\Events</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

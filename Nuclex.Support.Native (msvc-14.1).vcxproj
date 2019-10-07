@@ -225,6 +225,7 @@
     <ClCompile Include="Source\Collections\DynamicArray.cpp" />
     <ClCompile Include="Source\Collections\IndexedCollection.cpp" />
     <ClCompile Include="Source\Collections\Variegator.cpp" />
+    <ClCompile Include="Source\Events\Delegate.cpp" />
     <ClCompile Include="Source\Events\Event.cpp" />
     <ClCompile Include="Source\Events\EventSubscriber.cpp" />
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp" />
