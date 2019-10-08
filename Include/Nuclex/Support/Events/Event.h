@@ -21,8 +21,12 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_EVENTS_EVENT_H
 #define NUCLEX_SUPPORT_EVENTS_EVENT_H
 
-#include <vector>
+#include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Events/Delegate.h"
+
 #include <functional>
+#include <algorithm>
+#include <vector>
 
 namespace Nuclex { namespace Support { namespace Events {
 
@@ -34,19 +38,180 @@ namespace Nuclex { namespace Support { namespace Events {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Manages a list of subscribers that receive callback when the event fires</summary>
-  template<typename TReturn, typename... TArguments>
-  class Event<TReturn(TArguments...)> {
+  /// <typeparam name="TResult">Type that will be returned from the method</typeparam>
+  /// <typeparam name="TArguments">Types of the arguments accepted by the callback</typeparam>
+  /// <remarks>
+  ///   <para>
+  ///     An event should be equivalent in size to 5 pointers (depending on the
+  ///     value of the <see cref="BuiltInSubscriberCount" /> constant))
+  ///   </para>
+  /// </remarks>
+  template<typename TResult, typename... TArguments>
+  class Event<TResult(TArguments...)> {
 
-    /// <summary>Type of value that will be returned by event subscribers</summary>
-    public: typedef TReturn SubscriberReturnType;
+    /// <summary>Number of subscribers the event can subscribe withou allocating memory</summary>
+    /// <remarks>
+    ///   To reduce complexity, this value is unchangeable. It is the number off subscriber
+    ///   slots that are baked into the event, enabling it to handle a small number of
+    ///   subscribers without allocating heap memory. Each slot takes the size of a delegate,
+    ///   64 bits on a 32 bit system or 128 bits on a 64 bit system.
+    /// </remarks>
+    private: const static std::size_t BuiltInSubscriberCount = 2;
+
+    /// <summary>Type of value that will be returned by the delegate</summary>
+    public: typedef TResult ResultType;
     /// <summary>Method signature for the callbacks notified through this event</summary>
-    public: typedef TReturn CallbackType(TArguments...);
-    /// <summary>Type of functions that can subscribe to this event</summary>
-    public: typedef std::function<TReturn(TArguments...)> SubscriberType;
+    public: typedef TResult CallType(TArguments...);
+
     /// <summary>Type the will be returned by the event itself</summary>
     public: typedef typename std::conditional<
-      std::is_void<TReturn>::value, std::vector<TReturn>, void
-    >::type EventReturnType;
+      std::is_void<TResult>::value, std::vector<TResult>, void
+    >::type EventResultType;
+
+    /// <summary>Initializes a new event</summary>
+    public: Event() :
+      subscriberCount(0) {}
+
+    public: ~Event() {
+      // TODO: Check heap/stack storage
+      // TODO: Call Delegate destructors
+    }
+
+    /// <summary>Fires the event, calling all subscribers and collecting the results</summary>
+    /// <param name="arguments">Arguments that will be passed to the event</param>
+    /// <returns>
+    ///   Nothing if the event's return type is void, a collection of all events results otherwise
+    /// </returns>
+    public: EventResultType operator()(TArguments... arguments) {
+      throw -1;
+    }
+
+    //public: template<typename = typename enable_if<std::is_void<TResult>::value>::value, void>::type>
+    //void operator(EventResultType &results)() {}
+
+#if 0
+    /// <summary>Resets the delegate to the specified free function</summary>
+    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    public: template<TResult(*TMethod)(TArguments...)>
+    void Subscribe() {
+      auto x = Delegate<void(int something)>::Create<&Event::shit>();
+      //auto x = Delegate<TResult(TArguments...)>::Create<TMethod>();
+      //Subscribe(Delegate<TResult(TArguments...)>::Create<TMethod>());
+    }
+
+    /// <summary>Resets the delegate to the specified object method</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <param name="instance">Instance on which the object method will be called</param>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...)>
+    void Subscribe(TClass *instance) {
+      //Delegate<TResult(TArguments...)>::Create<TClass, TMethod>(instance);
+      //Subscribe(Delegate<TResult(TArguments...)>::Create<TClass, TMethod>(instance));
+    }
+
+    /// <summary>Resets the delegate to the specified const object method</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <param name="instance">Instance on which the object method will be called</param>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...) const>
+    void Subscribe(const TClass *instance) {
+      //Subscribe(Delegate<TResult(TArguments...)>::Create<TClass, TMethod>(instance));
+    }
+#endif
+
+    /// <summary>Subscribes the specified delegate to the event</summary>
+    /// <param name="delegate">Delegate that will be subscribed</param>
+    public: void Subscribe(const Delegate<TResult(TArguments...)> &delegate) {
+      if(this->subscriberCount < BuiltInSubscriberCount) {
+        reinterpret_cast<Delegate<TResult(TArguments...)> *>(this->stackMemory)[
+          this->subscriberCount
+        ] = delegate;
+      } else {
+        if(this->subscriberCount == BuiltInSubscriberCount) {
+          convertFromStackToHeapAllocation();
+        } else if(this->subscriberCount >= this->heapMemory.ReservedSubscriberCount) {
+          growHeapAllocatedList();
+        }
+
+        *reinterpret_cast<Delegate<TResult(TArguments...)> *>(this->heapMemory.Buffer) = (
+          delegate
+        );
+        //this->heapMemory.Subscribers[this->subscriberCount] = delegate;
+      }
+      ++this->subscriberCount;
+    }
+
+    /// <summary>Switches the event from stack-stored subscribers to heap-stored</summary>
+    /// <remarks>
+    ///   For internal use only; this must only be called when the subscriber count is
+    ///   equal to the built-in stack storage space and must be followed immediately by
+    ///   adding another subscriber (because the subscriberCount is the decision variable
+    ///   for the event to know whether to assume heap storage or stack storage).
+    /// </remarks>
+    private: void convertFromStackToHeapAllocation() {
+      std::size_t initialCapacity = this->subscriberCount * 4;
+
+      std::uint8_t *initialBuffer = new std::uint8_t[
+        sizeof(Delegate<TResult(TArguments...)>[2]) * (initialCapacity / 2)
+      ];
+      std::copy_n(
+        reinterpret_cast<Delegate<TResult(TArguments...)> *>(this->stackMemory),
+        this->subscriberCount,
+        reinterpret_cast<Delegate<TResult(TArguments...)> *>(initialBuffer)
+      );
+
+      this->heapMemory.ReservedSubscriberCount = initialCapacity;
+      this->heapMemory.Buffer = initialBuffer;
+    }
+
+    /// <summary>Increases the size of the heap-allocated list of event subscribers</summary>
+    private: void growHeapAllocatedList() {
+      std::size_t newCapacity = this->heapMemory.ReservedSubscriberCount * 2;
+
+      std::uint8_t *newBuffer = new std::uint8_t[
+        sizeof(Delegate<TResult(TArguments...)>[2]) * (newCapacity / 2)
+      ];
+      std::copy_n(
+        reinterpret_cast<Delegate<TResult(TArguments...)> *>(this->heapMemory.Buffer),
+        this->subscriberCount,
+        reinterpret_cast<Delegate<TResult(TArguments...)> *>(newBuffer)
+      );
+
+      std::swap(this->heapMemory.Buffer, newBuffer);
+      this->heapMemory.ReservedSubscriberCount = newCapacity;
+      delete []newBuffer;
+    }
+
+    /// <summary>Moves the event's subscriber list back into its own stack storage</summary>
+    /// <remarks>
+    ///   This must only be called if the event has just shrunk to the number of subscribers
+    ///   that can fit into built-in stack space for storing event subscriptions. The call is
+    ///   mandatory (because the subscriberCount is the decision variable for the event to
+    ///   know whether to assume heap storage or stack storage).
+    /// </remarks>
+    private: void convertFromHeapToStackAllocated() {
+      throw "TODO";
+    }
+
+    /// <summary>Information about subscribers if the list is moved to the heap</summary>
+    private: struct HeapAllocatedSubscribers {
+
+      /// <summary>Number of subscribers for which space has been reserved on the heap</summary>      
+      public: std::size_t ReservedSubscriberCount;
+      /// <summary>Dynamically allocated memory  the subscribers are stored in</summary>
+      public: std::uint8_t *Buffer;
+
+    };
+
+    /// <summary>Number of subscribers that have registered to the event</summary>
+    private: std::size_t subscriberCount;
+    /// <summary>Stores the first n subscribers inside the event's own memory</summary>
+    private: union {
+      HeapAllocatedSubscribers heapMemory;
+      std::uint8_t stackMemory[
+        sizeof(Delegate<TResult(TArguments...)>[BuiltInSubscriberCount])
+      ];
+    };
 
   };
 

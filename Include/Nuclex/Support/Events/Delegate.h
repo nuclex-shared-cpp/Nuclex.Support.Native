@@ -54,6 +54,9 @@ namespace Nuclex { namespace Support { namespace Events {
   ///     This makes delegates useful to implement subscriptions in publisher/subscriber
   ///     systems (aka. signals/slots) that can be unregistered without magic handles.
   ///   </para>
+  ///   <para>
+  ///     A delegate should be equivalent in size to two pointers.
+  ///   </para>
   /// </remarks>
   template<typename TResult, typename... TArguments>
   class Delegate<TResult(TArguments...)> {

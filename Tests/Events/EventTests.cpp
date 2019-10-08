@@ -29,8 +29,7 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Free function used to test event subscriptions</summary>
-  /// <param name="something">Parameter that's completely ignored</param>
-  void freeFunction(int something) { something; }
+  void freeFunction(int) { }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -63,7 +62,7 @@ namespace {
 namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
-#if 0
+
   TEST(EventTest, EventsCanBeCreated) {
     EXPECT_NO_THROW(
       Event<void(int something)> test;
@@ -74,9 +73,25 @@ namespace Nuclex { namespace Support { namespace Events {
 
   TEST(EventTest, FreeFunctionsCanBeSubscribed) {
     Event<void(int something)> test;
-    test.Subscribe(freeFunction);
+    Delegate<void(int something)> subscriber = (
+      Delegate<void(int something)>::Create<freeFunction>()
+    );
+    test.Subscribe(subscriber);
   }
 
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, EventCanHandleManySubscriptions) {
+    Event<void(int something)> test;
+    Delegate<void(int something)> subscriber = (
+      Delegate<void(int something)>::Create<freeFunction>()
+    );
+    for(std::size_t index = 0; index < 20; ++index) {
+      test.Subscribe(subscriber);
+    }
+  }
+
+#if 0
   // ------------------------------------------------------------------------------------------- //
 
   TEST(EventTest, FreeFunctionsCanBeUnsubscribed) {

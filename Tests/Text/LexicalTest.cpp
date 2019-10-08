@@ -338,7 +338,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(LexicalTest, FloattoStringOutputCanBeLong) {
+  TEST(LexicalTest, FloatToStringOutputCanBeLong) {
     const float PI = 3.14159265358979323846264338327950288419716939937510582097494459230781640628f;
     std::string text = lexical_cast<std::string>(PI);
 
@@ -397,7 +397,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(LexicalTest, DoubletoStringOutputCanBeLong) {
+  TEST(LexicalTest, DoubleToStringOutputCanBeLong) {
     const double PI = 3.14159265358979323846264338327950288419716939937510582097494459230781640628;
     std::string text = lexical_cast<std::string>(PI);
 
