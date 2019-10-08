@@ -21,6 +21,11 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_EVENTS_DELEGATE_H
 #define NUCLEX_SUPPORT_EVENTS_DELEGATE_H
 
+#include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Events/EmptyDelegateCallError.h"
+
+#include <cassert>
+
 namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
@@ -62,44 +67,116 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
     /// <returns>A delegate that invokes the specified free</returns>
     public: template<TResult(*TMethod)(TArguments...)>
-    static Delegate FromFreeFunction() {
-      Delegate result;
-      result.instance = nullptr;
-      result.method = &Delegate::callFreeFunction<TMethod>;
-      return result;
+    static Delegate Create() {
+      return Delegate(&Delegate::callFreeFunction<TMethod>);
     }
 
-    /// <summary>Creates a delegate that will invoke the specified free function</summary>
+    /// <summary>Creates a delegate that will invoke the specified object method</summary>
     /// <typeparam name="TClass">Class the object method is a member of</typeparam>
     /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <param name="instance">Instance on which the object method will be called</param>
     /// <returns>A delegate that invokes the specified free</returns>
     public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...)>
-    static Delegate FromObjectMethod(TClass *instance) {
-      Delegate result;
-      result.instance = reinterpret_cast<void *>(instance);
-      result.method = &Delegate::callObjectMethod<TClass, TMethod>;
-      return result;
+    static Delegate Create(TClass *instance) {
+      return Delegate(
+        reinterpret_cast<void *>(instance) , &Delegate::callObjectMethod<TClass, TMethod>
+      );
+    }
+
+    /// <summary>Creates a delegate that will invoke the specified const object method</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <param name="instance">Instance on which the object method will be called</param>
+    /// <returns>A delegate that invokes the specified free</returns>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...) const>
+    static Delegate Create(const TClass *instance) {
+      // Note: This const cast is fine. Casting away const is allowed if you do not
+      // ever modify the object that way. We're only casting it away for storage,
+      // the callConstObjectMethod() call wrapper will cast it on again before calling.
+      return Delegate(
+        const_cast<void *>(reinterpret_cast<const void *>(instance)),
+        &Delegate::callConstObjectMethod<TClass, TMethod>
+      );
     }
 
     /// <summary>Initializes a new delegate as copy of an existing delegate</summary>
     /// <param name="other">Existing delegate that will be copied</param>
     public: Delegate(const Delegate &other) = default;
 
+    /// <summary>Constructs an empty delegate<summary>
+    public: Delegate() :
+#if _DEBUG
+      instance(nullptr),
+#endif
+      method(&Delegate::callEmptyDelegate) {}
+
     /// <summary>Initializes a new delegate by taking over an existing delegate</summary>
     /// <param name="other">Existing delegate that will be taken over</param>
+#if _DEBUG
+    public: Delegate(Delegate &&other) :
+      instance(other.instance),
+      method(other.method) {
+      other.instance = nullptr;
+      other.method = &Delegate::errorDelegateDestroyed;
+    }
+#else
     public: Delegate(Delegate &&other) = default;
+#endif
 
     /// <summary>Frees all resources owned by the delegate</summary>
+#if _DEBUG
+    public: ~Delegate() {
+      this->instance = nullptr;
+      this->method = &Delegate::errorDelegateDestroyed;
+    }
+#else
     public: ~Delegate() = default;
-
-    /// <summary>Constructs an uninitialized delegate, for internal use only<summary>
-    private: Delegate() = default;
+#endif
 
     /// <summary>Invokes the delegate</summary>
     /// <param name="arguments">Arguments as defined by the call signature</param>
     /// <returns>The value returned by the called delegate, if any</returns>
-    public: TResult operator()(TArguments... arguments) {
+    public: TResult operator()(TArguments... arguments) const {
       return (this->*method)(arguments...);
+    }
+
+    /// <summary>Resets the delegate to an empty value</summary>
+    public: void Reset() {
+#if _DEBUG
+      this->method = nullptr;
+#endif
+      this->method = &Delegate::callEmptyDelegate;
+    }
+
+    /// <summary>Resets the delegate to the specified free function</summary>
+    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    public: template<TResult(*TMethod)(TArguments...)>
+    void Reset() {
+      this->instance = nullptr;
+      this->method = &Delegate::callFreeFunction<TMethod>;
+    }
+
+    /// <summary>Resets the delegate to the specified object method</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <param name="instance">Instance on which the object method will be called</param>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...)>
+    void Reset(TClass *instance) {
+      this->instance = reinterpret_cast<void *>(instance);
+      this->method = &Delegate::callObjectMethod<TClass, TMethod>;
+    }
+
+    /// <summary>Resets the delegate to the specified const object method</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <param name="instance">Instance on which the object method will be called</param>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...) const>
+    void Reset(const TClass *instance) {
+      // Note: This const cast is fine. Casting away const is allowed if you do not
+      // ever modify the object that way. We're only casting it away for storage,
+      // the callConstObjectMethod() call wrapper will cast it on again before calling.
+      this->instance = const_cast<void *>(reinterpret_cast<const void *>(instance));
+      this->method = &Delegate::callConstObjectMethod<TClass, TMethod>;
     }
 
     /// <summary>Makes this delegate a copy of another delegate</summary>
@@ -110,15 +187,93 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Lets this delegate take over another delegate</summary>
     /// <param name="other">Other delegate that will be taken over</param>
     /// <returns>This delegate</returns>
+#if _DEBUG
+    public: Delegate &operator =(Delegate &&other) {
+      this->instance = other.instance;
+      this->method = other.method;
+      other.instance = nullptr;
+      other.method = &Delegate::errorDelegateDestroyed;
+    }
+#else
     public: Delegate &operator =(Delegate &&other) = default;
+#endif
+
+    /// <summary>Checks whether another delegate is invoking the same target</summary>
+    /// <param name="other">Other delegate that will be compared against this one</param>
+    /// <returns>True if the other delegate is invoking the same target</returns>
+    public: bool operator ==(const Delegate &other) const {
+      if(this->method == &Delegate::callEmptyDelegate) {
+        return (other.method == &Delegate::callEmptyDelegate);
+      } else if(other.method == &Delegate::callEmptyDelegate) {
+        return false; // To avoid comparing uninitialized vars (even if of no consequence)
+      } else {
+        return (
+          (this->instance == other.instance) &&
+          (this->method == other.method)
+        );
+      }
+    }
+
+    /// <summary>Checks whether another delegate is invoking a different target</summary>
+    /// <param name="other">Other delegate that will be compared against this one</param>
+    /// <returns>True if the other delegate is invoking a different target</returns>
+    public: bool operator !=(const Delegate &other) const {
+      if(this->method == &Delegate::callEmptyDelegate) {
+        return (other.method != &Delegate::callEmptyDelegate);
+      } else if(other.method == &Delegate::callEmptyDelegate) {
+        return true; // To avoid comparing uninitialized vars (even if of no consequence)
+      } else {
+        return (
+          (this->instance != other.instance) ||
+          (this->method != other.method)
+        );
+      }
+    }
+
+    /// <summary>Checks whether the delegate has a target to invoke</summary>
+    /// <returns>True if the delegate currently has a target</returns>
+    public: bool HasTarget() const {
+      return (this->method != &Delegate::callEmptyDelegate);
+    }
+
+    /// <summary>Checks whether the delegate is unassigned</summary>
+    /// <returns>True if the delegate is unassigned</returns>
+    public: bool operator !() const {
+      return (this->method == &Delegate::callEmptyDelegate);
+    }
 
     /// <summary>Type of the call wrappers that invoke the target method</summary>
-    private: typedef TResult (Delegate::*CallWrapperType)(TArguments...);
+    private: typedef TResult (Delegate::*CallWrapperType)(TArguments...) const;
+
+    /// <summary>Special constructor for internal use by the named constructor methods</summary>
+    /// <param name="instance">Address that will be assigned to the instance field</param>
+    /// <param name="callWrapperMethod">Method used to call the delegate's target</param>
+    private: Delegate(void *instance, CallWrapperType callWrapperMethod) :
+      instance(instance),
+      method(callWrapperMethod) {}
+
+    /// <summary>Special constructor for internal use by the named constructor methods</summary>
+    /// <param name="callWrapperMethod">Method used to call the delegate's target</param>
+    private: Delegate(CallWrapperType callWrapperMethod) :
+      instance(nullptr),
+      method(callWrapperMethod) {}
+
+    /// <summary>Call wrapper that throws an exception if an empty delegate is called</summary>
+    /// <returns>The result of the called method or function</returns>
+    private: TResult callEmptyDelegate(TArguments...) const {
+
+      // Since we don't know the return type and there's no guarantee that we can
+      // default-construct one out of thin air (or that that would be the right course
+      // of action), we cannot 'return' and our only choice is to throw.
+      static const std::string message("No call target has been assigned to the delegate");
+      throw EmptyDelegateCallError(message);
+
+    }
 
     /// <summary>Call wrapper that invokes a free function</summary>
     /// <typeparam name="TFreeFunction">Function that will be invoked</typeparam>
     private: template<TResult(*TFreeFunction)(TArguments...)>
-    TResult callFreeFunction(TArguments... arguments) {
+    TResult callFreeFunction(TArguments... arguments) const {
       return (TFreeFunction)(arguments...);
     }
 
@@ -126,10 +281,32 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <typeparam name="TClass">Class the object method is a member of</typeparam>
     /// <typeparam name="TFreeFunction">Function that will be invoked</typeparam>
     private: template<typename TClass, TResult(TClass::*TObjectMethod)(TArguments...)>
-    TResult callObjectMethod(TArguments... arguments) {
+    TResult callObjectMethod(TArguments... arguments) const {
       TClass *typedInstance = reinterpret_cast<TClass *>(this->instance);
       return (typedInstance->*TObjectMethod)(arguments...);
     }
+
+    /// <summary>Call wrapper that invokes a free function</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TFreeFunction">Function that will be invoked</typeparam>
+    private: template<typename TClass, TResult(TClass::*TObjectMethod)(TArguments...) const>
+    TResult callConstObjectMethod(TArguments... arguments) const {
+      const TClass *typedInstance = reinterpret_cast<const TClass *>(
+        const_cast<const void *>(this->instance)
+      );
+      return (typedInstance->*TObjectMethod)(arguments...);
+    }
+
+#if _DEBUG
+    /// <summary>Call wrapper that reports when the delegate is called after </summary>
+    /// <typeparam name="TFreeFunction">Function that will be invoked</typeparam>
+    /// <returns>The result of the called method or function</returns>
+    private: TResult errorDelegateDestroyed(TArguments...) const {
+      using namespace std;
+      assert(!"Call to destroyed delegate (post-destructor or move operator)");
+      throw std::logic_error("Call to destroyed delegate (post-destructor or move operator)");
+    }
+#endif
 
     /// <summary>Instance on which the callback will take place, if applicable<summary>
     private: void *instance;
@@ -137,10 +314,6 @@ namespace Nuclex { namespace Support { namespace Events {
     private: CallWrapperType method;
 
   };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  // Add construction methods akin to std::make_pair(), std::make_shared() etc. here
 
   // ------------------------------------------------------------------------------------------- //
 
