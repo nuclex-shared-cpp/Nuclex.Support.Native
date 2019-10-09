@@ -44,16 +44,20 @@ namespace Nuclex { namespace Support { namespace Events {
   ///   <para>
   ///     This is the signal part of a standard signal/slot implementation. The name has been
   ///     chosen because std::signal already defines the term 'signal' for something entirely
-  ///     different and the term 'event' is at least understood and established in programming
-  ///     for this kind of system (i.e. C#).
+  ///     different and the term 'event' is the second most common term for this kind of system.
   ///   </para>
   ///   <para>
-  ///     The design makes a few assumptions on the usage pattern it optimizes. It assumes that
-  ///     events typically have a very small number of subscribers and that events should be
+  ///     The design makes a few assumptions on the usage patterns it optimizes for. It assumes
+  ///     thatevents typically have a very small number of subscribers and that events should be
   ///     as lean as possible (i.e. rather than expose a single big multi-purpose notification,
   ///     classes would expose multiple granular events to notify about different things).
-  ///     It also assumes that firing will happen much more often and subscribing/unsubscribing,
+  ///     It also assumes that firing will happen much more often than subscribing/unsubscribing,
   ///     and subscribing is given slightly more performance priority than than unsubscribing.
+  ///   </para>
+  ///   <para>
+  ///     This variant of the event class is not thread safe. The order in which subscribers
+  ///     are notified is not defined and may change even between individual calls. Subscribers
+  ///     are allowed to unsubscribe themselves during an event call, but not others. 
   ///   </para>
   ///   <para>
   ///     An event should be equivalent in size to 5 pointers (depending on the
@@ -95,24 +99,60 @@ namespace Nuclex { namespace Support { namespace Events {
       }
     }
 
-    // TODO: Handle unsubscribe during event fire
-
     /// <summary>Fires the event, calling all subscribers and collecting the results</summary>
     /// <param name="arguments">Arguments that will be passed to the event</param>
     /// <returns>
     ///   Nothing if the event's return type is void, a collection of all events results otherwise
     /// </returns>
-    public: void operator()(TArguments... arguments) {
-      if(this->subscriberCount <= BuiltInSubscriberCount) {
-        DelegateType *subscribers = reinterpret_cast<DelegateType *>(this->stackMemory);
-        for(std::size_t index = 0; index < this->subscriberCount; ++index) {
+    public: void operator()(TArguments... arguments) const {
+      std::size_t knownSubscriberCount = this->subscriberCount;
+
+      const DelegateType *subscribers;
+      std::size_t index = 0;
+
+      // Is the subscriber list currently on the stack?
+      if(knownSubscriberCount <= BuiltInSubscriberCount) {
+        ProcessStackSubscribers:
+        subscribers = reinterpret_cast<const DelegateType *>(this->stackMemory);
+        while(index < knownSubscriberCount) {
           subscribers[index](arguments...);
+          if(this->subscriberCount == knownSubscriberCount) {
+            ++index; // Only increment if the current callback wasn't unsubscribed
+          } else if(this->subscriberCount > knownSubscriberCount) {
+            ++index;
+            if(knownSubscriberCount > BuiltInSubscriberCount) {
+              knownSubscriberCount = this->subscriberCount;
+              goto ProcessHeapSubscribers;
+            }
+            knownSubscriberCount = this->subscriberCount;
+          } else {
+            knownSubscriberCount = this->subscriberCount;
+          }
         }
-      } else {
-        DelegateType *subscribers = reinterpret_cast<DelegateType *>(this->heapMemory.Buffer);
-        for(std::size_t index = 0; index < this->subscriberCount; ++index) {
+
+        return;
+      }
+
+      // The subscriber list is currently on the heap
+      {
+        ProcessHeapSubscribers:
+        subscribers = reinterpret_cast<const DelegateType *>(this->heapMemory.Buffer);
+        while(index < knownSubscriberCount) {
           subscribers[index](arguments...);
+          if(this->subscriberCount == knownSubscriberCount) {
+            ++index; // Only increment if the current callback wasn't unsubscribed
+          } else if(this->subscriberCount < knownSubscriberCount) {
+            if(knownSubscriberCount <= BuiltInSubscriberCount) {
+              knownSubscriberCount = this->subscriberCount;
+              goto ProcessStackSubscribers;
+            }
+            knownSubscriberCount = this->subscriberCount;
+          } else {
+            knownSubscriberCount = this->subscriberCount;
+          }
         }
+
+        return;
       }
     }
 

@@ -39,13 +39,19 @@ namespace {
     /// <summary>Initializes a new mocked subscriber</summary>
     public: Mock() :
       ReceivedNotificationCount(0),
-      LastSomethingParameterValue(0) {}
+      LastSomethingParameterValue(0),
+      ToUnsubscribe(nullptr) {}
 
     /// <summary>Method that can be subscribed to an event for testing</summary>
     /// <param name="something">Dummy integer value that will be remembered</param>
     public: void Notify(int something) {
       this->LastSomethingParameterValue = something;
       ++this->ReceivedNotificationCount;
+
+      if(this->ToUnsubscribe != nullptr) {
+        this->ToUnsubscribe->Unsubscribe<Mock, &Mock::Notify>(this);
+        this->ToUnsubscribe = nullptr;
+      }
     }
 
     /// <summary>Method that can be subscribed to an event for testing</summary>
@@ -60,7 +66,14 @@ namespace {
     /// <summary>Value that was last passed to the Notify() method</summary>
     public: mutable int LastSomethingParameterValue;
 
+    /// <summary>When set, unsubscribes the Notify() method from the event</summary>
+    /// <remarks>
+    ///   Event subscribers are allowd to unsubscribe themselves from within the
+    ///   notification callback. This is used to test that scenario.
+    /// </remarks>
+    public: Nuclex::Support::Events::Event<void(int something)> *ToUnsubscribe;
   };
+
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -194,7 +207,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(EventTest, NotificatinsAreSentToSubscribers) {
+  TEST(EventTest, NotificationsAreSentToSubscribers) {
     Event<void(int something)> test;
 
     Mock mock;
@@ -215,6 +228,36 @@ namespace Nuclex { namespace Support { namespace Events {
 
     EXPECT_EQ(mock.ReceivedNotificationCount, 1);
     EXPECT_EQ(mock.LastSomethingParameterValue, 135);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, SubscribersCanUnsubscribeInsideEventCall) {
+    Event<void(int something)> test;
+
+    Mock mock1, mock2;
+
+    test.Subscribe<Mock, &Mock::Notify>(&mock1);
+    test.Subscribe<Mock, &Mock::Notify>(&mock2);
+
+    EXPECT_EQ(mock1.ReceivedNotificationCount, 0);
+    EXPECT_EQ(mock1.LastSomethingParameterValue, 0);
+    EXPECT_EQ(mock2.ReceivedNotificationCount, 0);
+    EXPECT_EQ(mock2.LastSomethingParameterValue, 0);
+
+    mock1.ToUnsubscribe = &test;
+
+    test(135);
+
+    EXPECT_EQ(mock1.ReceivedNotificationCount, 1);
+    EXPECT_EQ(mock1.LastSomethingParameterValue, 135);
+    EXPECT_EQ(mock2.ReceivedNotificationCount, 1);
+    EXPECT_EQ(mock2.LastSomethingParameterValue, 135);
+
+    bool wasUnsubscribed = test.Unsubscribe<Mock, &Mock::Notify>(&mock1);
+    EXPECT_FALSE(wasUnsubscribed);
+    wasUnsubscribed = test.Unsubscribe<Mock, &Mock::Notify>(&mock2);
+    EXPECT_TRUE(wasUnsubscribed);
   }
 
   // ------------------------------------------------------------------------------------------- //
