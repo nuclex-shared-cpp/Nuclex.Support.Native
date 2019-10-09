@@ -25,6 +25,8 @@ License along with this library
 
 #include <gtest/gtest.h>
 
+using namespace std;
+
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
@@ -79,7 +81,8 @@ namespace {
     /// <summary>Initializes a new mocked subscriber</summary>
     public: Mock() :
       ReceivedNotificationCount(0),
-      LastSomethingParameterValue(0) {}
+      LastSomethingParameterValue(0),
+      ConstNotifyCalled(false) {}
 
     /// <summary>Method that can be called via delegate for testing</summary>
     /// <param name="something">Dummy integer value that will be remembered</param>
@@ -93,12 +96,15 @@ namespace {
     public: void ConstNotify(int something) const{
       this->LastSomethingParameterValue = something;
       ++this->ReceivedNotificationCount;
+      this->ConstNotifyCalled = true;
     }
 
     /// <summary>Number of calls to Notify() the instance has observed</summary>
     public: mutable std::size_t ReceivedNotificationCount;
     /// <summary>Value that was last passed to the Notify() method</summary>
     public: mutable int LastSomethingParameterValue;
+    /// <summary>Whether the ConstNotify() method was called</summary>
+    public: mutable bool ConstNotifyCalled;
 
   };
 
