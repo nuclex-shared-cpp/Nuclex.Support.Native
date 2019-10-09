@@ -196,6 +196,7 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableIndexedCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h" />
+    <ClInclude Include="Include\Nuclex\Support\Events\EmptyDelegateCallError.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Event.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\EventSubscriber.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\LazyServiceInjector.h" />
@@ -226,6 +227,7 @@
     <ClCompile Include="Source\Collections\IndexedCollection.cpp" />
     <ClCompile Include="Source\Collections\Variegator.cpp" />
     <ClCompile Include="Source\Events\Delegate.cpp" />
+    <ClCompile Include="Source\Events\EmptyDelegateCallError.cpp" />
     <ClCompile Include="Source\Events\Event.cpp" />
     <ClCompile Include="Source\Events\EventSubscriber.cpp" />
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp" />

@@ -40,7 +40,8 @@ namespace {
     public: Mock() :
       ReceivedNotificationCount(0),
       LastSomethingParameterValue(0),
-      ToUnsubscribe(nullptr) {}
+      ToUnsubscribe(nullptr),
+      ToSubscribe(nullptr) {}
 
     /// <summary>Method that can be subscribed to an event for testing</summary>
     /// <param name="something">Dummy integer value that will be remembered</param>
@@ -51,6 +52,10 @@ namespace {
       if(this->ToUnsubscribe != nullptr) {
         this->ToUnsubscribe->Unsubscribe<Mock, &Mock::Notify>(this);
         this->ToUnsubscribe = nullptr;
+      }
+      if(this->ToSubscribe != nullptr) {
+        this->ToSubscribe->Subscribe<Mock, &Mock::Notify>(this);
+        this->ToSubscribe = nullptr;
       }
     }
 
@@ -66,12 +71,20 @@ namespace {
     /// <summary>Value that was last passed to the Notify() method</summary>
     public: mutable int LastSomethingParameterValue;
 
-    /// <summary>When set, unsubscribes the Notify() method from the event</summary>
+    /// <summary>When set, unsubscribes the Notify() method from the event call</summary>
     /// <remarks>
     ///   Event subscribers are allowd to unsubscribe themselves from within the
     ///   notification callback. This is used to test that scenario.
     /// </remarks>
     public: Nuclex::Support::Events::Event<void(int something)> *ToUnsubscribe;
+
+    /// <summary>When set, subscribes the Notify() method from the event call</summary>
+    /// <remarks>
+    ///   Event subscribers are allowd to subscribe themselves or others from within
+    ///   the notification callback. This is used to test that scenario.
+    /// </remarks>
+    public: Nuclex::Support::Events::Event<void(int something)> *ToSubscribe;
+
   };
 
 
@@ -233,33 +246,97 @@ namespace Nuclex { namespace Support { namespace Events {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(EventTest, SubscribersCanUnsubscribeInsideEventCall) {
+    const static std::size_t MockCount = 32;
+
+    // This is a somewhat complex test. We create 32 subscribers, fire the event
+    // 32 times and each time it fires, one subscriber will unregister itself from
+    // inside the event call (this is supported). This guarantees the event will
+    // have to switch from stack to heap storage and - most importantly - back,
+    // while it is being fired!
+
     Event<void(int something)> test;
+    Mock mocks[MockCount];
 
-    Mock mock1, mock2;
+    // Subscribe all mocks to the event
+    for(std::size_t index = 0; index < MockCount; ++index) {
+      test.Subscribe<Mock, &Mock::Notify>(&mocks[index]);
+    }
+    for(std::size_t index = 0; index < MockCount; ++index) {
+      EXPECT_EQ(mocks[index].ReceivedNotificationCount, 0);
+      EXPECT_EQ(mocks[index].LastSomethingParameterValue, 0);
+    }
 
-    test.Subscribe<Mock, &Mock::Notify>(&mock1);
-    test.Subscribe<Mock, &Mock::Notify>(&mock2);
+    // Send out notifications, each time telling one mock to unsubscribe itself
+    // during the event call
+    for(std::size_t repetition = 0; repetition < MockCount; ++repetition) {
+      mocks[repetition].ToUnsubscribe = &test;
+      test(static_cast<int>(repetition + 99));
 
-    EXPECT_EQ(mock1.ReceivedNotificationCount, 0);
-    EXPECT_EQ(mock1.LastSomethingParameterValue, 0);
-    EXPECT_EQ(mock2.ReceivedNotificationCount, 0);
-    EXPECT_EQ(mock2.LastSomethingParameterValue, 0);
+      // Check that the outcome is as expected
+      for(std::size_t index = 0; index < MockCount; ++index) {
+        if(index < repetition) { // If this is an unsubscribed mock
+          EXPECT_EQ(mocks[index].ReceivedNotificationCount, index + 1);
+          EXPECT_EQ(
+            mocks[index].LastSomethingParameterValue,
+            static_cast<int>(index + 99)
+          );
+        } else { // It's still subscribed
+          EXPECT_EQ(mocks[index].ReceivedNotificationCount, repetition + 1);
+          EXPECT_EQ(mocks[index].LastSomethingParameterValue, static_cast<int>(repetition + 99));
+        }
+      }
 
-    mock1.ToUnsubscribe = &test;
-
-    test(135);
-
-    EXPECT_EQ(mock1.ReceivedNotificationCount, 1);
-    EXPECT_EQ(mock1.LastSomethingParameterValue, 135);
-    EXPECT_EQ(mock2.ReceivedNotificationCount, 1);
-    EXPECT_EQ(mock2.LastSomethingParameterValue, 135);
-
-    bool wasUnsubscribed = test.Unsubscribe<Mock, &Mock::Notify>(&mock1);
-    EXPECT_FALSE(wasUnsubscribed);
-    wasUnsubscribed = test.Unsubscribe<Mock, &Mock::Notify>(&mock2);
-    EXPECT_TRUE(wasUnsubscribed);
+      // The relevant mock should have been unsubscribed by now
+      bool wasUnsubscribed = test.Unsubscribe<Mock, &Mock::Notify>(&mocks[repetition]);
+      EXPECT_FALSE(wasUnsubscribed);
+    }
   }
 
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, SubscribersCanSubscribeInsideEventCall) {
+    const static std::size_t MockCount = 32;
+
+    // Another somewhat complex test. We create 32 subscribers, fire the event
+    // 32 times and each time it fires, one subscriber will register itself an
+    // additional time from inside the event call (this is supported).
+    // This guarantees the event will have to switch from stack to heap storage,
+    // while it is being fired!
+
+    Event<void(int something)> test;
+    Mock mocks[MockCount];
+
+    // Subscribe all mocks to the event
+    for(std::size_t index = 0; index < MockCount; ++index) {
+      test.Subscribe<Mock, &Mock::Notify>(&mocks[index]);
+    }
+    for(std::size_t index = 0; index < MockCount; ++index) {
+      EXPECT_EQ(mocks[index].ReceivedNotificationCount, 0);
+      EXPECT_EQ(mocks[index].LastSomethingParameterValue, 0);
+    }
+
+    // Send out notifications, each time telling one mock to subscribe itself
+    // an additional time during the event call
+    for(std::size_t repetition = 0; repetition < MockCount; ++repetition) {
+      mocks[repetition].ToSubscribe = &test;
+      test(234);
+
+      // Check that the outcome is as expected
+      for(std::size_t index = 0; index < MockCount; ++index) {
+        if(index <= repetition) { // If this is an unsubscribed mock
+          // Can be this or this + 1, even may or may not invoke subscribers that
+          // are added during event firing in the same firing cycle.
+          std::size_t expectedCallCount = (repetition - index) + repetition + 1;
+          EXPECT_GT(mocks[index].ReceivedNotificationCount, expectedCallCount);
+          EXPECT_LE(mocks[index].ReceivedNotificationCount, expectedCallCount + 1);
+        } else { // It's still subscribed
+          EXPECT_EQ(mocks[index].ReceivedNotificationCount, repetition + 1);
+        }
+      }
+    }
+
+  }
+    
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Events

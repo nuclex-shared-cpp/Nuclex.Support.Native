@@ -182,6 +182,12 @@
     <ClCompile Include="Source\Events\Delegate.cpp">
       <Filter>Source\Events</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Events\EmptyDelegateCallError.cpp">
+      <Filter>Source\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Events\DelegateTests.cpp">
+      <Filter>Tests\Events</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -305,6 +311,9 @@
       <Filter>Source\Text\Erthink</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h">
+      <Filter>Include\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\EmptyDelegateCallError.h">
       <Filter>Include\Events</Filter>
     </ClInclude>
   </ItemGroup>

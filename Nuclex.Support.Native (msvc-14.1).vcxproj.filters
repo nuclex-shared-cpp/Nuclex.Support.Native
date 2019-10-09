@@ -149,6 +149,12 @@
     <ClCompile Include="Source\Text\Dragon4\PrintFloat.cpp">
       <Filter>Source\Text\Dragon4</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Events\Delegate.cpp">
+      <Filter>Source\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Events\EmptyDelegateCallError.cpp">
+      <Filter>Source\Events</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -272,6 +278,9 @@
       <Filter>Source\Text\Erthink</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h">
+      <Filter>Include\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\EmptyDelegateCallError.h">
       <Filter>Include\Events</Filter>
     </ClInclude>
   </ItemGroup>

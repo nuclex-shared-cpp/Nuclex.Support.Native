@@ -57,7 +57,8 @@ namespace Nuclex { namespace Support { namespace Events {
   ///   <para>
   ///     This variant of the event class is not thread safe. The order in which subscribers
   ///     are notified is not defined and may change even between individual calls. Subscribers
-  ///     are allowed to unsubscribe themselves during an event call, but not others. 
+  ///     are allowed to unsubscribe themselves during an event call, but not others. Adding
+  ///     new event subscriptions from within a call is supported, too.
   ///   </para>
   ///   <para>
   ///     An event should be equivalent in size to 5 pointers (depending on the
@@ -148,7 +149,10 @@ namespace Nuclex { namespace Support { namespace Events {
             }
             knownSubscriberCount = this->subscriberCount;
           } else {
+            ++index;
             knownSubscriberCount = this->subscriberCount;
+            // In case more heap memory had to be allocated
+            subscribers = reinterpret_cast<const DelegateType *>(this->heapMemory.Buffer);
           }
         }
 
