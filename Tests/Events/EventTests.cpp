@@ -34,10 +34,10 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Dummy class used to test event subscriptions</summary>
-  class MockedSubscriber {
+  class Mock {
 
     /// <summary>Initializes a new mocked subscriber</summary>
-    public: MockedSubscriber() :
+    public: Mock() :
       ReceivedNotificationCount(0),
       LastSomethingParameterValue(0) {}
 
@@ -48,10 +48,17 @@ namespace {
       ++this->ReceivedNotificationCount;
     }
 
+    /// <summary>Method that can be subscribed to an event for testing</summary>
+    /// <param name="something">Dummy integer value that will be remembered</param>
+    public: void ConstNotify(int something) const {
+      this->LastSomethingParameterValue = something;
+      ++this->ReceivedNotificationCount;
+    }
+
     /// <summary>Number of calls to Notify() the instance has observed</summary>
-    public: std::size_t ReceivedNotificationCount;
+    public: mutable std::size_t ReceivedNotificationCount;
     /// <summary>Value that was last passed to the Notify() method</summary>
-    public: int LastSomethingParameterValue;
+    public: mutable int LastSomethingParameterValue;
 
   };
 
@@ -73,43 +80,143 @@ namespace Nuclex { namespace Support { namespace Events {
 
   TEST(EventTest, FreeFunctionsCanBeSubscribed) {
     Event<void(int something)> test;
-    Delegate<void(int something)> subscriber = (
-      Delegate<void(int something)>::Create<freeFunction>()
-    );
-    test.Subscribe(subscriber);
+    test.Subscribe<freeFunction>();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(EventTest, EventCanHandleManySubscriptions) {
     Event<void(int something)> test;
-    Delegate<void(int something)> subscriber = (
-      Delegate<void(int something)>::Create<freeFunction>()
-    );
-    for(std::size_t index = 0; index < 20; ++index) {
-      test.Subscribe(subscriber);
+    for(std::size_t index = 0; index < 32; ++index) {
+      test.Subscribe<freeFunction>();
     }
   }
 
-#if 0
   // ------------------------------------------------------------------------------------------- //
 
   TEST(EventTest, FreeFunctionsCanBeUnsubscribed) {
     Event<void(int something)> test;
-    test.Subscribe(freeFunction);
-    test.Unsubscribe(freeFunction);
+    test.Subscribe<freeFunction>();
+    
+    bool wasUnsubscribed = test.Unsubscribe<freeFunction>();
+    EXPECT_TRUE(wasUnsubscribed);
+    wasUnsubscribed = test.Unsubscribe<freeFunction>();
+    EXPECT_FALSE(wasUnsubscribed);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(EventTest, MethodsCanBeSubscribed) {
-    using std::placeholders::_1;
-
+  TEST(EventTest, EachSubscriptionRequiresOneUnsubscription) {
     Event<void(int something)> test;
-    MockedSubscriber mock;
-    test.Subscribe(std::bind(&MockedSubscriber::Notify, mock, _1));
+
+    for(std::size_t index = 0; index < 32; ++index) {
+      test.Subscribe<freeFunction>();
+    }
+
+    for(std::size_t index = 0; index < 32; ++index) {
+      bool wasUnsubscribed = test.Unsubscribe<freeFunction>();
+      EXPECT_TRUE(wasUnsubscribed);
+    }
+
+    bool wasUnsubscribed = test.Unsubscribe<freeFunction>();
+    EXPECT_FALSE(wasUnsubscribed);
   }
-#endif
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, ObjectMethodsCanBeSubscribed) {
+    Event<void(int something)> test;
+
+    Mock mock;
+    test.Subscribe<Mock, &Mock::Notify>(&mock);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, ObjectMethodsCanBeUnsubscribed) {
+    Event<void(int something)> test;
+
+    Mock mock;
+    test.Subscribe<Mock, &Mock::Notify>(&mock);
+
+    bool wasUnsubscribed = test.Unsubscribe<Mock, &Mock::Notify>(&mock);
+    EXPECT_TRUE(wasUnsubscribed);
+    wasUnsubscribed = test.Unsubscribe<Mock, &Mock::Notify>(&mock);
+    EXPECT_FALSE(wasUnsubscribed);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, ConstObjectMethodsCanBeSubscribed) {
+    Event<void(int something)> test;
+
+    Mock mock;
+    test.Subscribe<Mock, &Mock::ConstNotify>(&mock);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, ConstObjectMethodsCanBeUnsubscribed) {
+    Event<void(int something)> test;
+
+    Mock mock;
+    test.Subscribe<Mock, &Mock::ConstNotify>(&mock);
+
+    bool wasUnsubscribed = test.Unsubscribe<Mock, &Mock::ConstNotify>(&mock);
+    EXPECT_TRUE(wasUnsubscribed);
+    wasUnsubscribed = test.Unsubscribe<Mock, &Mock::ConstNotify>(&mock);
+    EXPECT_FALSE(wasUnsubscribed);
+  }
+
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, ConstObjectMethodsCanBeSubscribedOnConstInstance) {
+    Event<void(int something)> test;
+
+    const Mock mock;
+    test.Subscribe<Mock, &Mock::ConstNotify>(&mock);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, ConstObjectMethodsCanBeUnsubscribedOnConstInstance) {
+    Event<void(int something)> test;
+
+    const Mock mock;
+    test.Subscribe<Mock, &Mock::ConstNotify>(&mock);
+
+    bool wasUnsubscribed = test.Unsubscribe<Mock, &Mock::ConstNotify>(&mock);
+    EXPECT_TRUE(wasUnsubscribed);
+    wasUnsubscribed = test.Unsubscribe<Mock, &Mock::ConstNotify>(&mock);
+    EXPECT_FALSE(wasUnsubscribed);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, NotificatinsAreSentToSubscribers) {
+    Event<void(int something)> test;
+
+    Mock mock;
+    test.Subscribe<Mock, &Mock::Notify>(&mock);
+
+    EXPECT_EQ(mock.ReceivedNotificationCount, 0);
+    EXPECT_EQ(mock.LastSomethingParameterValue, 0);
+
+    test(135);
+
+    EXPECT_EQ(mock.ReceivedNotificationCount, 1);
+    EXPECT_EQ(mock.LastSomethingParameterValue, 135);
+
+    bool wasUnsubscribed = test.Unsubscribe<Mock, &Mock::Notify>(&mock);
+    EXPECT_TRUE(wasUnsubscribed);
+
+    test(135);
+
+    EXPECT_EQ(mock.ReceivedNotificationCount, 1);
+    EXPECT_EQ(mock.LastSomethingParameterValue, 135);
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Events

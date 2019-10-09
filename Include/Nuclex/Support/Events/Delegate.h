@@ -161,7 +161,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
     /// <summary>Resets the delegate to the specified object method</summary>
     /// <typeparam name="TClass">Class the object method is a member of</typeparam>
-    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <typeparam name="TMethod">Object method that will be called by the delegate</typeparam>
     /// <param name="instance">Instance on which the object method will be called</param>
     public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...)>
     void Reset(TClass *instance) {
@@ -171,7 +171,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
     /// <summary>Resets the delegate to the specified const object method</summary>
     /// <typeparam name="TClass">Class the object method is a member of</typeparam>
-    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <typeparam name="TMethod">Object method that will be called by the delegate</typeparam>
     /// <param name="instance">Instance on which the object method will be called</param>
     public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...) const>
     void Reset(const TClass *instance) {

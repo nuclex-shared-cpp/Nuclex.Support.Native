@@ -42,6 +42,20 @@ namespace Nuclex { namespace Support { namespace Events {
   /// <typeparam name="TArguments">Types of the arguments accepted by the callback</typeparam>
   /// <remarks>
   ///   <para>
+  ///     This is the signal part of a standard signal/slot implementation. The name has been
+  ///     chosen because std::signal already defines the term 'signal' for something entirely
+  ///     different and the term 'event' is at least understood and established in programming
+  ///     for this kind of system (i.e. C#).
+  ///   </para>
+  ///   <para>
+  ///     The design makes a few assumptions on the usage pattern it optimizes. It assumes that
+  ///     events typically have a very small number of subscribers and that events should be
+  ///     as lean as possible (i.e. rather than expose a single big multi-purpose notification,
+  ///     classes would expose multiple granular events to notify about different things).
+  ///     It also assumes that firing will happen much more often and subscribing/unsubscribing,
+  ///     and subscribing is given slightly more performance priority than than unsubscribing.
+  ///   </para>
+  ///   <para>
   ///     An event should be equivalent in size to 5 pointers (depending on the
   ///     value of the <see cref="BuiltInSubscriberCount" /> constant))
   ///   </para>
@@ -51,10 +65,10 @@ namespace Nuclex { namespace Support { namespace Events {
 
     /// <summary>Number of subscribers the event can subscribe withou allocating memory</summary>
     /// <remarks>
-    ///   To reduce complexity, this value is unchangeable. It is the number off subscriber
-    ///   slots that are baked into the event, enabling it to handle a small number of
-    ///   subscribers without allocating heap memory. Each slot takes the size of a delegate,
-    ///   64 bits on a 32 bit system or 128 bits on a 64 bit system.
+    ///   To reduce complexity, this value is baked in and not a template argument. It is
+    ///   the number of subscriber slots that are baked into the event, enabling it to handle
+    ///   a small number of subscribers without allocating heap memory. Each slot takes the size
+    ///   of a delegate, 64 bits on a 32 bit system or 128 bits on a 64 bit system.
     /// </remarks>
     private: const static std::size_t BuiltInSubscriberCount = 2;
 
@@ -62,6 +76,8 @@ namespace Nuclex { namespace Support { namespace Events {
     public: typedef TResult ResultType;
     /// <summary>Method signature for the callbacks notified through this event</summary>
     public: typedef TResult CallType(TArguments...);
+    /// <summary>Type of delegate used to call the event's subscribers</summary>
+    public: typedef Delegate<TResult(TArguments...)> DelegateType;
 
     /// <summary>Type the will be returned by the event itself</summary>
     public: typedef typename std::conditional<
@@ -72,58 +88,67 @@ namespace Nuclex { namespace Support { namespace Events {
     public: Event() :
       subscriberCount(0) {}
 
+    /// <summary>Frees all memory used by the event</summary>
     public: ~Event() {
-      // TODO: Check heap/stack storage
-      // TODO: Call Delegate destructors
+      if(this->subscriberCount > BuiltInSubscriberCount) {
+        delete []this->heapMemory.Buffer;
+      }
     }
+
+    // TODO: Handle unsubscribe during event fire
 
     /// <summary>Fires the event, calling all subscribers and collecting the results</summary>
     /// <param name="arguments">Arguments that will be passed to the event</param>
     /// <returns>
     ///   Nothing if the event's return type is void, a collection of all events results otherwise
     /// </returns>
-    public: EventResultType operator()(TArguments... arguments) {
-      throw -1;
+    public: void operator()(TArguments... arguments) {
+      if(this->subscriberCount <= BuiltInSubscriberCount) {
+        DelegateType *subscribers = reinterpret_cast<DelegateType *>(this->stackMemory);
+        for(std::size_t index = 0; index < this->subscriberCount; ++index) {
+          subscribers[index](arguments...);
+        }
+      } else {
+        DelegateType *subscribers = reinterpret_cast<DelegateType *>(this->heapMemory.Buffer);
+        for(std::size_t index = 0; index < this->subscriberCount; ++index) {
+          subscribers[index](arguments...);
+        }
+      }
     }
 
     //public: template<typename = typename enable_if<std::is_void<TResult>::value>::value, void>::type>
     //void operator(EventResultType &results)() {}
 
-#if 0
-    /// <summary>Resets the delegate to the specified free function</summary>
-    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <summary>Subscribes the specified free function to the event</summary>
+    /// <typeparam name="TMethod">Free function that will be subscribed</typeparam>
     public: template<TResult(*TMethod)(TArguments...)>
     void Subscribe() {
-      auto x = Delegate<void(int something)>::Create<&Event::shit>();
-      //auto x = Delegate<TResult(TArguments...)>::Create<TMethod>();
-      //Subscribe(Delegate<TResult(TArguments...)>::Create<TMethod>());
+      Subscribe(DelegateType::template Create<TMethod>());
     }
 
-    /// <summary>Resets the delegate to the specified object method</summary>
+    /// <summary>Subscribes the specified object method to the event</summary>
     /// <typeparam name="TClass">Class the object method is a member of</typeparam>
-    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <typeparam name="TMethod">Object method that will be subscribed to the event</typeparam>
     /// <param name="instance">Instance on which the object method will be called</param>
     public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...)>
     void Subscribe(TClass *instance) {
-      //Delegate<TResult(TArguments...)>::Create<TClass, TMethod>(instance);
-      //Subscribe(Delegate<TResult(TArguments...)>::Create<TClass, TMethod>(instance));
+      Subscribe(DelegateType::template Create<TClass, TMethod>(instance));
     }
 
-    /// <summary>Resets the delegate to the specified const object method</summary>
+    /// <summary>Subscribes the specified const object method to the event</summary>
     /// <typeparam name="TClass">Class the object method is a member of</typeparam>
-    /// <typeparam name="TMethod">Free function that will be called by the delegate</typeparam>
+    /// <typeparam name="TMethod">Object method that will be subscribed to the event</typeparam>
     /// <param name="instance">Instance on which the object method will be called</param>
     public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...) const>
     void Subscribe(const TClass *instance) {
-      //Subscribe(Delegate<TResult(TArguments...)>::Create<TClass, TMethod>(instance));
+      Subscribe(DelegateType::template Create<TClass, TMethod>(instance));
     }
-#endif
 
     /// <summary>Subscribes the specified delegate to the event</summary>
     /// <param name="delegate">Delegate that will be subscribed</param>
-    public: void Subscribe(const Delegate<TResult(TArguments...)> &delegate) {
+    public: void Subscribe(const DelegateType &delegate) {
       if(this->subscriberCount < BuiltInSubscriberCount) {
-        reinterpret_cast<Delegate<TResult(TArguments...)> *>(this->stackMemory)[
+        reinterpret_cast<DelegateType *>(this->stackMemory)[
           this->subscriberCount
         ] = delegate;
       } else {
@@ -133,12 +158,80 @@ namespace Nuclex { namespace Support { namespace Events {
           growHeapAllocatedList();
         }
 
-        *reinterpret_cast<Delegate<TResult(TArguments...)> *>(this->heapMemory.Buffer) = (
-          delegate
-        );
-        //this->heapMemory.Subscribers[this->subscriberCount] = delegate;
+        reinterpret_cast<DelegateType *>(this->heapMemory.Buffer)[
+          this->subscriberCount
+        ] = delegate;
       }
+
       ++this->subscriberCount;
+    }
+
+    /// <summary>Unsubscribes the specified free function from the event</summary>
+    /// <typeparam name="TMethod">
+    ///   Free function that will be unsubscribed from the event
+    /// </typeparam>
+    /// <returns>True if the object method was subscribed and has been unsubscribed</returns>
+    public: template<TResult(*TMethod)(TArguments...)>
+    bool Unsubscribe() {
+      return Unsubscribe(DelegateType::template Create<TMethod>());
+    }
+
+    /// <summary>Unsubscribes the specified object method from the event</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">
+    ///   Object method that will be unsubscribes from the event
+    /// </typeparam>
+    /// <param name="instance">Instance on which the object method was subscribed</param>
+    /// <returns>True if the object method was subscribed and has been unsubscribed</returns>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...)>
+    bool Unsubscribe(TClass *instance) {
+      return Unsubscribe(DelegateType::template Create<TClass, TMethod>(instance));
+    }
+
+    /// <summary>Unsubscribes the specified object method from the event</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">
+    ///   Object method that will be unsubscribes from the event
+    /// </typeparam>
+    /// <param name="instance">Instance on which the object method was subscribed</param>
+    /// <returns>True if the object method was subscribed and has been unsubscribed</returns>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...) const>
+    bool Unsubscribe(const TClass *instance) {
+      return Unsubscribe(DelegateType::template Create<TClass, TMethod>(instance));
+    }
+
+    /// <summary>Unsubscribes the specified delegate from the event</summary>
+    /// <param name="delegate">Delegate that will be unsubscribed</param>
+    /// <returns>True if the callback was found and unsubscribed, false otherwise</returns>
+    public: bool Unsubscribe(const DelegateType &delegate) {
+      if(this->subscriberCount <= BuiltInSubscriberCount) {
+        DelegateType *subscribers = reinterpret_cast<DelegateType *>(this->stackMemory);
+        for(std::size_t index = 0; index < this->subscriberCount; ++index) {
+          if(subscribers[index] == delegate) {
+            std::size_t lastSubscriberIndex = this->subscriberCount - 1;
+            subscribers[index] = subscribers[lastSubscriberIndex];
+            --this->subscriberCount;
+            return true;
+          }
+        }
+      } else {
+        DelegateType *subscribers = reinterpret_cast<DelegateType *>(this->heapMemory.Buffer);
+        for(std::size_t index = 0; index < this->subscriberCount; ++index) {
+          if(subscribers[index] == delegate) {
+            std::size_t lastSubscriberIndex = this->subscriberCount - 1;
+            subscribers[index] = subscribers[lastSubscriberIndex];
+            --this->subscriberCount;
+
+            if(this->subscriberCount <= BuiltInSubscriberCount) {
+              convertFromHeapToStackAllocated();
+            }
+
+            return true;
+          }
+        }
+      }
+
+      return false;
     }
 
     /// <summary>Switches the event from stack-stored subscribers to heap-stored</summary>
@@ -149,15 +242,15 @@ namespace Nuclex { namespace Support { namespace Events {
     ///   for the event to know whether to assume heap storage or stack storage).
     /// </remarks>
     private: void convertFromStackToHeapAllocation() {
-      std::size_t initialCapacity = this->subscriberCount * 4;
-
+      const static std::size_t initialCapacity = BuiltInSubscriberCount * 8;
       std::uint8_t *initialBuffer = new std::uint8_t[
-        sizeof(Delegate<TResult(TArguments...)>[2]) * (initialCapacity / 2)
+        sizeof(DelegateType[2]) * initialCapacity / 2
       ];
+
       std::copy_n(
-        reinterpret_cast<Delegate<TResult(TArguments...)> *>(this->stackMemory),
-        this->subscriberCount,
-        reinterpret_cast<Delegate<TResult(TArguments...)> *>(initialBuffer)
+        this->stackMemory,
+        sizeof(DelegateType[2]) * BuiltInSubscriberCount / 2,
+        initialBuffer
       );
 
       this->heapMemory.ReservedSubscriberCount = initialCapacity;
@@ -167,14 +260,14 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Increases the size of the heap-allocated list of event subscribers</summary>
     private: void growHeapAllocatedList() {
       std::size_t newCapacity = this->heapMemory.ReservedSubscriberCount * 2;
-
       std::uint8_t *newBuffer = new std::uint8_t[
-        sizeof(Delegate<TResult(TArguments...)>[2]) * (newCapacity / 2)
+        sizeof(DelegateType[2]) * newCapacity / 2
       ];
+
       std::copy_n(
-        reinterpret_cast<Delegate<TResult(TArguments...)> *>(this->heapMemory.Buffer),
-        this->subscriberCount,
-        reinterpret_cast<Delegate<TResult(TArguments...)> *>(newBuffer)
+        this->heapMemory.Buffer,
+        sizeof(DelegateType[2]) * this->subscriberCount / 2,
+        newBuffer
       );
 
       std::swap(this->heapMemory.Buffer, newBuffer);
@@ -190,7 +283,15 @@ namespace Nuclex { namespace Support { namespace Events {
     ///   know whether to assume heap storage or stack storage).
     /// </remarks>
     private: void convertFromHeapToStackAllocated() {
-      throw "TODO";
+      std::uint8_t *oldBuffer = this->heapMemory.Buffer;
+
+      std::copy_n(
+        oldBuffer,
+        sizeof(DelegateType[2]) * BuiltInSubscriberCount / 2,
+        this->stackMemory
+      );
+
+      delete []oldBuffer;
     }
 
     /// <summary>Information about subscribers if the list is moved to the heap</summary>
@@ -208,9 +309,7 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Stores the first n subscribers inside the event's own memory</summary>
     private: union {
       HeapAllocatedSubscribers heapMemory;
-      std::uint8_t stackMemory[
-        sizeof(Delegate<TResult(TArguments...)>[BuiltInSubscriberCount])
-      ];
+      std::uint8_t stackMemory[sizeof(DelegateType[BuiltInSubscriberCount])];
     };
 
   };
@@ -220,237 +319,3 @@ namespace Nuclex { namespace Support { namespace Events {
 }}} // namespace Nuclex::Support::Events
 
 #endif // NUCLEX_SUPPORT_EVENTS_EVENT_H
-
-#if 0
-
-class EventSubscriber {
-  
-  private: class Subscription {
-    public: virtual ~Subscription() {}
-    public: virtual void Disconnect() = 0;
-    //public: 
-  };
-
-
-};
-
-class Event {
-  
-};
-
-void mooh(int x) {}
-class cow {
-  public: void mooh(int x) {}
-};
-
-/*
-class EventSubscription {
-  public: ~EventSubscription() {}
-  public: void 
-};
-*/
-
-template<typename TArgument1>
-class Event1 {
-
-  #pragma region class Subscription
-
-  /// <summary>Stores a function or method pointer for an event subscription</summary>
-  private: class Subscription {
-
-    /// <summary>Initializes a new event subscription</summary>
-    /// <param name="event">Event that owns the subscription</summary>
-    /// <param name="functionType">Type of the function the subscription calls</param>
-    public: Subscription(Event1 *event, const std::type_info &functionType) :
-      Event(event),
-      FunctionType(functionType) {}
-
-    /// <summary>Frees all memory used by the event subscription</summary>
-    public: virtual ~Subscription() {}
-
-    /// <summary>Calls the subscribed method</summary>
-    /// <param name="argument1">First argument that will be passed to the subscriber</param>
-    public: virtual void Call(TArgument1 argument1) = 0;
-
-    /// <summary>Type of function or member function that is subscribed</summary>
-    public: const std::type_info &FunctionType;
-    /// <summary>Event this subscription belongs to</summary>
-    protected: Event1 *Event;
-
-  };
-
-  #pragma endregion // class Subscription
-
-  #pragma region class MemberFunctionSubscription
-  
-  /// <summary>Stores an object method pointer for an event subscription</summary>
-  private: template<typename TSubscriber>
-  class MemberFunctionSubscription : public Subscription {
-
-    /// <summary>Initializes a new object method event subscription</summary>
-    /// <param name="event">Event that owns the subscription</summary>
-    /// <param name="subscriber">Subscribing object the method will be called on</param>
-    /// <param name="method">Method that will be called when the event fires</param>
-    public: MemberFunctionSubscription(
-      Event1 *event, TSubscriber *subscriber, void (TSubscriber::*method)(TArgument1)
-    ) :
-      Subscription(event, typeid(method)),
-      Subscriber(subscriber),
-      Method(method),
-      subscriberForDisconnect(nullptr) {
-      registerAutomaticDisconnect(subscriber);
-    }
-
-    /// <summary>Frees all memory used by the event subscription</summary>
-    public: virtual ~MemberFunctionSubscription() {}
-
-    /// <summary>Calls the subscribed object method</summary>
-    /// <param name="argument1">First argument that will be passed to the subscriber</param>
-    public: virtual void Call(TArgument1 argument1) {
-      ((this->Subscriber)->*Method)(argument1);
-    }
-
-    
-    public: virtual bool IsCalling(void *function) const { return false; }
-
-    /// <summary>Dummy method for when automatic disconnects are not supported</summary>
-    private: void registerAutomaticDisconnect(void *) {}
-
-    /// <sumamry>Registers the event subscriber for automatic disconnection</summary>
-    /// <param name="subscriberForDisconnect">Event subscriber to notify on disconnect</param>
-    private: void registerAutomaticDisconnect(EventSubscriber *subscriberForDisconnect) {
-      this->subscriberForDisconnect = subscriberForDisconnect;
-    }
-
-    /// <summary>Subscriber on which the object method will be invoked</summary>
-    public: TSubscriber *Subscriber;
-    /// <summary>Method that will be invoked on the subscriber</summary>
-    public: void (TSubscriber::*Method)(TArgument1);
-    /// <summary>Subscriber to use for automatic disconnects</summary>
-    private: EventSubscriber *subscriberForDisconnect;
-
-  };
-
-  #pragma endregion // class MemberFunctionSubscription
-
-  #pragma region class FunctionSubscription
-
-  /// <summary>Stores an free function pointer for an event subscription</summary>
-  public: class FunctionSubscription {
-
-    /// <summary>Initializes a new free function event subscription</summary>
-    /// <param name="event">Event that owns the subscription</summary>
-    /// <param name="function">Function that will be called when the event fires</param>
-    public: FunctionSubscription(Event1 *event, void (*function)(TArgument1)) :
-      Subscription(Event1 *event, typeid(function)),
-      function(function) {}
-
-    /// <summary>Frees all memory used by the event subscription</summary>
-    public: virtual ~FunctionSubscription() {}
-
-    /// <summary>Calls the subscribed function</summary>
-    /// <param name="argument1">First argument that will be passed to the subscriber</param>
-    public: virtual void Call(TArgument1 argument1) {
-      (this->*function)(argument1);
-    }
-
-    /// <summary>Function that will be invoked on the subscriber</summary>
-    private: void (*function)(TArgument1);
-
-  };
-
-  #pragma endregion // class FunctionSubscription
-
-  public: template<typename TSubscriber> void Connect(
-    TSubscriber *subscriber, void (TSubscriber::*method)(TArgument1)
-  ) {
-    this->subscriptions.push_back(
-      new MemberFunctionSubscription<TSubscriber>(this, subscriber, method)
-    );
-  }
-
-  public: void Connect(void (*method)(TArgument1)) {
-    
-  }
-
-  public: template<typename TSubscriber> void Disconnect(
-    TSubscriber *subscriber,
-    void (TSubscriber::*method)(TArgument1)
-  ) {
-    const std::type_info &methodType = typeid(method);
-
-    for(std::size_t index = 0; index < this->subscriptions.size(); ++index) {
-      
-      if(this->subscriptions[index]->FunctionType == methodType) {
-         MemberFunctionSubscription<TSubscriber> *subscription =
-           static_cast<MemberFunctionSubscription<TSubscriber> *>(this->subscriptions[index]);
-
-         bool isEqual =
-           (subscription->Subscriber == subscriber) &&
-           (subscription->Method == method);
-         
-      }
-    }
-    //void *methodAsVoid = method;
-      //const std::type_info *type = typeof(method);
-
-  }
-
-  /// <summary>Retrieves the index of the specified member function subscription</summary>
-  /// <param name="subscriber">Object that subscribed a member function</param>
-  /// <param name="method">Object method whose subscription will be found</param>
-  /// <returns>The index of the object method's subscription or -1 if not found</returns>
-  private: template<typename TSubscriber> std::size_t find(
-    TSubscriber *subscriber, void (TSubscriber::*method)(TArgument1)
-  ) {
-    const std::type_info &methodType = typeid(method);
-
-    for(std::size_t index = 0; index < this->subscriptions.size(); ++index) {
-      if(this->subscriptions[index]->FunctionType == methodType) {
-        MemberFunctionSubscription<TSubscriber> *subscription =
-          static_cast<MemberFunctionSubscription<TSubscriber> *>(this->subscriptions[index]);
-
-        bool isEqual =
-          (subscription->Subscriber == subscriber) &&
-          (subscription->Method == method);
-
-        if(isEqual) {
-          return index;
-        }
-      }
-
-      return static_cast<std::size_t>(-1);
-    }
-    //void *methodAsVoid = method;
-      //const std::type_info *type = typeof(method);
-
-  }
-
-  /// <summary>Calls all event subscribers</summary>
-  /// <param name="argument">First argument that will be passed to the subscribers</param>
-  public: void Call(TArgument1 argument1) {
-    for(std::size_t index = 0; index < this->subscriptions.size(); ++index) {
-      this->subscriptions[index]->Call(argument1);
-    }
-  }
-
-  /// <summary>Stores all subscribers of the event</summary>
-  private: std::vector<Subscription *> subscriptions;
-
-};
-
-void test() {
-  std::function<void(int)> fn(&mooh);
-  std::function<void(cow *, int)> fn2(&cow::mooh);
-  cow c;
-  fn2(&c, 123);
-
-  Event1<int> e;
-  e.Connect(&c, &cow::mooh);
-  e.Call(123);
-  e.Disconnect(&c, &cow::mooh);
-  
-  
-}
-
-#endif
