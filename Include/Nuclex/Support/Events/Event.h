@@ -64,6 +64,37 @@ namespace Nuclex { namespace Support { namespace Events {
   ///     An event should be equivalent in size to 5 pointers (depending on the
   ///     value of the <see cref="BuiltInSubscriberCount" /> constant))
   ///   </para>
+  ///   <para>
+  ///     Usage example:
+  ///   </para>
+  ///   <para>
+  ///     <code>
+  ///       int Dummy(int first, std::string second) { return 123; }
+  ///
+  ///       class Mock {
+  ///         public: iunt Dummy(int first, std::string second) { return 456; }
+  ///       };
+  ///
+  ///       int main() {
+  ///         typedef Event&lt;int(int foo, std::string bar)&gt; FooBarEvent;
+  ///
+  ///         FooBarEvent test;
+  ///
+  ///         // Subscribe the dummy function
+  ///         test.Subscribe&lt;Dummy&gt;();
+  ///
+  ///         // Subscribe an object method
+  ///         Mock myMock;
+  ///         test.Subscribe&lt;Mock, &Mock::Dummy&gt;(&amp;myMock);
+  ///
+  ///         // Fire the event
+  ///         std::vector&lt;int&gt; returnedValues = test(123, &quot;Hello&quot;);
+  ///
+  ///         // Fire the event again and discard all returned values
+  ///         test.Emit(123, &quot;Hello&quot;);
+  ///       }
+  ///     </code>
+  ///   </para>
   /// </remarks>
   template<typename TResult, typename... TArguments>
   class Event<TResult(TArguments...)> {
@@ -84,11 +115,6 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Type of delegate used to call the event's subscribers</summary>
     public: typedef Delegate<TResult(TArguments...)> DelegateType;
 
-    /// <summary>Type the will be returned by the event itself</summary>
-    public: typedef typename std::conditional<
-      std::is_void<TResult>::value, std::vector<TResult>, void
-    >::type EventResultType;
-
     /// <summary>Initializes a new event</summary>
     public: Event() :
       subscriberCount(0) {}
@@ -100,12 +126,41 @@ namespace Nuclex { namespace Support { namespace Events {
       }
     }
 
-    /// <summary>Fires the event, calling all subscribers and collecting the results</summary>
+    /// <summary>Calls all subscribers of the event and collects their return values</summary>
     /// <param name="arguments">Arguments that will be passed to the event</param>
-    /// <returns>
-    ///   Nothing if the event's return type is void, a collection of all events results otherwise
-    /// </returns>
-    public: void operator()(TArguments... arguments) const {
+    /// <returns>An list of the values returned by the event subscribers</returns>
+    /// <remarks>
+    ///   This overload is enabled if the event signature returns anything other than 'void' 
+    /// </remarks>
+    public: template<typename T = TResult>
+    typename std::enable_if<
+      !std::is_void<T>::value, std::vector<TResult>
+    >::type operator()(TArguments&&... arguments) const {
+      std::vector<TResult> results;
+      results.reserve(this->subscriberCount);
+      EmitAndCollect(std::back_inserter(results), std::forward<TArguments>(arguments)...);
+      return results;
+    }
+
+    /// <summary>Calls all subscribers of the event</summary>
+    /// <param name="arguments">Arguments that will be passed to the event</param>
+    /// <remarks>
+    ///   This overload is enabled if the event signature has the return type 'void' 
+    /// </remarks>
+    public: template<typename T = TResult>
+    typename std::enable_if<
+      std::is_void<T>::value, void
+    >::type operator()(TArguments&&... arguments) const {
+      Emit(std::forward<TArguments>(arguments)...);
+    }
+
+    /// <summary>Calls all subscribers of the event and collects their return values</summary>
+    /// <param name="results">
+    ///   Output iterator into which the subscribers' return values will be written
+    /// </param>
+    /// <param name="arguments">Arguments that will be passed to the event</param>
+    public: template<typename TOutputIterator>
+    void EmitAndCollect(TOutputIterator results, TArguments&&... arguments) const {
       std::size_t knownSubscriberCount = this->subscriberCount;
 
       const DelegateType *subscribers;
@@ -116,7 +171,8 @@ namespace Nuclex { namespace Support { namespace Events {
         ProcessStackSubscribers:
         subscribers = reinterpret_cast<const DelegateType *>(this->stackMemory);
         while(index < knownSubscriberCount) {
-          subscribers[index](arguments...);
+          *results = subscribers[index](std::forward<TArguments>(arguments)...);
+          ++results;
           if(this->subscriberCount == knownSubscriberCount) {
             ++index; // Only increment if the current callback wasn't unsubscribed
           } else if(this->subscriberCount > knownSubscriberCount) {
@@ -139,7 +195,8 @@ namespace Nuclex { namespace Support { namespace Events {
         ProcessHeapSubscribers:
         subscribers = reinterpret_cast<const DelegateType *>(this->heapMemory.Buffer);
         while(index < knownSubscriberCount) {
-          subscribers[index](arguments...);
+          *results = subscribers[index](std::forward<TArguments>(arguments)...);
+          ++results;
           if(this->subscriberCount == knownSubscriberCount) {
             ++index; // Only increment if the current callback wasn't unsubscribed
           } else if(this->subscriberCount < knownSubscriberCount) {
@@ -160,8 +217,62 @@ namespace Nuclex { namespace Support { namespace Events {
       }
     }
 
-    //public: template<typename = typename enable_if<std::is_void<TResult>::value>::value, void>::type>
-    //void operator(EventResultType &results)() {}
+    /// <summary>Calls all subscribers of the event and discards their return values</summary>
+    /// <param name="arguments">Arguments that will be passed to the event</param>
+    public: void Emit(TArguments... arguments) const {
+      std::size_t knownSubscriberCount = this->subscriberCount;
+
+      const DelegateType *subscribers;
+      std::size_t index = 0;
+
+      // Is the subscriber list currently on the stack?
+      if(knownSubscriberCount <= BuiltInSubscriberCount) {
+        ProcessStackSubscribers:
+        subscribers = reinterpret_cast<const DelegateType *>(this->stackMemory);
+        while(index < knownSubscriberCount) {
+          subscribers[index](std::forward<TArguments>(arguments)...);
+          if(this->subscriberCount == knownSubscriberCount) {
+            ++index; // Only increment if the current callback wasn't unsubscribed
+          } else if(this->subscriberCount > knownSubscriberCount) {
+            ++index;
+            if(knownSubscriberCount > BuiltInSubscriberCount) {
+              knownSubscriberCount = this->subscriberCount;
+              goto ProcessHeapSubscribers;
+            }
+            knownSubscriberCount = this->subscriberCount;
+          } else {
+            knownSubscriberCount = this->subscriberCount;
+          }
+        }
+
+        return;
+      }
+
+      // The subscriber list is currently on the heap
+      {
+        ProcessHeapSubscribers:
+        subscribers = reinterpret_cast<const DelegateType *>(this->heapMemory.Buffer);
+        while(index < knownSubscriberCount) {
+          subscribers[index](std::forward<TArguments>(arguments)...);
+          if(this->subscriberCount == knownSubscriberCount) {
+            ++index; // Only increment if the current callback wasn't unsubscribed
+          } else if(this->subscriberCount < knownSubscriberCount) {
+            if(knownSubscriberCount <= BuiltInSubscriberCount) {
+              knownSubscriberCount = this->subscriberCount;
+              goto ProcessStackSubscribers;
+            }
+            knownSubscriberCount = this->subscriberCount;
+          } else {
+            ++index;
+            knownSubscriberCount = this->subscriberCount;
+            // In case more heap memory had to be allocated
+            subscribers = reinterpret_cast<const DelegateType *>(this->heapMemory.Buffer);
+          }
+        }
+
+        return;
+      }
+    }
 
     /// <summary>Subscribes the specified free function to the event</summary>
     /// <typeparam name="TMethod">Free function that will be subscribed</typeparam>

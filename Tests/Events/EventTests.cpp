@@ -33,6 +33,11 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Free function that returns an integral value for testing</summary>
+  int getSenseOfLife() { return 42; }
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Dummy class used to test event subscriptions</summary>
   class Mock {
 
@@ -71,14 +76,14 @@ namespace {
     /// <summary>Value that was last passed to the Notify() method</summary>
     public: mutable int LastSomethingParameterValue;
 
-    /// <summary>When set, unsubscribes the Notify() method from the event call</summary>
+    /// <summary>When set, unsubscribes the Notify() method inside the event call</summary>
     /// <remarks>
     ///   Event subscribers are allowd to unsubscribe themselves from within the
     ///   notification callback. This is used to test that scenario.
     /// </remarks>
     public: Nuclex::Support::Events::Event<void(int something)> *ToUnsubscribe;
 
-    /// <summary>When set, subscribes the Notify() method from the event call</summary>
+    /// <summary>When set, subscribes the Notify() method inside the event call</summary>
     /// <remarks>
     ///   Event subscribers are allowd to subscribe themselves or others from within
     ///   the notification callback. This is used to test that scenario.
@@ -86,7 +91,6 @@ namespace {
     public: Nuclex::Support::Events::Event<void(int something)> *ToSubscribe;
 
   };
-
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -336,7 +340,82 @@ namespace Nuclex { namespace Support { namespace Events {
     }
 
   }
-    
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, ValuesReturnedBySubscribersAreCollected) {
+    const static std::size_t SubscriberCount = 16;
+
+    Event<int()> test;
+
+    // Subscribe a bunch of callbacks to the event
+    for(std::size_t index = 0; index < SubscriberCount; ++index) {
+      test.Subscribe<getSenseOfLife>();
+    }
+
+    // Fire the event and collect the results
+    std::vector<int> results = test();
+
+    ASSERT_EQ(results.size(), SubscriberCount);
+    for(std::size_t index = 0; index < SubscriberCount; ++index) {
+      EXPECT_EQ(results[index], getSenseOfLife());
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, SubscriberReturnValuesCanBeDiscarded) {
+    const static std::size_t SubscriberCount = 16;
+
+    Event<int()> test;
+
+    // Subscribe a bunch of callbacks to the event
+    for(std::size_t index = 0; index < SubscriberCount; ++index) {
+      test.Subscribe<getSenseOfLife>();
+    }
+
+    // EmitAndCollect() stores return values, Emit() directly throws them away
+    test.Emit();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, ReturnValueListIsEmptyWithoutSubscribers) {
+    const static std::size_t SubscriberCount = 16;
+
+    Event<int()> test;
+
+    std::vector<int> results = test();
+
+    EXPECT_EQ(results.size(), 0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EventTest, SubscriberReturnValuesCanBeCollectedWithoutAllocating) {
+    const static std::size_t SubscriberCount = 16;
+
+    // Vector into which the return values are written. This could be reused
+    // from call to call, thus eliminating a heap allocation to provide the results.
+    std::vector<int> results;
+    results.reserve(SubscriberCount);
+
+    Event<int()> test;
+
+    // Subscribe a bunch of callbacks to the event
+    for(std::size_t index = 0; index < SubscriberCount; ++index) {
+      test.Subscribe<getSenseOfLife>();
+    }
+
+    // First argument to EmitAndCollect() is an output iterator
+    test.EmitAndCollect(std::back_inserter(results));
+
+    ASSERT_EQ(results.size(), SubscriberCount);
+    for(std::size_t index = 0; index < SubscriberCount; ++index) {
+      EXPECT_EQ(results[index], getSenseOfLife());
+    }
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Events

@@ -57,6 +57,35 @@ namespace Nuclex { namespace Support { namespace Events {
   ///   <para>
   ///     A delegate should be equivalent in size to two pointers.
   ///   </para>
+  ///   <para>
+  ///     Usage example:
+  ///   </para>
+  ///   <para>
+  ///     <code>
+  ///       void Dummy(int first, std::string second) {}
+  ///
+  ///       class Mock {
+  ///         public: void Dummy(int first, std::string second) {}
+  ///       };
+  ///
+  ///       int main() {
+  ///         typedef Delegate&lt;void(int foo, std::string bar)&gt; FooBarDelegate;
+  ///
+  ///         // Create a delegate
+  ///         FooBarDelegate test = FooBarDelegate::Create&lt;Dummy&gt;();
+  ///
+  ///         // Call the function the delegate is set to
+  ///         test(123, "Hello");
+  ///
+  ///         // Point the delegate to an object method (could use Reset() here, too)
+  ///         Mock myMock;
+  ///         test = FooBarDelegate::Create&lt;Mock, &Mock::Dummy&gt;(&amp;myMock);
+  ///
+  ///         // Call the object method the delegate is set to
+  ///         test(123, &quot;Hello&quot;);
+  ///       }
+  ///     </code>
+  ///   </para>
   /// </remarks>
   template<typename TResult, typename... TArguments>
   class Delegate<TResult(TArguments...)> {
@@ -140,7 +169,7 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <param name="arguments">Arguments as defined by the call signature</param>
     /// <returns>The value returned by the called delegate, if any</returns>
     public: TResult operator()(TArguments... arguments) const {
-      return (this->*method)(arguments...);
+      return (this->*method)(std::forward<TArguments>(arguments)...);
     }
 
     /// <summary>Resets the delegate to an empty value</summary>
@@ -277,7 +306,7 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <typeparam name="TFreeFunction">Function that will be invoked</typeparam>
     private: template<TResult(*TFreeFunction)(TArguments...)>
     TResult callFreeFunction(TArguments... arguments) const {
-      return (TFreeFunction)(arguments...);
+      return (TFreeFunction)(std::forward<TArguments>(arguments)...);
     }
 
     /// <summary>Call wrapper that invokes a free function</summary>
@@ -286,7 +315,7 @@ namespace Nuclex { namespace Support { namespace Events {
     private: template<typename TClass, TResult(TClass::*TObjectMethod)(TArguments...)>
     TResult callObjectMethod(TArguments... arguments) const {
       TClass *typedInstance = reinterpret_cast<TClass *>(this->instance);
-      return (typedInstance->*TObjectMethod)(arguments...);
+      return (typedInstance->*TObjectMethod)(std::forward<TArguments>(arguments)...);
     }
 
     /// <summary>Call wrapper that invokes a free function</summary>
@@ -297,7 +326,7 @@ namespace Nuclex { namespace Support { namespace Events {
       const TClass *typedInstance = reinterpret_cast<const TClass *>(
         const_cast<const void *>(this->instance)
       );
-      return (typedInstance->*TObjectMethod)(arguments...);
+      return (typedInstance->*TObjectMethod)(std::forward<TArguments>(arguments)...);
     }
 
 #if _DEBUG

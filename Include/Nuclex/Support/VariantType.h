@@ -23,6 +23,8 @@ License along with this library
 
 namespace Nuclex { namespace Support {
 
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Different types that can be stored in a variant</summary>
   enum class VariantType {
 
@@ -60,6 +62,8 @@ namespace Nuclex { namespace Support {
     VoidPointer = 15
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
 
 }} // namespace Nuclex::Support
 
