@@ -371,17 +371,27 @@ namespace Nuclex { namespace Support { namespace Events {
         }
       } else {
         DelegateType *subscribers = reinterpret_cast<DelegateType *>(this->heapMemory.Buffer);
-        for(std::size_t index = 0; index < this->subscriberCount; ++index) {
-          if(subscribers[index] == delegate) {
-            std::size_t lastSubscriberIndex = this->subscriberCount - 1;
-            subscribers[index] = subscribers[lastSubscriberIndex];
-            --this->subscriberCount;
+        std::size_t lastSubscriberIndex = this->subscriberCount;
+        if(lastSubscriberIndex > 0) {
+          --lastSubscriberIndex;
 
+          // Tiny optimization. Often the removed event is the last one registered
+          if(subscribers[lastSubscriberIndex] == delegate) {
+            --this->subscriberCount;
             if(this->subscriberCount <= BuiltInSubscriberCount) {
               convertFromHeapToStackAllocated();
             }
-
             return true;
+          }
+          for(std::size_t index = 0; index < lastSubscriberIndex; ++index) {
+            if(subscribers[index] == delegate) {
+              subscribers[index] = subscribers[lastSubscriberIndex];
+              --this->subscriberCount;
+              if(this->subscriberCount <= BuiltInSubscriberCount) {
+                convertFromHeapToStackAllocated();
+              }
+              return true;
+            }
           }
         }
       }
