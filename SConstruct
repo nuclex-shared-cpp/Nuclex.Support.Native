@@ -12,8 +12,8 @@ nuclex = importlib.import_module('nuclex')
 
 # Standard C/C++ build environment with Nuclex extension methods
 common_environment = nuclex.create_cplusplus_environment()
-common_environment['ENV'] = os.environ
-common_environment['CXX'] = 'clang++'
+#common_environment['ENV'] = os.environ
+#common_environment['CXX'] = 'clang++'
 
 # Compile the main library
 library_environment = common_environment.Clone()
