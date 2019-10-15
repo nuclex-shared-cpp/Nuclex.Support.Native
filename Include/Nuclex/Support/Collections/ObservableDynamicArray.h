@@ -18,11 +18,12 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_COLLECTIONS_DYNAMICARRAY_H
-#define NUCLEX_SUPPORT_COLLECTIONS_DYNAMICARRAY_H
+#ifndef NUCLEX_SUPPORT_COLLECTIONS_OBSERVABLEDYNAMICARRAY_H
+#define NUCLEX_SUPPORT_COLLECTIONS_OBSERVABLEDYNAMICARRAY_H
 
-#include "Nuclex/Support/Config.h"
-#include "Nuclex/Support/Collections/IndexedCollection.h"
+#include "IndexedCollection.h"
+#include "ObservableCollection.h"
+#include "ObservableIndexedCollection.h"
 
 #include <vector>
 
@@ -30,25 +31,19 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>
-  ///   Simple dynamic array exposed under the <see cref="IndexedCollection"> interface
-  /// </summary>
-  /// <remarks>
-  ///   Use std::vector&lt;&gt; directly for library-internal data. This wrapper is intended
-  ///   for when you want to expose a collection of items across DLL boundaries or if you
-  ///   need to hide the actual container used from a public interface in order to stay
-  ///   flexible in its implementation.
-  /// </remarks>
   template<typename TValue>
-  class DynamicArray : public IndexedCollection<TValue> {
+  class ObservableDynamicArray :
+    public IndexedCollection<TValue>,
+    public virtual ObservableCollection<TValue>,
+    public virtual ObservableIndexedCollection<TValue> {
 
     public: using IndexedCollection<TValue>::InvalidIndex;
 
     /// <summary>Initializes a new dynamic array</summary>
-    public: DynamicArray() = default;
+    public: ObservableDynamicArray() = default;
 
     /// <summary>Frees all memory used by the collection</summary>
-    public: virtual ~DynamicArray() = default;
+    public: virtual ~ObservableDynamicArray() = default;
 
     /// <summary>Initializes a dynamic array reserving memory up-front</summary>
     /// <param name="capacity">Capacity for which memory will be reserved</param>
@@ -172,4 +167,4 @@ namespace Nuclex { namespace Support { namespace Collections {
 
 }}} // namespace Nuclex::Support::Collections
 
-#endif // NUCLEX_SUPPORT_COLLECTIONS_DYNAMICARRAY_H
+#endif // NUCLEX_SUPPORT_COLLECTIONS_OBSERVABLEDYNAMICARRAY_H

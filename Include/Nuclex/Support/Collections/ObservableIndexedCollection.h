@@ -21,6 +21,9 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_OBSERVABLEINDEXEDCOLLECTION_H
 #define NUCLEX_SUPPORT_COLLECTIONS_OBSERVABLEINDEXEDCOLLECTION_H
 
+#include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Events/Event.h"
+
 #include <cstdlib>
 
 namespace Nuclex { namespace Support { namespace Collections {
@@ -37,19 +40,33 @@ namespace Nuclex { namespace Support { namespace Collections {
   template<typename TValue>
   class ObservableIndexedCollection {
 
-    // public: mutable Event ItemAdded(std::size_t index, const TValue &value);
-    // public: mutable Event ItemRemoved(std::size_t index, const TValue &value);
+    /// <summary>Fired when an item has been added to the collection</summary>
+    /// <param name="index">Index at which the item has been added</param>
+    /// <param name="value">Item that has been added to the collection</param>
+    public: mutable Events::Event<
+      void(std::size_t index, const TValue &value)
+    > ItemAdded;
+
+    /// <summary>Fired when an item has been removed from the collection</summary>
+    /// <param name="index">Index at which the item has been removed</param>
+    /// <param name="value">Item that has been removed from the collection</param>
+    public: mutable Events::Event<
+      void(std::size_t index, const TValue &value)
+    > ItemRemoved;
+
     // public: mutable Event ItemReplaced(std::size_t index, const TValue &previousValue);
     // public: mutable Event Clearing();
     // public: mutable Event Cleared();
 
+    /// <summary>Initializes a new observable indexed collection</summary>
+    protected: ObservableIndexedCollection() = default;
     /// <summary>Frees all memory used by the observable collection</summary>
-    public: virtual ~ObservableIndexedCollection() {}
+    public: virtual ~ObservableIndexedCollection() = default;
 
-    private: ObservableIndexedCollection(const ObservableIndexedCollection &) = delete;
-    private: ObservableIndexedCollection &operator =(
-      const ObservableIndexedCollection &
-    ) = delete;
+    //private: ObservableIndexedCollection(const ObservableIndexedCollection &) = delete;
+    //private: ObservableIndexedCollection &operator =(
+    //  const ObservableIndexedCollection &
+    //) = delete;
 
   };
 

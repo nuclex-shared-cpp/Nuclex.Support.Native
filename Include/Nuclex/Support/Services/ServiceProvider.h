@@ -21,8 +21,8 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_SERVICES_SERVICEPROVIDER_H
 #define NUCLEX_SUPPORT_SERVICES_SERVICEPROVIDER_H
 
-#include "../Config.h"
-#include "../Any.h"
+#include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Any.h"
 
 #include <memory>
 
@@ -39,7 +39,7 @@ namespace Nuclex { namespace Support { namespace Services {
   class ServiceProvider {
 
     /// <summary>Destroys the service provider and frees all resources</summary>
-    public: NUCLEX_SUPPORT_API virtual ~ServiceProvider() {}
+    public: NUCLEX_SUPPORT_API virtual ~ServiceProvider() = default;
 
     /// <summary>Looks up the specified service</summary>
     /// <param name="serviceType">Type of service that will be looked up</param>
