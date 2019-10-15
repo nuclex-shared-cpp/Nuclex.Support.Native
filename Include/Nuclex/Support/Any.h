@@ -21,6 +21,8 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_ANY_H
 #define NUCLEX_SUPPORT_ANY_H
 
+#include "Nuclex/Support/Config.h"
+
 #include <typeinfo>
 
 namespace Nuclex { namespace Support {
@@ -91,21 +93,38 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Initializes a new any copying the contents of an existing instance</summary>
     /// <param name="other">Other instance that will be copied</param>
-    public: Any(const Any &other) :
+    public: NUCLEX_SUPPORT_API Any(const Any &other) :
       valueHolder(other.valueHolder->Clone()) {}
 
+    /// <summary>Initializes a new any taking over an existing instance</summary>
+    /// <param name="other">Other instance that will be taken over</param>
+    public: NUCLEX_SUPPORT_API Any(Any &&other) :
+      valueHolder(other.valueHolder) {
+      other.valueHolder = nullptr;
+    }
+
     /// <summary>Frees all memory used by the instance</summary>
-    public: ~Any() {
+    public: NUCLEX_SUPPORT_API ~Any() {
       delete this->valueHolder;
     }
 
     /// <summary>Assigns the contents of another any to this instance</summary>
     /// <param name="other">Other any whose contents will be assigned to this one</param>
     /// <returns>The current any after the value has been assigned</returns>
-    public: Any &operator =(const Any &other) {
+    public: NUCLEX_SUPPORT_API Any &operator =(const Any &other) {
       delete this->valueHolder;
       this->valueHolder = nullptr; // In case clone throws
       this->valueHolder = other.valueHolder->Clone();
+      return *this;
+    }
+
+    /// <summary>Moves the contents of another any to this instance</summary>
+    /// <param name="other">Other any whose contents will be moved to this one</param>
+    /// <returns>The current any after the value has been moved</returns>
+    public: NUCLEX_SUPPORT_API Any &operator =(Any &&other) {
+      delete this->valueHolder;
+      this->valueHolder = other.valueHolder;
+      other.valueHolder = nullptr;
       return *this;
     }
 
@@ -125,6 +144,7 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Value holder that carries the value stored in the any</summary>
     private: GenericValueHolder *valueHolder;
+    //private: std::uint8_t memory[sizeof(ValueHolder<std::intptr_t>)];
 
   };
 

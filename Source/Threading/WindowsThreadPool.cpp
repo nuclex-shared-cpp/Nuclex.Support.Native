@@ -50,7 +50,7 @@ namespace {
       if(::InterlockedDecrement(&task->second) == 0) {
         delete task;
       }
-      std::unexpected();
+      std::terminate();
     }
 
     if(::InterlockedDecrement(&task->second) == 0) {
