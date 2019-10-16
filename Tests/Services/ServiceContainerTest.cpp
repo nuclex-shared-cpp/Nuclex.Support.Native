@@ -41,6 +41,18 @@ namespace {
     public: int Multiply(int first, int second) override { return first + first * second; };
   };
 
+  class DestructorTester {
+    public: DestructorTester(bool *destructionFlag) :
+      destructionFlag(destructionFlag) {}
+    public: ~DestructorTester() {
+      if(this->destructionFlag != nullptr) {
+        *this->destructionFlag = true;
+      }
+    }
+    public: void Disarm() { this->destructionFlag = nullptr; }
+    private: bool *destructionFlag;
+  };
+
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -84,6 +96,54 @@ namespace Nuclex { namespace Support { namespace Services {
 
     std::shared_ptr<CalculatorService> service;
     EXPECT_TRUE(test.TryGet<CalculatorService>(service));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ServiceContainerTest, ServicesCanBeRemoved) {
+    ServiceContainer test;
+    EXPECT_EQ(test.CountServices(), 0);
+    test.Add(std::make_shared<BrokenCalculator>());
+    EXPECT_EQ(test.CountServices(), 1);
+
+    std::shared_ptr<BrokenCalculator> service;
+    EXPECT_TRUE(test.TryGet<BrokenCalculator>(service));
+
+    EXPECT_TRUE(test.Remove<BrokenCalculator>());
+    EXPECT_FALSE(test.TryGet<BrokenCalculator>(service));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ServiceContainerTest, ContainerDestructorReleasesServices) {
+    bool destructorCalled = false;
+    std::weak_ptr<DestructorTester> weak;
+    {
+      std::shared_ptr<DestructorTester> tester = (
+        std::make_shared<DestructorTester>(&destructorCalled)
+      );
+      weak = tester;
+
+      ServiceContainer test;
+      EXPECT_EQ(test.CountServices(), 0);
+      test.Add(tester);
+      EXPECT_EQ(test.CountServices(), 1);
+
+      // Dropping our shared_ptr to the test object will not destroy it because
+      // another shared_ptr to it is kept by the service container
+      tester.reset();
+      EXPECT_FALSE(destructorCalled);
+    }
+
+    // When the service container is destroyed, it should release all shared_ptrs
+    // it is holding on to (in whatever manner), thus now the destructor should run
+    EXPECT_TRUE(destructorCalled);
+    if(!weak.expired()) {
+      std::shared_ptr<DestructorTester> crap = weak.lock();
+      if(!!crap) {
+        crap->Disarm();
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
