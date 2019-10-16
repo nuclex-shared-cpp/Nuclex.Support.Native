@@ -61,6 +61,14 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(AnyTest, HasDefaultConstructor) {
+    EXPECT_NO_THROW(
+      Any test;
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(AnyTest, InstancesCanBeCreated) {
     EXPECT_NO_THROW(
       Any test(12345);
@@ -83,6 +91,19 @@ namespace Nuclex { namespace Support {
     Any copy(std::move(original));
 
     EXPECT_EQ(copy.Get<int>(), 12345);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(AnyTest, CanBeReset) {
+    Any test(12345);
+    EXPECT_TRUE(test.HasValue());
+    test.Reset();
+    EXPECT_FALSE(test.HasValue());
+
+    EXPECT_NO_THROW(
+      test.Reset();
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -86,6 +86,10 @@ namespace Nuclex { namespace Support {
 
     #pragma endregion // struct ValueHolder
 
+    /// <summary>Initializes a new any not holding a value</summary>
+    public: Any() :
+      valueHolder(nullptr) {}
+
     /// <summary>Initializes a new any containing the specified value</summary>
     /// <param name="value">Value that will be carried by the any</param>
     public: template<typename TValue> Any(const TValue &value) :
@@ -94,7 +98,7 @@ namespace Nuclex { namespace Support {
     /// <summary>Initializes a new any copying the contents of an existing instance</summary>
     /// <param name="other">Other instance that will be copied</param>
     public: NUCLEX_SUPPORT_API Any(const Any &other) :
-      valueHolder(other.valueHolder->Clone()) {}
+      valueHolder(cloneOrPropagateNull(other.valueHolder)) {}
 
     /// <summary>Initializes a new any taking over an existing instance</summary>
     /// <param name="other">Other instance that will be taken over</param>
@@ -108,13 +112,33 @@ namespace Nuclex { namespace Support {
       delete this->valueHolder;
     }
 
+    /// <summary>Checks whether the Any is currently holding a value</summary>
+    /// <returns>True if the Any holds a value, false otherwise</returns>
+    public: NUCLEX_SUPPORT_API bool HasValue() const {
+      return (this->valueHolder != nullptr);
+    }
+
+    /// <summary>Destroys the contents of the Any</summary>
+    public: NUCLEX_SUPPORT_API void Reset() {
+      delete this->valueHolder;
+      this->valueHolder = nullptr;
+    }
+
     /// <summary>Assigns the contents of another any to this instance</summary>
     /// <param name="other">Other any whose contents will be assigned to this one</param>
     /// <returns>The current any after the value has been assigned</returns>
     public: NUCLEX_SUPPORT_API Any &operator =(const Any &other) {
-      delete this->valueHolder;
-      this->valueHolder = nullptr; // In case clone throws
-      this->valueHolder = other.valueHolder->Clone();
+      if(other.valueHolder == nullptr) {
+        delete this->valueHolder;
+        this->valueHolder = nullptr;
+      } else {
+        //std::unique_ptr<GenericValueHolder> clone(other.valueHolder->Clone());
+        GenericValueHolder *clone = other.valueHolder->Clone();
+        delete this->valueHolder;
+        //this->valueHolder = clone.release();
+        this->valueHolder = clone;
+      }
+
       return *this;
     }
 
@@ -140,6 +164,17 @@ namespace Nuclex { namespace Support {
       }
 
       return static_cast<TValueHolder *>(this->valueHolder)->Get();
+    }
+
+    /// <summary>Creates a clone of an existing value holder only if it's non-null</summary>
+    /// <param name="other">Existing value holder to clone or null</param>
+    /// <returns>A clone of the existing value holder or a null pointer</returns>
+    private: static GenericValueHolder *cloneOrPropagateNull(GenericValueHolder *other) {
+      if(other == nullptr) {
+        return nullptr;
+      } else {
+        return other->Clone();
+      }
     }
 
     /// <summary>Value holder that carries the value stored in the any</summary>

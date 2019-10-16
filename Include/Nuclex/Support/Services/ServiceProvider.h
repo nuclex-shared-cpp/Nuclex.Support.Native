@@ -58,7 +58,7 @@ namespace Nuclex { namespace Support { namespace Services {
     public: template<typename TService> bool TryGet(std::shared_ptr<TService> &service) {
       typedef std::shared_ptr<TService> ServicePointer;
 
-      Any serviceAsAny = 0;
+      Any serviceAsAny;
       if(TryGet(typeid(TService), serviceAsAny)) {
         service = serviceAsAny.Get<ServicePointer>();
         return true;
