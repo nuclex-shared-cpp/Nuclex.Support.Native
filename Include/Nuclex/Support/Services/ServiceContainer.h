@@ -60,10 +60,10 @@ namespace Nuclex { namespace Support { namespace Services {
     private: typedef std::map<const std::type_info *, Any, TypeInfoComparer> ServiceMap;
 
     /// <summary>Initializes a new service container</summary>
-    public: NUCLEX_SUPPORT_API ServiceContainer() {}
+    public: NUCLEX_SUPPORT_API ServiceContainer() = default;
 
     /// <summary>Destroys the service container and frees all resources</summary>
-    public: NUCLEX_SUPPORT_API virtual ~ServiceContainer() {}
+    public: NUCLEX_SUPPORT_API virtual ~ServiceContainer() = default;
 
     /// <summary>Counts the number of services registered in the container</summary>
     /// <returns>The number of services the container is currently holding</returns>

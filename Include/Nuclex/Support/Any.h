@@ -55,7 +55,7 @@ namespace Nuclex { namespace Support {
     #pragma region struct ValueHolder
 
     /// <summary>Strongly typed container for the value the any is carrying</summary>
-    private: template<typename TValue> struct  ValueHolder : public GenericValueHolder {
+    private: template<typename TValue> struct ValueHolder : public GenericValueHolder {
 
       /// <summary>Initializes a new value holder for the specified value</summary>
       /// <param name="value">Value the holder will carry</param>

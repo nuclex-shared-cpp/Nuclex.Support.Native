@@ -54,7 +54,14 @@ namespace Nuclex { namespace Support { namespace Collections {
       void(std::size_t index, const TValue &value)
     > ItemRemoved;
 
-    // public: mutable Event ItemReplaced(std::size_t index, const TValue &previousValue);
+    /// <summary>Fired when an item in the collection has been replaced</summary>
+    /// <param name="index">Index at which the item has been replaced</param>
+    /// <param name="oldValue">Item that is no longer part of the collection</param>
+    /// <param name="newValue">Item that has taken the place of the old item</param>
+    public: mutable Events::Event<
+      void(std::size_t index, const TValue &oldValue, const TValue &newValue)
+    > ItemReplaced;
+
     // public: mutable Event Clearing();
     // public: mutable Event Cleared();
 

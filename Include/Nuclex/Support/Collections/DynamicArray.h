@@ -101,11 +101,9 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Removes the item at the specified index from the collection</summary>
     /// <param name="index">Index at which the item will be removed</param>
-    /// <returns>True if the item was removed, false if the index was invalid</returns>
-    public: bool RemoveAt(std::size_t index) override {
+    public: void RemoveAt(std::size_t index) override {
       typename std::vector<TValue>::iterator where = this->items.begin() + index;
       this->items.erase(where);
-      return true;
     }
 
     /// <summary>Adds the specified item to the collection</summary>

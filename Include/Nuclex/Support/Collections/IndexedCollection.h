@@ -82,8 +82,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Removes the item at the specified index from the collection</summary>
     /// <param name="index">Index at which the item will be removed</param>
-    /// <returns>True if the item was removed, false if the index was invalid</returns>
-    public: virtual bool RemoveAt(std::size_t index) = 0;
+    public: virtual void RemoveAt(std::size_t index) = 0;
 
     //private: IndexedCollection(const IndexedCollection &) = delete;
     //private: IndexedCollection &operator =(const IndexedCollection &) = delete;

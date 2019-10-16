@@ -83,7 +83,24 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="index">Index at which the item will be stored</param>
     /// <param name="value">Item that will be stored at the specified index</param>
     public: void SetAt(std::size_t index, const TValue &value) override {
-      this->items.at(index) = value;
+      if(index < this->items.size()) {
+        bool removedItemNeeded = (
+          (ObservableIndexedCollection<TValue>::ItemReplaced.CountSubscribers() > 0) ||
+          (ObservableCollection<TValue>::ItemRemoved.CountSubscribers() > 0)
+        );
+        if(removedItemNeeded) {
+          TValue old = this->items[index];
+          this->items[index] = value;
+          ObservableIndexedCollection<TValue>::ItemReplaced(index, old, value);
+          ObservableCollection<TValue>::ItemRemoved(old);
+          ObservableCollection<TValue>::ItemAdded(value);
+        } else {
+          this->items[index] = value;
+          ObservableCollection<TValue>::ItemAdded(value);
+        }
+      } else { // Let .at() throw the appropriate out-of-bounds exception
+        this->items.at(index) = value;
+      }
     }
 
     /// <summary>Inserts the specified item at a specified index</summary>
@@ -92,21 +109,34 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: void InsertAt(std::size_t index, const TValue &value) override {
       typename std::vector<TValue>::iterator where = this->items.begin() + index;
       this->items.insert(where, value);
+      ObservableIndexedCollection<TValue>::ItemAdded(index, value);
+      ObservableCollection<TValue>::ItemAdded(value);
     }
 
     /// <summary>Removes the item at the specified index from the collection</summary>
     /// <param name="index">Index at which the item will be removed</param>
-    /// <returns>True if the item was removed, false if the index was invalid</returns>
-    public: bool RemoveAt(std::size_t index) override {
+    public: void RemoveAt(std::size_t index) override {
       typename std::vector<TValue>::iterator where = this->items.begin() + index;
-      this->items.erase(where);
-      return true;
+      bool erasedItemNeeded = (
+        (ObservableIndexedCollection<TValue>::ItemRemoved.CountSubscribers() > 0) ||
+        (ObservableCollection<TValue>::ItemRemoved.CountSubscribers() > 0)
+      );
+      if(erasedItemNeeded) {
+        TValue value = *where;
+        this->items.erase(where);
+        ObservableIndexedCollection<TValue>::ItemRemoved(index, value);
+        ObservableCollection<TValue>::ItemRemoved(value);
+      } else {
+        this->items.erase(where);
+      }
     }
 
     /// <summary>Adds the specified item to the collection</summary>
     /// <param name="item">Item that will be added to the collection</param>
     public: void Add(const TValue &item) override {
       this->items.push_back(item);
+      ObservableIndexedCollection<TValue>::ItemAdded(this->items.size() - 1, item);
+      ObservableCollection<TValue>::ItemAdded(item);
     }
 
     /// <summary>Removes the specified item from the collection</summary>
@@ -120,6 +150,8 @@ namespace Nuclex { namespace Support { namespace Collections {
       ) {
         if(*iterator == item) {
           this->items.erase(iterator);
+          ObservableIndexedCollection<TValue>::ItemRemoved(iterator - this->items.begin, item);
+          ObservableCollection<TValue>::ItemRemoved(item);
           return true;
         }
       }
@@ -129,7 +161,23 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Removes all items from the collection</summary>
     public: void Clear() override {
-      this->items.clear();
+      std::size_t count = this->items.size();
+      bool erasedItemNeeded = (
+        (ObservableIndexedCollection<TValue>::ItemRemoved.CountSubscribers() > 0) ||
+        (ObservableCollection<TValue>::ItemRemoved.CountSubscribers() > 0)
+      );
+      if(erasedItemNeeded && (count > 0)) {
+        std::vector<TValue> removed;
+        removed.reserve(this->items.capacity());
+        removed.swap(this->items);
+        while(count > 0) {
+          --count;
+          ObservableIndexedCollection<TValue>::ItemRemoved(count, removed[count]);
+          ObservableCollection<TValue>::ItemRemoved(removed[count]);
+        }
+      } else {
+        this->items.clear();
+      }
     }
 
     /// <summary>Checks if the collection contains the specified item</summary>

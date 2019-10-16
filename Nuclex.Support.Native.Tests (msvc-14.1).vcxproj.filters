@@ -104,6 +104,9 @@
     <ClCompile Include="Source\Events\Event.cpp">
       <Filter>Source\Events</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Events\EventSubscriber.cpp">
+      <Filter>Source\Events</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
@@ -185,15 +188,6 @@
     <ClCompile Include="Tests\Events\DelegateTests.cpp">
       <Filter>Tests\Events</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Collections\ObservableDynamicArray.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\ObservableCollection.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\ObservableIndexedCollection.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -242,6 +236,9 @@
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Events\Event.h">
+      <Filter>Include\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\EventSubscriber.h">
       <Filter>Include\Events</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\LazyServiceInjector.h">
@@ -318,12 +315,6 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Events\EmptyDelegateCallError.h">
       <Filter>Include\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\DynamicArray.h">
-      <Filter>Include\Collections</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\ObservableDynamicArray.h">
-      <Filter>Include\Collections</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
