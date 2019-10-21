@@ -25,32 +25,69 @@ License along with this library
 
 #include <gtest/gtest.h>
 
-using namespace std;
-
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Example service providing a few simple math methods</summary>
   class CalculatorService {
+
+    /// <summary>Calculates the sum of two integers</summary>
+    /// <param name="first">First integer that will be part of the sum</param>
+    /// <param name="second">Second integer that will be part of the sum</param>
+    /// <returns>The sum of the two integers</returnd>
     public: virtual int Add(int first, int second) = 0;
+
+    /// <summary>Multiplies two integers with each other</summary>
+    /// <param name="first">First integer that will be multiplied with the other</param>
+    /// <param name="second">Second integer that will be multiplied with the other</param>
+    /// <returns>The sum of the two integers</returnd>
     public: virtual int Multiply(int first, int second) = 0;
+
   };
 
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Example implementation of the calculator service</summary>
   class BrokenCalculator : public virtual CalculatorService {
+
+    /// <summary>Calculates the sum of two integers</summary>
+    /// <param name="first">First integer that will be part of the sum</param>
+    /// <param name="second">Second integer that will be part of the sum</param>
+    /// <returns>The sum of the two integers</returnd>
     public: int Add(int first, int second) override { return first + second + 1; }
+
+    /// <summary>Multiplies two integers with each other</summary>
+    /// <param name="first">First integer that will be multiplied with the other</param>
+    /// <param name="second">Second integer that will be multiplied with the other</param>
+    /// <returns>The sum of the two integers</returnd>
     public: int Multiply(int first, int second) override { return first + first * second; };
+
   };
 
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Helper class used by the unit tests to track service destruction</summary>
   class DestructorTester {
+
+    /// <summary>Initializes a new destructor tester using the specified flag</summary>
+    /// <param name="destructionFlag">Will be set when the instance is destroyed</param>
     public: DestructorTester(bool *destructionFlag) :
       destructionFlag(destructionFlag) {}
+
+    /// <summary>Sets the destruction flag (unless disarmeds)</summary>
     public: ~DestructorTester() {
       if(this->destructionFlag != nullptr) {
         *this->destructionFlag = true;
       }
     }
+
+    /// <summary>Disarms the destructor tester, no longer letting it set the flag</summary>
     public: void Disarm() { this->destructionFlag = nullptr; }
+
+    /// <summary>Address of a boolean that will be set when the destructor runs</summary>
     private: bool *destructionFlag;
+
   };
 
   // ------------------------------------------------------------------------------------------- //

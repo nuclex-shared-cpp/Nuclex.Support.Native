@@ -21,8 +21,12 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_SERVICES_LAZYSERVICEINJECTOR_H
 #define NUCLEX_SUPPORT_SERVICES_LAZYSERVICEINJECTOR_H
 
-#include "../Config.h"
-#include "ServiceContainer.h"
+#include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Services/ServiceContainer.h"
+#include "Nuclex/Support/Events/Delegate.h"
+
+#include "Nuclex/Support/Services/IntegerSequence.inl"
+#include "Nuclex/Support/Services/Checks.inl"
 
 #include <functional>
 
@@ -42,13 +46,22 @@ namespace Nuclex { namespace Support { namespace Services {
     /// <summary>Provides the syntax for the fluent Bind() method</summary>
     public: template<typename TService> class BindSyntax {
 
+      public: typedef Events::Delegate<std::shared_ptr<TService>(void)> FactoryMethodType;
+
       /// <summary>Binds the service to a constructor-injected provider</summary>
       /// <typeparam name="TProvider">Provider the service will be bound to</typeparam>
       public: template<typename TProvider> void To() {
       }
 
       /// <summary>Binds the service to a factory method or functor used to create it</summary>
-      public: void ToMethod(const std::function<TService *()> &factory) {
+      public: void ToFactoryMethod(const FactoryMethodType &factoryMethod) {
+      }
+
+      public: void ToInstance(const std::shared_ptr<TService> &instance) {
+
+      }
+
+      public: void ToSelf() {
         
       }
 
@@ -104,10 +117,10 @@ namespace Nuclex { namespace Support { namespace Services {
     #pragma endregion // class ServiceStore
 
     /// <summary>Initializes a new service injector</summary>
-    public: NUCLEX_SUPPORT_API LazyServiceInjector() {}
+    public: NUCLEX_SUPPORT_API LazyServiceInjector() = default;
 
     /// <summary>Destroys the service injector and frees all resources</summary>
-    public: NUCLEX_SUPPORT_API virtual ~LazyServiceInjector() {}
+    public: NUCLEX_SUPPORT_API virtual ~LazyServiceInjector() = default;
 
     /// <summary>Binds a provider to the specified service</summary>
     /// <returns>A syntax through which the provider to be bound can be selected</returns>

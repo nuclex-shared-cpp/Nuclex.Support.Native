@@ -21,8 +21,8 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_SERVICES_SERVICECONTAINER_H
 #define NUCLEX_SUPPORT_SERVICES_SERVICECONTAINER_H
 
-#include "../Config.h"
-#include "ServiceProvider.h"
+#include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Services/ServiceProvider.h"
 
 #include <map>
 #include <cstddef>
@@ -55,9 +55,6 @@ namespace Nuclex { namespace Support { namespace Services {
     };
 
     #pragma endregion // class TypeInfoComparer
-
-    /// <summary>Map through which services can be looked up</summary> 
-    private: typedef std::map<const std::type_info *, Any, TypeInfoComparer> ServiceMap;
 
     /// <summary>Initializes a new service container</summary>
     public: NUCLEX_SUPPORT_API ServiceContainer() = default;
@@ -123,6 +120,9 @@ namespace Nuclex { namespace Support { namespace Services {
     /// </param>
     /// <returns>True if the service was found and removed</returns>
     protected: NUCLEX_SUPPORT_API bool Remove(const std::type_info &serviceType);
+
+    /// <summary>Map through which services can be looked up</summary> 
+    private: typedef std::map<const std::type_info *, Any, TypeInfoComparer> ServiceMap;
 
     /// <summary>Services the container is currently holding</summary>
     private: ServiceMap services;
