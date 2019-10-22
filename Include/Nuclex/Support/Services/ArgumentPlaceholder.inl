@@ -23,6 +23,7 @@ License along with this library
 #endif
 
 #include <type_traits>
+#include <stdexcept>
 
 namespace Nuclex { namespace Support { namespace Services {
 
@@ -46,7 +47,7 @@ namespace Nuclex { namespace Support { namespace Services {
           IsInjectableArgument<typename std::decay<TArgument>::type>::value
         >::type
       >
-      operator TArgument() {
+      operator TArgument() const {
         throw std::logic_error(
           "This functor is used to detect an argument type and should never be called"
         );

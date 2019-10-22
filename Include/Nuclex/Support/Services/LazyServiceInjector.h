@@ -23,6 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Services/ServiceContainer.h"
+#include "Nuclex/Support/Services/ServiceLifetime.h"
 #include "Nuclex/Support/Events/Delegate.h"
 
 namespace Nuclex { namespace Support { namespace Services {
@@ -61,23 +62,67 @@ namespace Nuclex { namespace Support { namespace Services {
     /// <summary>Provides the syntax for the fluent Bind() method</summary>
     public: template<typename TService> class BindSyntax {
 
+      /// <summary>Type of a factory method for this service</summary>
       public: typedef Events::Delegate<std::shared_ptr<TService>(void)> FactoryMethodType;
 
       /// <summary>Binds the service to a constructor-injected provider</summary>
-      /// <typeparam name="TProvider">Provider the service will be bound to</typeparam>
-      public: template<typename TProvider> void To() {
+      /// <typeparam name="TImplementation">Implementation of the service to use</typeparam>
+      /// <remarks>
+      ///   This binds the service to the specified service implementation
+      /// </remarks>
+      public: template<typename TImplementation> void To() {
+        static_assert(
+          std::is_base_of<TService, TImplementation>::value,
+          "Implementation must inherit from the service interface"
+        );
+
+        constexpr bool implementationHasInjectableConstructor = !std::is_base_of<
+          Private::InvalidConstructorSignature,
+          Private::DetectConstructorSignature<TImplementation>
+        >::value;
+        static_assert(
+          implementationHasInjectableConstructor,
+          "Implementation must have a constructor that can be dependency-injected "
+          "(either providing a default constructor or using only std::shared_ptr arguments)"
+        );
+
+        throw std::logic_error("Not implemented yet");
       }
 
       /// <summary>Binds the service to a factory method or functor used to create it</summary>
+      /// <param name="factoryMethod">
+      ///   Factory method that will be called to create the service
+      /// </param>
       public: void ToFactoryMethod(const FactoryMethodType &factoryMethod) {
+        throw std::logic_error("Not implemented yet");
       }
 
+      /// <summary>Binds the service to an already constructed service instance</summary>
+      /// <param name="instance">Instance that will be returned for the service</param>
       public: void ToInstance(const std::shared_ptr<TService> &instance) {
-
+        throw std::logic_error("Not implemented yet");
       }
 
+      /// <summary>Assumes that the service and its implementation are the same type</summary>
+      /// <remarks>
+      ///   For trivial services that don't have an interface separate from their implementation
+      ///   class (or when you just have to provide some implementation everywhere),
+      ///   use this method to say that the service type is a non-abstract class and
+      ///   should be created directly.
+      /// </remarks>
       public: void ToSelf() {
-        
+        constexpr bool serviceHasInjectableConstructor = !std::is_base_of<
+          Private::InvalidConstructorSignature,
+          Private::DetectConstructorSignature<TService>
+        >::value;
+        static_assert(
+          serviceHasInjectableConstructor,
+          "Self-bound service must not be construct and have a constructor "
+          "that can be dependency-injected (either providing a default constructor or "
+          "using only std::shared_ptr arguments)"
+        );
+
+        throw std::logic_error("Not implemented yet");
       }
 
     };
@@ -156,7 +201,7 @@ namespace Nuclex { namespace Support { namespace Services {
     /// </returns>
     protected: NUCLEX_SUPPORT_API const Any &Get(
       const std::type_info &serviceType
-    ) const;
+    ) const override;
 
     /// <summary>Tries to look up the specified service</summary>
     /// <param name="serviceType">Type of service that will be looked up</param>
@@ -164,7 +209,9 @@ namespace Nuclex { namespace Support { namespace Services {
     /// <returns>True if the service was found and stored in the any</returns>
     protected: NUCLEX_SUPPORT_API bool TryGet(
       const std::type_info &serviceType, Any &service
-    ) const;
+    ) const override;
+
+    //private: void 
 
     /// <summary>Stores services that have already been initialized</summary>
     private: ServiceStore services;

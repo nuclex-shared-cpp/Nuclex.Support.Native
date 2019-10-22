@@ -22,6 +22,7 @@ License along with this library
 #error This header must be included via LazyServiceInjector.h
 #endif
 
+#include <cstddef>
 #include <type_traits>
 
 namespace Nuclex { namespace Support { namespace Services {

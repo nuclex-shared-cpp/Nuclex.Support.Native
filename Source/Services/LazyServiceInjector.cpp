@@ -30,11 +30,11 @@ namespace Nuclex { namespace Support { namespace Services {
   // ------------------------------------------------------------------------------------------- //
 
   const Any &LazyServiceInjector::Get(const std::type_info &serviceType) const {
-    Any service(false);
+    Any service;
 
     bool alreadyCreated = this->services.TryGet(serviceType, service);
     if(alreadyCreated) {
-      return this->services.Get(serviceType);
+      return this->services.Get(serviceType); // TODO: Find more efficient ServiceProvider design
     }
 
     throw std::runtime_error("Service creation is not implemented yet :-(");

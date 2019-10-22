@@ -198,7 +198,7 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(LazyServiceInjectorTest, RejectsConstructorWithNuninjectableArguments) {
+  TEST(LazyServiceInjectorTest, RejectsConstructorWithUninjectableArguments) {
     class UninjectableConstructor {
       public: UninjectableConstructor(float) {}
     };
@@ -228,6 +228,22 @@ namespace Nuclex { namespace Support { namespace Services {
       Nuclex::Support::Services::Private::DetectConstructorSignature<NineArgumentConstructible>
     >::value;
     EXPECT_FALSE(nineArgumentsAreAccepted);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LazyServiceInjectorTest, CanBindServiceToImplementation) {
+    LazyServiceInjector serviceInjector;
+
+    serviceInjector.Bind<CalculatorService>().To<BrokenCalculator>();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LazyServiceInjectorTest, CanBindServiceToSelf) {
+    LazyServiceInjector serviceInjector;
+
+    serviceInjector.Bind<BrokenCalculator>().ToSelf();
   }
 
   // ------------------------------------------------------------------------------------------- //
