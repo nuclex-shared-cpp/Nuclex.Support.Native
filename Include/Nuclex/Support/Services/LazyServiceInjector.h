@@ -25,10 +25,25 @@ License along with this library
 #include "Nuclex/Support/Services/ServiceContainer.h"
 #include "Nuclex/Support/Events/Delegate.h"
 
+namespace Nuclex { namespace Support { namespace Services {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>The maximum number of constructor arguments that can be injected</summary>
+  /// <remarks>
+  ///   Increasing this value will result in (slightly) slower compiles. Though you might
+  ///   want to reconsider your design if a single type consumes more than 8 services ;)
+  /// </remarks>
+  static constexpr std::size_t MaximumConstructorArgumentCount = 8;
+
+  // ------------------------------------------------------------------------------------------- //
+
+}}} // namespace Nuclex::Support::Services
+
 #include "Nuclex/Support/Services/IntegerSequence.inl"
 #include "Nuclex/Support/Services/Checks.inl"
-
-#include <functional>
+#include "Nuclex/Support/Services/ArgumentPlaceholder.inl"
+#include "Nuclex/Support/Services/ConstructorSignatureDetector.inl"
 
 namespace Nuclex { namespace Support { namespace Services {
 
