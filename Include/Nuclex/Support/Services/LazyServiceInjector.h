@@ -43,7 +43,6 @@ namespace Nuclex { namespace Support { namespace Services {
 
 #include "Nuclex/Support/Services/IntegerSequence.inl"
 #include "Nuclex/Support/Services/Checks.inl"
-#include "Nuclex/Support/Services/ArgumentPlaceholder.inl"
 #include "Nuclex/Support/Services/ConstructorSignature.inl"
 #include "Nuclex/Support/Services/ConstructorSignatureDetector.inl"
 #include "Nuclex/Support/Services/ServiceFactory.inl"
@@ -121,12 +120,13 @@ namespace Nuclex { namespace Support { namespace Services {
         >::value;
         static_assert(
           serviceHasInjectableConstructor,
-          "Self-bound service must not be construct and have a constructor "
+          "Self-bound service must not be abstract and requires a constructor "
           "that can be dependency-injected (either providing a default constructor or "
           "using only std::shared_ptr arguments)"
         );
 
-        Private::ServiceFactory<TService, ConstructorSignature>::CreateInstance();
+        ServiceProvider *needThis = nullptr;
+        Private::ServiceFactory<TService, ConstructorSignature>::CreateInstance(*needThis);
 
         throw std::logic_error("Not implemented yet");
       }

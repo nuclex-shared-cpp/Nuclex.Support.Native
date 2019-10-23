@@ -207,7 +207,6 @@
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\EmptyDelegateCallError.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Event.h" />
-    <ClInclude Include="Include\Nuclex\Support\Services\ArgumentPlaceholder.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignature.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignatureDetector.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\CyclicDependencyError.h" />

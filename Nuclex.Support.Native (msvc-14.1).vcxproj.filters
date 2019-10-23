@@ -298,9 +298,6 @@
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h">
       <Filter>Include\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ArgumentPlaceholder.inl">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\Checks.inl">
       <Filter>Include\Services</Filter>
     </ClInclude>

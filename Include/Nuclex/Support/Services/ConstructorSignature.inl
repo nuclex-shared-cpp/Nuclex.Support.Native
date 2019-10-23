@@ -31,6 +31,58 @@ namespace Nuclex { namespace Support { namespace Services {
 
   namespace Private {
 
+    /// <summary>Informations about an argument passed to the constructor of a type</summary>
+    /// <typeparam name="ArgumentIndex">Index of this argument</typeparam>
+    template<std::size_t ArgumentIndex>
+    class ConstructorArgument {
+
+      /// <summary>This type</summary>
+      public: typedef ConstructorArgument Type;
+
+      /// <summary>Index of this argument on the constructor</summary>
+      public: constexpr static std::size_t Index = ArgumentIndex;
+
+      /// <summary>Initializes a new constructor argument<summary>
+      /// <param name="serviceActivator">
+      ///   Activator through which the argument will be resolved when it is used
+      /// </param>
+      public: ConstructorArgument() :
+        serviceActivator(*static_cast<ServiceProvider *>(nullptr)) {}
+
+      /// <summary>Initializes a new constructor argument<summary>
+      /// <param name="serviceActivator">
+      ///   Activator through which the argument will be resolved when it is used
+      /// </param>
+      public: ConstructorArgument(ServiceProvider &serviceActivator) :
+        serviceActivator(serviceActivator) {}
+
+      /// <summary>Implicitly converts the placeholder to the argument's type</summary>
+      /// <typeparam name="TArgument">The full type of the argument</typeparam>
+      /// <returns>The value that will be passed as the constructor argument</returns>
+      public: template<
+        typename TArgument,
+        typename = typename std::enable_if<
+          IsInjectableArgument<typename std::decay<TArgument>::type>::value
+        >::type
+      >
+      operator TArgument() const {
+        typedef typename TArgument::element_type ServiceType;
+        return this->serviceActivator.Get<ServiceType>();
+        //std::shared_ptr<int> x;
+        //return this->serviceActivator.Get<typename std::decay<TArgument>::type>();
+      }
+
+      /// <summary>Activator through which the argument will be resolved when needed</summary>
+      private: ServiceProvider &serviceActivator;
+
+    };
+
+  } // namespace Private
+
+  // ------------------------------------------------------------------------------------------- //
+
+  namespace Private {
+
     /// <summary>Stores a constructor signature (the number and type of its arguments)</summary>
     /// <typeparam name="TArguments">Arguments required by the constructor</typeparam>
     template<typename... TArguments>
@@ -38,6 +90,7 @@ namespace Nuclex { namespace Support { namespace Services {
 
       /// <summary>The type of this constructor signature itself</summary>
       public: typedef ConstructorSignature Type;
+
       /// <summary>Number of arguments being passed to the constructor</summary>
       public: static constexpr std::size_t ArgumentCount = sizeof...(TArguments);
 

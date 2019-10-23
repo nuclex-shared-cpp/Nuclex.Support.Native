@@ -31,30 +31,6 @@ namespace Nuclex { namespace Support { namespace Services {
 
   namespace Private {
 
-    /// <summary>Informations about an argument passed to the constructor of a type</summary>
-    /// <typeparam name="TImplementation">
-    ///   Type for whose constructor this argument is used
-    /// </typeparma>
-    /// <typeparam name="ArgumentIndex">Index of this argument</typeparam>
-    template<typename TImplementation, std::size_t ArgumentIndex>
-    class DetectedArgument : public ArgumentPlaceholder {
-
-      /// <summary>This type</summary>
-      public: typedef DetectedArgument Type;
-      /// <summary>Type of which this is a constructor argument</summary>
-      public: typedef TImplementation OwningType;
-
-      /// <summary>Index of this argument on the constructor</summary>
-      public: constexpr static std::size_t Index = ArgumentIndex;
-
-    };
-
-  } // namespace Private
-
-  // ------------------------------------------------------------------------------------------- //
-
-  namespace Private {
-
     /// <summary>Detects the constructor signature of the specified type</summary>
     /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
     /// <typeparam name="TArgumentSequence">
@@ -117,10 +93,10 @@ namespace Nuclex { namespace Support { namespace Services {
         (sizeof...(TArgumentIndices) > 0) &&
         (sizeof...(TArgumentIndices) < MaximumConstructorArgumentCount) &&
         std::is_constructible<
-          TImplementation, DetectedArgument<TImplementation, TArgumentIndices>...
+          TImplementation, ConstructorArgument<TArgumentIndices>...
         >::value
       >::type
-    > : public ConstructorSignature<DetectedArgument<TImplementation, TArgumentIndices>...> {};
+    > : public ConstructorSignature<ConstructorArgument<TArgumentIndices>...> {};
 
     /// <summary>Detects the constructor signature of the specified type</summary>
     /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
@@ -135,7 +111,7 @@ namespace Nuclex { namespace Support { namespace Services {
         (sizeof...(TArgumentIndices) > 0) &&
         (sizeof...(TArgumentIndices) < MaximumConstructorArgumentCount) &&
         !std::is_constructible<
-          TImplementation, DetectedArgument<TImplementation, TArgumentIndices>...
+          TImplementation, ConstructorArgument<TArgumentIndices>...
         >::value
       >::type
     > : public ConstructorSignatureDetector<
@@ -154,10 +130,10 @@ namespace Nuclex { namespace Support { namespace Services {
       typename std::enable_if<
         (sizeof...(TArgumentIndices) == MaximumConstructorArgumentCount) &&
         std::is_constructible<
-          TImplementation, DetectedArgument<TImplementation, TArgumentIndices>...
+          TImplementation, ConstructorArgument<TArgumentIndices>...
         >::value
       >::type
-    > : public ConstructorSignature<DetectedArgument<TImplementation, TArgumentIndices>...> {};
+    > : public ConstructorSignature<ConstructorArgument<TArgumentIndices>...> {};
 
     /// <summary>Detects the constructor signature of the specified type</summary>
     /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
@@ -171,7 +147,7 @@ namespace Nuclex { namespace Support { namespace Services {
       typename std::enable_if<
         (sizeof...(TArgumentIndices) == MaximumConstructorArgumentCount) &&
         !std::is_constructible<
-          TImplementation, DetectedArgument<TImplementation, TArgumentIndices>...
+          TImplementation, ConstructorArgument<TArgumentIndices>...
         >::value
       >::type
     > : public InvalidConstructorSignature {};

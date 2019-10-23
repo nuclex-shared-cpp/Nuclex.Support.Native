@@ -349,19 +349,16 @@
     <ClInclude Include="Include\Nuclex\Support\Services\Checks.inl">
       <Filter>Include\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ArgumentPlaceholder.inl">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignatureDetector.inl">
       <Filter>Include\Services</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignature.inl">
       <Filter>Include\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ServiceFactory.inl">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\CyclicDependencyError.h">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceFactory.inl">
       <Filter>Include\Services</Filter>
     </ClInclude>
   </ItemGroup>
