@@ -18,10 +18,10 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-// If the library is compiled as a DLL, this ensures symbols are exported
-#define NUCLEX_SUPPORT_SOURCE 1
+#ifndef NUCLEX_SUPPORT_SERVICES_CYCLICDEPENDENCYERROR_H
+#define NUCLEX_SUPPORT_SERVICES_CYCLICDEPENDENCYERROR_H
 
-#include "Nuclex/Support/Services/LazyServiceInjector.h"
+#include "Nuclex/Support/Config.h"
 
 #include <stdexcept>
 
@@ -29,21 +29,25 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  const Any &LazyServiceInjector::Get(const std::type_info &serviceType) const {
-    const Any &service = this->services.TryGet(serviceType);
-    if(service.HasValue()) {
-      return service;
-    }
+  /// <summary>
+  ///   Indicates that a service depends on a chain of other services leading back to itself
+  /// </summary>
+  class CyclicDependencyError : public std::logic_error {
 
-    throw std::runtime_error("Service creation is not implemented yet :-(");
-  }
+    /// <summary>Initializes a new cyclic dependency error</summary>
+    /// <param name="message">Message that describes the error</param>
+	  public: explicit CyclicDependencyError(const std::string &message) :
+      std::logic_error(message) {}
 
-  // ------------------------------------------------------------------------------------------- //
+    /// <summary>Initializes a new cyclic dependency error</summary>
+    /// <param name="message">Message that describes the error</param>
+	  public: explicit CyclicDependencyError(const char *message) :
+      std::logic_error(message) {}
 
-  const Any &LazyServiceInjector::TryGet(const std::type_info &serviceType) const {
-    return this->services.TryGet(serviceType);
-  }
+  };
 
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Services
+
+#endif // NUCLEX_SUPPORT_SERVICES_CYCLICDEPENDENCYERROR_H

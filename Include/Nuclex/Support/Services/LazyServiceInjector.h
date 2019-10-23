@@ -44,7 +44,9 @@ namespace Nuclex { namespace Support { namespace Services {
 #include "Nuclex/Support/Services/IntegerSequence.inl"
 #include "Nuclex/Support/Services/Checks.inl"
 #include "Nuclex/Support/Services/ArgumentPlaceholder.inl"
+#include "Nuclex/Support/Services/ConstructorSignature.inl"
 #include "Nuclex/Support/Services/ConstructorSignatureDetector.inl"
+#include "Nuclex/Support/Services/ServiceFactory.inl"
 
 namespace Nuclex { namespace Support { namespace Services {
 
@@ -71,14 +73,15 @@ namespace Nuclex { namespace Support { namespace Services {
       ///   This binds the service to the specified service implementation
       /// </remarks>
       public: template<typename TImplementation> void To() {
+        typedef Private::DetectConstructorSignature<TImplementation> ConstructorSignature;
+
         static_assert(
           std::is_base_of<TService, TImplementation>::value,
           "Implementation must inherit from the service interface"
         );
 
         constexpr bool implementationHasInjectableConstructor = !std::is_base_of<
-          Private::InvalidConstructorSignature,
-          Private::DetectConstructorSignature<TImplementation>
+          Private::InvalidConstructorSignature, ConstructorSignature
         >::value;
         static_assert(
           implementationHasInjectableConstructor,
@@ -111,9 +114,10 @@ namespace Nuclex { namespace Support { namespace Services {
       ///   should be created directly.
       /// </remarks>
       public: void ToSelf() {
+        typedef Private::DetectConstructorSignature<TService> ConstructorSignature;
+
         constexpr bool serviceHasInjectableConstructor = !std::is_base_of<
-          Private::InvalidConstructorSignature,
-          Private::DetectConstructorSignature<TService>
+          Private::InvalidConstructorSignature, ConstructorSignature
         >::value;
         static_assert(
           serviceHasInjectableConstructor,
@@ -121,6 +125,8 @@ namespace Nuclex { namespace Support { namespace Services {
           "that can be dependency-injected (either providing a default constructor or "
           "using only std::shared_ptr arguments)"
         );
+
+        Private::ServiceFactory<TService, ConstructorSignature>::CreateInstance();
 
         throw std::logic_error("Not implemented yet");
       }
@@ -148,10 +154,9 @@ namespace Nuclex { namespace Support { namespace Services {
 
       /// <summary>Tries to look up the specified service</summary>
       /// <param name="serviceType">Type of service that will be looked up</param>
-      /// <param name="service">Any that will receive the shared_ptr to the service</param>
-      /// <returns>True if the service was found and stored in the any</returns>
-      public: bool TryGet(const std::type_info &serviceType, Any &service) const {
-        return ServiceContainer::TryGet(serviceType, service);
+      /// <returns>An Any containing the service, if found, or an empty Any</returns>
+      public: const Any &TryGet(const std::type_info &serviceType) const {
+        return ServiceContainer::TryGet(serviceType);
       }
 
       /// <summary>Adds a service to the container</summary>
@@ -205,10 +210,9 @@ namespace Nuclex { namespace Support { namespace Services {
 
     /// <summary>Tries to look up the specified service</summary>
     /// <param name="serviceType">Type of service that will be looked up</param>
-    /// <param name="service">Any that will receive the shared_ptr to the service</param>
-    /// <returns>True if the service was found and stored in the any</returns>
-    protected: NUCLEX_SUPPORT_API bool TryGet(
-      const std::type_info &serviceType, Any &service
+    /// <returns>An Any containing the service, if found, or an empty Any</returns>
+    protected: NUCLEX_SUPPORT_API const Any &TryGet(
+      const std::type_info &serviceType
     ) const override;
 
     //private: void 

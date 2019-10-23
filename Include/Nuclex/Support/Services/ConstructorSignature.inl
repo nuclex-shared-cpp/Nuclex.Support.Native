@@ -18,31 +18,46 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-// If the library is compiled as a DLL, this ensures symbols are exported
-#define NUCLEX_SUPPORT_SOURCE 1
+#if !defined(NUCLEX_SUPPORT_SERVICES_LAZYSERVICEINJECTOR_H)
+#error This header must be included via LazyServiceInjector.h
+#endif
 
-#include "Nuclex/Support/Services/LazyServiceInjector.h"
-
-#include <stdexcept>
+#include <cstddef>
+#include <type_traits>
 
 namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  const Any &LazyServiceInjector::Get(const std::type_info &serviceType) const {
-    const Any &service = this->services.TryGet(serviceType);
-    if(service.HasValue()) {
-      return service;
-    }
+  namespace Private {
 
-    throw std::runtime_error("Service creation is not implemented yet :-(");
-  }
+    /// <summary>Stores a constructor signature (the number and type of its arguments)</summary>
+    /// <typeparam name="TArguments">Arguments required by the constructor</typeparam>
+    template<typename... TArguments>
+    class ConstructorSignature {
+
+      /// <summary>The type of this constructor signature itself</summary>
+      public: typedef ConstructorSignature Type;
+      /// <summary>Number of arguments being passed to the constructor</summary>
+      public: static constexpr std::size_t ArgumentCount = sizeof...(TArguments);
+
+    };
+
+  } // namespace Private
 
   // ------------------------------------------------------------------------------------------- //
 
-  const Any &LazyServiceInjector::TryGet(const std::type_info &serviceType) const {
-    return this->services.TryGet(serviceType);
-  }
+  namespace Private {
+
+    /// <summary>Used if the constructor signature cannot be determined</summary>
+    class InvalidConstructorSignature {
+    
+      /// <summary>The type of this constructor signature itself</summary>
+      public: typedef InvalidConstructorSignature Type;
+
+    };
+
+  } // namespace Private
 
   // ------------------------------------------------------------------------------------------- //
 

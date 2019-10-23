@@ -48,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Services {
     /// </returns>
     public: template<typename TService> const std::shared_ptr<TService> &Get() {
       typedef std::shared_ptr<TService> ServicePointer;
-      return Get(typeid(TService)).Get<ServicePointer>();
+      return Get(typeid(typename std::decay<TService>::type)).Get<ServicePointer>();
     }
 
     /// <summary>Tries to look up the specified service</summary>
@@ -56,11 +56,12 @@ namespace Nuclex { namespace Support { namespace Services {
     /// <param name="service">Shared pointer that will receive the service if found</param>
     /// <returns>True if the specified service was found and retrieved</returns>
     public: template<typename TService> bool TryGet(std::shared_ptr<TService> &service) {
-      typedef std::shared_ptr<TService> ServicePointer;
+      typedef typename std::decay<TService>::type VanillaServiceType;
+      typedef std::shared_ptr<VanillaServiceType> SharedServicePointer;
 
-      Any serviceAsAny;
-      if(TryGet(typeid(TService), serviceAsAny)) {
-        service = serviceAsAny.Get<ServicePointer>();
+      Any serviceAsAny = TryGet(typeid(VanillaServiceType));
+      if(serviceAsAny.HasValue()) {
+        service = serviceAsAny.Get<SharedServicePointer>();
         return true;
       } else {
         service.reset();
@@ -79,10 +80,20 @@ namespace Nuclex { namespace Support { namespace Services {
 
     /// <summary>Tries to look up the specified service</summary>
     /// <param name="serviceType">Type of service that will be looked up</param>
-    /// <param name="service">Any that will receive the shared_ptr to the service</param>
-    /// <returns>True if the service was found and stored in the any</returns>
-    protected: NUCLEX_SUPPORT_API virtual bool TryGet(
-      const std::type_info &serviceType, Any &service
+    /// <returns>An Any containing the service, if found, or an empty Any</returns>
+    /// <remarks>
+    ///   <para>
+    ///     An empty <see cref="Any" /> will be returned if the specified service has not
+    ///     been activated yet (for a mere container, that means it's not in the container,
+    ///     for a factory, it means it has not been constructed yet or its lifetime requires
+    ///     that the service instance is not stored).
+    ///   </para>
+    ///   <para>
+    ///     If there is another problem, this method will still throw an exception.
+    ///   </para>
+    /// </remarks>
+    protected: NUCLEX_SUPPORT_API virtual const Any &TryGet(
+      const std::type_info &serviceType
     ) const = 0;
 
     //private: ServiceProvider(const ServiceProvider &);

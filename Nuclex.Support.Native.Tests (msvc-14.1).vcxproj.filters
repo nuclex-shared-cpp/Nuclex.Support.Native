@@ -113,9 +113,6 @@
     <ClCompile Include="Source\Services\ServiceContainer.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services\ServiceProvider.cpp">
-      <Filter>Source\Services</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Text\Lexical.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
@@ -203,6 +200,15 @@
     <ClCompile Include="Tests\Services\ServiceContainerTest.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Services\ServiceProvider.cpp">
+      <Filter>Source\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services\CyclicDependencyError.cpp">
+      <Filter>Source\Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -257,9 +263,6 @@
       <Filter>Include\Services</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceContainer.h">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h">
       <Filter>Include\Services</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h">
@@ -337,12 +340,33 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\StackArray.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\IntegerSequence.inl">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\Checks.inl">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\ArgumentPlaceholder.inl">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignatureDetector.inl">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignature.inl">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceFactory.inl">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\CyclicDependencyError.h">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf">
-      <Filter>Documents</Filter>
-    </None>
-    <None Include="Documents\Copyright.md">
       <Filter>Documents</Filter>
     </None>
     <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf">
@@ -360,5 +384,13 @@
     <None Include="Nuclex.Support.Native.def">
       <Filter>Resources</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Documents\EventBenchmark.md">
+      <Filter>Documents</Filter>
+    </Text>
+    <Text Include="Documents\Copyright.md">
+      <Filter>Documents</Filter>
+    </Text>
   </ItemGroup>
 </Project>

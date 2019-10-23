@@ -31,42 +31,16 @@ namespace Nuclex { namespace Support { namespace Services {
 
   namespace Private {
 
-    /// <summary>Stores a constructor signature (the number and type of its arguments)</summary>
-    /// <typeparam name="TArguments">Arguments required by the constructor</typeparam>
-    template<typename... TArguments>
-    class ConstructorSignature {
-
-      /// <summary>The type of this constructor signature itself</summary>
-      public: typedef ConstructorSignature Type;
-      /// <summary>Number of arguments being passed to the constructor</summary>
-      public: static constexpr std::size_t ArgumentCount = sizeof...(TArguments);
-
-    };
-
-  } // namespace Private
-
-  // ------------------------------------------------------------------------------------------- //
-
-  namespace Private {
-
-    /// <summary>Used if the constructor signature cannot be determined</summary>
-    class InvalidConstructorSignature {
-    
-      /// <summary>The type of this constructor signature itself</summary>
-      public: typedef InvalidConstructorSignature Type;
-
-    };
-
-  } // namespace Private
-
-  // ------------------------------------------------------------------------------------------- //
-
-  namespace Private {
-
     /// <summary>Informations about an argument passed to the constructor of a type</summary>
+    /// <typeparam name="TImplementation">
+    ///   Type for whose constructor this argument is used
+    /// </typeparma>
+    /// <typeparam name="ArgumentIndex">Index of this argument</typeparam>
     template<typename TImplementation, std::size_t ArgumentIndex>
     class DetectedArgument : public ArgumentPlaceholder {
 
+      /// <summary>This type</summary>
+      public: typedef DetectedArgument Type;
       /// <summary>Type of which this is a constructor argument</summary>
       public: typedef TImplementation OwningType;
 
@@ -100,7 +74,7 @@ namespace Nuclex { namespace Support { namespace Services {
     ///   </para>
     /// </remarks>
     template<typename TImplementation, typename TArgumentSequence, typename = void>
-    struct ConstructorSignatureDetector;
+    class ConstructorSignatureDetector;
 
     /// <summary>Detects the constructor signature of the specified type</summary>
     /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
@@ -108,13 +82,13 @@ namespace Nuclex { namespace Support { namespace Services {
     ///   Starting try, used if the type is default-constructible
     /// </remarks>
     template<typename TImplementation>
-    struct ConstructorSignatureDetector<
+    class ConstructorSignatureDetector<
       TImplementation,
       IntegerSequence<>,
       typename std::enable_if<
         std::is_constructible<TImplementation>::value
       >::type
-    > : ConstructorSignature<> {};
+    > : public ConstructorSignature<> {};
 
     /// <summary>Detects the constructor signature of the specified type</summary>
     /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
@@ -122,13 +96,13 @@ namespace Nuclex { namespace Support { namespace Services {
     ///   Starting try, delegates to check with 1 argument if type is not default-constructible
     /// </remarks>
     template<typename TImplementation>
-    struct ConstructorSignatureDetector <
+    class ConstructorSignatureDetector <
       TImplementation,
       IntegerSequence<>,
       typename std::enable_if<
         !std::is_constructible<TImplementation>::value
       >::type
-    > : ConstructorSignatureDetector<TImplementation, BuildIntegerSequence<1>>::Type {};
+    > : public ConstructorSignatureDetector<TImplementation, BuildIntegerSequence<1>>::Type {};
 
     /// <summary>Detects the constructor signature of the specified type</summary>
     /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
@@ -136,7 +110,7 @@ namespace Nuclex { namespace Support { namespace Services {
     ///   Intermediate successful attempt, used if the argument count matches
     /// </remarks>
     template<typename TImplementation, std::size_t... TArgumentIndices>
-    struct ConstructorSignatureDetector <
+    class ConstructorSignatureDetector <
       TImplementation,
       IntegerSequence<TArgumentIndices...>,
       typename std::enable_if<
@@ -146,7 +120,7 @@ namespace Nuclex { namespace Support { namespace Services {
           TImplementation, DetectedArgument<TImplementation, TArgumentIndices>...
         >::value
       >::type
-    > : ConstructorSignature<DetectedArgument<TImplementation, TArgumentIndices>...> {};
+    > : public ConstructorSignature<DetectedArgument<TImplementation, TArgumentIndices>...> {};
 
     /// <summary>Detects the constructor signature of the specified type</summary>
     /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
@@ -154,7 +128,7 @@ namespace Nuclex { namespace Support { namespace Services {
     ///   Intermediate failed attempt, delegates recursively to check with N + 1 arguments
     /// </remarks>
     template<typename TImplementation, std::size_t... TArgumentIndices>
-    struct ConstructorSignatureDetector<
+    class ConstructorSignatureDetector<
       TImplementation,
       IntegerSequence<TArgumentIndices...>,
       typename std::enable_if<
@@ -164,11 +138,9 @@ namespace Nuclex { namespace Support { namespace Services {
           TImplementation, DetectedArgument<TImplementation, TArgumentIndices>...
         >::value
       >::type
-    > : ConstructorSignatureDetector<
+    > : public ConstructorSignatureDetector<
       TImplementation, BuildIntegerSequence<sizeof...(TArgumentIndices) + 1>
-    >::Type {
-      //static_assert(false, "nope");
-    };
+    >::Type {};
 
     /// <summary>Detects the constructor signature of the specified type</summary>
     /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
@@ -176,7 +148,7 @@ namespace Nuclex { namespace Support { namespace Services {
     ///   Last attempt, used if the argument count matches the maximum number of arguments
     /// </remarks>
     template<typename TImplementation, std::size_t... TArgumentIndices>
-    struct ConstructorSignatureDetector<
+    class ConstructorSignatureDetector<
       TImplementation,
       IntegerSequence<TArgumentIndices...>,
       typename std::enable_if<
@@ -185,7 +157,7 @@ namespace Nuclex { namespace Support { namespace Services {
           TImplementation, DetectedArgument<TImplementation, TArgumentIndices>...
         >::value
       >::type
-    > : ConstructorSignature<DetectedArgument<TImplementation, TArgumentIndices>...> {};
+    > : public ConstructorSignature<DetectedArgument<TImplementation, TArgumentIndices>...> {};
 
     /// <summary>Detects the constructor signature of the specified type</summary>
     /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
@@ -193,7 +165,7 @@ namespace Nuclex { namespace Support { namespace Services {
     ///   Last attempt, also failed, inherits from an invalid signature marker type
     /// </remarks>
     template<typename TImplementation, std::size_t... TArgumentIndices>
-    struct ConstructorSignatureDetector<
+    class ConstructorSignatureDetector<
       TImplementation,
       IntegerSequence<TArgumentIndices...>,
       typename std::enable_if<
@@ -202,7 +174,7 @@ namespace Nuclex { namespace Support { namespace Services {
           TImplementation, DetectedArgument<TImplementation, TArgumentIndices>...
         >::value
       >::type
-    > : InvalidConstructorSignature {};
+    > : public InvalidConstructorSignature {};
 
   } // namespace Private
 

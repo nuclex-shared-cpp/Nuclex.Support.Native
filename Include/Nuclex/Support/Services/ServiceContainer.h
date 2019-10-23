@@ -99,11 +99,19 @@ namespace Nuclex { namespace Support { namespace Services {
 
     /// <summary>Tries to look up the specified service</summary>
     /// <param name="serviceType">Type of service that will be looked up</param>
-    /// <param name="service">Any that will receive the shared_ptr to the service</param>
-    /// <returns>True if the service was found and stored in the any</returns>
-    protected: NUCLEX_SUPPORT_API bool TryGet(
-      const std::type_info &serviceType, Any &service
-    ) const;
+    /// <returns>An Any containing the service, if found, or an empty Any</returns>
+    /// <remarks>
+    ///   <para>
+    ///     An empty <see cref="Any" /> will be returned if the specified service has not
+    ///     been activated yet (for a mere container, that means it's not in the container,
+    ///     for a factory, it means it has not been constructed yet or its lifetime requires
+    ///     that the service instance is not stored).
+    ///   </para>
+    ///   <para>
+    ///     If there is another problem, this method will still throw an exception.
+    ///   </para>
+    /// </remarks>
+    protected: NUCLEX_SUPPORT_API const Any &TryGet(const std::type_info &serviceType) const;
 
     /// <summary>Adds a service to the container</summary>
     /// <param name="serviceType">

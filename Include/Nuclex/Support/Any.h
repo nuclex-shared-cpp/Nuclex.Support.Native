@@ -32,6 +32,9 @@ namespace Nuclex { namespace Support {
   /// <summary>Opaquely wraps a value of an arbitrary type</summary>
   class Any {
 
+    /// <summary>An <see cref="Any" /> instance that is empty</summary>
+    public: const static Any Empty;
+
     #pragma region struct GenericValueHolder
 
     /// <summary>Base class to the holder for the value wrapped by the any</summary>
@@ -93,7 +96,7 @@ namespace Nuclex { namespace Support {
     /// <summary>Initializes a new any containing the specified value</summary>
     /// <param name="value">Value that will be carried by the any</param>
     public: template<typename TValue> Any(const TValue &value) :
-      valueHolder(new ValueHolder<TValue>(value)) {}
+      valueHolder(new ValueHolder<typename std::decay<TValue>::type>(value)) {}
 
     /// <summary>Initializes a new any copying the contents of an existing instance</summary>
     /// <param name="other">Other instance that will be copied</param>
@@ -158,7 +161,7 @@ namespace Nuclex { namespace Support {
     public: template<typename TValue> const TValue &Get() const {
       typedef ValueHolder<TValue> TValueHolder;
 
-      const std::type_info &type = typeid(TValue);
+      const std::type_info &type = typeid(typename std::decay<TValue>::type);
       if(type != valueHolder->GetType()) {
         throw std::bad_cast(); // "Type is different from the value stored by the 'Any' instance"
       }

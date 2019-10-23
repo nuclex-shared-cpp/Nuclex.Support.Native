@@ -222,7 +222,7 @@ namespace Nuclex { namespace Support { namespace Services {
       ) {}
     };
 
-    // This test will obviously break if you increase the argument limit beyond nine
+    // This test will obviously break if you increase the argument limit beyond eight
     constexpr bool nineArgumentsAreAccepted = !std::is_base_of<
       Nuclex::Support::Services::Private::InvalidConstructorSignature,
       Nuclex::Support::Services::Private::DetectConstructorSignature<NineArgumentConstructible>
@@ -235,6 +235,9 @@ namespace Nuclex { namespace Support { namespace Services {
   TEST(LazyServiceInjectorTest, CanBindServiceToImplementation) {
     LazyServiceInjector serviceInjector;
 
+    //const std::type_info &typeInfo = typeid(CalculatorService);
+    //std::cout << typeInfo.name() << std::endl;
+
     serviceInjector.Bind<CalculatorService>().To<BrokenCalculator>();
   }
 
@@ -242,6 +245,8 @@ namespace Nuclex { namespace Support { namespace Services {
 
   TEST(LazyServiceInjectorTest, CanBindServiceToSelf) {
     LazyServiceInjector serviceInjector;
+
+    serviceInjector.Bind<CalculatorUser>().ToSelf();
 
     serviceInjector.Bind<BrokenCalculator>().ToSelf();
   }

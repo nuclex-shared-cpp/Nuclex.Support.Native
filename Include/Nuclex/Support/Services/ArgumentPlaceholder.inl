@@ -48,10 +48,11 @@ namespace Nuclex { namespace Support { namespace Services {
         >::type
       >
       operator TArgument() const {
-        throw std::logic_error(
-          "This functor is used to detect an argument type and should never be called"
-        );
+        // TODO: Call the service injector to construct this service
+        //   Use a dependency chain to detect cyclic dependencies
+        return TArgument(); // We know TArgument is a std::shared_ptr()
       }
+
     };
 
   } // namespace Private

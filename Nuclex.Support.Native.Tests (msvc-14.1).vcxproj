@@ -207,8 +207,15 @@
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\EmptyDelegateCallError.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Event.h" />
+    <ClInclude Include="Include\Nuclex\Support\Services\ArgumentPlaceholder.inl" />
+    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignature.inl" />
+    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignatureDetector.inl" />
+    <ClInclude Include="Include\Nuclex\Support\Services\CyclicDependencyError.h" />
+    <ClInclude Include="Include\Nuclex\Support\Services\IntegerSequence.inl" />
+    <ClInclude Include="Include\Nuclex\Support\Services\Checks.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\LazyServiceInjector.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceContainer.h" />
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceFactory.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLine.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLineArgument.h" />
@@ -241,6 +248,7 @@
     <ClCompile Include="Source\Events\Delegate.cpp" />
     <ClCompile Include="Source\Events\EmptyDelegateCallError.cpp" />
     <ClCompile Include="Source\Events\Event.cpp" />
+    <ClCompile Include="Source\Services\CyclicDependencyError.cpp" />
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp" />
     <ClCompile Include="Source\Services\ServiceContainer.cpp" />
     <ClCompile Include="Source\Services\ServiceProvider.cpp" />
@@ -276,8 +284,9 @@
     <ClCompile Include="Source\VariantType.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Documents\Copyright.md" />
+    <Text Include="Documents\Copyright.md" />
     <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf" />
+    <Text Include="Documents\EventBenchmark.md" />
     <None Include="Documents\Florian Loitsch - Printing Floating-Point Numbers Quickly and Accurately with Integers.pdf" />
     <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf" />
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
@@ -286,6 +295,7 @@
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp" />
     <ClCompile Include="Tests\Events\DelegateTests.cpp" />
     <ClCompile Include="Tests\Events\EventTests.cpp" />
+    <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp" />
     <ClCompile Include="Tests\Services\ServiceContainerTest.cpp" />
     <ClCompile Include="Tests\Text\LexicalTest.cpp" />
     <ClCompile Include="Tests\Text\StringConverterTest.cpp" />

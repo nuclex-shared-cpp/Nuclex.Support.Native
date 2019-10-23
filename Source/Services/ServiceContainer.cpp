@@ -38,13 +38,12 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool ServiceContainer::TryGet(const std::type_info &serviceType, Any &service) const {
+  const Any &ServiceContainer::TryGet(const std::type_info &serviceType) const {
     ServiceMap::const_iterator iterator = this->services.find(&serviceType);
     if(iterator == this->services.end()) {
-      return false;
+      return Any::Empty;
     } else {
-      service = iterator->second;
-      return true;
+      return iterator->second;
     }
   }
 
