@@ -62,9 +62,13 @@ namespace Nuclex { namespace Support { namespace Services {
 
     /// <summary>Provides the syntax for the fluent Bind() method</summary>
     public: template<typename TService> class BindSyntax {
+      friend LazyServiceInjector;
 
       /// <summary>Type of a factory method for this service</summary>
       public: typedef Events::Delegate<std::shared_ptr<TService>(void)> FactoryMethodType;
+
+      protected: BindSyntax(LazyServiceInjector &serviceInjector) :
+        serviceInjector(serviceInjector) {}
 
       /// <summary>Binds the service to a constructor-injected provider</summary>
       /// <typeparam name="TImplementation">Implementation of the service to use</typeparam>
@@ -125,11 +129,15 @@ namespace Nuclex { namespace Support { namespace Services {
           "using only std::shared_ptr arguments)"
         );
 
-        ServiceProvider *needThis = nullptr;
-        Private::ServiceFactory<TService, ConstructorSignature>::CreateInstance(*needThis);
+        Private::ServiceFactory<TService, ConstructorSignature>::CreateInstance(
+          this->serviceInjector
+        );
 
         throw std::logic_error("Not implemented yet");
       }
+
+      /// <summary>Service injector to which the binding will be added</summary>
+      private: LazyServiceInjector &serviceInjector;
 
     };
 
@@ -190,7 +198,7 @@ namespace Nuclex { namespace Support { namespace Services {
     /// <summary>Binds a provider to the specified service</summary>
     /// <returns>A syntax through which the provider to be bound can be selected</returns>
     public: template<typename TService> BindSyntax<TService> Bind() {
-      return BindSyntax<TService>();
+      return BindSyntax<TService>(*this);
     }
 
     // Unhide the templated Get method from the service provider

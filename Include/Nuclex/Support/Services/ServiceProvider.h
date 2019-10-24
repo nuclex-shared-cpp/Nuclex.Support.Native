@@ -46,7 +46,7 @@ namespace Nuclex { namespace Support { namespace Services {
     /// <returns>
     ///   The specified service as a shared_ptr wrapped in an <see cref="Any" />
     /// </returns>
-    public: template<typename TService> const std::shared_ptr<TService> &Get() {
+    public: template<typename TService> const std::shared_ptr<TService> &Get() const {
       typedef std::shared_ptr<TService> ServicePointer;
       return Get(typeid(typename std::decay<TService>::type)).Get<ServicePointer>();
     }
@@ -55,7 +55,7 @@ namespace Nuclex { namespace Support { namespace Services {
     /// <param name="serviceType">Type of service that will be looked up</param>
     /// <param name="service">Shared pointer that will receive the service if found</param>
     /// <returns>True if the specified service was found and retrieved</returns>
-    public: template<typename TService> bool TryGet(std::shared_ptr<TService> &service) {
+    public: template<typename TService> bool TryGet(std::shared_ptr<TService> &service) const {
       typedef typename std::decay<TService>::type VanillaServiceType;
       typedef std::shared_ptr<VanillaServiceType> SharedServicePointer;
 

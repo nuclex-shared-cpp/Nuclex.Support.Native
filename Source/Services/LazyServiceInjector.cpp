@@ -35,6 +35,7 @@ namespace Nuclex { namespace Support { namespace Services {
       return service;
     }
 
+    // TODO: Create an ServiceConstructionChain to detect cyclic dependencies
     throw std::runtime_error("Service creation is not implemented yet :-(");
   }
 

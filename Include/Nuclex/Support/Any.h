@@ -24,6 +24,7 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 
 #include <typeinfo>
+#include <type_traits>
 
 namespace Nuclex { namespace Support {
 

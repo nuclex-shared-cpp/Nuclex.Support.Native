@@ -46,14 +46,7 @@ namespace Nuclex { namespace Support { namespace Services {
       /// <param name="serviceActivator">
       ///   Activator through which the argument will be resolved when it is used
       /// </param>
-      public: ConstructorArgument() :
-        serviceActivator(*static_cast<ServiceProvider *>(nullptr)) {}
-
-      /// <summary>Initializes a new constructor argument<summary>
-      /// <param name="serviceActivator">
-      ///   Activator through which the argument will be resolved when it is used
-      /// </param>
-      public: ConstructorArgument(ServiceProvider &serviceActivator) :
+      public: ConstructorArgument(const ServiceProvider &serviceActivator) :
         serviceActivator(serviceActivator) {}
 
       /// <summary>Implicitly converts the placeholder to the argument's type</summary>
@@ -68,12 +61,10 @@ namespace Nuclex { namespace Support { namespace Services {
       operator TArgument() const {
         typedef typename TArgument::element_type ServiceType;
         return this->serviceActivator.Get<ServiceType>();
-        //std::shared_ptr<int> x;
-        //return this->serviceActivator.Get<typename std::decay<TArgument>::type>();
       }
 
       /// <summary>Activator through which the argument will be resolved when needed</summary>
-      private: ServiceProvider &serviceActivator;
+      private: const ServiceProvider &serviceActivator;
 
     };
 

@@ -75,11 +75,7 @@ namespace Nuclex { namespace Support { namespace Services {
       public: static std::shared_ptr<TImplementation> CreateInstance(
         const ServiceProvider &serviceProvider
       ) {
-        return std::make_shared<TImplementation>(
-          typename TArguments::Type()...
-          //std::make_shared<TArguments::Type>()...
-        );
-
+        return std::make_shared<TImplementation>(typename TArguments::Type(serviceProvider)...);
       }
 
     };
