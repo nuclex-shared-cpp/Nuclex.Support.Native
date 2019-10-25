@@ -34,12 +34,12 @@ namespace Nuclex { namespace Support { namespace Events {
 
     /// <summary>Initializes a new empty delegate call error</summary>
     /// <param name="message">Message that describes the error</param>
-	  public: explicit EmptyDelegateCallError(const std::string &message) :
+    public: explicit EmptyDelegateCallError(const std::string &message) :
       std::runtime_error(message) {}
 
     /// <summary>Initializes a new empty delegate call error</summary>
     /// <param name="message">Message that describes the error</param>
-	  public: explicit EmptyDelegateCallError(const char *message) :
+    public: explicit EmptyDelegateCallError(const char *message) :
       std::runtime_error(message) {}
 
   };

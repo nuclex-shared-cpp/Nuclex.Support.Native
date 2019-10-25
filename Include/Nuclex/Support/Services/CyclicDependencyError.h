@@ -36,12 +36,12 @@ namespace Nuclex { namespace Support { namespace Services {
 
     /// <summary>Initializes a new cyclic dependency error</summary>
     /// <param name="message">Message that describes the error</param>
-	  public: explicit CyclicDependencyError(const std::string &message) :
+    public: explicit CyclicDependencyError(const std::string &message) :
       std::logic_error(message) {}
 
     /// <summary>Initializes a new cyclic dependency error</summary>
     /// <param name="message">Message that describes the error</param>
-	  public: explicit CyclicDependencyError(const char *message) :
+    public: explicit CyclicDependencyError(const char *message) :
       std::logic_error(message) {}
 
   };
