@@ -22,21 +22,42 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Services/LazyServiceInjector.h"
+#include "Nuclex/Support/Services/UnresolvedDependencyError.h"
 
 #include <stdexcept>
+
+// TODO: Create a ServiceConstructionChain or something to detect cyclic dependencies
 
 namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
   const Any &LazyServiceInjector::Get(const std::type_info &serviceType) const {
+
+    // Check if the service has already been constructed
     const Any &service = this->services.TryGet(serviceType);
     if(service.HasValue()) {
       return service;
     }
 
-    // TODO: Create an ServiceConstructionChain to detect cyclic dependencies
-    throw std::runtime_error("Service creation is not implemented yet :-(");
+    // Check if a factory for the service has been registered
+    ServiceFactoryMap::const_iterator it = this->factories.find(&serviceType);
+    if(it != this->factories.end()) {
+      Any serviceAsAny = it->second(*this);
+      this->services.Add(serviceType, serviceAsAny);
+      this->factories.erase(it);
+      return this->services.Get(serviceType); // TODO: Streamline this
+    }
+
+    // We could attempt an ad-hoc service creation here, but there are several concerns
+    // speaking against doing so: a) we don't have the type in template form anymore,
+    // b) the service is not registered as a container singleton and creating a per-request
+    // service would be confusing.
+    std::string message = "Service '";
+    message += serviceType.name();
+    message += " is not known to the injector. Please register it before requesting.";
+    throw UnresolvedDependencyError(message);
+
   }
 
   // ------------------------------------------------------------------------------------------- //

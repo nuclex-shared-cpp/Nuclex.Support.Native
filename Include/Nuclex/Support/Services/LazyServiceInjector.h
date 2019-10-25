@@ -24,7 +24,8 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Services/ServiceContainer.h"
 #include "Nuclex/Support/Services/ServiceLifetime.h"
-#include "Nuclex/Support/Events/Delegate.h"
+
+#include <map>
 
 namespace Nuclex { namespace Support { namespace Services {
 
@@ -58,15 +59,31 @@ namespace Nuclex { namespace Support { namespace Services {
   /// </remarks>
   class LazyServiceInjector : public ServiceProvider {
 
+    #pragma region class TypeInfoComparer
+
+    /// <summary>Compares instances of std::type_info</summary>
+    private: class TypeInfoComparer {
+
+      /// <summary>Determines the relationship of two std::type_info instances</summary>
+      /// <param name="left">Type info to compare on the left side</param>
+      /// <param name="right">Type info to compare on the right side</param>
+      /// <returns>True if the left side comes before the right side</returns>
+      public: bool operator()(const std::type_info *left, const std::type_info *right) const {
+        return left->before(*right) != 0;
+      }
+
+    };
+
+    #pragma endregion // class TypeInfoComparer
+
     #pragma region class BindSyntax
 
     /// <summary>Provides the syntax for the fluent Bind() method</summary>
     public: template<typename TService> class BindSyntax {
       friend LazyServiceInjector;
 
-      /// <summary>Type of a factory method for this service</summary>
-      public: typedef Events::Delegate<std::shared_ptr<TService>(void)> FactoryMethodType;
-
+      /// <summary>Initializes the syntax helper for binding services</summary>
+      /// <param name="serviceInjector">Service injector on which services will be bound</param>
       protected: BindSyntax(LazyServiceInjector &serviceInjector) :
         serviceInjector(serviceInjector) {}
 
@@ -78,11 +95,13 @@ namespace Nuclex { namespace Support { namespace Services {
       public: template<typename TImplementation> void To() {
         typedef Private::DetectConstructorSignature<TImplementation> ConstructorSignature;
 
+        // Verify that the implementation actually implements the service
         static_assert(
           std::is_base_of<TService, TImplementation>::value,
           "Implementation must inherit from the service interface"
         );
 
+        // Also verify that the implementation's constructor can be injected
         constexpr bool implementationHasInjectableConstructor = !std::is_base_of<
           Private::InvalidConstructorSignature, ConstructorSignature
         >::value;
@@ -92,21 +111,55 @@ namespace Nuclex { namespace Support { namespace Services {
           "(either providing a default constructor or using only std::shared_ptr arguments)"
         );
 
-        throw std::logic_error("Not implemented yet");
+        // Implementation looks injectable, add the service factory method to the map
+        const std::type_info &serviceTypeInfo = typeid(TService);
+        this->serviceInjector.factories.insert(
+          ServiceFactoryMap::value_type(
+            &serviceTypeInfo,
+            [](const ServiceProvider &serviceProvider) {
+              typedef Private::ServiceFactory<TImplementation, ConstructorSignature> Factory;
+              return Any(
+                std::static_pointer_cast<TService>(Factory::CreateInstance(serviceProvider))
+              );
+            }
+          )
+        );
+
       }
 
       /// <summary>Binds the service to a factory method or functor used to create it</summary>
       /// <param name="factoryMethod">
       ///   Factory method that will be called to create the service
       /// </param>
-      public: void ToFactoryMethod(const FactoryMethodType &factoryMethod) {
-        throw std::logic_error("Not implemented yet");
+      public: template<typename TResult, std::shared_ptr<TResult>(*TMethod)(const ServiceProvider &)>
+      void ToFactoryMethod(){ 
+
+        // Verify that whatever the factory method returns implements the service
+        static_assert(
+          std::is_base_of<TService, TResult>::value,
+          "Factory method must return either the service type or one that "
+          "inherits from it"
+        );
+
+        // Method does provide the service, add it to the map
+        const std::type_info &serviceTypeInfo = typeid(TService);
+        this->serviceInjector.factories.insert(
+          ServiceFactoryMap::value_type(
+            &serviceTypeInfo,
+            [](const ServiceProvider &serviceProvider) {
+              return Any(std::static_pointer_cast<TService>(TMethod(serviceProvider)));
+            }
+          )
+        );
+
       }
 
       /// <summary>Binds the service to an already constructed service instance</summary>
       /// <param name="instance">Instance that will be returned for the service</param>
       public: void ToInstance(const std::shared_ptr<TService> &instance) {
-        throw std::logic_error("Not implemented yet");
+        //const std::type_info &typeInfo = typeid(TService);
+        //this->serviceInjector.services.Add(&typeInfo, Any(instance));
+        this->serviceInjector.services.Add(instance);
       }
 
       /// <summary>Assumes that the service and its implementation are the same type</summary>
@@ -129,11 +182,18 @@ namespace Nuclex { namespace Support { namespace Services {
           "using only std::shared_ptr arguments)"
         );
 
-        Private::ServiceFactory<TService, ConstructorSignature>::CreateInstance(
-          this->serviceInjector
+        // Service looks injectable, add the service factory method to the map
+        const std::type_info &serviceTypeInfo = typeid(TService);
+        this->serviceInjector.factories.insert(
+          ServiceFactoryMap::value_type(
+            &serviceTypeInfo,
+            [](const ServiceProvider &serviceProvider) {
+              typedef Private::ServiceFactory<TService, ConstructorSignature> Factory;
+              return Any(Factory::CreateInstance(serviceProvider));
+            }
+          )
         );
 
-        throw std::logic_error("Not implemented yet");
       }
 
       /// <summary>Service injector to which the binding will be added</summary>
@@ -223,10 +283,21 @@ namespace Nuclex { namespace Support { namespace Services {
       const std::type_info &serviceType
     ) const override;
 
-    //private: void 
+    /// <summary>Delegate for a factory method that creates a service</summary>
+    private: typedef Any(*CreateServiceFunction)(const ServiceProvider &);
 
+    /// <summary>Map of factories to create different services</summary> 
+    private: typedef std::map<
+      const std::type_info *, CreateServiceFunction, TypeInfoComparer
+    > ServiceFactoryMap;
+
+    // These are both mutable. Reasoning: the service injector acts as if all services
+    // already exist, so 
+
+    /// <summary>Factory methods to construct the various services</summary>
+    private: mutable ServiceFactoryMap factories;
     /// <summary>Stores services that have already been initialized</summary>
-    private: ServiceStore services;
+    private: mutable ServiceStore services;
 
   };
 

@@ -51,6 +51,12 @@ namespace {
   /// <summary>Example implementation of the calculator service</summary>
   class BrokenCalculator : public virtual CalculatorService {
 
+    /// <summary>Factory method that creates an instance of the broken calculator</summary>
+    /// <returns>The new broken calculator instance</returns>
+    public: static std::shared_ptr<BrokenCalculator> CreateInstance() {
+      return std::make_shared<BrokenCalculator>();
+    }
+
     /// <summary>Calculates the sum of two integers</summary>
     /// <param name="first">First integer that will be part of the sum</param>
     /// <param name="second">Second integer that will be part of the sum</param>
@@ -235,10 +241,12 @@ namespace Nuclex { namespace Support { namespace Services {
   TEST(LazyServiceInjectorTest, CanBindServiceToImplementation) {
     LazyServiceInjector serviceInjector;
 
-    //const std::type_info &typeInfo = typeid(CalculatorService);
-    //std::cout << typeInfo.name() << std::endl;
-
     serviceInjector.Bind<CalculatorService>().To<BrokenCalculator>();
+    
+    std::shared_ptr<CalculatorService> service = serviceInjector.Get<CalculatorService>();
+    ASSERT_TRUE(!!service);
+
+    EXPECT_NO_THROW(service->Add(1, 2));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -246,9 +254,12 @@ namespace Nuclex { namespace Support { namespace Services {
   TEST(LazyServiceInjectorTest, CanBindServiceToSelf) {
     LazyServiceInjector serviceInjector;
 
-    serviceInjector.Bind<CalculatorUser>().ToSelf();
-
     serviceInjector.Bind<BrokenCalculator>().ToSelf();
+
+    std::shared_ptr<BrokenCalculator> service = serviceInjector.Get<BrokenCalculator>();
+    ASSERT_TRUE(!!service);
+
+    EXPECT_NO_THROW(service->Add(1, 2));
   }
 
   // ------------------------------------------------------------------------------------------- //
