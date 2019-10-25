@@ -79,6 +79,7 @@ namespace Nuclex { namespace Support { namespace Services {
     #pragma region class BindSyntax
 
     /// <summary>Provides the syntax for the fluent Bind() method</summary>
+    /// <typeparam name="TService">Service for which a binding will be set up</typeparam>
     public: template<typename TService> class BindSyntax {
       friend LazyServiceInjector;
 
@@ -131,8 +132,10 @@ namespace Nuclex { namespace Support { namespace Services {
       /// <param name="factoryMethod">
       ///   Factory method that will be called to create the service
       /// </param>
-      public: template<typename TResult, std::shared_ptr<TResult>(*TMethod)(const ServiceProvider &)>
-      void ToFactoryMethod(){ 
+      public: template<
+        typename TResult, std::shared_ptr<TResult>(*TMethod)(const ServiceProvider &)
+      >
+      void ToFactoryMethod() { 
 
         // Verify that whatever the factory method returns implements the service
         static_assert(
@@ -154,12 +157,33 @@ namespace Nuclex { namespace Support { namespace Services {
 
       }
 
+      /// <summary>Binds the service to a factory method or functor used to create it</summary>
+      /// <param name="factoryMethod">
+      ///   Factory method that will be called to create the service
+      /// </param>
+      public: template<
+        std::shared_ptr<TService>(*TMethod)(const ServiceProvider &)
+      >
+      void ToFactoryMethod() { 
+
+        // Method does provide the service, add it to the map
+        const std::type_info &serviceTypeInfo = typeid(TService);
+        this->serviceInjector.factories.insert(
+          ServiceFactoryMap::value_type(
+            &serviceTypeInfo,
+            [](const ServiceProvider &serviceProvider) {
+              return Any(TMethod(serviceProvider));
+            }
+          )
+        );
+
+      }
+
       /// <summary>Binds the service to an already constructed service instance</summary>
       /// <param name="instance">Instance that will be returned for the service</param>
       public: void ToInstance(const std::shared_ptr<TService> &instance) {
-        //const std::type_info &typeInfo = typeid(TService);
-        //this->serviceInjector.services.Add(&typeInfo, Any(instance));
-        this->serviceInjector.services.Add(instance);
+        const std::type_info &serviceTypeInfo = typeid(TService);
+        this->serviceInjector.services.Add(serviceTypeInfo, Any(instance));
       }
 
       /// <summary>Assumes that the service and its implementation are the same type</summary>

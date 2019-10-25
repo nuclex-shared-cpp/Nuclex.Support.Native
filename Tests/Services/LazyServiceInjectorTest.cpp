@@ -53,7 +53,9 @@ namespace {
 
     /// <summary>Factory method that creates an instance of the broken calculator</summary>
     /// <returns>The new broken calculator instance</returns>
-    public: static std::shared_ptr<BrokenCalculator> CreateInstance() {
+    public: static std::shared_ptr<BrokenCalculator> CreateInstance(
+      const Nuclex::Support::Services::ServiceProvider &
+    ) {
       return std::make_shared<BrokenCalculator>();
     }
 
@@ -251,7 +253,7 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(LazyServiceInjectorTest, CanBindServiceToSelf) {
+  TEST(LazyServiceInjectorTest, ServiceCanBeItsOwnImplementation) {
     LazyServiceInjector serviceInjector;
 
     serviceInjector.Bind<BrokenCalculator>().ToSelf();
@@ -260,6 +262,67 @@ namespace Nuclex { namespace Support { namespace Services {
     ASSERT_TRUE(!!service);
 
     EXPECT_NO_THROW(service->Add(1, 2));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LazyServiceInjectorTest, CanBindServiceToFactoryMethod) {
+    LazyServiceInjector serviceInjector;
+
+    // Simple form of .ToFactoryMethod() that expects the factory method to
+    // return the service type
+    serviceInjector.Bind<BrokenCalculator>().ToFactoryMethod<
+      &BrokenCalculator::CreateInstance
+    >();
+
+    std::shared_ptr<BrokenCalculator> service = serviceInjector.Get<BrokenCalculator>();
+    ASSERT_TRUE(!!service);
+
+    EXPECT_NO_THROW(service->Add(1, 2));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LazyServiceInjectorTest, CanBindServiceToFactoryMethodReturningImplementation) {
+    LazyServiceInjector serviceInjector;
+
+    // More elaborate form of .ToFactoryMethod() where the factory methood
+    // can return any type that inherits from the service type
+    serviceInjector.Bind<CalculatorService>().ToFactoryMethod<
+      BrokenCalculator, &BrokenCalculator::CreateInstance
+    >();
+
+    std::shared_ptr<CalculatorService> service = serviceInjector.Get<CalculatorService>();
+    ASSERT_TRUE(!!service);
+
+    EXPECT_NO_THROW(service->Add(1, 2));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LazyServiceInjectorTest, CanBindServiceToInstance) {
+    LazyServiceInjector serviceInjector;
+
+    serviceInjector.Bind<CalculatorService>().ToInstance(std::make_shared<BrokenCalculator>());
+
+    std::shared_ptr<CalculatorService> service = serviceInjector.Get<CalculatorService>();
+    ASSERT_TRUE(!!service);
+
+    EXPECT_NO_THROW(service->Add(1, 2));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LazyServiceInjectorTest, CanResolveServiceImplementationDependencies) {
+    LazyServiceInjector serviceInjector;
+
+    serviceInjector.Bind<CalculatorService>().To<BrokenCalculator>();
+    serviceInjector.Bind<CalculatorUser>().ToSelf();
+
+    std::shared_ptr<CalculatorUser> user = serviceInjector.Get<CalculatorUser>();
+    ASSERT_TRUE(!!user);
+
+    EXPECT_NO_THROW(user->CalculateSomething());
   }
 
   // ------------------------------------------------------------------------------------------- //
