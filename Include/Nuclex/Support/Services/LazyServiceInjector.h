@@ -23,7 +23,6 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Services/ServiceContainer.h"
-#include "Nuclex/Support/Services/ServiceLifetime.h"
 
 #include <map>
 
@@ -76,43 +75,6 @@ namespace Nuclex { namespace Support { namespace Services {
 
     #pragma endregion // class TypeInfoComparer
 
-    #pragma region class LifetimeSyntax
-
-    /// <summary>Provides the syntax for the fluent service liftime configuration</summary>
-    public: class LifetimeSyntax {
-
-      /// <summary>
-      ///   Initializes a new fluent syntax helper for service lifetime configuration
-      /// </summary>
-      /// <param name="serviceInjector">Service injector that is managing the service</param>
-      /// <param name="serviceTypeInfo">Service type whose lifetime is being configured</param>
-      public: NUCLEX_SUPPORT_API LifetimeSyntax(
-        LazyServiceInjector &serviceInjector, const std::type_info &serviceTypeInfo
-      ) :
-        serviceInjector(serviceInjector),
-        serviceTypeInfo(serviceTypeInfo) {}
-
-      /// <summary>
-      ///   Configures the service to serve a single, shared instance to all requests
-      /// </summary>
-      public: NUCLEX_SUPPORT_API void UsingSharedInstance();
-
-      /// <summary>
-      ///   Configures the service to provide a unique instance for each request
-      /// </summary>
-      public: NUCLEX_SUPPORT_API void ServedPerRequest();
-
-      /// <summary>
-      ///   Service injector for which the fluent syntax helper is configuring a service lifetime
-      /// </summary>
-      private: LazyServiceInjector &serviceInjector;
-      /// <summary>Type of the service whose lifetime is being configured</summary>
-      private: const std::type_info &serviceTypeInfo;
-
-    };
-
-    #pragma endregion // class LifetimeSyntax
-
     #pragma region class BindSyntax
 
     /// <summary>Provides the syntax for the fluent Bind() method</summary>
@@ -127,11 +89,10 @@ namespace Nuclex { namespace Support { namespace Services {
 
       /// <summary>Binds the service to a constructor-injected provider</summary>
       /// <typeparam name="TImplementation">Implementation of the service to use</typeparam>
-      /// <returns>A helper through which the service lifetime can be configured</returns>
       /// <remarks>
       ///   This binds the service to the specified service implementation
       /// </remarks>
-      public: template<typename TImplementation> LifetimeSyntax To() {
+      public: template<typename TImplementation> void To() {
         typedef Private::DetectConstructorSignature<TImplementation> ConstructorSignature;
 
         // Verify that the implementation actually implements the service
@@ -155,29 +116,23 @@ namespace Nuclex { namespace Support { namespace Services {
         this->serviceInjector.factories.insert(
           ServiceFactoryMap::value_type(
             &serviceTypeInfo,
-            ServiceFactoryType(
-              ServiceLifetime::Container,
-              [](const ServiceProvider &serviceProvider) {
-                typedef Private::ServiceFactory<TImplementation, ConstructorSignature> Factory;
-                return Any(
-                  std::static_pointer_cast<TService>(Factory::CreateInstance(serviceProvider))
-                );
-              }
-            )
+            [](const ServiceProvider &serviceProvider) {
+              typedef Private::ServiceFactory<TImplementation, ConstructorSignature> Factory;
+              return Any(
+                std::static_pointer_cast<TService>(Factory::CreateInstance(serviceProvider))
+              );
+            }
           )
         );
-
-        return LifetimeSyntax(this->serviceInjector, serviceTypeInfo);
       }
 
       /// <summary>Binds the service to a factory method or functor used to create it</summary>
       /// <typeparam name="TResult">Type of value returned by the service factory</typeparam>
       /// <typeparam name="TMethod">Service factory method used to create the service</typeparam>
-      /// <returns>A helper through which the service lifetime can be configured</returns>
       public: template<
         typename TResult, std::shared_ptr<TResult>(*TMethod)(const ServiceProvider &)
       >
-      LifetimeSyntax ToFactoryMethod() { 
+      void ToFactoryMethod() { 
 
         // Verify that whatever the factory method returns implements the service
         static_assert(
@@ -191,42 +146,31 @@ namespace Nuclex { namespace Support { namespace Services {
         this->serviceInjector.factories.insert(
           ServiceFactoryMap::value_type(
             &serviceTypeInfo,
-            ServiceFactoryType(
-              ServiceLifetime::Container,
-              [](const ServiceProvider &serviceProvider) {
-                return Any(std::static_pointer_cast<TService>(TMethod(serviceProvider)));
-              }
-            )
+            [](const ServiceProvider &serviceProvider) {
+              return Any(std::static_pointer_cast<TService>(TMethod(serviceProvider)));
+            }
           )
         );
-
-        return LifetimeSyntax(this->serviceInjector, serviceTypeInfo);
 
       }
 
       /// <summary>Binds the service to a factory method or functor used to create it</summary>
       /// <typeparam name="TMethod">Service factory method used to create the service</typeparam>
-      /// <returns>A helper through which the service lifetime can be configured</returns>
       public: template<
         std::shared_ptr<TService>(*TMethod)(const ServiceProvider &)
       >
-      LifetimeSyntax ToFactoryMethod() { 
+      void ToFactoryMethod() { 
 
         // Method does provide the service, add it to the map
         const std::type_info &serviceTypeInfo = typeid(TService);
         this->serviceInjector.factories.insert(
           ServiceFactoryMap::value_type(
             &serviceTypeInfo,
-            ServiceFactoryType(
-              ServiceLifetime::Container,
-              [](const ServiceProvider &serviceProvider) {
-                return Any(TMethod(serviceProvider));
-              }
-            )
+            [](const ServiceProvider &serviceProvider) {
+              return Any(TMethod(serviceProvider));
+            }
           )
         );
-
-        return LifetimeSyntax(this->serviceInjector, serviceTypeInfo);
 
       }
 
@@ -240,14 +184,13 @@ namespace Nuclex { namespace Support { namespace Services {
       }
 
       /// <summary>Assumes that the service and its implementation are the same type</summary>
-      /// <returns>A helper through which the service lifetime can be configured</returns>
       /// <remarks>
       ///   For trivial services that don't have an interface separate from their implementation
       ///   class (or when you just have to provide some implementation everywhere),
       ///   use this method to say that the service type is a non-abstract class and
       ///   should be created directly.
       /// </remarks>
-      public: LifetimeSyntax ToSelf() {
+      public: void ToSelf() {
         typedef Private::DetectConstructorSignature<TService> ConstructorSignature;
 
         constexpr bool serviceHasInjectableConstructor = !std::is_base_of<
@@ -265,17 +208,12 @@ namespace Nuclex { namespace Support { namespace Services {
         this->serviceInjector.factories.insert(
           ServiceFactoryMap::value_type(
             &serviceTypeInfo,
-            ServiceFactoryType(
-              ServiceLifetime::Container,
-              [](const ServiceProvider &serviceProvider) {
-                typedef Private::ServiceFactory<TService, ConstructorSignature> Factory;
-                return Any(Factory::CreateInstance(serviceProvider));
-              }
-            )
+            [](const ServiceProvider &serviceProvider) {
+              typedef Private::ServiceFactory<TService, ConstructorSignature> Factory;
+              return Any(Factory::CreateInstance(serviceProvider));
+            }
           )
         );
-
-        return LifetimeSyntax(this->serviceInjector, serviceTypeInfo);
 
       }
 
@@ -294,7 +232,8 @@ namespace Nuclex { namespace Support { namespace Services {
 
     /// <summary>Binds a provider to the specified service</summary>
     /// <returns>A syntax through which the provider to be bound can be selected</returns>
-    public: template<typename TService> BindSyntax<TService> Bind() {
+    public: template<typename TService>
+    BindSyntax<TService> Bind() {
       return BindSyntax<TService>(*this);
     }
 
@@ -304,12 +243,48 @@ namespace Nuclex { namespace Support { namespace Services {
     // Unhide the templated TryGet method fro mthe service provider
     using ServiceProvider::TryGet;
 
+    /// <summary>Creates a new instance of the specified service</summary>
+    /// <param name="serviceType">Type of service that will be created</param>
+    /// <returns>A new instance of the requested service</returns>
+    public: template<typename TService>
+    std::shared_ptr<TService> Create() const {
+      const std::type_info &serviceTypeInfo = typeid(TService);
+      std::shared_ptr<TService> newServiceInstance(
+        Create(serviceTypeInfo).Get<std::shared_ptr<TService>>()
+      );
+      return newServiceInstance;
+    }
+
+/*
+    /// <summary>Provides a factory that creates the specified service</summary>
+    /// <param name="serviceType">Type of service that will be created</param>
+    /// <returns>
+    ///   A factory method that creates instances of the specified service on demand
+    /// </returns>
+    public: template<typename TService>
+    std::shared_ptr<TService>(*GetServiceFactory() const)() {
+      []() {
+        const std::type_info &serviceTypeInfo = typeid(TService);
+        std::shared_ptr<TService> newServiceInstance(
+          Create(serviceTypeInfo).Get<TService>()
+        );
+        return newServiceInstance;
+      }
+    }
+*/
     /// <summary>Looks up the specified service</summary>
     /// <param name="serviceType">Type of service that will be looked up</param>
     /// <returns>
     ///   The specified service as a shared_ptr wrapped in an <see cref="Any" />
     /// </returns>
     protected: NUCLEX_SUPPORT_API const Any &Get(
+      const std::type_info &serviceType
+    ) const override;
+
+    /// <summary>Tries to look up the specified service</summary>
+    /// <param name="serviceType">Type of service that will be looked up</param>
+    /// <returns>An Any containing the service, if found, or an empty Any</returns>
+    protected: NUCLEX_SUPPORT_API const Any &TryGet(
       const std::type_info &serviceType
     ) const override;
 
@@ -322,22 +297,12 @@ namespace Nuclex { namespace Support { namespace Services {
       const std::type_info &serviceType
     ) const;
 
-    /// <summary>Tries to look up the specified service</summary>
-    /// <param name="serviceType">Type of service that will be looked up</param>
-    /// <returns>An Any containing the service, if found, or an empty Any</returns>
-    protected: NUCLEX_SUPPORT_API const Any &TryGet(
-      const std::type_info &serviceType
-    ) const override;
-
     /// <summary>Delegate for a factory method that creates a service</summary>
     private: typedef Any(*CreateServiceFunction)(const ServiceProvider &);
 
-    /// <summary>Service factory with service lifetime policy</summary>
-    private: typedef std::pair<ServiceLifetime, CreateServiceFunction> ServiceFactoryType;
-
     /// <summary>Map of factories to create different services</summary> 
     private: typedef std::map<
-      const std::type_info *, ServiceFactoryType, TypeInfoComparer
+      const std::type_info *, CreateServiceFunction, TypeInfoComparer
     > ServiceFactoryMap;
 
     /// <summary>Map of services permanently stored in the container</summary>
@@ -354,43 +319,6 @@ namespace Nuclex { namespace Support { namespace Services {
     private: mutable ServiceInstanceMap instances;
 
   };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  inline void LazyServiceInjector::LifetimeSyntax::UsingSharedInstance() {
-    ServiceFactoryMap::iterator it = this->serviceInjector.factories.find(
-      &this->serviceTypeInfo
-    );
-    if(it == this->serviceInjector.factories.end()) {
-      throw std::logic_error("Service lifetime configuration failed to find service");
-    }
-
-    ServiceFactoryType &serviceFactory = it->second;
-    serviceFactory.first = ServiceLifetime::Container;
-
-    // In case someone stores this syntax helper, requests the service with its
-    // default lifetime and then changes the lifetime post-request...
-    ServiceInstanceMap::iterator instanceIt = (
-      this->serviceInjector.instances.find(&serviceTypeInfo)
-    );
-    if(instanceIt != this->serviceInjector.instances.end()) {
-      this->serviceInjector.instances.erase(instanceIt);
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  inline void LazyServiceInjector::LifetimeSyntax::ServedPerRequest() {
-    ServiceFactoryMap::iterator it = this->serviceInjector.factories.find(
-      &this->serviceTypeInfo
-    );
-    if(it == this->serviceInjector.factories.end()) {
-      throw std::logic_error("Service lifetime configuration failed to find service");
-    }
-
-    ServiceFactoryType &serviceFactory = it->second;
-    serviceFactory.first = ServiceLifetime::Request;
-  }
 
   // ------------------------------------------------------------------------------------------- //
 

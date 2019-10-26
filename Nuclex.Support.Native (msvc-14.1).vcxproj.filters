@@ -167,9 +167,6 @@
     <ClCompile Include="Source\Services\CyclicDependencyError.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services\ServiceLifetime.cpp">
-      <Filter>Source\Services</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Services\UnresolvedDependencyError.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
@@ -323,9 +320,6 @@
       <Filter>Include\Services</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\CyclicDependencyError.h">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ServiceLifetime.h">
       <Filter>Include\Services</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\UnresolvedDependencyError.h">

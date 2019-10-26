@@ -216,6 +216,7 @@
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceContainer.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceFactory.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h" />
+    <ClInclude Include="Include\Nuclex\Support\Services\UnresolvedDependencyError.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLine.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLineArgument.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h" />
@@ -251,6 +252,7 @@
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp" />
     <ClCompile Include="Source\Services\ServiceContainer.cpp" />
     <ClCompile Include="Source\Services\ServiceProvider.cpp" />
+    <ClCompile Include="Source\Services\UnresolvedDependencyError.cpp" />
     <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp" />
     <ClInclude Include="Source\Text\Dragon4\Dragon4.h" />
     <ClInclude Include="Source\Text\Dragon4\Math.h" />

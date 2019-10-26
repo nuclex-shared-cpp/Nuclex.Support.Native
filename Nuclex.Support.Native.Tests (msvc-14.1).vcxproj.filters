@@ -209,6 +209,9 @@
     <ClCompile Include="Source\Services\CyclicDependencyError.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Services\UnresolvedDependencyError.cpp">
+      <Filter>Source\Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -359,6 +362,9 @@
       <Filter>Include\Services</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceFactory.inl">
+      <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services\UnresolvedDependencyError.h">
       <Filter>Include\Services</Filter>
     </ClInclude>
   </ItemGroup>
