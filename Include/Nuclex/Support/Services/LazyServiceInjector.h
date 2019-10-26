@@ -255,23 +255,6 @@ namespace Nuclex { namespace Support { namespace Services {
       return newServiceInstance;
     }
 
-/*
-    /// <summary>Provides a factory that creates the specified service</summary>
-    /// <param name="serviceType">Type of service that will be created</param>
-    /// <returns>
-    ///   A factory method that creates instances of the specified service on demand
-    /// </returns>
-    public: template<typename TService>
-    std::shared_ptr<TService>(*GetServiceFactory() const)() {
-      []() {
-        const std::type_info &serviceTypeInfo = typeid(TService);
-        std::shared_ptr<TService> newServiceInstance(
-          Create(serviceTypeInfo).Get<TService>()
-        );
-        return newServiceInstance;
-      }
-    }
-*/
     /// <summary>Looks up the specified service</summary>
     /// <param name="serviceType">Type of service that will be looked up</param>
     /// <returns>

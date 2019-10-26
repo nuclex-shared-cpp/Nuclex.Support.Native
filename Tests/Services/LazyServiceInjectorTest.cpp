@@ -253,7 +253,7 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(LazyServiceInjectorTest, ServiceCanBeItsOwnImplementation) {
+  TEST(LazyServiceInjectorTest, ServiceCanSelfImplement) {
     LazyServiceInjector serviceInjector;
 
     serviceInjector.Bind<BrokenCalculator>().ToSelf();
@@ -355,6 +355,8 @@ namespace Nuclex { namespace Support { namespace Services {
     */
 
     std::shared_ptr<BrokenCalculator> shared = serviceInjector.Get<BrokenCalculator>();
+    ASSERT_TRUE(!!shared);
+
     std::shared_ptr<BrokenCalculator> first = serviceInjector.Create<BrokenCalculator>();
     std::shared_ptr<BrokenCalculator> second = serviceInjector.Create<BrokenCalculator>();
     ASSERT_TRUE(!!first);
@@ -362,6 +364,8 @@ namespace Nuclex { namespace Support { namespace Services {
 
     // The service injector should have created a new instance both times
     EXPECT_NE(first.get(), second.get());
+    EXPECT_NE(shared.get(), first.get());
+    EXPECT_NE(shared.get(), second.get());
   }
 
   // ------------------------------------------------------------------------------------------- //
