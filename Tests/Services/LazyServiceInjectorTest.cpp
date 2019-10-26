@@ -327,4 +327,52 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(LazyServiceInjectorTest, ServiceInstanceCanBeShared) {
+    LazyServiceInjector serviceInjector;
+
+    serviceInjector.Bind<BrokenCalculator>().ToSelf().UsingSharedInstance();
+
+    std::shared_ptr<BrokenCalculator> first = serviceInjector.Get<BrokenCalculator>();
+    std::shared_ptr<BrokenCalculator> second = serviceInjector.Get<BrokenCalculator>();
+    ASSERT_TRUE(!!first);
+    ASSERT_TRUE(!!second);
+
+    // The service injector should have delivered the same instance both times
+    EXPECT_EQ(first.get(), second.get());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LazyServiceInjectorTest, ServiceInstanceCanBeCreatedPerRequest) {
+    LazyServiceInjector serviceInjector;
+
+    serviceInjector.Bind<BrokenCalculator>().ToSelf().ServedPerRequest();
+
+    std::shared_ptr<BrokenCalculator> first = serviceInjector.Get<BrokenCalculator>();
+    std::shared_ptr<BrokenCalculator> second = serviceInjector.Get<BrokenCalculator>();
+    ASSERT_TRUE(!!first);
+    ASSERT_TRUE(!!second);
+
+    // The service injector should have delivered two different instances now
+    EXPECT_NE(first.get(), second.get());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LazyServiceInjectorTest, ServiceInstanceDefaultsToShared) {
+    LazyServiceInjector serviceInjector;
+
+    serviceInjector.Bind<BrokenCalculator>().ToSelf();
+
+    std::shared_ptr<BrokenCalculator> first = serviceInjector.Get<BrokenCalculator>();
+    std::shared_ptr<BrokenCalculator> second = serviceInjector.Get<BrokenCalculator>();
+    ASSERT_TRUE(!!first);
+    ASSERT_TRUE(!!second);
+
+    // The service injector should have delivered the same instance both times
+    EXPECT_EQ(first.get(), second.get());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Services

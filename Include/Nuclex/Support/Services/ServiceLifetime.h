@@ -31,12 +31,11 @@ namespace Nuclex { namespace Support { namespace Services {
   enum class ServiceLifetime {
 
     /// <summary>
-    ///   The lifetime of the service will end after it has been requested
+    ///   The service injector will use a new instance of the service for each request
     /// </summary>
     /// <remarks>
-    ///   This is the default for any ad-hoc services. An instance of the service
-    ///   implementation will be created and handed to the user without storing
-    ///   it anywhere else. Thus, each request returns a new instance.
+    ///   With this lifetime policy, the service injector will not keep the service around
+    ///   after a request has been served.
     /// </remarks>
     Request,
 
@@ -46,8 +45,8 @@ namespace Nuclex { namespace Support { namespace Services {
     /// <remarks>
     ///   This is the default for registered services. When an instance of the service
     ///   implementation is created, it will be stored by the injector for future
-    ///   requests asking for the same service. Thus, service implementations continue
-    ///   to live on until the injector is destroyed.
+    ///   requests asking for the same service. Thus, any number of users inside your
+    ///   code will be accessing the same service instance.
     /// </remarks>
     Container
 
