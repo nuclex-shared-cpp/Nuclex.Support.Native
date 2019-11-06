@@ -35,4 +35,10 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  CommandLine CommandLine::Parse(const std::string &parameterString) {
+    return CommandLine();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text

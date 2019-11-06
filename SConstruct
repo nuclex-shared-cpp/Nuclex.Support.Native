@@ -3,6 +3,7 @@
 import sys
 import importlib
 import os
+import platform
 
 # Nuclex SCons libraries
 sys.path.append('../References/scripts/scons')
@@ -27,3 +28,11 @@ unit_test_artifacts = unit_test_environment.build_unit_tests(
 )
 
 # ----------------------------------------------------------------------------------------------- #
+
+if platform.system() != 'Windows':
+    list_exported_symbols = common_environment.Command(
+        source = library_artifacts,
+        action = 'nm --demangle --extern-only $SOURCE | grep Nuclex',
+        target = None
+    )
+    # On Windows, use dumpbin

@@ -94,4 +94,26 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StringConverterTest, Utf8StringsCanBeCaseFolded) {
+    std::string variant1 = u8"HeLlO wOrLd Ä ö Ü λ Φ δ";
+    std::string variant2 = u8"hElLo WoRlD ä Ö ü Λ φ Δ";
+    std::string wrong1 = u8"hElLo WoRlD A o U λ Φ Δ";
+    std::string wrong2 = u8"hElLo WoRlD ä ö ü ^ & ∩";
+
+    EXPECT_EQ(
+      StringConverter::FoldedLowercaseFromUtf8(variant1),
+      StringConverter::FoldedLowercaseFromUtf8(variant2)
+    );
+    EXPECT_NE(
+      StringConverter::FoldedLowercaseFromUtf8(variant1),
+      StringConverter::FoldedLowercaseFromUtf8(wrong1)
+    );
+    EXPECT_NE(
+      StringConverter::FoldedLowercaseFromUtf8(variant2),
+      StringConverter::FoldedLowercaseFromUtf8(wrong2)
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text

@@ -116,6 +116,19 @@ namespace Nuclex { namespace Support { namespace Text {
       const std::u32string &utf32String
     );
 
+    /// <summary>Converts the specified UTF-8 string to &quot;folded lowercase&quot;</summary>
+    /// <param name="utf8String">String that will be converted</param>
+    /// <returns>An equivalent-ish string using only lowercase characters</returns>
+    /// <remarks>
+    ///   Folded lowercase is a special variant of lowercase that will result in a string of
+    ///   equal or shorter length (codepoint-wise). It is not guaranteed to always give the
+    ///   correct result for a human reading the string (though in the vast majority of cases
+    ///   it does) -- it's purpose is to enable case-insensitive comparison of strings. 
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static std::string FoldedLowercaseFromUtf8(
+      const std::string &utf8String
+    );
+
   };
 
   // ------------------------------------------------------------------------------------------- //

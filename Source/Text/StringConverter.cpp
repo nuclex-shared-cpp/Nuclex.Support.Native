@@ -24,6 +24,7 @@ License along with this library
 #include "Nuclex/Support/Text/StringConverter.h"
 
 #include "Utf8/checked.h"
+#include "Utf8Fold/Utf8Fold.h"
 
 #include <vector>
 
@@ -76,7 +77,7 @@ namespace {
       std::vector<wchar_t> utf16Characters;
       utf16Characters.reserve(utf8String.length());
 
-      // Do the conversions. If the vector was too short, it will be grown in factors
+      // Do the conversion. If the vector was too short, it will be grown in factors
       // of 2 usually (depending on the standard library implementation)
       utf8::utf8to16(utf8String.begin(), utf8String.end(), std::back_inserter(utf16Characters));
 
@@ -96,7 +97,7 @@ namespace {
       std::vector<char> utf8Characters;
       utf8Characters.reserve(utf16String.length());
 
-      // Do the conversions. If the vector was too short, it will be grown in factors
+      // Do the conversion. If the vector was too short, it will be grown in factors
       // of 2 usually (depending on the standard library implementation)
       utf8::utf16to8(
         utf16String.begin(), utf16String.end(), std::back_inserter(utf8Characters)
@@ -126,7 +127,7 @@ namespace {
       std::vector<char32_t> utf32Characters;
       utf32Characters.reserve(utf8String.length());
 
-      // Do the conversions. If the vector was too short, it will be grown in factors
+      // Do the conversion. If the vector was too short, it will be grown in factors
       // of 2 usually (depending on the standard library implementation)
       utf8::utf8to32(utf8String.begin(), utf8String.end(), std::back_inserter(utf32Characters));
 
@@ -149,7 +150,7 @@ namespace {
       std::vector<char> utf8Characters;
       utf8Characters.reserve(utf32String.length());
 
-      // Do the conversions. If the vector was too short, it will be grown in factors
+      // Do the conversion. If the vector was too short, it will be grown in factors
       // of 2 usually (depending on the standard library implementation)
       utf8::utf32to8(
         utf32String.begin(), utf32String.end(), std::back_inserter(utf8Characters)
@@ -190,7 +191,7 @@ namespace Nuclex { namespace Support { namespace Text {
     std::vector<char16_t> utf16Characters;
     utf16Characters.reserve(utf8String.length());
 
-    // Do the conversions. If the vector was too short, it will be grown in factors
+    // Do the conversion. If the vector was too short, it will be grown in factors
     // of 2 usually (depending on the standard library implementation)
     utf8::utf8to16(utf8String.begin(), utf8String.end(), std::back_inserter(utf16Characters));
 
@@ -209,7 +210,7 @@ namespace Nuclex { namespace Support { namespace Text {
     std::vector<char> utf8Characters;
     utf8Characters.reserve(utf16String.length());
 
-    // Do the conversions. If the vector was too short, it will be grown in factors
+    // Do the conversion. If the vector was too short, it will be grown in factors
     // of 2 usually (depending on the standard library implementation)
     utf8::utf16to8(
       utf16String.begin(), utf16String.end(), std::back_inserter(utf8Characters)
@@ -230,7 +231,7 @@ namespace Nuclex { namespace Support { namespace Text {
     std::vector<char32_t> utf32Characters;
     utf32Characters.reserve(utf8String.length());
 
-    // Do the conversions. If the vector was too short, it will be grown in factors
+    // Do the conversion. If the vector was too short, it will be grown in factors
     // of 2 usually (depending on the standard library implementation)
     utf8::utf8to32(utf8String.begin(), utf8String.end(), std::back_inserter(utf32Characters));
 
@@ -249,13 +250,19 @@ namespace Nuclex { namespace Support { namespace Text {
     std::vector<char> utf8Characters;
     utf8Characters.reserve(utf32String.length());
 
-    // Do the conversions. If the vector was too short, it will be grown in factors
+    // Do the conversion. If the vector was too short, it will be grown in factors
     // of 2 usually (depending on the standard library implementation)
     utf8::utf32to8(
       utf32String.begin(), utf32String.end(), std::back_inserter(utf8Characters)
     );
 
     return std::string(&utf8Characters[0], utf8Characters.size());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string StringConverter::FoldedLowercaseFromUtf8(const std::string &utf8String) {
+    return toFoldedLowercase(utf8String);
   }
 
   // ------------------------------------------------------------------------------------------- //
