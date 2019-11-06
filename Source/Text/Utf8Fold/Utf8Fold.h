@@ -551,7 +551,7 @@ namespace Nuclex {
 
       // Obtain the whole codepoint (all bytes belonging to the character in a single 32 bit
       // integer - this is not UTF-32 encoded, it's a 32-bit 'overlong' UTF-8 codepoint)
-      std::uint32_t codePoint = utf8::next(current, text.end());
+      std::uint32_t codePoint = utf8::next(current, end);
       if(codePoint == 0) {
         break;
       }

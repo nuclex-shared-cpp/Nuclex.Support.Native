@@ -95,10 +95,10 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringConverterTest, Utf8StringsCanBeCaseFolded) {
-    std::string variant1 = u8"HeLlO wOrLd Ä ö Ü λ Φ δ";
-    std::string variant2 = u8"hElLo WoRlD ä Ö ü Λ φ Δ";
-    std::string wrong1 = u8"hElLo WoRlD A o U λ Φ Δ";
-    std::string wrong2 = u8"hElLo WoRlD ä ö ü ^ & ∩";
+    std::string variant1 = u8"HeLlO wOrLd Ä ö Ü λ Φ δ ẞ";
+    std::string variant2 = u8"hElLo WoRlD ä Ö ü Λ φ Δ ß";
+    std::string wrong1 = u8"hElLo WoRlD A o U λ Φ Δ B";
+    std::string wrong2 = u8"hElLo WoRlD ä ö ü ^ & ∩ b";
 
     EXPECT_EQ(
       StringConverter::FoldedLowercaseFromUtf8(variant1),
