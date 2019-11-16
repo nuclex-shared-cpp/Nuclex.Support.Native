@@ -18,21 +18,35 @@ common_environment = nuclex.create_cplusplus_environment()
 
 # Compile the main library
 library_environment = common_environment.Clone()
-library_artifacts = library_environment.build_library('Nuclex.Support.Native')
+library_binaries = library_environment.build_library('Nuclex.Support.Native')
 
 # Compile the unit test executable
 unit_test_environment = common_environment.Clone()
 unit_test_environment.add_preprocessor_constant('NUCLEX_SUPPORT_EXECUTABLE')
-unit_test_artifacts = unit_test_environment.build_unit_tests(
+unit_test_binaries = unit_test_environment.build_unit_tests(
     'Nuclex.Support.Native.Tests'
 )
 
 # ----------------------------------------------------------------------------------------------- #
 
-if platform.system() != 'Windows':
-    list_exported_symbols = common_environment.Command(
-        source = library_artifacts,
-        action = 'nm --demangle --extern-only $SOURCE | grep Nuclex',
-        target = None
-    )
+artifact_directory = os.path.join(
+        unit_test_environment['ARTIFACT_DIRECTORY'],
+        unit_test_environment.get_build_directory_name()
+)
+unit_test_results = unit_test_environment.Command(
+    source = unit_test_binaries,
+    action = '$SOURCE --gtest_color=yes --gtest_output=xml:$TARGET',
+    target = os.path.join(artifact_directory, 'gtest-results.xml')
+)
+
+# ----------------------------------------------------------------------------------------------- #
+
+AlwaysBuild(unit_test_results)
+
+#if platform.system() != 'Windows':
+#    list_exported_symbols = common_environment.Command(
+#        source = library_binaries,
+#        action = 'nm --demangle --extern-only $SOURCE | grep Nuclex',
+#        target = None
+#    )
     # On Windows, use dumpbin
