@@ -35,7 +35,7 @@ artifact_directory = os.path.join(
 )
 unit_test_results = unit_test_environment.Command(
     source = unit_test_binaries,
-    action = '$SOURCE --gtest_color=yes --gtest_output=xml:$TARGET',
+    action = '-$SOURCE --gtest_color=yes --gtest_output=xml:$TARGET',
     target = os.path.join(artifact_directory, 'gtest-results.xml')
 )
 
