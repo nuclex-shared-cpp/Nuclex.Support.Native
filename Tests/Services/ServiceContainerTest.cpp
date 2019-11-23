@@ -108,16 +108,16 @@ namespace Nuclex { namespace Support { namespace Services {
 
   TEST(ServiceContainerTest, NewContainerHasNoServices) {
     ServiceContainer test;
-    EXPECT_EQ(test.CountServices(), 0);
+    EXPECT_EQ(test.CountServices(), 0U);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(ServiceContainerTest, ServicesCanBeAddedUnderOwnType) {
     ServiceContainer test;
-    EXPECT_EQ(test.CountServices(), 0);
+    EXPECT_EQ(test.CountServices(), 0U);
     test.Add(std::make_shared<BrokenCalculator>());
-    EXPECT_EQ(test.CountServices(), 1);
+    EXPECT_EQ(test.CountServices(), 1U);
     
     std::shared_ptr<CalculatorService> service;
     EXPECT_FALSE(test.TryGet<CalculatorService>(service));
@@ -127,9 +127,9 @@ namespace Nuclex { namespace Support { namespace Services {
 
   TEST(ServiceContainerTest, ServicesCanBeAddedUnderServiceType) {
     ServiceContainer test;
-    EXPECT_EQ(test.CountServices(), 0);
+    EXPECT_EQ(test.CountServices(), 0U);
     test.Add<CalculatorService>(std::make_shared<BrokenCalculator>());
-    EXPECT_EQ(test.CountServices(), 1);
+    EXPECT_EQ(test.CountServices(), 1U);
 
     std::shared_ptr<CalculatorService> service;
     EXPECT_TRUE(test.TryGet<CalculatorService>(service));
@@ -139,9 +139,9 @@ namespace Nuclex { namespace Support { namespace Services {
 
   TEST(ServiceContainerTest, ServicesCanBeRemoved) {
     ServiceContainer test;
-    EXPECT_EQ(test.CountServices(), 0);
+    EXPECT_EQ(test.CountServices(), 0U);
     test.Add(std::make_shared<BrokenCalculator>());
-    EXPECT_EQ(test.CountServices(), 1);
+    EXPECT_EQ(test.CountServices(), 1U);
 
     std::shared_ptr<BrokenCalculator> service;
     EXPECT_TRUE(test.TryGet<BrokenCalculator>(service));
@@ -162,9 +162,9 @@ namespace Nuclex { namespace Support { namespace Services {
       weak = tester;
 
       ServiceContainer test;
-      EXPECT_EQ(test.CountServices(), 0);
+      EXPECT_EQ(test.CountServices(), 0U);
       test.Add(tester);
-      EXPECT_EQ(test.CountServices(), 1);
+      EXPECT_EQ(test.CountServices(), 1U);
 
       // Dropping our shared_ptr to the test object will not destroy it because
       // another shared_ptr to it is kept by the service container

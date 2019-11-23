@@ -36,6 +36,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   CommandLine CommandLine::Parse(const std::string &parameterString) {
+    (void)parameterString;
     return CommandLine();
   }
 

@@ -230,12 +230,12 @@ namespace Nuclex { namespace Support { namespace Events {
     Mock mock;
     test.Subscribe<Mock, &Mock::Notify>(&mock);
 
-    EXPECT_EQ(mock.ReceivedNotificationCount, 0);
+    EXPECT_EQ(mock.ReceivedNotificationCount, 0U);
     EXPECT_EQ(mock.LastSomethingParameterValue, 0);
 
     test(135);
 
-    EXPECT_EQ(mock.ReceivedNotificationCount, 1);
+    EXPECT_EQ(mock.ReceivedNotificationCount, 1U);
     EXPECT_EQ(mock.LastSomethingParameterValue, 135);
 
     bool wasUnsubscribed = test.Unsubscribe<Mock, &Mock::Notify>(&mock);
@@ -243,7 +243,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
     test(135);
 
-    EXPECT_EQ(mock.ReceivedNotificationCount, 1);
+    EXPECT_EQ(mock.ReceivedNotificationCount, 1U);
     EXPECT_EQ(mock.LastSomethingParameterValue, 135);
   }
 
@@ -266,7 +266,7 @@ namespace Nuclex { namespace Support { namespace Events {
       test.Subscribe<Mock, &Mock::Notify>(&mocks[index]);
     }
     for(std::size_t index = 0; index < MockCount; ++index) {
-      EXPECT_EQ(mocks[index].ReceivedNotificationCount, 0);
+      EXPECT_EQ(mocks[index].ReceivedNotificationCount, 0U);
       EXPECT_EQ(mocks[index].LastSomethingParameterValue, 0);
     }
 
@@ -315,7 +315,7 @@ namespace Nuclex { namespace Support { namespace Events {
       test.Subscribe<Mock, &Mock::Notify>(&mocks[index]);
     }
     for(std::size_t index = 0; index < MockCount; ++index) {
-      EXPECT_EQ(mocks[index].ReceivedNotificationCount, 0);
+      EXPECT_EQ(mocks[index].ReceivedNotificationCount, 0U);
       EXPECT_EQ(mocks[index].LastSomethingParameterValue, 0);
     }
 
@@ -384,7 +384,7 @@ namespace Nuclex { namespace Support { namespace Events {
     Event<int()> test;
     std::vector<int> results = test();
 
-    EXPECT_EQ(results.size(), 0);
+    EXPECT_EQ(results.size(), 0U);
   }
 
   // ------------------------------------------------------------------------------------------- //

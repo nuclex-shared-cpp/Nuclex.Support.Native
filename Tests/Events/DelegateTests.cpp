@@ -154,12 +154,12 @@ namespace Nuclex { namespace Support { namespace Events {
     );
 
     EXPECT_EQ(StaticMock::LastSomethingParameterValue, 0);
-    EXPECT_EQ(StaticMock::ReceivedNotificationCount, 0);
+    EXPECT_EQ(StaticMock::ReceivedNotificationCount, 0U);
 
     test(666);
 
     EXPECT_EQ(StaticMock::LastSomethingParameterValue, 666);
-    EXPECT_EQ(StaticMock::ReceivedNotificationCount, 1);
+    EXPECT_EQ(StaticMock::ReceivedNotificationCount, 1U);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -172,12 +172,12 @@ namespace Nuclex { namespace Support { namespace Events {
     );
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 0);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0U);
 
     test(42);
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 42);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1U);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -190,12 +190,12 @@ namespace Nuclex { namespace Support { namespace Events {
     );
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 0);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0U);
 
     test(0x4472676E);
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 0x4472676E);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1U);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -208,12 +208,12 @@ namespace Nuclex { namespace Support { namespace Events {
     );
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 0);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0U);
 
     test(0x4472676E);
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 0x4472676E);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1U);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -273,12 +273,12 @@ namespace Nuclex { namespace Support { namespace Events {
     test.Reset<Mock, &Mock::Notify>(&callTarget);
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 0);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0U);
 
     test(555);
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 555);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1U);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -292,12 +292,12 @@ namespace Nuclex { namespace Support { namespace Events {
     test.Reset<Mock, &Mock::ConstNotify>(&callTarget);
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 0);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0U);
 
     test(555);
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 555);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1U);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -311,12 +311,12 @@ namespace Nuclex { namespace Support { namespace Events {
     test.Reset<Mock, &Mock::ConstNotify>(&callTarget);
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 0);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 0U);
 
     test(555);
 
     EXPECT_EQ(callTarget.LastSomethingParameterValue, 555);
-    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1);
+    EXPECT_EQ(callTarget.ReceivedNotificationCount, 1U);
   }
 
   // ------------------------------------------------------------------------------------------- //

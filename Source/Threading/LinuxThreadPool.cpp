@@ -56,6 +56,8 @@ namespace Nuclex { namespace Support { namespace Threading {
   void LinuxThreadPool::AddTask(
     const std::function<void()> &task, std::size_t count /* = 1 */
   ) {
+    (void)task;
+    (void)count;
     // TODO: Implement thread pool on Linux
   }
 

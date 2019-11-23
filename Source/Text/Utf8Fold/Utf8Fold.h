@@ -537,9 +537,6 @@ namespace Nuclex {
     std::string::const_iterator current = text.begin();
     std::string::const_iterator end = text.end();
 
-    const char32_t *uppercaseBegin = uppercase;
-    const char32_t *uppercaseEnd = uppercaseBegin + characterCount();
-
     // The folding map will never increase the length of the string (and there are only
     // a very small number of cases where it decreases the length), so preallocating
     // the same amount of memory for the new string is a very good approximation.
