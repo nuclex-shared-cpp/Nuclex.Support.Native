@@ -558,8 +558,8 @@ namespace Nuclex {
 
       // Append the codepoint to the result string
       std::uint8_t buffer[4];
-      std::uint8_t *end = utf8::append(codePoint, buffer);
-      for(const std::uint8_t *octet = buffer; octet < end; ++octet) {
+      std::uint8_t *bufferEnd = utf8::append(codePoint, buffer);
+      for(const std::uint8_t *octet = buffer; octet < bufferEnd; ++octet) {
         result.append(1, *reinterpret_cast<const std::string::value_type *>(octet));
       }
 
