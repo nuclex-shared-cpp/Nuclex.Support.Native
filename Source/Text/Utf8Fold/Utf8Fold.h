@@ -443,10 +443,6 @@ namespace Nuclex {
   ///   to locate uppercase characters.
   /// </remarks>
   void verifyUpperCaseIsSorted() {
-    std::size_t upperCharacterCount = sizeof(uppercase) / sizeof(*uppercase);
-
-    // Characters should be sorted in ascending order in uppercase so that
-    // we can use binary search to locate them for case-insensitive comparisons.
     char32_t lastUpper = 0;
     for(std::size_t index = 0; index < characterCount(); ++index) {
       assert(uppercase[index] > lastUpper);
