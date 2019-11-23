@@ -464,7 +464,7 @@ namespace Nuclex {
   ///   translated everything to uppercase, it would contain duplicate uppercase characters
   ///   and would not work in the direction it's used by this code).
   /// </remarks>
-  void verifyCharacterAreUnique() {
+  void verifyCharactersAreUnique() {
     std::set<char32_t> chars;
     for(std::size_t index = 0; index < characterCount(); ++index) {
       std::pair<std::set<char32_t>::iterator, bool> result = chars.insert(uppercase[index]);
