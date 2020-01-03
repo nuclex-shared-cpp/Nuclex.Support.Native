@@ -30,7 +30,7 @@ License along with this library
 namespace {
 
   /// Message used in the exception thrown when the variant is of an unknown type
-  std::string InvalidVariantTypeExceptionMessage("Invalid variant type");
+  std::string InvalidVariantTypeExceptionMessage(u8"Invalid variant type");
 
 } // anonymous namespace
 
@@ -525,8 +525,8 @@ namespace Nuclex { namespace Support {
 
   std::string Variant::ToString() const {
     static std::string emptyString;
-    static std::string trueString("1", 1);
-    static std::string falseString("0", 1);
+    static std::string trueString(u8"1", 1);
+    static std::string falseString(u8"0", 1);
 
     switch(this->type) {
       case VariantType::Empty: { return emptyString; }

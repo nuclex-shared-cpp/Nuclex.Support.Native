@@ -306,7 +306,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const float &from) {
     char characters[64];
-    tU32 length = PrintFloat32(
+    tU32 length = ::PrintFloat32(
       characters, sizeof(characters), from, PrintFloatFormat_Positional, -1
     );
 
@@ -326,6 +326,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> float lexical_cast<>(const std::string &from) {
+    // TODO: Find locale-independent, public domain strtof() implementation
+    //   Ruby contains one, but it's naive and produces wrong decimal places
+    //   The one from Sun is just as dumb
+    //   There's lucent, which isn't naive but very sketchy (20+ uninitialized var warnings)
+    //   glibc has a decent one, but it's GPLed
     return std::stof(from);
   }
 
@@ -333,7 +338,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const double &from) {
     char characters[256];
-    tU32 length = PrintFloat64(
+    tU32 length = ::PrintFloat64(
       characters, sizeof(characters), from, PrintFloatFormat_Positional, -1
     );
 
@@ -353,6 +358,8 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> double lexical_cast<>(const std::string &from) {
+    // TODO: Find locale-independent, public domain strtod() implementation
+    //   See comments in method above near std::stof()
     return std::stod(from);
   }
 

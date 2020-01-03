@@ -31,12 +31,19 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Dynamic array that sends out change notifications</summary>
+  /// <remarks>
+  ///   This collection sends out notifications to any interested party when its contents
+  ///   change (items being reordered, added or removed). It has no way of knowing when
+  ///   internal changes to an item itself occur.
+  /// </remarks>
   template<typename TValue>
   class ObservableDynamicArray :
     public IndexedCollection<TValue>,
     public virtual ObservableCollection<TValue>,
     public virtual ObservableIndexedCollection<TValue> {
 
+    /// <summary>Invalid index used to indicate when a requested item wasn't found</summary>
     public: using IndexedCollection<TValue>::InvalidIndex;
 
     /// <summary>Initializes a new dynamic array</summary>

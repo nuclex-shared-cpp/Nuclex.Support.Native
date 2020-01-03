@@ -57,6 +57,9 @@
       <UniqueIdentifier>{c58695d4-9cc1-47b4-8c0c-d930830ae758}</UniqueIdentifier>
       <Extensions>md;txt;pdf</Extensions>
     </Filter>
+    <Filter Include="Source\Text\Lucent">
+      <UniqueIdentifier>{78d0ab77-4b32-4840-be5c-06999f21545a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Any.cpp">
@@ -169,6 +172,12 @@
     </ClCompile>
     <ClCompile Include="Source\Services\UnresolvedDependencyError.cpp">
       <Filter>Source\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Optional.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Lucent\dtoa.c">
+      <Filter>Source\Text\Lucent</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -324,6 +333,9 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\UnresolvedDependencyError.h">
       <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Optional.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
