@@ -18,28 +18,27 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-// If the library is compiled as a DLL, this ensures symbols are exported
-#define NUCLEX_SUPPORT_SOURCE 1
+#ifndef NUCLEX_SUPPORT_OPTIONAL_H
+#define NUCLEX_SUPPORT_OPTIONAL_H
 
-#include "Nuclex/Support/Text/CommandLine.h"
+#include "Nuclex/Support/Config.h"
 
-namespace Nuclex { namespace Support { namespace Text {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  CommandLine::CommandLine() {}
+namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  CommandLine::~CommandLine() {}
+  /// <summary>Wraps a type and allows either the type or nothing to be passed</summary>
+  /// <remarks>
+  ///   This is similar to .NET's Nullable&lt;T&gt; type. It allows other types to be optionally
+  ///   passed without having to create ugly out parameters or relying on pointers.
+  /// </remarks>
+  class Optional {
+
+
+  };
 
   // ------------------------------------------------------------------------------------------- //
 
-  CommandLine CommandLine::Parse(const std::string &parameterString) {
-    (void)parameterString;
-    return CommandLine();
-  }
+}} // namespace Nuclex::Support
 
-  // ------------------------------------------------------------------------------------------- //
-
-}}} // namespace Nuclex::Support::Text
+#endif // NUCLEX_SUPPORT_OPTIONAL_H
