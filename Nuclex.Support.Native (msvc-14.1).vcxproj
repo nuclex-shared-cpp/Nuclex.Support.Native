@@ -267,7 +267,6 @@
     <ClCompile Include="Source\Text\CommandLine.cpp" />
     <ClCompile Include="Source\Text\CommandLineArgument.cpp" />
     <ClCompile Include="Source\Text\Lexical.cpp" />
-    <ClCompile Include="Source\Text\Lucent\dtoa.c" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />
     <ClCompile Include="Source\Threading\Mutex.cpp" />
