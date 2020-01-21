@@ -20,6 +20,8 @@
 
 #include "ryu_generic_128.h"
 
+#if defined(RYU_HAVE_128BIT_INTEGER)
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -336,3 +338,9 @@ int generic_to_chars(const struct floating_decimal_128 v, char* const result) {
   index += elength;
   return index;
 }
+
+#else // defined(RYU_HAVE_128BIT_INTEGER)
+
+typedef void _iso_c_forbids_an_empty_translation_unit_so_this_is_what_you_get;
+
+#endif // defined(RYU_HAVE_128BIT_INTEGER)

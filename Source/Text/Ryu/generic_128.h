@@ -17,6 +17,8 @@
 #ifndef RYU_GENERIC128_H
 #define RYU_GENERIC128_H
 
+#if defined(RYU_HAVE_128BIT_INTEGER)
+
 #include <assert.h>
 #include <stdint.h>
 
@@ -515,5 +517,7 @@ static inline uint32_t log10Pow5(const int32_t e) {
   assert(e <= 1 << 15);
   return (uint32_t) ((((uint64_t) e) * 196742565691928ull) >> 48);
 }
+
+#endif // defined(RYU_HAVE_128BIT_INTEGER)
 
 #endif // RYU_GENERIC128_H

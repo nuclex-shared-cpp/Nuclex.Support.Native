@@ -27,24 +27,7 @@ License along with this library
 #include "Erthink/erthink_u2a.h"
 #include "Ryu/ryu_parse.h"
 
-//#include <cstdlib>
 #include <limits> // for std::numeric_limits
-
-#if 0
-extern "C" {
-
-  /// <summary>Converts a string to a double precision floating point value</summary>
-  /// <param name="buffer">Buffer containing the string representation of the float</param>
-  /// <param name="len">Length of the string pointed to by <see cref="buffer" /></param>
-  /// <param name="result">Receives the resulting floating point value</param>
-  /// <returns>
-  ///   The outcome of the conversion, SUCCESS if the floating point value has been written
-  ///   to the <see cref="result" /> parameter, one of the error indicators otherwise
-  /// </returns>
-  enum Status s2d_n(const char * buffer, const int len, double * result);
-
-}
-#endif
 
 // Goal: print floating-point values accurately, locale-independent and without exponent
 //

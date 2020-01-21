@@ -64,7 +64,7 @@ namespace {
   template<>
   struct StringConverterCharWidthHelper<sizeof(char16_t)> {
 
-    /// <summary>Converts a UTF-8 string into a wide (UTF-16 or UTF-32) string</summary>
+    /// <summary>Converts a UTF-8 string into a UTF-16 string</summary>
     /// <param name="utf8String">UTF-8 string that will be converted</param>
     /// <returns>A wide version of the provided UTF-8 string</returns>
     inline static std::wstring WideFromUtf8(const std::string &utf8String) {
@@ -84,9 +84,9 @@ namespace {
       return std::wstring(&utf16Characters[0], utf16Characters.size());
     }
 
-    /// <summary>Converts a wide (UTF-16 or UTF-32) string into a UTF-8 string</summary>
-    /// <param name="wideString">Wide string that will be converted</param>
-    /// <returns>A UTF-8 version of the provided wide string</returns>
+    /// <summary>Converts a UTF-16 string into a UTF-8 string</summary>
+    /// <param name="wideString">UTF-16 string that will be converted</param>
+    /// <returns>A UTF-8 version of the provided UTF-16 string</returns>
     inline static std::string Utf8FromWide(const std::wstring &utf16String) {
       if(utf16String.empty()) {
         return std::string();
@@ -114,9 +114,9 @@ namespace {
   template<>
   struct StringConverterCharWidthHelper<sizeof(char32_t)> {
 
-    /// <summary>Converts a UTF-8 string into a wide (UTF-16 or UTF-32) string</summary>
+    /// <summary>Converts a UTF-8 string into a UTF-32 string</summary>
     /// <param name="utf8String">UTF-8 string that will be converted</param>
-    /// <returns>A wide version of the provided UTF-8 string</returns>
+    /// <returns>A UTF-32 version of the provided UTF-8 string</returns>
     inline static std::wstring WideFromUtf8(const std::string &utf8String) {
       if(utf8String.empty()) {
         return std::wstring();
@@ -137,9 +137,9 @@ namespace {
       return std::wstring(first, utf32Characters.size());
     }
 
-    /// <summary>Converts a wide (UTF-16 or UTF-32) string into a UTF-8 string</summary>
-    /// <param name="wideString">Wide string that will be converted</param>
-    /// <returns>A UTF-8 version of the provided wide string</returns>
+    /// <summary>Converts a UTF-32 string into a UTF-8 string</summary>
+    /// <param name="wideString">UTF-32 string that will be converted</param>
+    /// <returns>A UTF-8 version of the provided UTF-32 string</returns>
     inline static std::string Utf8FromWide(const std::wstring &utf32String) {
       if(utf32String.empty()) {
         return std::string();

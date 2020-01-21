@@ -17,6 +17,8 @@
 #ifndef RYU_GENERIC_128_H
 #define RYU_GENERIC_128_H
 
+#if defined(RYU_HAVE_128BIT_INTEGER)
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -68,5 +70,7 @@ int generic_to_chars(const struct floating_decimal_128 v, char* const result);
 #ifdef __cplusplus
 }
 #endif
+
+#endif // defined(RYU_HAVE_128BIT_INTEGER)
 
 #endif // RYU_GENERIC_128_H
