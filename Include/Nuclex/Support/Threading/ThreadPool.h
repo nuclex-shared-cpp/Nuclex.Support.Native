@@ -56,7 +56,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///     the more work can potentially be performed in parallel. If you want to
     ///     split a single piece of work so it can be done in parallel, you can partition
     ///     the data into n pieces (where n >= CountMaximumParallelTasks() ideally) and
-    ///     use the <see param="count" /> parameter to specify how often the task should
+    ///     use the <see cref="count" /> parameter to specify how often the task should
     ///     be invoked.
     ///   </para>
     ///   <para>

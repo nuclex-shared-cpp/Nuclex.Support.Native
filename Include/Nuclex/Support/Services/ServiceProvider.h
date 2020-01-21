@@ -42,7 +42,7 @@ namespace Nuclex { namespace Support { namespace Services {
     public: NUCLEX_SUPPORT_API virtual ~ServiceProvider() = default;
 
     /// <summary>Looks up the specified service</summary>
-    /// <param name="serviceType">Type of service that will be looked up</param>
+    /// <typeparam name="TService">Type of service that will be looked up</typeparam>
     /// <returns>
     ///   The specified service as a shared_ptr wrapped in an <see cref="Any" />
     /// </returns>
@@ -52,7 +52,7 @@ namespace Nuclex { namespace Support { namespace Services {
     }
 
     /// <summary>Tries to look up the specified service</summary>
-    /// <param name="serviceType">Type of service that will be looked up</param>
+    /// <typeparam name="TService">Type of service that will be looked up</typeparam>
     /// <param name="service">Shared pointer that will receive the service if found</param>
     /// <returns>True if the specified service was found and retrieved</returns>
     public: template<typename TService> bool TryGet(std::shared_ptr<TService> &service) const {

@@ -69,7 +69,7 @@ namespace Nuclex { namespace Support { namespace Text {
   class StringConverter {
 
     /// <summary>Converts a UTF-8 string into a wide (UTF-16 or UTF-32) string</summary>
-    /// <param name="utf8String">UTF-8 string that will be converted</param>
+    /// <param name="from">UTF-8 string that will be converted</param>
     /// <returns>A wide version of the provided UTF-8 string</returns>
     /// <remarks>
     ///   Assumes std::wstring has to carry either UTF-16 or UTF-32 based on the size of
@@ -79,7 +79,7 @@ namespace Nuclex { namespace Support { namespace Text {
     public: NUCLEX_SUPPORT_API static std::wstring WideFromUtf8(const std::string &from);
 
     /// <summary>Converts a wide (UTF-16 or UTF-32) string into a UTF-8 string</summary>
-    /// <param name="wideString">Wide string that will be converted</param>
+    /// <param name="from">Wide string that will be converted</param>
     /// <returns>A UTF-8 version of the provided wide string</returns>
     /// <remarks>
     ///   Assumes the std::wstring is carrying either UTF-16 or UTF-32 based on the size of
@@ -110,7 +110,7 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Converts a UTF-32 string into a UTF-8 string</summary>
-    /// <param name="utf16String">UTF-32 string that will be converted</param>
+    /// <param name="utf32String">UTF-32 string that will be converted</param>
     /// <returns>A UTF-8 version of the provided UTF-32 string</returns>
     public: NUCLEX_SUPPORT_API static std::string Utf8FromUtf32(
       const std::u32string &utf32String

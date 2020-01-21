@@ -31,7 +31,7 @@ namespace Nuclex { namespace Support { namespace Collections {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>
-  ///   Simple dynamic array exposed under the <see cref="IndexedCollection"> interface
+  ///   Simple dynamic array exposed under the <see cref="IndexedCollection" /> interface
   /// </summary>
   /// <remarks>
   ///   Use std::vector&lt;&gt; directly for library-internal data. This wrapper is intended

@@ -244,7 +244,7 @@ namespace Nuclex { namespace Support { namespace Services {
     using ServiceProvider::TryGet;
 
     /// <summary>Creates a new instance of the specified service</summary>
-    /// <param name="serviceType">Type of service that will be created</param>
+    /// <typeparam name="TService">Type of service that will be created</typeparam>
     /// <returns>A new instance of the requested service</returns>
     public: template<typename TService>
     std::shared_ptr<TService> Create() const {
