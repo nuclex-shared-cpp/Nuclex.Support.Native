@@ -420,7 +420,7 @@ namespace Nuclex {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Returns the number of foldable characters in the array</summary>
-  constexpr std::size_t characterCount() {
+  inline constexpr std::size_t characterCount() {
     return sizeof(uppercase) / sizeof(*uppercase);
   }
 
@@ -429,7 +429,7 @@ namespace Nuclex {
   /// <summary>
   ///   Verifies that there is a matching lowercase character for each uppercase character
   /// </summary>
-  void verifyArraysHaveSameSize() {
+  inline void verifyArraysHaveSameSize() {
     std::size_t lowerCharacterCount = sizeof(lowercase) / sizeof(*lowercase);
     std::size_t upperCharacterCount = sizeof(uppercase) / sizeof(*uppercase);
     assert(lowerCharacterCount == upperCharacterCount);
@@ -442,7 +442,7 @@ namespace Nuclex {
   ///   The array must be sorted because the case folding functions below use binary search
   ///   to locate uppercase characters.
   /// </remarks>
-  void verifyUpperCaseIsSorted() {
+  inline void verifyUpperCaseIsSorted() {
     char32_t lastUpper = 0;
     for(std::size_t index = 0; index < characterCount(); ++index) {
       assert(uppercase[index] > lastUpper);
@@ -460,7 +460,7 @@ namespace Nuclex {
   ///   translated everything to uppercase, it would contain duplicate uppercase characters
   ///   and would not work in the direction it's used by this code).
   /// </remarks>
-  void verifyCharactersAreUnique() {
+  inline void verifyCharactersAreUnique() {
     std::set<char32_t> chars;
     for(std::size_t index = 0; index < characterCount(); ++index) {
       std::pair<std::set<char32_t>::iterator, bool> result = chars.insert(uppercase[index]);
@@ -475,7 +475,7 @@ namespace Nuclex {
   ///   This guarantee is needed to support case-folding UTF-8 strings without needing more
   ///   memory than the non-folded string occupied.
   /// </remarks>
-  void verifyCharacterSizesDontIncrease() {
+  inline void verifyCharacterSizesDontIncrease() {
     for(std::size_t index = 0; index < characterCount(); ++index) {
       if(uppercase[index] < char32_t(0x7F)) { // 0xxxxxxx
         assert(lowercase[index] < char32_t(0x7F));
@@ -502,7 +502,7 @@ namespace Nuclex {
   ///   integers (leaving the unused bits empty). This is called an &quot;overlong&quot;
   ///   codepoint by the unicode consortium and is different from UTF-32.
   /// </remarks>
-  char32_t toFoldedLowercase(char32_t codepoint) {
+  inline char32_t toFoldedLowercase(char32_t codepoint) {
     const char32_t *upperCaseBegin = uppercase;
     const char32_t *upperCaseEnd = upperCaseBegin + characterCount();
 
@@ -529,7 +529,7 @@ namespace Nuclex {
   ///   correct result for a human reading the string (though in the vast majority of cases
   ///   it does) -- it's purpose is to enable case-insensitive comparison of strings. 
   /// </remarks>
-  std::string toFoldedLowercase(const std::string &text) {
+  inline std::string toFoldedLowercase(const std::string &text) {
     std::string::const_iterator current = text.begin();
     std::string::const_iterator end = text.end();
 

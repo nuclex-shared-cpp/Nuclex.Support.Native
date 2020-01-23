@@ -37,13 +37,15 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <remarks>
   ///   <para>
   ///     This cast offers a portable way to convert between numeric and string types without
-  ///     resorting to cumbersome sprintf() constructs or relying on deprecated and functions
+  ///     resorting to cumbersome sprintf() constructs or relying on deprecated functions
   ///     such as gcvt() or itoa(). 
   ///   </para>
   ///   <para>
-  ///     Lexical casts are guaranteed to completely ignore system locale and any other
-  ///     localization settings. Primitive types can be converted without pulling in iostreams
-  ///     (which is a bit of a heavyweight part of the SC++L).
+  ///     <list type="bullet">
+  ///       <item><term>No iostreams dependency</term></item>
+  ///       <item><term>Ignores system locale</term></item>
+  ///       <item><term>Full float-string-float round tripping</term></item>
+  ///     </list>
   ///   </para>
   /// </remarks>
   template<typename TTarget>

@@ -22,8 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_COLLECTIONS_INDEXEDCOLLECTION_H
 
 #include "Nuclex/Support/Config.h"
-
-#include "Collection.h"
+#include "Nuclex/Support/Collections/Collection.h"
 
 namespace Nuclex { namespace Support { namespace Collections {
 

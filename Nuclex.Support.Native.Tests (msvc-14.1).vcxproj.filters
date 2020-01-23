@@ -236,6 +236,12 @@
     <ClCompile Include="Source\Text\Ryu\s2d.c">
       <Filter>Source\Text\Ryu</Filter>
     </ClCompile>
+    <ClCompile Include="Test\Text\StringMatcherTest.cpp">
+      <Filter>Tests\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\StringMatcher.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -429,6 +435,9 @@
     </ClInclude>
     <ClInclude Include="Source\Text\Utf8Fold\Utf8Fold.h">
       <Filter>Source\Text\Utf8Fold</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h">
+      <Filter>Include\Text</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

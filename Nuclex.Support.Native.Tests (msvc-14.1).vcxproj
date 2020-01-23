@@ -222,6 +222,7 @@
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLineArgument.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\LinuxThreadPool.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Mutex.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\ReaderWriterLock.h" />
@@ -256,6 +257,7 @@
     <ClCompile Include="Source\Services\ServiceProvider.cpp" />
     <ClCompile Include="Source\Services\UnresolvedDependencyError.cpp" />
     <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp" />
+    <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClInclude Include="Source\Text\Dragon4\Dragon4.h" />
     <ClInclude Include="Source\Text\Dragon4\Math.h" />
     <ClCompile Include="Source\Text\Dragon4\PrintFloat.cpp" />
@@ -319,6 +321,7 @@
     <ClCompile Include="Tests\Services\ServiceContainerTest.cpp" />
     <ClCompile Include="Tests\Text\LexicalTest.cpp" />
     <ClCompile Include="Tests\Text\StringConverterTest.cpp" />
+    <ClCompile Include="Tests\Text\StringMatcherTest.cpp" />
     <ClCompile Include="Tests\AnyTests.cpp" />
     <ClCompile Include="Tests\VariantTests.cpp" />
   </ItemGroup>

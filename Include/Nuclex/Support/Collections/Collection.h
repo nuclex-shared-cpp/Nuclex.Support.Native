@@ -21,6 +21,8 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_COLLECTION_H
 #define NUCLEX_SUPPORT_COLLECTIONS_COLLECTION_H
 
+#include "Nuclex/Support/Config.h"
+
 #include <cstdlib>
 
 namespace Nuclex { namespace Support { namespace Collections {

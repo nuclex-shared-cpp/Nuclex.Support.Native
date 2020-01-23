@@ -216,6 +216,7 @@
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLineArgument.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\LinuxThreadPool.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Mutex.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\ReaderWriterLock.h" />
@@ -285,6 +286,7 @@
     <ClCompile Include="Source\Text\Ryu\generic_128.c" />
     <ClCompile Include="Source\Text\Ryu\s2d.c" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
+    <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />
     <ClCompile Include="Source\Threading\Mutex.cpp" />
     <ClCompile Include="Source\Threading\ReaderWriterLock.cpp" />
