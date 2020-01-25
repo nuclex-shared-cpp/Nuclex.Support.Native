@@ -502,7 +502,7 @@ namespace Nuclex {
   ///   integers (leaving the unused bits empty). This is called an &quot;overlong&quot;
   ///   codepoint by the unicode consortium and is different from UTF-32.
   /// </remarks>
-  inline char32_t toFoldedLowercase(char32_t codepoint) {
+  inline char32_t ToFoldedLowercase(char32_t codepoint) {
     const char32_t *upperCaseBegin = uppercase;
     const char32_t *upperCaseEnd = upperCaseBegin + characterCount();
 
@@ -529,7 +529,7 @@ namespace Nuclex {
   ///   correct result for a human reading the string (though in the vast majority of cases
   ///   it does) -- it's purpose is to enable case-insensitive comparison of strings. 
   /// </remarks>
-  inline std::string toFoldedLowercase(const std::string &text) {
+  inline std::string ToFoldedLowercase(const std::string &text) {
     std::string::const_iterator current = text.begin();
     std::string::const_iterator end = text.end();
 
@@ -550,7 +550,7 @@ namespace Nuclex {
       }
 
       // Convert the codepoint to lowercase if it is an uppercase charactrer
-      codePoint = toFoldedLowercase(codePoint);
+      codePoint = ToFoldedLowercase(codePoint);
 
       // Append the codepoint to the result string
       std::uint8_t buffer[4];

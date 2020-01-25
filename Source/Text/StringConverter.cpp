@@ -262,7 +262,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   std::string StringConverter::FoldedLowercaseFromUtf8(const std::string &utf8String) {
-    return toFoldedLowercase(utf8String);
+    return ToFoldedLowercase(utf8String);
   }
 
   // ------------------------------------------------------------------------------------------- //

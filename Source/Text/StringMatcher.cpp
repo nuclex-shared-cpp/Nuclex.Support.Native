@@ -73,7 +73,7 @@ namespace {
   /// <param name="wildcard">Wild card against which the text will be matched</param>
   /// <returns>True if the text matches the wild card, false otherwise</returns>
   bool matchWildcardUtf8(const char *text, const char *wildcard) {
-    using Nuclex::toFoldedLowercase;
+    using Nuclex::ToFoldedLowercase;
 
     assert((text != nullptr) && u8"Text must not be a NULL pointer");
 
@@ -102,7 +102,7 @@ namespace {
 
       // Otherwise, the text must match the wildcard character
       if(wildcardCodepoint != '?') {
-        if(toFoldedLowercase(textCodepoint) != toFoldedLowercase(wildcardCodepoint)) {
+        if(ToFoldedLowercase(textCodepoint) != ToFoldedLowercase(wildcardCodepoint)) {
           return false;
         }
       }
@@ -132,7 +132,7 @@ namespace {
   /// <param name="wildcard">Wild card against which the text will be matched</param>
   /// <returns>True if the text matches the wild card, false otherwise</returns>
   bool matchWildcardUtf8CaseSensitive(const char *text, const char *wildcard) {
-    using Nuclex::toFoldedLowercase;
+    using Nuclex::ToFoldedLowercase;
 
     assert((text != nullptr) && u8"Text must not be a NULL pointer");
 
@@ -198,7 +198,7 @@ namespace Nuclex { namespace Support { namespace Text {
     if(caseSensitive) {
       return (left == right);
     } else {
-      return (toFoldedLowercase(left) == toFoldedLowercase(right));
+      return (ToFoldedLowercase(left) == ToFoldedLowercase(right));
     }
   }
 
