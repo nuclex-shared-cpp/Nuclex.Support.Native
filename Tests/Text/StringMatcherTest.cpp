@@ -50,4 +50,58 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StringMatcherTest, WilcardMatchDefaultsToCaseInsensitive) {
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"hello world"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HellØ WØrld", u8"hellø wørld"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, WildcardMatchCanBeCaseSensitive) {
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"Hello World", u8"hello world", true));
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"HellØ WØrld", u8"hellø wørld", true));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CanMatchAsciiStringToWildcard) {
+    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hello World"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard("Hello World", ""));
+    EXPECT_TRUE(StringMatcher::FitsWildcard("", ""));
+    EXPECT_FALSE(StringMatcher::FitsWildcard("", "Hello World"));
+
+    EXPECT_TRUE(StringMatcher::FitsWildcard("", "*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "He*o World"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hell*o World"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "*"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard("Hello World", "W*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "*W*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hello World*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "*Hello World"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hello***World"));
+
+    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hell? W?rld"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard("Hello World", "?Hello World"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard("Hello World", "Hello World?"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CanMatchUtf8StringToWildcard) {
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"He*ø Wørld"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"Hell*ø Wørld"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"*"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"DLRØW ØLLEH", u8"ø*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"*ø*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"Hellø Wørld*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"*Hellø Wørld"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"Hellø***Wørld"));
+
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"H?llø Wør?d"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"?Hellø Wørld"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"HELLØ WØRLD", u8"Hellø Wørld?"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text
