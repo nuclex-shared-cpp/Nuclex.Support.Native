@@ -41,7 +41,7 @@
 #include <intrin.h>
 
 static inline uint32_t floor_log2(const uint64_t value) {
-  long index;
+  unsigned long index;
   return _BitScanReverse64(&index, value) ? index : 64;
 }
 
@@ -242,5 +242,5 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
 }
 
 enum Status s2d(const char * buffer, double * result) {
-  return s2d_n(buffer, strlen(buffer), result);
+  return s2d_n(buffer, (int)strlen(buffer), result);
 }

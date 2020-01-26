@@ -173,9 +173,17 @@ namespace Nuclex { namespace Support { namespace Threading {
   bool WindowsThreadPool::isAtLeastWindowsVersion(int major, int minor) {
     OSVERSIONINFOW osVersionInfo = {0};
     osVersionInfo.dwOSVersionInfoSize = sizeof(osVersionInfo);
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996) // method was declared deprecated
+#endif
     BOOL result = ::GetVersionExW(&osVersionInfo);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
     if(result == FALSE) {
-      throw std::runtime_error("Could not determine operating system version");
+      throw std::runtime_error(u8"Could not determine operating system version");
     }
 
     if(osVersionInfo.dwMajorVersion == static_cast<DWORD>(major)) {

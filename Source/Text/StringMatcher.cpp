@@ -33,7 +33,7 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
-
+#if 0 // This is a memento for my old, trusty Ascii wildcard checker. It's retired now.
   /// <summary>C-style function that checks if a string matches a wild card</summary>
   /// <param name="text">Text that will be checked against the wild card</param>
   /// <param name="wildcard">Wild card against which the text will be matched</param>
@@ -65,7 +65,7 @@ namespace {
 
     return false;
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>C-style function that checks if a string matches a wild card</summary>
@@ -108,12 +108,15 @@ namespace {
       }
     }
 
+    // If we encountered a star, first skip any redundant stars directly following
     const char *wildcardAfterStar;
     do {
       wildcardAfterStar = wildcard;
       wildcardCodepoint = utf8::unchecked::next(wildcard);
     } while(wildcardCodepoint == '*');
 
+    // Then retry the wildcard match skipping any number of characters from text
+    // (the star can match anything from zero to all characters)
     do {
       if(matchWildcardUtf8(textAtStart, wildcardAfterStar)) {
         return true;
@@ -122,6 +125,7 @@ namespace {
       textCodepoint = utf8::unchecked::next(textAtStart);
     } while(textCodepoint != 0);
 
+    // No amount of skipping helped, there's not match
     return false;
   }
 

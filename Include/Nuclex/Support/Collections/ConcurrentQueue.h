@@ -32,6 +32,12 @@ License along with this library
 
 namespace Nuclex { namespace Support { namespace Collections {
 
+  enum class ConcurrentQueueAccessBehavior {
+    SingleProducerSingleConsumer,
+    MultipleProducersSingleConsumer,
+    MultipleProducersMultipleConsumers
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Queue that can safely be used from multiple threads</summary>
