@@ -36,7 +36,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     SingleProducerSingleConsumer,
     MultipleProducersSingleConsumer,
     MultipleProducersMultipleConsumers
-  }
+  };
 
   // ------------------------------------------------------------------------------------------- //
 
