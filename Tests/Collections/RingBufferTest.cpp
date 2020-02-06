@@ -189,15 +189,29 @@ namespace Nuclex { namespace Support { namespace Collections {
     test.Dequeue(&retrieved[0], oneThirdCapacity);
     EXPECT_EQ(test.Count(), oneThirdCapacity);
 
-    // Now add another 2/3rds to the ring buffer. The write must wrap around.
+    // Now add exactly the amount of items it takes to hit the end of the buffer
     std::size_t remainingItemCount = capacity - (oneThirdCapacity * 2);
     test.Append(&items[0], remainingItemCount);
     EXPECT_EQ(test.Count(), oneThirdCapacity + remainingItemCount);
 
+    // If there's a karfluffle or off-by-one problem when hitting the end index,
+    // this next call might blow up
     test.Append(&items[0], oneThirdCapacity);
     EXPECT_EQ(test.Count(), capacity);
 
-    
+    // Read all of the data from the ring buffer so we can check it
+    test.Dequeue(&retrieved[0], capacity);
+    EXPECT_EQ(test.Count(), 0U);
+
+    for(std::size_t index = 0; index < oneThirdCapacity; ++index) {
+      EXPECT_EQ(retrieved[index], items[index + oneThirdCapacity]);
+    }
+    for(std::size_t index = 0; index < (capacity - oneThirdCapacity * 2); ++index) {
+      EXPECT_EQ(retrieved[index + oneThirdCapacity], items[index]);
+    }
+    for(std::size_t index = 0; index < oneThirdCapacity; ++index) {
+      EXPECT_EQ(retrieved[index + (capacity - oneThirdCapacity)], items[index]);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
