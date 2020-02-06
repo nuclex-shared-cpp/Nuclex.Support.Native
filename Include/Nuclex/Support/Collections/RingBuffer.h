@@ -169,7 +169,7 @@ namespace Nuclex { namespace Support { namespace Collections {
           std::copy_n(
             items + remainingSegmentItemCount,
             this->endIndex,
-            reinterpret_cast<TItem *>(this->itemMemory) + this->endIndex
+            reinterpret_cast<TItem *>(this->itemMemory)
           );
         } else { // New data doesn't fit, ring buffer needs to be extended
           std::size_t oldItemCount = this->endIndex - this->startIndex;
@@ -333,7 +333,7 @@ namespace Nuclex { namespace Support { namespace Collections {
             ++items;
           }
 
-          if(this->startIndex == this->endIndex) {
+          if(count == availableItemCount - availableSegmentItemCount) {
             this->startIndex = InvalidIndex;
           } else {
             this->startIndex = count;
