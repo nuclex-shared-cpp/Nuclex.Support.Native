@@ -242,6 +242,12 @@
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp">
       <Filter>Tests\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Collections\RingBuffer.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Collections\RingBufferTest.cpp">
+      <Filter>Tests\Collections</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -438,6 +444,9 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h">
       <Filter>Include\Text</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\RingBuffer.h">
+      <Filter>Include\Collections</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

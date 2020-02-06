@@ -202,6 +202,7 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableDynamicArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableIndexedCollection.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\RingBuffer.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\StackArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h" />
@@ -245,6 +246,7 @@
     <ClCompile Include="Source\Collections\ObservableCollection.cpp" />
     <ClCompile Include="Source\Collections\ObservableDynamicArray.cpp" />
     <ClCompile Include="Source\Collections\ObservableIndexedCollection.cpp" />
+    <ClCompile Include="Source\Collections\RingBuffer.cpp" />
     <ClCompile Include="Source\Collections\StackArray.cpp" />
     <ClCompile Include="Source\Collections\Variegator.cpp" />
     <ClCompile Include="Source\Events\Delegate.cpp" />
@@ -315,6 +317,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp" />
+    <ClCompile Include="Tests\Collections\RingBufferTest.cpp" />
     <ClCompile Include="Tests\Events\DelegateTests.cpp" />
     <ClCompile Include="Tests\Events\EventTests.cpp" />
     <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp" />
