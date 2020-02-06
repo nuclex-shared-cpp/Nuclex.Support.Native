@@ -120,7 +120,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     test.Append(&items[0], oneThirdCapacity * 2);
     EXPECT_EQ(test.Count(), oneThirdCapacity * 2);
 
-    // Remove the first 1/3rd, we end up with data in the middle ofthe ring
+    // Remove the first 1/3rd, we end up with data in the middle of the ring
     std::vector<std::uint8_t> retrieved(capacity);
     test.Dequeue(&retrieved[0], oneThirdCapacity);
     EXPECT_EQ(test.Count(), oneThirdCapacity);
@@ -211,6 +211,57 @@ namespace Nuclex { namespace Support { namespace Collections {
     }
     for(std::size_t index = 0; index < oneThirdCapacity; ++index) {
       EXPECT_EQ(retrieved[index + (capacity - oneThirdCapacity)], items[index]);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(RingBufferTest, DequeueCanHitBufferEnd) {
+    RingBuffer<std::uint8_t> test;
+
+    std::size_t capacity = test.GetCapacity();
+    
+    std::vector<std::uint8_t> items(capacity);
+    for(std::size_t index = 0; index < capacity; ++index) {
+      items[index] = static_cast<std::uint8_t>(index);
+    }
+
+    // Fill the ring buffer to 2/3rds
+    std::size_t oneThirdCapacity = capacity / 3;
+    test.Append(&items[0], oneThirdCapacity * 2);
+    EXPECT_EQ(test.Count(), oneThirdCapacity * 2);
+
+    // Remove the first 1/3rd, we end up with data in the middle of the ring
+    std::vector<std::uint8_t> retrieved(capacity);
+    test.Dequeue(&retrieved[0], oneThirdCapacity);
+    EXPECT_EQ(test.Count(), oneThirdCapacity);
+
+    // Now add another 2/3rds to the ring buffer. The write must wrap around.
+    test.Append(&items[0], oneThirdCapacity * 2);
+    EXPECT_EQ(test.Count(), oneThirdCapacity * 3);
+
+    // Finally, retrieve just enough bytes to hit the end.
+    test.Dequeue(&retrieved[0], capacity - oneThirdCapacity);
+    EXPECT_EQ(test.Count(), oneThirdCapacity * 3 - (capacity - oneThirdCapacity));
+
+    for(std::size_t index = 0; index < oneThirdCapacity; ++index) {
+      EXPECT_EQ(retrieved[index], items[index + oneThirdCapacity]);
+    }
+    for(std::size_t index = 0; index < capacity - oneThirdCapacity * 2; ++index) {
+      EXPECT_EQ(retrieved[index + oneThirdCapacity], items[index]);
+    }
+
+    // If there's a karfluffle or off-by-one problem when moving the start index,
+    // this next call might blow up
+    std::size_t remainingByteCount = oneThirdCapacity * 3 - (capacity - oneThirdCapacity);
+    test.Dequeue(&retrieved[0], remainingByteCount);
+    EXPECT_EQ(test.Count(), 0U);
+
+    for(std::size_t index = 0; index < remainingByteCount; ++index) {
+      EXPECT_EQ(
+        retrieved[index],
+        items[index + capacity - oneThirdCapacity * 2]
+      );
     }
   }
 

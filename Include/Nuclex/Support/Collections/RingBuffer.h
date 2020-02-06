@@ -307,8 +307,9 @@ namespace Nuclex { namespace Support { namespace Collections {
           ++sourceAddress;
           ++items;
         }
-        if(this->startIndex == this->endIndex) {
-          this->startIndex = InvalidIndex;
+
+        if(count == availableSegmentItemCount) {
+          this->startIndex = 0;
         } else {
           this->startIndex += count;
         }
