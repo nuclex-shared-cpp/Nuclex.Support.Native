@@ -255,6 +255,23 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="items">Buffer in which the dequeued items will be stored</param>
     /// <param name="count">Number of items that will be dequeued</param>
     private: void dequeueFromLinear(TItem *items, std::size_t count) {
+      std::size_t availableItemCount = this->endIndex - this->startIndex;
+      if(availableItemCount >= count) {
+        TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
+        for(std::size_t index = 0; index < count; ++index) {
+          new(items) TItem(std::move(*sourceAddress));
+          sourceAddress->~TItem();
+          ++sourceAddress;
+          ++items;
+        }
+        if(count == availableItemCount) {
+          this->startIndex = InvalidIndex;
+        } else {
+          this->startIndex += count;
+        }
+      } else {
+        throw std::logic_error(u8"Ring buffer contains fewer items than requested");
+      }
     }
 
     /// <summary>Removes items from the beginning of the ring buffer</summary>
