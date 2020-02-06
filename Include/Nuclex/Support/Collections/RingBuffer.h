@@ -56,7 +56,27 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Destroys the ring buffer and all items in it</summary>
     public: ~RingBuffer() {
       if(this->itemMemory != nullptr) {
-        // TODO: Call destructor on filled items
+        if(this->startIndex != InvalidIndex) {
+          if(this->startIndex < this->endIndex) {
+            TItem *address = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
+            for(std::size_t index = this->startIndex; index < this->endIndex; ++index) {
+              address->~TItem();
+            }
+          } else {
+            std::size_t segmentItemCount = this->capacity - this->startIndex;
+
+            TItem *address = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
+            for(std::size_t index = 0; index < segmentItemCount; ++index) {
+              address->~TItem();
+            }
+
+            address = reinterpret_cast<TItem *>(this->itemMemory);
+            for(std::size_t index = 0; index < this->endIndex; ++index) {
+              address->~TItem();
+            }
+          }
+        }
+
         delete this->itemMemory;
       }
     }
@@ -278,6 +298,50 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="items">Buffer in which the dequeued items will be stored</param>
     /// <param name="count">Number of items that will be dequeued</param>
     private: void dequeueFromWrapped(TItem *items, std::size_t count) {
+      std::size_t availableSegmentItemCount = this->capacity - this->startIndex;
+      if(availableSegmentItemCount >= count) {
+        TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
+        for(std::size_t index = 0; index < count; ++index) {
+          new(items) TItem(std::move(*sourceAddress));
+          sourceAddress->~TItem();
+          ++sourceAddress;
+          ++items;
+        }
+        if(this->startIndex == this->endIndex) {
+          this->startIndex = InvalidIndex;
+        } else {
+          this->startIndex += count;
+        }
+      } else {
+        std::size_t availableItemCount = availableSegmentItemCount + this->endIndex;
+        if(availableItemCount >= count) {
+          TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
+          for(std::size_t index = 0; index < availableSegmentItemCount; ++index) {
+            new(items) TItem(std::move(*sourceAddress));
+            sourceAddress->~TItem();
+            ++sourceAddress;
+            ++items;
+          }
+
+          count -= availableSegmentItemCount;
+
+          sourceAddress = reinterpret_cast<TItem *>(this->itemMemory);
+          for(std::size_t index = 0; index < count; ++index) {
+            new(items) TItem(std::move(*sourceAddress));
+            sourceAddress->~TItem();
+            ++sourceAddress;
+            ++items;
+          }
+
+          if(this->startIndex == this->endIndex) {
+            this->startIndex = InvalidIndex;
+          } else {
+            this->startIndex = count;
+          }
+        } else {
+          throw std::logic_error(u8"Ring buffer contains fewer items than requested");
+        }
+      }
     }
 
     /// <summary>Calculates the next power of two for the specified value</summary>
