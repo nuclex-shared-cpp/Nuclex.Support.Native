@@ -53,23 +53,85 @@ namespace Nuclex { namespace Support { namespace Collections {
       startIndex(InvalidIndex),
       endIndex(InvalidIndex) {}
 
+    /// <summary>Initializes a ring buffer as a copy of another ring buffer</summary>
+    /// <param name="other">Other ring buffer that will be copied</param>
+    public: RingBuffer(const RingBuffer &other) :
+      itemMemory(new std::uint8_t[sizeof(TItem[2]) * getNextPowerOfTwo(other.capacity) / 2]),
+      capacity(getNextPowerOfTwo(other.capacity)),
+      startIndex(0),
+      endIndex(other.Count()) {
+
+      if(other.startIndex == InvalidIndex) {
+        this->startIndex = InvalidIndex;
+      } else if(other.startIndex < other.endIndex) {
+
+        // Copy all items from first to last
+        TItem *sourceAddress = reinterpret_cast<TItem *>(other.itemMemory) + other.startIndex;
+        TItem *targetAddress = reinterpret_cast<TItem *>(this->itemMemory);
+        for(std::size_t index = 0; index < this->endIndex; ++index) {
+          new(targetAddress) TItem(*sourceAddress);
+          ++sourceAddress;
+          ++targetAddress;
+        }
+
+      } else {
+        std::size_t segmentItemCount = other.capacity - other.startIndex;
+        TItem *targetAddress = reinterpret_cast<TItem *>(this->itemMemory);
+
+        // Copy all items from the start index up to the end of the other buffer
+        TItem *sourceAddress = reinterpret_cast<TItem *>(other.itemMemory) + other.startIndex;
+        for(std::size_t index = 0; index < segmentItemCount; ++index) {
+          new(targetAddress) TItem(*sourceAddress);
+          ++sourceAddress;
+          ++targetAddress;
+        }
+
+        // Copy all items from the beginning of the other buffer up to the end index
+        sourceAddress = reinterpret_cast<TItem *>(other.itemMemory);
+        for(std::size_t index = 0; index < other.endIndex; ++index) {
+          new(targetAddress) TItem(*sourceAddress);
+          ++sourceAddress;
+          ++targetAddress;
+        }
+      }
+    }
+
+    /// <summary>Initializes a ring buffer taking over another ring buffer</summary>
+    /// <param name="other">Other ring buffer that will be taken over</param>
+    public: RingBuffer(RingBuffer &&other) :
+      itemMemory(other.itemMemory),
+      capacity(other.capacity),
+      startIndex(other.startIndex),
+      endIndex(other.endIndex) {
+      other.itemMemory = nullptr;
+#if !defined(NDEBUG)
+      other.startIndex = InvalidIndex;
+#endif
+    }
+
     /// <summary>Destroys the ring buffer and all items in it</summary>
     public: ~RingBuffer() {
-      if(this->itemMemory != nullptr) {
+      if(this->itemMemory != nullptr) { // Can be NULL if container donated its guts
+
+        // If the buffer contains items, they, too, need to be destroyed
         if(this->startIndex != InvalidIndex) {
+
+          // If the ring buffer is linear, simply destroy the items from start to end
           if(this->startIndex < this->endIndex) {
             TItem *address = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
             for(std::size_t index = this->startIndex; index < this->endIndex; ++index) {
               address->~TItem();
             }
-          } else {
+          } else { // If the ring buffer is wrapped, both segments need to be destroyed
             std::size_t segmentItemCount = this->capacity - this->startIndex;
 
+            // Destroy all items in the older segment
             TItem *address = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
             for(std::size_t index = 0; index < segmentItemCount; ++index) {
               address->~TItem();
             }
 
+            // Destroy all items in the younger segment
             address = reinterpret_cast<TItem *>(this->itemMemory);
             for(std::size_t index = 0; index < this->endIndex; ++index) {
               address->~TItem();
@@ -78,6 +140,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         }
 
         delete this->itemMemory;
+
       }
     }
 
@@ -299,7 +362,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="count">Number of items that will be dequeued</param>
     private: void dequeueFromWrapped(TItem *items, std::size_t count) {
       std::size_t availableSegmentItemCount = this->capacity - this->startIndex;
-      if(availableSegmentItemCount >= count) {
+      if(availableSegmentItemCount >= count) { // Enough data in older segment
         TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
         for(std::size_t index = 0; index < count; ++index) {
           new(items) TItem(std::move(*sourceAddress));
@@ -308,14 +371,17 @@ namespace Nuclex { namespace Support { namespace Collections {
           ++items;
         }
 
+        // Was all data in the segment consumed?
         if(count == availableSegmentItemCount) {
           this->startIndex = 0;
         } else {
           this->startIndex += count;
         }
-      } else {
+      } else { // The older segment alone does not have enough data, check younger segment
         std::size_t availableItemCount = availableSegmentItemCount + this->endIndex;
-        if(availableItemCount >= count) {
+        if(availableItemCount >= count) { // Is there enough data with both segments together?
+
+          // Move the items from the older segment into the caller-provided buffer
           TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
           for(std::size_t index = 0; index < availableSegmentItemCount; ++index) {
             new(items) TItem(std::move(*sourceAddress));
@@ -326,6 +392,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
           count -= availableSegmentItemCount;
 
+          // Move some or all items from the younger segment into the caller-provided buffer
           sourceAddress = reinterpret_cast<TItem *>(this->itemMemory);
           for(std::size_t index = 0; index < count; ++index) {
             new(items) TItem(std::move(*sourceAddress));
@@ -334,12 +401,13 @@ namespace Nuclex { namespace Support { namespace Collections {
             ++items;
           }
 
+          // If all data was taken from the buffer, then the ring buffer is empty now
           if(count == availableItemCount - availableSegmentItemCount) {
             this->startIndex = InvalidIndex;
-          } else {
+          } else { // Otherwise, the new start index is one past the last read position
             this->startIndex = count;
           }
-        } else {
+        } else { // There is insufficient data in the ring buffer
           throw std::logic_error(u8"Ring buffer contains fewer items than requested");
         }
       }
