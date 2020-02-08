@@ -71,6 +71,55 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(RingBufferTest, HasCopyConstructor) {
+    RingBuffer<std::uint8_t> test;
+
+    std::uint8_t items[10] = { 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U };
+    test.Append(items, 10);
+
+    EXPECT_EQ(test.Count(), 10);
+
+    RingBuffer<std::uint8_t> copy(test);
+
+    EXPECT_EQ(copy.Count(), 10);
+
+    std::uint8_t retrieved[10];
+    copy.Dequeue(retrieved, 10);
+
+    EXPECT_EQ(copy.Count(), 0);
+    EXPECT_EQ(test.Count(), 10);
+
+    for(std::size_t index = 0; index < 10; ++index) {
+      EXPECT_EQ(retrieved[index], items[index]);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(RingBufferTest, HasMoveConstructor) {
+    RingBuffer<std::uint8_t> test;
+
+    std::uint8_t items[10] = { 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U };
+    test.Append(items, 10);
+
+    EXPECT_EQ(test.Count(), 10);
+
+    RingBuffer<std::uint8_t> moved(std::move(test));
+
+    EXPECT_EQ(moved.Count(), 10);
+
+    std::uint8_t retrieved[10];
+    moved.Dequeue(retrieved, 10);
+
+    EXPECT_EQ(moved.Count(), 0);
+
+    for(std::size_t index = 0; index < 10; ++index) {
+      EXPECT_EQ(retrieved[index], items[index]);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(RingBufferTest, ItemsCanBeAppended) {
     RingBuffer<std::uint8_t> test;
 

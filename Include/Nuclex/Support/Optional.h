@@ -33,6 +33,10 @@ namespace Nuclex { namespace Support {
 
   /// <summary>Stores either a value or nothing, allowing optional values on the stack</summary>
   /// <typeparam name="TValue">Type of value the optional will contain</typeparam>
+  /// <remarks>
+  ///   This library targets C++14, where std::optional hadn't been introduced yet.
+  ///   If you are targeting C++17 or later, there is no need to use this class.
+  /// </remarks>
   template<typename TValue>
   class Optional {
 
