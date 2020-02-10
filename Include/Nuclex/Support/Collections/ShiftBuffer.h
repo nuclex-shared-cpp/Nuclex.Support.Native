@@ -28,6 +28,9 @@ License along with this library
 #include <vector> // for std::vector
 #include <algorithm> // for std::copy_n()
 #include <stdexcept> // for std::out_of_range
+#include <memory> // for std::unique_ptr
+
+// https://www.zverovich.net/2017/12/09/improving-compile-times.html
 
 namespace Nuclex { namespace Support { namespace Collections {
 
@@ -65,20 +68,16 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: ShiftBuffer(std::size_t capacity = 256) :
       itemMemory(new std::uint8_t[sizeof(TItem[2]) * getNextPowerOfTwo(capacity) / 2]),
       capacity(getNextPowerOfTwo(capacity)),
-      startIndex(InvalidIndex),
-      endIndex(InvalidIndex) {}
+      startIndex(0),
+      endIndex(0) {}
 
     /// <summary>Destroys the shift buffer and all items in it</summary>
     public: ~ShiftBuffer() {
-      if(this->itemMemory != nullptr) { // Can be NULL if container donated its guts
-        if(this->startIndex != InvalidIndex) {
-          TItem *address = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
-          for(std::size_t index = this->startIndex; index < this->endIndex; ++index) {
-            address->~TItem();
-          }
+      if(this->startIndex != this->endIndex) {
+        TItem *address = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex;
+        for(std::size_t index = this->startIndex; index < this->endIndex; ++index) {
+          address->~TItem();
         }
-
-        delete this->itemMemory;
       }
     }
 
@@ -99,6 +98,76 @@ namespace Nuclex { namespace Support { namespace Collections {
       } else {
         return this->endIndex - this->startIndex;
       }
+    }
+
+    /// <summary>Copies the specified number of items into the shift buffer</summary>
+    /// <param name="items">Items that will be copied into the shift buffer</param>
+    /// <param name="count">Number of items that will be copied</param>
+    public: void Write(const TItem *items, std::size_t count) {
+      std::size_t usedItemCount = this->endIndex - this->startIndex;
+
+      // We shift on writes because there may be multiple reads in succession and
+      // only at this point may we need additional space
+
+      // Is more space in the buffer inaccessible that is occupied by items?
+      if(this->startIndex > usedItemCount) {
+
+        // If the buffer needs to be resized anyway, we don't need to shift back
+        // and can do the resize + shift in one operation
+        std::size_t totalItemCount = usedItemCount + count;
+#if defined(NUCLEX_SUPPORT_CXX20)
+        if(totalItemCount > this->capacity) [[unlikely]] {
+#else
+        if(totalItemCount > this->capacity) {
+#endif
+          this->capacity = getNextPowerOfTwo(this->startIndex + totalItemCount);
+          {
+            std::unique_ptr<std::uint8_t[]> newItemMemory(
+              new std::uint8_t[sizeof(TItem[2]) * this->capacity / 2]
+            );
+            shiftBuffer(newItemMemory.get(), usedItemCount);
+            newItemMemory.swap(this->itemMemory);
+          }
+        } else { // No buffer resize needed, just shift the items back
+          shiftBuffer(this->itemMemory.get(), usedItemCount);
+        }
+
+        this->startIndex = 0;
+        this->endIndex = usedItemCount;
+
+      } else { // The inaccessible space in the buffer is less than the used space
+
+        // If the space at the end of the buffer is too small, allocate a new buffer
+        // two times the required size. This ensures that the buffer will settle into
+        // a read-shift-fill cycle without resizes if the current usage pattern repeats.
+        std::size_t freeItemCount = this->capacity - this->endIndex;
+#if defined(NUCLEX_SUPPORT_CXX20)
+        if(freeItemCount < count) [[unlikely]] {
+#else
+        if(freeItemCount < count) {
+#endif
+          this->capacity = getNextPowerOfTwo((usedItemCount + count) * 2);
+          {
+            std::unique_ptr<std::uint8_t[]> newItemMemory(
+              new std::uint8_t[sizeof(TItem[2]) * this->capacity / 2]
+            );
+            shiftBuffer(newItemMemory.get(), usedItemCount);
+            newItemMemory.swap(this->itemMemory);
+          }
+
+          this->startIndex = 0;
+          this->endIndex = usedItemCount;
+        }
+
+      }
+
+      // Append the new items to the end of the buffer
+      std::copy_n(
+        items,
+        count,
+        reinterpret_cast<TItem *>(this->itemMemory.get()) + this->endIndex
+      );
+      this->endIndex += count;
     }
 
     /// <summary>Calculates the next power of two for the specified value</summary>
@@ -132,8 +201,27 @@ namespace Nuclex { namespace Support { namespace Collections {
       return (value + 1);
     }
 
+    /// <summary>Moves the items in the buffer to another location</summary>
+    /// <param name="targetBuffer">Buffer into which the items will be moved</param>
+    /// <param name="itemCount">Number of items that will be moved</param>
+    /// <remarks>
+    ///   The target buffer can be the ShiftBuffer's own memory so long as there is
+    ///   no overlap between the items to be moved and the target memory range.
+    /// </remarks>
+    private: void shiftBuffer(std::uint8_t *targetBuffer, std::size_t itemCount) {
+      TItem *sourceItems = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex;
+      TItem *targetItems = reinterpret_cast<TItem *>(targetBuffer);
+
+      for(std::size_t index = 0; index < itemCount; ++index) {
+        new(targetItems) TItem(std::move(*sourceItems));
+        sourceItems->~TItem();
+        ++sourceItems;
+        ++targetItems;
+      }
+    }
+
     /// <summary>Holds the items stored in the shift buffer</summary>
-    private: std::uint8_t *itemMemory;
+    private: std::unique_ptr<std::uint8_t[]> itemMemory;
     /// <summary>Number of items the shift buffer can currently hold</summary>
     private: std::size_t capacity;
     /// <summary>Index of the first item in the shift buffer</summary>

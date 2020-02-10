@@ -197,7 +197,11 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="items">Items that will be appended to the ring buffer</param>
     /// <param name="count">Number of items that will be appended</param>
     private: void appendToEmpty(const TItem *items, std::size_t count) {
+#if defined(NUCLEX_SUPPORT_CXX20)
+      if(count > this->capacity) [[unlikely]] {
+#else
       if(count > this->capacity) {
+#endif
         delete[] this->itemMemory;
         this->capacity = getNextPowerOfTwo(count);
         this->itemMemory = new std::uint8_t[sizeof(TItem[2]) * capacity / 2];
@@ -222,7 +226,11 @@ namespace Nuclex { namespace Support { namespace Collections {
         this->endIndex += count;
       } else { // New data must be wrapped or ring buffer needs to be extended
         std::size_t remainingItemCount = remainingSegmentItemCount + this->startIndex;
+#if defined(NUCLEX_SUPPORT_CXX20)
+        if(remainingItemCount >= count) [[likely]] {
+#else
         if(remainingItemCount >= count) {
+#endif
           std::copy_n(
             items,
             remainingSegmentItemCount,
@@ -278,7 +286,11 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="count">Number of items that will be appended</param>
     private: void appendToWrapped(const TItem *items, std::size_t count) {
       std::size_t remainingItemCount = this->startIndex - this->endIndex;
+#if defined(NUCLEX_SUPPORT_CXX20)
+      if(count > remainingItemCount) [[likely]] { // New data fits, simplest case there is
+#else
       if(count > remainingItemCount) { // New data fits, simplest case there is
+#endif
         std::copy_n(
           items,
           count,

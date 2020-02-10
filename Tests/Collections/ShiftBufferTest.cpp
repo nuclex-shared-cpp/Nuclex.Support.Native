@@ -71,4 +71,15 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(ShiftBufferTest, ItemsCanBeAppended) {
+    ShiftBuffer<std::uint8_t> test;
+
+    std::uint8_t items[128];
+    test.Write(items, 128);
+
+    EXPECT_EQ(test.Count(), 128U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Collections
