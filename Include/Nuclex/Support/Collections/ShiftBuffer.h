@@ -26,7 +26,6 @@ License along with this library
 #include <cstddef> // for std::size_t
 #include <cstdint> // for std::uint8_t
 #include <algorithm> // for std::copy_n()
-#include <stdexcept> // for std::out_of_range
 #include <memory> // for std::unique_ptr
 #include <cassert> // for assert()
 
@@ -114,10 +113,86 @@ namespace Nuclex { namespace Support { namespace Collections {
       this->startIndex += skipItemCount;
     }
 
+    /// <summary>Reads items out of the buffer, starting with the oldest item</summary>
+    /// <param name="items">Memory to which the items will be moved</param>
+    /// <param name="count">Number of items that will be read from the buffer</param>
+    public: void Read(TItem *items, std::size_t count) {
+      assert(
+        ((this->startIndex + skipItemCount) <= this->endIndex) &&
+        u8"Amount of data read is less or equal to the amount of data in the buffer"
+      );
+
+      TItem *sourceItems = Access();
+      for(std::size_t index = 0; index < count; ++index) {
+        *items = std::move(*sourceItems);
+        sourceItems->~TItem();
+        ++items;
+        ++sourceItems;
+      }
+
+      this->startIndex += count;
+    }
+
     /// <summary>Copies the specified number of items into the shift buffer</summary>
     /// <param name="items">Items that will be copied into the shift buffer</param>
     /// <param name="count">Number of items that will be copied</param>
     public: void Write(const TItem *items, std::size_t count) {
+      TItem *targetItems = Promise(count);
+
+      for(std::size_t index = 0; index < count; ++index) {
+        new(targetItems) TItem(*items);
+        ++items;
+        ++targetItems;
+      }
+    }
+
+    /// <summary>Moves the specified number of items into the shift buffer</summary>
+    /// <param name="items">Items that will be moves into the shift buffer</param>
+    /// <param name="count">Number of items that will be moves</param>
+    public: void Shove(const TItem *items, std::size_t count) {
+      TItem *targetItems = Promise(count);
+
+      for(std::size_t index = 0; index < count; ++index) {
+        new(targetItems) TItem(std::move(*items));
+        ++items;
+        ++targetItems;
+      }
+    }
+
+#if 1 // Cool, efficient and an invitation to shoot yourself in the foot
+
+    /// <summary>Reads items out of the buffer, starting with the oldest item</summary>
+    /// <param name="items">Memory to which the items will be moved</param>
+    /// <param name="count">Number of items that will be read from the buffer</param>
+    protected: void ReadIntoUninitialized(TItem *items, std::size_t count) {
+      assert(
+        ((this->startIndex + skipItemCount) <= this->endIndex) &&
+        u8"Amount of data read is less or equal to the amount of data in the buffer"
+      );
+
+      TItem *sourceItems = Access();
+      for(std::size_t index = 0; index < count; ++index) {
+        new(items) TItem(std::move(*sourceItems));
+        sourceItems->~TItem();
+        ++items;
+        ++sourceItems;
+      }
+
+      this->startIndex += count;
+    }
+
+    /// <summary>
+    ///   Promises the shift buffer to write the specified number of items before
+    ///   the next call to any non-const method
+    /// </summary>
+    /// <param name="itemCount">Number of items to promise the shift buffer</param>
+    /// <returns>The address at which the items must be written</returns>
+    /// <remarks>
+    ///   Warning! The returned pointer is to uninitialized memory. That means assigning
+    ///   the items is an error, they must be constructed into their addresses via
+    ///   placement new, not assignment!
+    /// </remarks>
+    protected: TItem *Promise(std::size_t itemCount) {
       std::size_t usedItemCount = this->endIndex - this->startIndex;
 
       // We shift on writes because there may be multiple reads in succession and
@@ -175,14 +250,25 @@ namespace Nuclex { namespace Support { namespace Collections {
 
       }
 
-      // Append the new items to the end of the buffer
-      std::copy_n(
-        items,
-        count,
-        reinterpret_cast<TItem *>(this->itemMemory.get()) + this->endIndex
-      );
+      usedItemCount = this->endIndex;
       this->endIndex += count;
+
+      return reinterpret_cast<TItem *>(this->itemMemory.get()) + usedItemCount;
     }
+
+    /// <summary>Reverses a promise of data given via <see cref="Promise" /></summary>
+    /// <param name="itemCount">Number of items for which to reverse the promise</param>
+    /// <remarks>
+    ///   Warning! You must not reverse a promise for more data then you promised with
+    ///   your last call to <see cref="Promise" />. The items for which you reverse your
+    ///   promise will be considered uninitialized memory again and will have their
+    ///   destructors called.
+    /// </remarks>
+    protected: void Unpromise(std::size_t itemCount) {
+      this->endIndex -= itemCount;
+    }
+
+#endif
 
     /// <summary>Calculates the next power of two for the specified value</summary>
     /// <param name="value">Value of which the next power of two will be calculated</param>
