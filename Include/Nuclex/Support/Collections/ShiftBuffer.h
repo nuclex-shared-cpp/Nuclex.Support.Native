@@ -25,12 +25,10 @@ License along with this library
 
 #include <cstddef> // for std::size_t
 #include <cstdint> // for std::uint8_t
-#include <vector> // for std::vector
 #include <algorithm> // for std::copy_n()
 #include <stdexcept> // for std::out_of_range
 #include <memory> // for std::unique_ptr
-
-// https://www.zverovich.net/2017/12/09/improving-compile-times.html
+#include <cassert> // for assert()
 
 namespace Nuclex { namespace Support { namespace Collections {
 
@@ -81,8 +79,8 @@ namespace Nuclex { namespace Support { namespace Collections {
       }
     }
 
-    /// <summary>Looks up the number of items the ring shift has allocated memory for</summary>
-    /// <returns>The number of items the ring buffer has reserved space for</returns>
+    /// <summary>Returns the number of items the shift buffer has allocated memory for</summary>
+    /// <returns>The number of items the shift buffer has reserved space for</returns>
     /// <remarks>
     ///   Just like std::vector::capacity(), this is not a limit. If the capacity is
     ///   exceeded, the shift buffer will allocate a large memory block and use that one.
@@ -93,11 +91,27 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Counts the number of items currently stored in the shift buffer</summary>
     public: std::size_t Count() const {
-      if(this->startIndex == InvalidIndex) { // Empty
-        return 0;
-      } else {
-        return this->endIndex - this->startIndex;
-      }
+      return this->endIndex - this->startIndex;
+    }
+
+    /// <summary>Provides direct access to the items stored in the buffer</summary>
+    /// <returns>
+    ///   A pointer to the oldest item in the buffer, following sequentially by
+    ///   all newer items in the order they were written
+    /// </returns>
+    public: const TItem *Access() const {
+      return reinterpret_cast<const TItem *>(this->itemMemory.get()) + this->startIndex;
+    }
+
+    /// <summary>Skips the specified number of items</summary>
+    /// <param name="skipItemCount">Number of items that will be skipped</param>
+    public: void Skip(std::size_t skipItemCount) {
+      assert(
+        ((this->startIndex + skipItemCount) <= this->endIndex) &&
+        u8"Amount of data skipped is less or equal to the amount of data in the buffer"
+      );
+
+      this->startIndex += skipItemCount;
     }
 
     /// <summary>Copies the specified number of items into the shift buffer</summary>

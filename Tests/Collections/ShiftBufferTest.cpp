@@ -82,4 +82,15 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(ShiftBufferDeathTest, SkippingOnEmptyBufferTriggersAssertion) {
+    ShiftBuffer<std::uint8_t> test;
+
+    ASSERT_DEATH(
+      test.Skip(1),
+      ".*Amount of data skipped is less or equal to the amount of data in the buffer.*"
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Collections
