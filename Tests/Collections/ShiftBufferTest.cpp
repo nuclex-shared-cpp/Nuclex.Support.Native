@@ -71,6 +71,55 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(ShiftBufferTest, HasCopyConstructor) {
+    ShiftBuffer<std::uint8_t> test;
+
+    std::uint8_t items[10] = { 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U };
+    test.Write(items, 10);
+
+    EXPECT_EQ(test.Count(), 10);
+
+    ShiftBuffer<std::uint8_t> copy(test);
+
+    EXPECT_EQ(copy.Count(), 10);
+
+    std::uint8_t retrieved[10];
+    copy.Read(retrieved, 10);
+
+    EXPECT_EQ(copy.Count(), 0);
+    EXPECT_EQ(test.Count(), 10);
+
+    for(std::size_t index = 0; index < 10; ++index) {
+      EXPECT_EQ(retrieved[index], items[index]);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ShiftBufferTest, HasMoveConstructor) {
+    ShiftBuffer<std::uint8_t> test;
+
+    std::uint8_t items[10] = { 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U };
+    test.Write(items, 10);
+
+    EXPECT_EQ(test.Count(), 10);
+
+    ShiftBuffer<std::uint8_t> moved(std::move(test));
+
+    EXPECT_EQ(moved.Count(), 10);
+
+    std::uint8_t retrieved[10];
+    moved.Read(retrieved, 10);
+
+    EXPECT_EQ(moved.Count(), 0);
+
+    for(std::size_t index = 0; index < 10; ++index) {
+      EXPECT_EQ(retrieved[index], items[index]);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(ShiftBufferTest, ItemsCanBeAppended) {
     ShiftBuffer<std::uint8_t> test;
 
@@ -89,6 +138,42 @@ namespace Nuclex { namespace Support { namespace Collections {
       test.Skip(1),
       ".*Amount of data skipped is less or equal to the amount of data in the buffer.*"
     );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ShiftBufferDeathTest, ReadingFromEmptyBufferTriggersAssertion) {
+    ShiftBuffer<std::uint8_t> test;
+
+    std::uint8_t retrieved[1];
+
+    ASSERT_DEATH(
+      test.Read(retrieved, 1),
+      ".*Amount of data read is less or equal to the amount of data in the buffer.*"
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ShiftBufferTest, ItemsCanBeReadAndWritten) {
+    ShiftBuffer<std::uint8_t> test;
+
+    std::uint8_t items[128];
+    for(std::size_t index = 0; index < 128; ++index) {
+      items[index] = static_cast<std::uint8_t>(index);
+    }
+    test.Write(items, 128);
+
+    EXPECT_EQ(test.Count(), 128U);
+
+    std::uint8_t retrieved[128];
+    test.Read(retrieved, 128);
+
+    EXPECT_EQ(test.Count(), 0U);
+
+    for(std::size_t index = 0; index < 128; ++index) {
+      EXPECT_EQ(retrieved[index], static_cast<std::uint8_t>(index));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
