@@ -27,12 +27,8 @@ License along with this library
 #include <cstdint> // for std::uint8_t
 #include <memory> // for std::unique_ptr
 #include <cassert> // for assert()
-
-// Status:
-//
-// * Safe for trivial types (buffer away with std::uint8_t etc.)
-// * Messes up if complex types throw exceptions from the copy constructors
-//   or from their move constructors
+#include <cstring> // for std::memcpy()
+#include <type_traits> // for std::enable_if<>
 
 namespace Nuclex { namespace Support { namespace Collections {
 
@@ -79,36 +75,11 @@ namespace Nuclex { namespace Support { namespace Collections {
       itemMemory(new std::uint8_t[sizeof(TItem[2]) * other.capacity / 2]),
       capacity(other.capacity),
       startIndex(0),
-      endIndex(other.endIndex - other.startIndex) {
-
+      endIndex(0) {
       const TItem *sourceItems = (
         reinterpret_cast<const TItem *>(other.itemMemory.get()) + other.startIndex
       );
-      const TItem *sourceItemsEnd = sourceItems + this->endIndex;
-      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
-
-      try {
-
-        // Copy the items from the other shift buffer individually
-        while(sourceItems < sourceItemsEnd) {
-          new(targetItems) TItem(*sourceItems);
-          ++sourceItems;
-          ++targetItems;
-        }
-
-      }
-      catch(...) {
-        TItem *firstTargetItem = reinterpret_cast<TItem *>(this->itemMemory.get());
-
-        // Copy failed, the constructor will exit with an exception, so we have
-        // to destroy all of the items we copied so far.
-        while(firstTargetItem < targetItems) {
-          firstTargetItem->~TItem();
-          ++firstTargetItem;
-        }
-
-        throw;
-      }
+      emplaceItems(sourceItems, other.endIndex - other.startIndex);
     }
 
     /// <summary>Initializes a shift buffer taking over another shift buffer</summary>
@@ -218,30 +189,32 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Copies the specified number of items into the shift buffer</summary>
     /// <param name="items">Items that will be copied into the shift buffer</param>
     /// <param name="count">Number of items that will be copied</param>
+    /// <remarks>
+    ///   This method provides a basic exception guarantee. If the buffer needs to be
+    ///   extended or shifted and an item's move constructor throws, the buffer will
+    ///   be truncated but usable. If the copy constructor of an item throws while it
+    ///   is being appended, the append will be incomplete and the buffer will retain
+    ///   all items appended until the exception triggered.
+    /// </remarks>
     public: void Write(const TItem *items, std::size_t count) {
-      TItem *targetItems = Promise(count);
-
-      // TODO: This is not exception-safe when a copy constructor throws
-
-      for(std::size_t index = 0; index < count; ++index) {
-        new(targetItems) TItem(*items);
-        ++items;
-        ++targetItems;
-      }
+      makeSpace(count);
+      emplaceItems(items, count);
     }
 
     /// <summary>Moves the specified number of items into the shift buffer</summary>
     /// <param name="items">Items that will be moves into the shift buffer</param>
     /// <param name="count">Number of items that will be moves</param>
     public: void Shove(const TItem *items, std::size_t count) {
-      TItem *targetItems = Promise(count);
+      makeSpace(count);
 
-      // TODO: This is not exception-safe when a move constructor throws
+      TItem *itemsEnd = items + count;
+      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->endIndex;
 
-      for(std::size_t index = 0; index < count; ++index) {
+      while(items < itemsEnd) {
         new(targetItems) TItem(std::move(*items));
         ++items;
         ++targetItems;
+        ++this->endIndex;
       }
     }
 
@@ -252,9 +225,11 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="count">Number of items that will be read from the buffer</param>
     protected: void ReadIntoUninitialized(TItem *items, std::size_t count) {
       assert(
-        ((this->startIndex + skipItemCount) <= this->endIndex) &&
+        ((this->startIndex + count) <= this->endIndex) &&
         u8"Amount of data read is less or equal to the amount of data in the buffer"
       );
+
+      TItem *itemsEnd = items + count;
 
       TItem *sourceItems = Access();
       for(std::size_t index = 0; index < count; ++index) {
@@ -288,7 +263,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   </para>
     /// </remarks>
     protected: TItem *Promise(std::size_t itemCount) {
-      ensureSpaceAvailable(itemCount);
+      makeSpace(itemCount);
 
       TItem *items = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->endIndex;
       this->endIndex += itemCount;
@@ -341,11 +316,17 @@ namespace Nuclex { namespace Support { namespace Collections {
       return (value + 1);
     }
 
-    /// <summary>Ensures that enough spacer is available for the 
-    private: void ensureSpaceAvailable(std::size_t itemCount) {
+    /// <summary>Ensures that space is available for the specified number of items</summary>
+    /// <param name="itemCount">Number of items for which space will be made available</param>
+    /// <remarks>
+    ///   When this method finishes, there will be enough space between
+    ///   <see cref="endIndex" /> and <see cref="capacity" /> to fit the requested number
+    ///   of items. If there was enough space in the first place, this method does nothing.
+    /// </remarks>
+    private: void makeSpace(std::size_t itemCount) {
       std::size_t usedItemCount = this->endIndex - this->startIndex;
 
-      // Is more space in the buffer inaccessible that is occupied by items?
+      // Is more space in the buffer inaccessible than is occupied by items?
       if(this->startIndex > usedItemCount) {
 
         // If the buffer needs to be resized anyway, we don't need to shift back
@@ -364,11 +345,11 @@ namespace Nuclex { namespace Support { namespace Collections {
             newItemMemory.swap(this->itemMemory);
 
             TItem *items = reinterpret_cast<TItem *>(newItemMemory.get()) + this->startIndex;
-            shiftBuffer(items, usedItemCount);
+            shiftItems(items, usedItemCount);
           }
         } else { // No buffer resize needed, just shift the items back
           TItem *items = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex;
-          shiftBuffer(items, usedItemCount);
+          shiftItems(items, usedItemCount);
         }
 
       } else { // The inaccessible space in the buffer is less than the used space
@@ -390,11 +371,58 @@ namespace Nuclex { namespace Support { namespace Collections {
             newItemMemory.swap(this->itemMemory);
 
             TItem *items = reinterpret_cast<TItem *>(newItemMemory.get()) + this->startIndex;
-            shiftBuffer(items, usedItemCount);
+            shiftItems(items, usedItemCount);
           }
         }
 
       }
+    }
+
+    /// <summary>Copies the specified items into the already available buffer</summary>
+    /// <param name="sourceItems">Items that will be copied into the buffer</param>
+    /// <param name="itemCount">Number of items that will be copied</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<!std::is_trivially_copyable<T>::value>::type emplaceItems(
+      const TItem *sourceItems, std::size_t itemCount
+    ) {
+      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+      targetItems += this->endIndex;
+
+      std::size_t count = itemCount;
+      try {
+        while(count > 0) {
+          new(targetItems) TItem(*sourceItems);
+          ++sourceItems;
+          ++targetItems;
+          --count;
+        }
+      }
+      catch(...) {
+        TItem *firstTargetItem = reinterpret_cast<TItem *>(this->itemMemory.get());
+
+        // Copy failed, destroy all of the items we copied so far
+        while(firstTargetItem < targetItems) {
+          firstTargetItem->~TItem();
+          ++firstTargetItem;
+        }
+
+        throw;
+      }
+
+      this->endIndex += itemCount;
+    }
+
+    /// <summary>Copies the specified items into the already available buffer</summary>
+    /// <param name="sourceItems">Items that will be copied into the buffer</param>
+    /// <param name="itemCount">Number of items that will be copied</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<std::is_trivially_copyable<T>::value>::type emplaceItems(
+      const TItem *sourceItems, std::size_t itemCount
+    ) {
+      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+      targetItems += this->endIndex;
+      std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
+      this->endIndex += itemCount;
     }
 
     /// <summary>Moves the items from another location into the buffer</summary>
@@ -414,7 +442,10 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///     are either moved or destroyed after the call.
     ///   </para>
     /// </remarks>
-    private: void moveItems(TItem *sourceItems, std::size_t itemCount) {
+    private: template<typename T = TItem>
+    typename std::enable_if<!std::is_trivially_copyable<T>::value>::type shiftItems(
+      TItem *sourceItems, std::size_t itemCount
+    ) {
       TItem *sourceItemsEnd = sourceItems + itemCount;
       TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
 
@@ -446,6 +477,23 @@ namespace Nuclex { namespace Support { namespace Collections {
 
         throw;
       }
+    }
+
+    /// <summary>Moves the items from another location into the buffer</summary>
+    /// <param name="sourceItems">Items that will be moved into the buffer</param>
+    /// <param name="itemCount">Number of items that will be moved</param>
+    /// <remarks>
+    ///   Variant for trivially copyable items where we don't have to worry about
+    ///   individual items throwing inside the move constructor.
+    /// </remarks>
+    private: template<typename T = TItem>
+    typename std::enable_if<std::is_trivially_copyable<T>::value>::type shiftItems(
+      TItem *sourceItems, std::size_t itemCount
+    ) {
+      // std::copy_n() would use std::memmove(), but we know there is no overlap, so:
+      std::memcpy(this->itemMemory.get(), sourceItems, itemCount * sizeof(TItem));
+      this->startIndex = 0;
+      this->endIndex = itemCount;
     }
 
     /// <summary>Holds the items stored in the shift buffer</summary>

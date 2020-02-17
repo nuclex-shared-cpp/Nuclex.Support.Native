@@ -248,6 +248,15 @@
     <ClCompile Include="Tests\Collections\RingBufferTest.cpp">
       <Filter>Tests\Collections</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Collections\ShiftBuffer.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Collections\ShiftBufferTest.cpp">
+      <Filter>Tests\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ScopeGuard.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -447,6 +456,12 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\RingBuffer.h">
       <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftBuffer.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

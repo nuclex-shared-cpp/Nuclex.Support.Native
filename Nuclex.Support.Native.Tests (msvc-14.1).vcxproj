@@ -203,12 +203,14 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableDynamicArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableIndexedCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\RingBuffer.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftBuffer.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\StackArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\EmptyDelegateCallError.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Event.h" />
     <ClInclude Include="Include\Nuclex\Support\Optional.h" />
+    <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignature.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignatureDetector.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\CyclicDependencyError.h" />
@@ -247,12 +249,14 @@
     <ClCompile Include="Source\Collections\ObservableDynamicArray.cpp" />
     <ClCompile Include="Source\Collections\ObservableIndexedCollection.cpp" />
     <ClCompile Include="Source\Collections\RingBuffer.cpp" />
+    <ClCompile Include="Source\Collections\ShiftBuffer.cpp" />
     <ClCompile Include="Source\Collections\StackArray.cpp" />
     <ClCompile Include="Source\Collections\Variegator.cpp" />
     <ClCompile Include="Source\Events\Delegate.cpp" />
     <ClCompile Include="Source\Events\EmptyDelegateCallError.cpp" />
     <ClCompile Include="Source\Events\Event.cpp" />
     <ClCompile Include="Source\Optional.cpp" />
+    <ClCompile Include="Source\ScopeGuard.cpp" />
     <ClCompile Include="Source\Services\CyclicDependencyError.cpp" />
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp" />
     <ClCompile Include="Source\Services\ServiceContainer.cpp" />
@@ -318,6 +322,7 @@
   <ItemGroup>
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp" />
     <ClCompile Include="Tests\Collections\RingBufferTest.cpp" />
+    <ClCompile Include="Tests\Collections\ShiftBufferTest.cpp" />
     <ClCompile Include="Tests\Events\DelegateTests.cpp" />
     <ClCompile Include="Tests\Events\EventTests.cpp" />
     <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp" />
