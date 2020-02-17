@@ -77,17 +77,17 @@ namespace Nuclex { namespace Support { namespace Collections {
     std::uint8_t items[10] = { 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U };
     test.Append(items, 10);
 
-    EXPECT_EQ(test.Count(), 10);
+    EXPECT_EQ(test.Count(), 10U);
 
     RingBuffer<std::uint8_t> copy(test);
 
-    EXPECT_EQ(copy.Count(), 10);
+    EXPECT_EQ(copy.Count(), 10U);
 
     std::uint8_t retrieved[10];
     copy.Dequeue(retrieved, 10);
 
-    EXPECT_EQ(copy.Count(), 0);
-    EXPECT_EQ(test.Count(), 10);
+    EXPECT_EQ(copy.Count(), 0U);
+    EXPECT_EQ(test.Count(), 10U);
 
     for(std::size_t index = 0; index < 10; ++index) {
       EXPECT_EQ(retrieved[index], items[index]);
@@ -102,16 +102,16 @@ namespace Nuclex { namespace Support { namespace Collections {
     std::uint8_t items[10] = { 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U };
     test.Append(items, 10);
 
-    EXPECT_EQ(test.Count(), 10);
+    EXPECT_EQ(test.Count(), 10U);
 
     RingBuffer<std::uint8_t> moved(std::move(test));
 
-    EXPECT_EQ(moved.Count(), 10);
+    EXPECT_EQ(moved.Count(), 10U);
 
     std::uint8_t retrieved[10];
     moved.Dequeue(retrieved, 10);
 
-    EXPECT_EQ(moved.Count(), 0);
+    EXPECT_EQ(moved.Count(), 0U);
 
     for(std::size_t index = 0; index < 10; ++index) {
       EXPECT_EQ(retrieved[index], items[index]);
@@ -234,7 +234,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     // Finally, retrieve everything. The read must wrap around.
     test.Dequeue(&retrieved[0], oneThirdCapacity * 3);
-    EXPECT_EQ(test.Count(), 0);
+    EXPECT_EQ(test.Count(), 0U);
 
     for(std::size_t index = 0; index < oneThirdCapacity; ++index) {
       EXPECT_EQ(retrieved[index], items[index + oneThirdCapacity]);
