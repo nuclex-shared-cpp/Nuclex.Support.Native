@@ -56,8 +56,8 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Initializes a ring buffer as a copy of another ring buffer</summary>
     /// <param name="other">Other ring buffer that will be copied</param>
     public: RingBuffer(const RingBuffer &other) :
-      itemMemory(new std::uint8_t[sizeof(TItem[2]) * getNextPowerOfTwo(other.capacity) / 2]),
-      capacity(getNextPowerOfTwo(other.capacity)),
+      itemMemory(new std::uint8_t[sizeof(TItem[2]) * other.capacity / 2]),
+      capacity(other.capacity),
       startIndex(0),
       endIndex(other.Count()) {
 

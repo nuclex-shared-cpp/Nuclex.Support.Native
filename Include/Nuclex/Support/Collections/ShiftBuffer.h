@@ -37,22 +37,28 @@ namespace Nuclex { namespace Support { namespace Collections {
   /// <summary>A buffer that acts like a ring buffer but guarantees linear memory</summary>
   /// <remarks>
   ///   <para>
-  ///     This is a buffer with FIFO batch operations like the ring buffer, but instead of
+  ///     This is a buffer for FIFO batch operations like the ring buffer, but instead of
   ///     wrapping data around, it will keep all data linear. This can be less efficient than
-  ///     a ring buffer if there are lots of small reads, but can also be more efficient in
-  ///     cases where most (but not all!) of the buffer is removed regularly.
+  ///     a ring buffer if there are lots of partial updates, but can also be more efficient
+  ///     in cases where the buffer is mostly or completely emptied regularly.
   ///   </para>
   ///   <para>
-  ///     It works by simply accumulating data in a linear buffer. Reads simple advance
-  ///     the read pointer without freeing space in the buffer. Whenever the wasted space
-  ///     in the buffer becomes larger than the space holding waiting data, the waiting
-  ///     data is shifted to the front (which can now be done with a non-interecting memory
-  ///     move operation)
+  ///     It works by naively accumulating data in a buffer. Reads advance a read pointer,
+  ///     leaving unused memory behind. When writing to the buffer, if more space is wasted
+  ///     than there is data in the buffer, all data is shifted back to the front of the
+  ///     buffer. This is a fairly good heuristic so long as your reads typically consume
+  ///     most of the buffer.
   ///   </para>
   ///   <para>
   ///     In contrast to a ring buffer, this buffer also allows you to obtain a pointer to
   ///     the data it holds, allowing for extra efficiency if the data can be processed
-  ///     directly from a buffer.
+  ///     directly from a buffer. You can also obtain a pointer to write into the buffer.
+  ///   </para>
+  ///   <para>
+  ///     This class offers the <em>basic</em> exception guarantee: if you use items whose
+  ///     copy and move constructors can throw, the ring buffer will remain in a usable
+  ///     state and not leak memory, but operations may end up applied partially, i.e.
+  ///     a read may fail and return nothing, yet kill half your buffer contents.
   ///   </para>
   /// </remarks>
   template<typename TItem>
@@ -148,13 +154,6 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Copies the specified number of items into the shift buffer</summary>
     /// <param name="items">Items that will be copied into the shift buffer</param>
     /// <param name="count">Number of items that will be copied</param>
-    /// <remarks>
-    ///   This method provides a basic exception guarantee. If the buffer needs to be
-    ///   extended or shifted and an item's move constructor throws, the buffer will
-    ///   be truncated but usable. If the copy constructor of an item throws while it
-    ///   is being appended, the append will be incomplete and the buffer will retain
-    ///   all items appended until the exception triggered.
-    /// </remarks>
     public: void Write(const TItem *items, std::size_t count) {
       makeSpace(count);
       emplaceItems(items, count);
@@ -181,7 +180,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///     Warning! The returned pointer is to uninitialized memory. That means assigning
     ///     the items is an error, they must be constructed into their addresses via
     ///     placement new, not assignment! (unless they're std::is_trivially_copyable,
-    ///     in which case, memcpy() away)
+    ///     in which case, std::memcpy() away)
     ///   </para>
     ///   <para>
     ///     Additional Warning! After calling this method, the shift buffer will attempt
@@ -210,6 +209,10 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// </remarks>
     protected: void Unpromise(std::size_t itemCount) {
       this->endIndex -= itemCount;
+      assert(
+        (this->endIndex >= startIndex) &&
+        u8"Promise reversal can not deny more data than was promised earlier"
+      );
     }
 
 #endif
