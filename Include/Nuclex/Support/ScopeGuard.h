@@ -54,6 +54,19 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
+  // Typical C-style macro to concatenate two names in the preprocessor
+  #define NUCLEX_SUPPORT_CONCAT_IMPL(x, y) x##y
+  #define NUCLEX_SUPPORT_CONCAT(x, y) NUCLEX_SUPPORT_CONCAT_IMPL(x, y)
+
+  // Macro to give scope guards unique names, either sequential or line numbers
+  #if defined(__COUNTER__)
+    #define NUCLEX_SUPPORT_UNIQUE_VARIABLE(name) NUCLEX_SUPPORT_CONCAT(name, __COUNTER__)
+  #else
+    #define NUCLEX_SUPPORT_UNIQUE_VARIABLE(name) NUCLEX_SUPPORT_CONCAT(name, __LINE__)
+  #endif
+
+  // ------------------------------------------------------------------------------------------- //
+
 }} // namespace Nuclex::Support
 
 #endif // NUCLEX_SUPPORT_SCOPEGUARD_H
