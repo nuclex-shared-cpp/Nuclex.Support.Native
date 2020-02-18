@@ -132,23 +132,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: void Skip(std::size_t skipItemCount) {
       assert(
         ((this->startIndex + skipItemCount) <= this->endIndex) &&
-        u8"Amount of data skipped is less or equal to the amount of data in the buffer"
+        u8"Amount of data skipped must be less or equal to the amount of data in the buffer"
       );
-
-      // Destroy all skipped items. Should be optimized to nothing for fundamental types.
-      {
-        TItem *items = (
-          reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex
-        );
-        TItem *itemsEnd = items + skipItemCount;
-
-        while(items < itemsEnd) {
-          items->~TItem();
-          ++items;
-        }
-      }
-
-      this->startIndex += skipItemCount;
+      skipItems(skipItemCount);
     }
 
     /// <summary>Reads items out of the buffer, starting with the oldest item</summary>
@@ -157,33 +143,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: void Read(TItem *items, std::size_t count) {
       assert(
         ((this->startIndex + count) <= this->endIndex) &&
-        u8"Amount of data read is less or equal to the amount of data in the buffer"
+        u8"Amount of data read must be less or equal to the amount of data in the buffer"
       );
-
-      TItem *sourceItems = (
-        reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex
-      );
-      TItem *sourceItemsEnd = sourceItems + count;
-      try {
-        while(sourceItems < sourceItemsEnd) {
-          *items = std::move(*sourceItems);
-          sourceItems->~TItem();
-          ++sourceItems;
-          ++items;
-        }
-
-        this->startIndex += count;
-      }
-      catch(...) {
-        TItem *firstSourceItem = (
-          reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex
-        );
-        this->startIndex += (sourceItems - firstSourceItem);
-
-        // TODO: Delete all items moved so far
-
-        throw;
-      }
+      extractItems(items, count);
     }
 
     /// <summary>Copies the specified number of items into the shift buffer</summary>
@@ -206,41 +168,10 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="count">Number of items that will be moves</param>
     public: void Shove(const TItem *items, std::size_t count) {
       makeSpace(count);
-
-      TItem *itemsEnd = items + count;
-      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->endIndex;
-
-      while(items < itemsEnd) {
-        new(targetItems) TItem(std::move(*items));
-        ++items;
-        ++targetItems;
-        ++this->endIndex;
-      }
+      moveEmplaceItems(items, count);
     }
 
 #if 1 // Cool, efficient and an invitation to shoot yourself in the foot
-
-    /// <summary>Reads items out of the buffer, starting with the oldest item</summary>
-    /// <param name="items">Memory to which the items will be moved</param>
-    /// <param name="count">Number of items that will be read from the buffer</param>
-    protected: void ReadIntoUninitialized(TItem *items, std::size_t count) {
-      assert(
-        ((this->startIndex + count) <= this->endIndex) &&
-        u8"Amount of data read is less or equal to the amount of data in the buffer"
-      );
-
-      TItem *itemsEnd = items + count;
-
-      TItem *sourceItems = Access();
-      for(std::size_t index = 0; index < count; ++index) {
-        new(items) TItem(std::move(*sourceItems));
-        sourceItems->~TItem();
-        ++sourceItems;
-        ++items;
-      }
-
-      this->startIndex += count;
-    }
 
     /// <summary>
     ///   Promises the shift buffer to write the specified number of items before
@@ -252,7 +183,8 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   <para>
     ///     Warning! The returned pointer is to uninitialized memory. That means assigning
     ///     the items is an error, they must be constructed into their addresses via
-    ///     placement new, not assignment!
+    ///     placement new, not assignment! (unless they're std::is_trivially_copyable,
+    ///     in which case, memcpy() away)
     ///   </para>
     ///   <para>
     ///     Additional Warning! After calling this method, the shift buffer will attempt
@@ -274,9 +206,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Reverses a promise of data given via <see cref="Promise" /></summary>
     /// <param name="itemCount">Number of items for which to reverse the promise</param>
     /// <remarks>
-    ///   Warning! You must not reverse a promise for more data then you promised with
+    ///   Warning! You must not reverse a promise for more data than you promised with
     ///   your last call to <see cref="Promise" />. The items for which you reverse your
-    ///   promise will be considered uninitialized memory again and will have their
+    ///   promise will be considered uninitialized memory again and will not have their
     ///   destructors called.
     /// </remarks>
     protected: void Unpromise(std::size_t itemCount) {
@@ -425,6 +357,141 @@ namespace Nuclex { namespace Support { namespace Collections {
       this->endIndex += itemCount;
     }
 
+    /// <summary>Moves the specified items into the already available buffer</summary>
+    /// <param name="sourceItems">Items that will be copied into the buffer</param>
+    /// <param name="itemCount">Number of items that will be copied</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<!std::is_trivially_copyable<T>::value>::type moveEmplaceItems(
+      TItem *sourceItems, std::size_t itemCount
+    ) {
+      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+      targetItems += this->endIndex;
+
+      std::size_t count = itemCount;
+      try {
+        while(count > 0) {
+          new(targetItems) TItem(std::move(*sourceItems));
+          ++sourceItems;
+          ++targetItems;
+          --count;
+        }
+      }
+      catch(...) {
+        TItem *firstTargetItem = reinterpret_cast<TItem *>(this->itemMemory.get());
+
+        // Copy failed, destroy all of the items we copied so far
+        while(firstTargetItem < targetItems) {
+          firstTargetItem->~TItem();
+          ++firstTargetItem;
+        }
+
+        throw;
+      }
+
+      this->endIndex += itemCount;
+    }
+
+    /// <summary>Moves the specified items into the already available buffer</summary>
+    /// <param name="sourceItems">Items that will be copied into the buffer</param>
+    /// <param name="itemCount">Number of items that will be copied</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<std::is_trivially_copyable<T>::value>::type moveEmplaceItems(
+      TItem *sourceItems, std::size_t itemCount
+    ) {
+      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+      targetItems += this->endIndex;
+      std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
+      this->endIndex += itemCount;
+    }
+
+    /// <summary>Takes the specified number of items out of the buffer</summary>
+    /// <param name="targetItems">Address at which the items will be placed</param>
+    /// <param name="itemCount">Number of items that will be extracted</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<
+      !std::is_trivially_copyable<T>::value || !std::is_trivially_destructible<T>::value
+    >::type extractItems(
+      TItem *targetItems, std::size_t itemCount
+    ) {
+      TItem *sourceItems = (
+        reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex
+      );
+      std::size_t count = itemCount;
+      try {
+        while(count > 0) {
+          *targetItems = std::move(*sourceItems);
+          sourceItems->~TItem();
+          ++targetItems;
+          ++sourceItems;
+          --count;
+        }
+
+        this->startIndex += itemCount;
+      }
+      catch(...) {
+        
+        // Calculate the number of items that were moved before the exception
+        count = itemCount - count;
+
+        // Update our start pointer accordingly (we can't move them back without
+        // risking another exception, but we can at least keep our state consistent)
+        this->startIndex += count;
+
+        // Destroy all items that were moved so far
+        while(count > 0) {
+          --targetItems;
+          targetItems->~TItem();
+        }
+
+        throw;
+
+      }
+    }
+
+    /// <summary>Takes the specified number of items out of the buffer</summary>
+    /// <param name="targetItems">Address at which the items will be placed</param>
+    /// <param name="itemCount">Number of items that will be extracted</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<
+      std::is_trivially_copyable<T>::value && std::is_trivially_destructible<T>::value
+    >::type extractItems(
+      TItem *targetItems, std::size_t itemCount
+    ) {
+      TItem *sourceItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+      std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
+      this->startIndex += itemCount;
+    }
+
+    /// <summary>Skips the specified number of items in the buffer</summary>
+    /// <param name="itemCount">Number of items that will be skipped</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<!std::is_trivially_destructible<T>::value>::type skipItems(
+      std::size_t itemCount
+    ) {
+      TItem *sourceItems = (
+        reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex
+      );
+
+      std::size_t count = itemCount;
+      while(count > 0) {
+        sourceItems->~TItem();
+        --count;
+      }
+    }
+
+    /// <summary>Skips the specified number of items in the buffer</summary>
+    /// <param name="itemCount">Number of items that will be skipped</param>
+    /// <remarks>
+    ///   Storage occupied by trivially destructible objects may be reused without
+    ///   calling the destructor - so we don't.
+    /// </remarka>
+    private: template<typename T = TItem>
+    typename std::enable_if<std::is_trivially_destructible<T>::value>::type skipItems(
+      std::size_t itemCount
+    ) {
+      this->startIndex += itemCount;
+    }
+
     /// <summary>Moves the items from another location into the buffer</summary>
     /// <param name="sourceItems">Items that will be moved into the buffer</param>
     /// <param name="itemCount">Number of items that will be moved</param>
@@ -443,7 +510,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   </para>
     /// </remarks>
     private: template<typename T = TItem>
-    typename std::enable_if<!std::is_trivially_copyable<T>::value>::type shiftItems(
+    typename std::enable_if<
+      !std::is_trivially_copyable<T>::value || !std::is_trivially_destructible<T>::value
+    >::type shiftItems(
       TItem *sourceItems, std::size_t itemCount
     ) {
       TItem *sourceItemsEnd = sourceItems + itemCount;
@@ -487,7 +556,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   individual items throwing inside the move constructor.
     /// </remarks>
     private: template<typename T = TItem>
-    typename std::enable_if<std::is_trivially_copyable<T>::value>::type shiftItems(
+    typename std::enable_if<
+      std::is_trivially_copyable<T>::value && std::is_trivially_destructible<T>::value
+    >::type shiftItems(
       TItem *sourceItems, std::size_t itemCount
     ) {
       // std::copy_n() would use std::memmove(), but we know there is no overlap, so:

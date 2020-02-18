@@ -322,6 +322,7 @@
   <ItemGroup>
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp" />
     <ClCompile Include="Tests\Collections\RingBufferTest.cpp" />
+    <ClCompile Include="Tests\Collections\ShiftBufferDeathTest.cpp" />
     <ClCompile Include="Tests\Collections\ShiftBufferTest.cpp" />
     <ClCompile Include="Tests\Events\DelegateTests.cpp" />
     <ClCompile Include="Tests\Events\EventTests.cpp" />

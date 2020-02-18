@@ -257,6 +257,9 @@
     <ClCompile Include="Source\ScopeGuard.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\Collections\ShiftBufferDeathTest.cpp">
+      <Filter>Tests\Collections</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
