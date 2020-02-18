@@ -58,9 +58,6 @@ namespace Nuclex { namespace Support { namespace Collections {
   template<typename TItem>
   class ShiftBuffer {
 
-    /// <summary>Constant used to indicate an invalid index</summary>
-    private: static const std::size_t InvalidIndex = static_cast<std::size_t>(-1);
-
     /// <summary>Initializes a new shift buffer</summary>
     /// <param name="capacity">Storage space in the shift  buffer at the beginning</param>
     public: ShiftBuffer(std::size_t capacity = 256) :
@@ -475,8 +472,11 @@ namespace Nuclex { namespace Support { namespace Collections {
       std::size_t count = itemCount;
       while(count > 0) {
         sourceItems->~TItem();
+        ++sourceItems;
         --count;
       }
+
+      this->startIndex += itemCount;
     }
 
     /// <summary>Skips the specified number of items in the buffer</summary>
