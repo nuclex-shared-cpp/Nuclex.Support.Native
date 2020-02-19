@@ -278,43 +278,6 @@ namespace Nuclex { namespace Support { namespace Collections {
       }
     }
 
-    /// <summary>Reallocates the ring buffers memory to fit the required items</summary>
-    /// <param name="requiredItemCount">Number of items the buffer needs to hold</param>
-    private: template<typename T = TItem>
-    typename std::enable_if<
-      std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, TItem *
-    >::type reallocateWhenWrapped(std::size_t requiredItemCount) {
-      std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
-      
-      // Allocate new memory for the enlarged buffer
-      std::unique_ptr<std::uint8_t[]> newItemMemory(
-        new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2]
-      );
-      TItem *targetItems = reinterpret_cast<TItem *>(newItemMemory.get());
-
-      // Copy the older segment of the existing items into the new buffer
-      {
-        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
-        existingItems += this->endIndex;
-
-        std::size_t count = this->capacity - this->startIndex;
-        std::memcpy(targetItems, existingItems, count);
-        targetItems += count;
-      }
-
-      // Copy the newer segment of the existing items into the new buffer
-      {
-        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
-        std::memcpy(targetItems, existingItems, this->endIndex);
-        targetItems += this->endIndex;
-      }
-
-      // Apply the changes. Note that we do not update startIndex and endIndex here.
-      this->itemMemory.swap(newItemMemory);
-      this->capacity = newCapacity;
-      
-      return targetItems;
-    }
 
 
 #if 0
@@ -491,6 +454,119 @@ namespace Nuclex { namespace Support { namespace Collections {
       value |= value >> 32;
 
       return (value + 1);
+    }
+
+    /// <summary>Reallocates the ring buffers memory to fit the required items</summary>
+    /// <param name="requiredItemCount">Number of items the buffer needs to hold</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<
+      !std::is_trivially_destructible<T>::value || !std::is_trivially_copyable<T>::value, TItem *
+    >::type reallocateWhenWrapped(std::size_t requiredItemCount) {
+      std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
+      
+      // Allocate new memory for the enlarged buffer
+      std::unique_ptr<std::uint8_t[]> newItemMemory(
+        new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2]
+      );
+      TItem *targetItems = reinterpret_cast<TItem *>(newItemMemory.get());
+
+      // Copy the older segment of the existing items into the new buffer
+      {
+        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        existingItems += this->endIndex;
+
+        std::size_t count = this->capacity - this->startIndex;
+        try {
+          while(count > 0) {
+            new(targetItems) TItem(std::move(*existingItems));
+            existingItems->~TItem();
+            ++existingItems;
+            ++targetItems;
+          }
+        }
+        catch(...) {
+          count = (this->capacity - this->startIndex) - count;
+
+          this->startIndex += count;
+
+          while(count > 0) {
+            --targetItems;
+            targetItems->~TItem();
+          }
+
+          throw;
+        }
+      }
+
+      // Copy the newer segment of the existing items into the new buffer
+      {
+        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+
+        std::size_t count = this->endIndex;
+        try {
+          while(count > 0) {
+            new(targetItems) TItem(std::move(*existingItems));
+            existingItems->~TItem();
+            ++existingItems;
+            ++targetItems;
+            --count;
+          }
+        }
+        catch(...) {
+          count = (this->endIndex - count) + (this->capacity - this->startIndex);
+
+          while(count > 0) {
+            --targetItems;
+            targetItems->~TItem();
+          }
+
+          throw;
+        }
+      }
+
+      // Apply the changes. Note that we do not update startIndex and endIndex here.
+      this->itemMemory.swap(newItemMemory);
+      this->capacity = newCapacity;
+      
+      return targetItems;
+    }
+
+    /// <summary>Reallocates the ring buffers memory to fit the required items</summary>
+    /// <param name="requiredItemCount">Number of items the buffer needs to hold</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<
+      std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, TItem *
+    >::type reallocateWhenWrapped(std::size_t requiredItemCount) {
+      std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
+      
+      // Allocate new memory for the enlarged buffer
+      std::unique_ptr<std::uint8_t[]> newItemMemory(
+        new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2]
+      );
+      TItem *targetItems = reinterpret_cast<TItem *>(newItemMemory.get());
+
+      // Copy the older segment of the existing items into the new buffer
+      {
+        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        existingItems += this->endIndex;
+
+        std::size_t count = this->capacity - this->startIndex;
+        std::memcpy(targetItems, existingItems, count);
+        targetItems += count;
+      }
+
+      // Copy the newer segment of the existing items into the new buffer
+      {
+        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        std::memcpy(targetItems, existingItems, this->endIndex);
+        targetItems += this->endIndex;
+      }
+
+      // Apply the changes. Note that we do not update startIndex and endIndex here.
+      this->itemMemory.swap(newItemMemory);
+      this->capacity = newCapacity;
+      
+      return targetItems;
     }
 
     /// <summary>Holds the items stored in the ring buffer</summary>
