@@ -264,11 +264,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         // If the buffer needs to be resized anyway, we don't need to shift back
         // and can do the resize + shift in one operation
         std::size_t totalItemCount = usedItemCount + itemCount;
-#if defined(NUCLEX_SUPPORT_CXX20)
-        if(totalItemCount > this->capacity) [[unlikely]] {
-#else
-        if(totalItemCount > this->capacity) {
-#endif
+        if(unlikely(totalItemCount > this->capacity)) {
           this->capacity = getNextPowerOfTwo(this->startIndex + totalItemCount);
           {
             std::unique_ptr<std::uint8_t[]> newItemMemory(
@@ -290,11 +286,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         // two times the required size. This ensures that the buffer will settle into
         // a read-shift-fill cycle without resizes if the current usage pattern repeats.
         std::size_t freeItemCount = this->capacity - this->endIndex;
-#if defined(NUCLEX_SUPPORT_CXX20)
-        if(freeItemCount < count) [[unlikely]] {
-#else
-        if(freeItemCount < itemCount) {
-#endif
+        if(unlikely(freeItemCount < itemCount)) {
           this->capacity = getNextPowerOfTwo((usedItemCount + itemCount) * 2);
           {
             std::unique_ptr<std::uint8_t[]> newItemMemory(
@@ -518,18 +510,20 @@ namespace Nuclex { namespace Support { namespace Collections {
     >::type shiftItems(
       TItem *sourceItems, std::size_t itemCount
     ) {
-      TItem *sourceItemsEnd = sourceItems + itemCount;
       TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
 
       this->startIndex = 0;
+
+      std::size_t count = itemCount;
       try {
 
         // Move all items from their old location to their new location
-        while(sourceItems < sourceItemsEnd) {
+        while(count > 0) {
           new(targetItems) TItem(std::move(*sourceItems));
           sourceItems->~TItem();
           ++sourceItems;
           ++targetItems;
+          --count;
         }
 
         // Move succeeded, the new end index is the number of items we have moved
@@ -537,14 +531,15 @@ namespace Nuclex { namespace Support { namespace Collections {
 
       }
       catch(...) {
-        this->endIndex = itemCount - (sourceItemsEnd - sourceItems);
+        this->endIndex = itemCount - count;
 
         // Move failed, kill all items that we could not move. Moving the rest would
         // result in skipping an item in the buffer and risking another exception.
         // We can't deal with two buffers, so this our only way to resolve this.
-        while(sourceItems < sourceItemsEnd) {
+        while(count > 0) {
           sourceItems->~TItem();
           ++sourceItems;
+          --count;
         }
 
         throw;
