@@ -39,7 +39,7 @@ namespace {
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Collections {
-
+#if 0
   // ------------------------------------------------------------------------------------------- //
 
   TEST(RingBufferTest, InstancesCanBeCreated) {
@@ -369,5 +369,5 @@ namespace Nuclex { namespace Support { namespace Collections {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
+#endif
 }}} // namespace Nuclex::Support::Collections

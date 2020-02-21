@@ -55,10 +55,10 @@ namespace Nuclex { namespace Support { namespace Collections {
   ///     directly from a buffer. You can also obtain a pointer to write into the buffer.
   ///   </para>
   ///   <para>
-  ///     This class offers the <em>basic</em> exception guarantee: if you use items whose
-  ///     copy and move constructors can throw, the ring buffer will remain in a usable
-  ///     state and not leak memory, but operations may end up applied partially, i.e.
-  ///     a read may fail and return nothing, yet kill half your buffer contents.
+  ///     This class offers the <em>basic</em> exception guarantee: if you your items
+  ///     throw in their copy or move constructors throw, the ring buffer will remain in
+  ///     a usable state and not leak memory, but operations may end up applied partially,
+  ///     i.e. a read may fail and return nothing, yet kill half your buffer contents.
   ///   </para>
   /// </remarks>
   template<typename TItem>
@@ -162,7 +162,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Moves the specified number of items into the shift buffer</summary>
     /// <param name="items">Items that will be moves into the shift buffer</param>
     /// <param name="count">Number of items that will be moves</param>
-    public: void Shove(const TItem *items, std::size_t count) {
+    public: void Shove(TItem *items, std::size_t count) {
       makeSpace(count);
       moveEmplaceItems(items, count);
     }
@@ -322,12 +322,13 @@ namespace Nuclex { namespace Support { namespace Collections {
         }
       }
       catch(...) {
-        TItem *firstTargetItem = reinterpret_cast<TItem *>(this->itemMemory.get());
+        count = itemCount - count;
 
         // Copy failed, destroy all of the items we copied so far
-        while(firstTargetItem < targetItems) {
-          firstTargetItem->~TItem();
-          ++firstTargetItem;
+        while(count > 0) {
+          --targetItems;
+          targetItems->~TItem();
+          --count;
         }
 
         throw;
@@ -363,18 +364,20 @@ namespace Nuclex { namespace Support { namespace Collections {
       try {
         while(count > 0) {
           new(targetItems) TItem(std::move(*sourceItems));
+          // no d'tor call here, source isn't ours and will be destroyed externally
           ++sourceItems;
           ++targetItems;
           --count;
         }
       }
       catch(...) {
-        TItem *firstTargetItem = reinterpret_cast<TItem *>(this->itemMemory.get());
+        count = itemCount - count;
 
         // Copy failed, destroy all of the items we copied so far
-        while(firstTargetItem < targetItems) {
-          firstTargetItem->~TItem();
-          ++firstTargetItem;
+        while(count > 0) {
+          --targetItems;
+          targetItems->~TItem();
+          --count;
         }
 
         throw;
