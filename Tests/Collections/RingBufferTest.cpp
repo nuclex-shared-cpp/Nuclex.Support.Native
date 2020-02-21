@@ -75,7 +75,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     RingBuffer<std::uint8_t> test;
 
     std::uint8_t items[10] = { 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U };
-    test.Append(items, 10);
+    test.Write(items, 10);
 
     EXPECT_EQ(test.Count(), 10U);
 
@@ -84,7 +84,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     EXPECT_EQ(copy.Count(), 10U);
 
     std::uint8_t retrieved[10];
-    copy.Dequeue(retrieved, 10);
+    copy.Read(retrieved, 10);
 
     EXPECT_EQ(copy.Count(), 0U);
     EXPECT_EQ(test.Count(), 10U);
@@ -100,7 +100,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     RingBuffer<std::uint8_t> test;
 
     std::uint8_t items[10] = { 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U };
-    test.Append(items, 10);
+    test.Write(items, 10);
 
     EXPECT_EQ(test.Count(), 10U);
 
@@ -109,7 +109,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     EXPECT_EQ(moved.Count(), 10U);
 
     std::uint8_t retrieved[10];
-    moved.Dequeue(retrieved, 10);
+    moved.Read(retrieved, 10);
 
     EXPECT_EQ(moved.Count(), 0U);
 
@@ -124,7 +124,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     RingBuffer<std::uint8_t> test;
 
     std::uint8_t items[128];
-    test.Append(items, 128);
+    test.Write(items, 128);
     
     EXPECT_EQ(test.Count(), 128U);
   }
@@ -136,7 +136,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     std::uint8_t items[128];
     EXPECT_THROW(
-      test.Dequeue(items, 1),
+      test.Read(items, 1),
       std::logic_error
     );
   }
@@ -147,10 +147,10 @@ namespace Nuclex { namespace Support { namespace Collections {
     RingBuffer<std::uint8_t> test;
 
     std::uint8_t items[100];
-    test.Append(items, 99);
+    test.Write(items, 99);
 
     EXPECT_THROW(
-      test.Dequeue(items, 100),
+      test.Read(items, 100),
       std::logic_error
     );
   }
@@ -170,15 +170,15 @@ namespace Nuclex { namespace Support { namespace Collections {
     std::vector<std::uint8_t> retrieved(capacity);
 
     std::size_t oneThirdCapacity = capacity / 3;
-    test.Append(&items[0], oneThirdCapacity * 2);
-    test.Dequeue(&retrieved[0], oneThirdCapacity);
-    test.Append(&items[0], oneThirdCapacity * 2);
-    test.Dequeue(&retrieved[0], oneThirdCapacity);
+    test.Write(&items[0], oneThirdCapacity * 2);
+    test.Read(&retrieved[0], oneThirdCapacity);
+    test.Write(&items[0], oneThirdCapacity * 2);
+    test.Read(&retrieved[0], oneThirdCapacity);
 
     EXPECT_EQ(test.Count(), oneThirdCapacity * 2);
 
     EXPECT_THROW(
-      test.Dequeue(&items[0], oneThirdCapacity * 2 + 1),
+      test.Read(&items[0], oneThirdCapacity * 2 + 1),
       std::logic_error
     );
   }
@@ -192,12 +192,12 @@ namespace Nuclex { namespace Support { namespace Collections {
     for(std::size_t index = 0; index < 128; ++index) {
       items[index] = static_cast<std::uint8_t>(index);
     }
-    test.Append(items, 128);
+    test.Write(items, 128);
     
     EXPECT_EQ(test.Count(), 128U);
 
     std::uint8_t retrieved[128];
-    test.Dequeue(retrieved, 128);
+    test.Read(retrieved, 128);
 
     EXPECT_EQ(test.Count(), 0U);
 
@@ -220,20 +220,20 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     // Fill the ring buffer to 2/3rds
     std::size_t oneThirdCapacity = capacity / 3;
-    test.Append(&items[0], oneThirdCapacity * 2);
+    test.Write(&items[0], oneThirdCapacity * 2);
     EXPECT_EQ(test.Count(), oneThirdCapacity * 2);
 
     // Remove the first 1/3rd, we end up with data in the middle of the ring
     std::vector<std::uint8_t> retrieved(capacity);
-    test.Dequeue(&retrieved[0], oneThirdCapacity);
+    test.Read(&retrieved[0], oneThirdCapacity);
     EXPECT_EQ(test.Count(), oneThirdCapacity);
 
     // Now add another 2/3rds to the ring buffer. The write must wrap around.
-    test.Append(&items[0], oneThirdCapacity * 2);
+    test.Write(&items[0], oneThirdCapacity * 2);
     EXPECT_EQ(test.Count(), oneThirdCapacity * 3);
 
     // Finally, retrieve everything. The read must wrap around.
-    test.Dequeue(&retrieved[0], oneThirdCapacity * 3);
+    test.Read(&retrieved[0], oneThirdCapacity * 3);
     EXPECT_EQ(test.Count(), 0U);
 
     for(std::size_t index = 0; index < oneThirdCapacity; ++index) {
@@ -257,12 +257,12 @@ namespace Nuclex { namespace Support { namespace Collections {
     }
 
     // Fill the ring buffer to its current capacity
-    test.Append(&items[0], capacity);
+    test.Write(&items[0], capacity);
     EXPECT_EQ(test.Count(), capacity);
 
     // Remove the first 1/3rd, we end up with data in the middle ofthe ring
     std::vector<std::uint8_t> retrieved(capacity);
-    test.Dequeue(&retrieved[0], capacity);
+    test.Read(&retrieved[0], capacity);
     EXPECT_EQ(test.Count(), 0);
 
     for(std::size_t index = 0; index < capacity; ++index) {
@@ -284,26 +284,26 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     // Fill the ring buffer to 2/3rds
     std::size_t oneThirdCapacity = capacity / 3;
-    test.Append(&items[0], oneThirdCapacity * 2);
+    test.Write(&items[0], oneThirdCapacity * 2);
     EXPECT_EQ(test.Count(), oneThirdCapacity * 2);
 
     // Remove the first 1/3rd, we end up with data in the middle ofthe ring
     std::vector<std::uint8_t> retrieved(capacity);
-    test.Dequeue(&retrieved[0], oneThirdCapacity);
+    test.Read(&retrieved[0], oneThirdCapacity);
     EXPECT_EQ(test.Count(), oneThirdCapacity);
 
     // Now add exactly the amount of items it takes to hit the end of the buffer
     std::size_t remainingItemCount = capacity - (oneThirdCapacity * 2);
-    test.Append(&items[0], remainingItemCount);
+    test.Write(&items[0], remainingItemCount);
     EXPECT_EQ(test.Count(), oneThirdCapacity + remainingItemCount);
 
     // If there's a karfluffle or off-by-one problem when hitting the end index,
     // this next call might blow up
-    test.Append(&items[0], oneThirdCapacity);
+    test.Write(&items[0], oneThirdCapacity);
     EXPECT_EQ(test.Count(), capacity);
 
     // Read all of the data from the ring buffer so we can check it
-    test.Dequeue(&retrieved[0], capacity);
+    test.Read(&retrieved[0], capacity);
     EXPECT_EQ(test.Count(), 0U);
 
     for(std::size_t index = 0; index < oneThirdCapacity; ++index) {
@@ -331,20 +331,20 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     // Fill the ring buffer to 2/3rds
     std::size_t oneThirdCapacity = capacity / 3;
-    test.Append(&items[0], oneThirdCapacity * 2);
+    test.Write(&items[0], oneThirdCapacity * 2);
     EXPECT_EQ(test.Count(), oneThirdCapacity * 2);
 
     // Remove the first 1/3rd, we end up with data in the middle of the ring
     std::vector<std::uint8_t> retrieved(capacity);
-    test.Dequeue(&retrieved[0], oneThirdCapacity);
+    test.Read(&retrieved[0], oneThirdCapacity);
     EXPECT_EQ(test.Count(), oneThirdCapacity);
 
     // Now add another 2/3rds to the ring buffer. The write must wrap around.
-    test.Append(&items[0], oneThirdCapacity * 2);
+    test.Write(&items[0], oneThirdCapacity * 2);
     EXPECT_EQ(test.Count(), oneThirdCapacity * 3);
 
     // Finally, retrieve just enough bytes to hit the end.
-    test.Dequeue(&retrieved[0], capacity - oneThirdCapacity);
+    test.Read(&retrieved[0], capacity - oneThirdCapacity);
     EXPECT_EQ(test.Count(), oneThirdCapacity * 3 - (capacity - oneThirdCapacity));
 
     for(std::size_t index = 0; index < oneThirdCapacity; ++index) {
@@ -357,7 +357,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     // If there's a karfluffle or off-by-one problem when moving the start index,
     // this next call might blow up
     std::size_t remainingByteCount = oneThirdCapacity * 3 - (capacity - oneThirdCapacity);
-    test.Dequeue(&retrieved[0], remainingByteCount);
+    test.Read(&retrieved[0], remainingByteCount);
     EXPECT_EQ(test.Count(), 0U);
 
     for(std::size_t index = 0; index < remainingByteCount; ++index) {

@@ -172,7 +172,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Appends items to the end of the ring buffer</summary>
     /// <param name="items">Items that will be added to the ring buffer</param>
     /// <param name="count">Number of items that will be added</param>
-    public: void Append(const TItem *items, std::size_t count) {
+    public: void Write(const TItem *items, std::size_t count) {
       if(this->startIndex == InvalidIndex) {
         if(unlikely(count > this->capacity)) {
           std::size_t newCapacity = getNextPowerOfTwo(count);
@@ -193,7 +193,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Removes items from the beginning of the ring buffer</summary>
     /// <param name="items">Buffer in which the dequeued items will be stored</param>
     /// <param name="count">Number of items that will be dequeued</param>
-    public: void Dequeue(TItem *items, std::size_t count) {
+    public: void Read(TItem *items, std::size_t count) {
       if(this->startIndex == InvalidIndex) {
         if(count > 0) {
           throw std::logic_error(u8"Ring buffer contains fewer items than requested");
@@ -264,17 +264,16 @@ namespace Nuclex { namespace Support { namespace Collections {
         std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
         this->endIndex += itemCount;
       } else { // New data doesn't fit, ring buffer needs to be extended
+        std::size_t totalItemCount = this->capacity - remainingItemCount + itemCount;
 
         // Expand the ring buffer to the required capacity
-        std::size_t totalItemCount = this->capacity - remainingItemCount + itemCount;
         TItem *targetItems = reallocateWhenWrapped(totalItemCount);
 
-        // Copy the items the caller wanted to write to the ring buffer
+        // Copy the items the caller wanted to write into the ring buffer
         std::memcpy(targetItems, sourceItems, itemCount);
 
         this->startIndex = 0;
         this->endIndex = totalItemCount;
-
       }
     }
 
@@ -482,6 +481,7 @@ namespace Nuclex { namespace Support { namespace Collections {
             existingItems->~TItem();
             ++existingItems;
             ++targetItems;
+            --count;
           }
         }
         catch(...) {
@@ -492,6 +492,7 @@ namespace Nuclex { namespace Support { namespace Collections {
           while(count > 0) {
             --targetItems;
             targetItems->~TItem();
+            --count;
           }
 
           throw;
@@ -518,6 +519,7 @@ namespace Nuclex { namespace Support { namespace Collections {
           while(count > 0) {
             --targetItems;
             targetItems->~TItem();
+            --count;
           }
 
           throw;
@@ -571,7 +573,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Holds the items stored in the ring buffer</summary>
     private: std::unique_ptr<std::uint8_t[]> itemMemory;
-    //private: std::uint8_t *itemMemory;
     /// <summary>Number of items the ring buffer can currently hold</summary>
     private: std::size_t capacity;
     /// <summary>Index of the first item in the ring buffer</summary>
