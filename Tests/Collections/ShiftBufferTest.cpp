@@ -155,21 +155,6 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void resetCounter(
-    std::vector<std::shared_ptr<TestItemStats>> &stats
-  ) {
-    std::size_t statCount = stats.size();
-
-    for(std::size_t index = 0; index < statCount; ++index) {
-      stats[index]->CopyCount = 0;
-      stats[index]->MoveCount = 0;
-      stats[index]->DestroyCount = 0;
-      stats[index]->OverwriteCount = 0;
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Collections {
@@ -484,13 +469,6 @@ namespace Nuclex { namespace Support { namespace Collections {
     std::vector<TestItem> items;
     makeItems(items, stats);
 
-    for(std::size_t index = 0; index < 16; ++index) {
-      EXPECT_EQ(stats[index]->CopyCount, 0);
-      EXPECT_EQ(stats[index]->MoveCount, 0);
-      EXPECT_EQ(stats[index]->DestroyCount, 0);
-      EXPECT_EQ(stats[index]->OverwriteCount, 0);
-    }
-
     {
       ShiftBuffer<TestItem> test(16);
       test.Write(&items[0], 16);
@@ -522,15 +500,159 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     // The container should have deleted all remaining items it held
     for(std::size_t index = 0; index < 16; ++index) {
-      if(index <= 10) {
+      if(index < 10) {
         EXPECT_EQ(stats[index]->MoveCount, 1);
         EXPECT_EQ(stats[index]->DestroyCount, 2); // once in move source, once in undo
+      } else if(index == 10) {
+        EXPECT_EQ(stats[index]->MoveCount, 1);
+        EXPECT_EQ(stats[index]->DestroyCount, 1); // attempted to move, killed in undo
       } else {
         EXPECT_EQ(stats[index]->MoveCount, 0);
-        EXPECT_EQ(stats[index]->DestroyCount, 1); // only once in container destructor
+        EXPECT_EQ(stats[index]->DestroyCount, 1); // only killed in container destructor
       }
     }
 
   }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ShiftBufferTest, ExceptionDuringWriteCausesNoLeaks) {
+    std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
+    std::vector<TestItem> items;
+    makeItems(items, stats);
+
+    stats[10]->ThrowOnCopy = true;
+
+    {
+      ShiftBuffer<TestItem> test(16);
+      EXPECT_THROW(test.Write(&items[0], 16), std::runtime_error);
+
+      // Shoving the items should have caused them to be moved
+      for(std::size_t index = 0; index < 16; ++index) {
+        if(index <= 10) {
+          EXPECT_EQ(stats[index]->CopyCount, 1);
+        } else {
+          EXPECT_EQ(stats[index]->CopyCount, 0);
+        }
+        EXPECT_EQ(stats[index]->MoveCount, 0);
+        EXPECT_EQ(stats[index]->DestroyCount, 0);
+        EXPECT_EQ(stats[index]->OverwriteCount, 0);
+      }
+    }
+
+    for(std::size_t index = 0; index < 16; ++index) {
+      if(index <= 10) {
+        EXPECT_EQ(stats[index]->CopyCount, 1);
+      } else {
+        EXPECT_EQ(stats[index]->CopyCount, 0);
+      }
+      EXPECT_EQ(stats[index]->MoveCount, 0);
+      if(index < 10) {
+        EXPECT_EQ(stats[index]->DestroyCount, 1);
+      } else {
+        EXPECT_EQ(stats[index]->DestroyCount, 0);
+      }
+      EXPECT_EQ(stats[index]->OverwriteCount, 0);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ShiftBufferTest, ExceptionDuringShoveCausesNoLeaks) {
+    std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
+    std::vector<TestItem> items;
+    makeItems(items, stats);
+
+    stats[10]->ThrowOnMove = true;
+
+    {
+      ShiftBuffer<TestItem> test(16);
+      EXPECT_THROW(test.Shove(&items[0], 16), std::runtime_error);
+
+      // Shoving the items should have caused them to be moved
+      for(std::size_t index = 0; index < 16; ++index) {
+        EXPECT_EQ(stats[index]->CopyCount, 0);
+        if(index <= 10) {
+          EXPECT_EQ(stats[index]->MoveCount, 1);
+        } else {
+          EXPECT_EQ(stats[index]->MoveCount, 0);
+        }
+        EXPECT_EQ(stats[index]->DestroyCount, 0);
+        EXPECT_EQ(stats[index]->OverwriteCount, 0);
+      }
+    }
+
+    for(std::size_t index = 0; index < 16; ++index) {
+      EXPECT_EQ(stats[index]->CopyCount, 0);
+      if(index <= 10) {
+        EXPECT_EQ(stats[index]->MoveCount, 1);
+      } else {
+        EXPECT_EQ(stats[index]->MoveCount, 0);
+      }
+      if(index < 10) {
+        EXPECT_EQ(stats[index]->DestroyCount, 1);
+      } else {
+        EXPECT_EQ(stats[index]->DestroyCount, 0);
+      }
+      EXPECT_EQ(stats[index]->OverwriteCount, 0);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ShiftBufferTest, ExceptionDuringReadCausesNoLeaks) {
+    std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
+    std::vector<TestItem> items;
+    makeItems(items, stats);
+
+    std::vector<std::shared_ptr<TestItemStats>> stats2 = makeStats(16);
+    std::vector<TestItem> items2;
+    makeItems(items2, stats2);
+
+    {
+      ShiftBuffer<TestItem> test(16);
+      test.Write(&items[0], 16);
+
+      for(std::size_t index = 0; index < 16; ++index) {
+        EXPECT_EQ(stats[index]->CopyCount, 1);
+        EXPECT_EQ(stats[index]->MoveCount, 0);
+        EXPECT_EQ(stats[index]->DestroyCount, 0);
+        EXPECT_EQ(stats[index]->OverwriteCount, 0);
+      }
+
+      stats[5]->ThrowOnMove = true;
+
+      EXPECT_THROW(test.Read(&items2[0], 8), std::runtime_error);
+
+      for(std::size_t index = 0; index < 16; ++index) {
+        EXPECT_EQ(stats[index]->CopyCount, 1);
+        if(index <= 5) {
+          EXPECT_EQ(stats[index]->MoveCount, 1);
+          EXPECT_EQ(stats2[index]->OverwriteCount, 1);
+        } else {
+          EXPECT_EQ(stats[index]->MoveCount, 0);
+          EXPECT_EQ(stats2[index]->OverwriteCount, 0);
+        }
+        if(index < 5) {
+          EXPECT_EQ(stats[index]->DestroyCount, 1); // in shift buffer during read
+        } else {
+          EXPECT_EQ(stats[index]->DestroyCount, 0);
+        }
+      }
+    }
+
+    for(std::size_t index = 0; index < 16; ++index) {
+      EXPECT_EQ(stats[index]->CopyCount, 1);
+      if(index <= 5) {
+        EXPECT_EQ(stats[index]->MoveCount, 1);
+      } else {
+        EXPECT_EQ(stats[index]->MoveCount, 0);
+      }
+      EXPECT_EQ(stats[index]->DestroyCount, 1); // either during read or shift buffer d'tor
+
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections

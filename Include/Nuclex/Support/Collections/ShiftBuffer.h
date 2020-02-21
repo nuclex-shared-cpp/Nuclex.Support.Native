@@ -322,15 +322,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         }
       }
       catch(...) {
-        count = itemCount - count;
-
-        // Copy failed, destroy all of the items we copied so far
-        while(count > 0) {
-          --targetItems;
-          targetItems->~TItem();
-          --count;
-        }
-
+        this->endIndex += itemCount - count;
         throw;
       }
 
@@ -371,15 +363,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         }
       }
       catch(...) {
-        count = itemCount - count;
-
-        // Copy failed, destroy all of the items we copied so far
-        while(count > 0) {
-          --targetItems;
-          targetItems->~TItem();
-          --count;
-        }
-
+        this->endIndex += itemCount - count;
         throw;
       }
 
@@ -424,22 +408,8 @@ namespace Nuclex { namespace Support { namespace Collections {
         this->startIndex += itemCount;
       }
       catch(...) {
-        
-        // Calculate the number of items that were moved before the exception
-        count = itemCount - count;
-
-        // Update our start pointer accordingly (we can't move them back without
-        // risking another exception, but we can at least keep our state consistent)
-        this->startIndex += count;
-
-        // Destroy all items that were moved so far
-        while(count > 0) {
-          --targetItems;
-          targetItems->~TItem();
-        }
-
+        this->startIndex += (itemCount - count);
         throw;
-
       }
     }
 
@@ -536,9 +506,9 @@ namespace Nuclex { namespace Support { namespace Collections {
       catch(...) {
         this->endIndex = itemCount - count;
 
-        // Move failed, kill all items that we could not move. Moving the rest would
-        // result in skipping an item in the buffer and risking another exception.
-        // We can't deal with two buffers, so this our only way to resolve this.
+        // Move failed, kill all items that remain in the source buffer. Moving
+        // the rest would result in skipping an item in the buffer and risking
+        // another exception. We can't deal with segmented buffers either.
         while(count > 0) {
           sourceItems->~TItem();
           ++sourceItems;
