@@ -264,7 +264,10 @@ namespace Nuclex { namespace Support { namespace Collections {
         // If the buffer needs to be resized anyway, we don't need to shift back
         // and can do the resize + shift in one operation
         std::size_t totalItemCount = usedItemCount + itemCount;
-        if(unlikely(totalItemCount > this->capacity)) {
+        if(likely(this->capacity >= totalItemCount)) {
+          TItem *items = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex;
+          shiftItems(items, usedItemCount);
+        } else { // No buffer resize needed, just shift the items back
           this->capacity = getNextPowerOfTwo(this->startIndex + totalItemCount);
           {
             std::unique_ptr<std::uint8_t[]> newItemMemory(
@@ -275,9 +278,6 @@ namespace Nuclex { namespace Support { namespace Collections {
             TItem *items = reinterpret_cast<TItem *>(newItemMemory.get()) + this->startIndex;
             shiftItems(items, usedItemCount);
           }
-        } else { // No buffer resize needed, just shift the items back
-          TItem *items = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex;
-          shiftItems(items, usedItemCount);
         }
 
       } else { // The inaccessible space in the buffer is less than the used space
@@ -286,7 +286,9 @@ namespace Nuclex { namespace Support { namespace Collections {
         // two times the required size. This ensures that the buffer will settle into
         // a read-shift-fill cycle without resizes if the current usage pattern repeats.
         std::size_t freeItemCount = this->capacity - this->endIndex;
-        if(unlikely(freeItemCount < itemCount)) {
+        if(likely(freeItemCount >= itemCount)) {
+          // Enough space available, no action needed
+        } else {
           this->capacity = getNextPowerOfTwo((usedItemCount + itemCount) * 2);
           {
             std::unique_ptr<std::uint8_t[]> newItemMemory(

@@ -26,142 +26,10 @@ License along with this library
 
 #include <vector> // for std::vector
 
-namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Unique number generator for the test item class</summary>
-  int NextUniqueNumber = 0;
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Tracks what happens with its associated test item</summary>
-  struct TestItemStats {
-
-    /// <summary>Number of times the item was the source of a copy</summary>
-    public: int CopyCount = 0;
-    /// <summary>Number of times the item was the source of a move</summary>
-    public: int MoveCount = 0;
-    /// <summary>Number of times an associated item was destroyed</summary>
-    public: int DestroyCount = 0;
-    /// <summary>Number of times an associated item was assigned to</summary>
-    public: int OverwriteCount = 0;
-    /// <summary>Whether the associated item's copy constructor should fail</summary>
-    public: bool ThrowOnCopy = false;
-    /// <summary>Whether the associated item's move constructor should fail</summary>
-    public: bool ThrowOnMove = false;
-    /// <summary>Unique number by which this instance can be identified</summary>
-    public: int UniqueNumber = NextUniqueNumber++;
-
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Dummy item to test correct copy and move semantics of the ring buffer</summary>
-  class TestItem {
-
-    /// <summary>Initializes a new item</summary>
-    public: TestItem(const std::shared_ptr<TestItemStats> &stats) :
-      stats(stats) {}
-
-    /// <summary>Initializes an item as copy of another item</summary>
-    /// <param name="other">Other item that will be copied</param>
-    public: TestItem(const TestItem &other) :
-      stats(other.stats) {
-      ++this->stats->CopyCount;
-      if(this->stats->ThrowOnCopy) {
-        throw std::runtime_error(u8"Simulated error for unit testing");
-      }
-    }
-
-    /// <summary>Initializes an item by taking over an existing item</summary>
-    /// <param name="other">Other item that will be taken over</param>
-    public: TestItem(TestItem &&other) :
-      stats(other.stats) { // No move, we want to still track destruction
-      ++this->stats->MoveCount;
-      if(this->stats->ThrowOnMove) {
-        throw std::runtime_error(u8"Simulated error for unit testing");
-      }
-    }
-
-    /// <summary>Destroys the item</summary>
-    public: ~TestItem() {
-      ++this->stats->DestroyCount;
-    }
-
-    /// <summary>Initializes an item as copy of another item</summary>
-    /// <param name="other">Other item that will be copied</param>
-    /// <returns>This instance</returns>
-    public: TestItem &operator =(const TestItem &other) {
-      ++this->stats->OverwriteCount;
-      this->stats = other.stats;
-      ++this->stats->CopyCount;
-      if(this->stats->ThrowOnCopy) {
-        throw std::runtime_error(u8"Simulated error for unit testing");
-      }
-      return *this;
-    }
-
-    /// <summary>Initializes an item by taking over an existing item</summary>
-    /// <param name="other">Other item that will be taken over</param>
-    /// <returns>This instance</returns>
-    public: TestItem &operator =(TestItem &&other) {
-      ++this->stats->OverwriteCount;
-      this->stats = other.stats; // No move, we want to still track destruction
-      ++this->stats->MoveCount;
-      if(this->stats->ThrowOnMove) {
-        throw std::runtime_error(u8"Simulated error for unit testing");
-      }
-      return *this;
-    }
-
-    /// <summary>
-    ///   Status tracker for the instance, used by tests to verify expected actions took place
-    /// </summary>
-    private: std::shared_ptr<TestItemStats> stats;
-
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Creates a vector of test item status structures</summary>
-  /// <param name="count">Number of test item states that will be created</param>
-  /// <returns>All test item states in a vector</returns>
-  std::vector<std::shared_ptr<TestItemStats>> makeStats(std::size_t count) {
-    std::vector<std::shared_ptr<TestItemStats>> stats;
-    stats.reserve(count);
-
-    for(std::size_t index = 0; index < count; ++index) {
-      stats.emplace_back(std::make_shared<TestItemStats>());
-    }
-
-    return stats;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Fills a vector with test items associated with test item states</summary>
-  /// <param name="target">Vector that will receive the test items</param>
-  /// <param name="stats">Test item states the created items will be associated with</param>
-  void makeItems(
-    std::vector<TestItem> &target, const std::vector<std::shared_ptr<TestItemStats>> &stats
-  ) {
-    std::size_t statCount = stats.size();
-
-    target.reserve(statCount);
-    for(std::size_t index = 0; index < statCount; ++index) {
-      target.emplace_back(stats[index]);
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-} // anonymous namespace
-
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
-
+#if !defined(NDEBUG)
   TEST(RingBufferDeathTest, DequeuingFromEmptyBufferTriggersAssertion) {
     RingBuffer<std::uint8_t> test;
 
@@ -171,9 +39,9 @@ namespace Nuclex { namespace Support { namespace Collections {
       u8""
     );
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
-
+#if !defined(NDEBUG)
   TEST(RingBufferDeathTest, DequeuingTooManyItemsTriggersAssertion) {
     RingBuffer<std::uint8_t> test;
 
@@ -185,9 +53,9 @@ namespace Nuclex { namespace Support { namespace Collections {
       u8""
     );
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
-
+#if !defined(NDEBUG)
   TEST(RingBufferDeathTest, DequeuingTooManyItemsInWrappedBufferTriggersAssertion) {
     RingBuffer<std::uint8_t> test;
 
@@ -213,7 +81,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       u8""
     );
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections
