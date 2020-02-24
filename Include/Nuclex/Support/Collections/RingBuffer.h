@@ -180,98 +180,15 @@ namespace Nuclex { namespace Support { namespace Collections {
       if(this->startIndex == InvalidIndex) {
         assert(
           (this->startIndex != InvalidIndex) &&
-          u8"Ring buffer must contains at least the requested number of items"
+          u8"Ring buffer must contain at least the requested number of items"
         );
       } else if(this->endIndex > this->startIndex) {
-        //dequeueFromLinear(items, count);
+        extractFromLinear(items, count);
       } else {
         //dequeueFromWrapped(items, count);
       }
     }
 
-
-
-#if 0
-
-    /// <summary>Removes items from the beginning of the ring buffer</summary>
-    /// <param name="items">Buffer in which the dequeued items will be stored</param>
-    /// <param name="count">Number of items that will be dequeued</param>
-    private: void dequeueFromLinear(TItem *items, std::size_t count) {
-      std::size_t availableItemCount = this->endIndex - this->startIndex;
-      if(availableItemCount >= count) {
-        TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
-        for(std::size_t index = 0; index < count; ++index) {
-          new(items) TItem(std::move(*sourceAddress));
-          sourceAddress->~TItem();
-          ++sourceAddress;
-          ++items;
-        }
-        if(count == availableItemCount) {
-          this->startIndex = InvalidIndex;
-        } else {
-          this->startIndex += count;
-        }
-      } else {
-        throw std::logic_error(u8"Ring buffer contains fewer items than requested");
-      }
-    }
-
-    /// <summary>Removes items from the beginning of the ring buffer</summary>
-    /// <param name="items">Buffer in which the dequeued items will be stored</param>
-    /// <param name="count">Number of items that will be dequeued</param>
-    private: void dequeueFromWrapped(TItem *items, std::size_t count) {
-      std::size_t availableSegmentItemCount = this->capacity - this->startIndex;
-      if(availableSegmentItemCount >= count) { // Enough data in older segment
-        TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
-        for(std::size_t index = 0; index < count; ++index) {
-          new(items) TItem(std::move(*sourceAddress));
-          sourceAddress->~TItem();
-          ++sourceAddress;
-          ++items;
-        }
-
-        // Was all data in the segment consumed?
-        if(count == availableSegmentItemCount) {
-          this->startIndex = 0;
-        } else {
-          this->startIndex += count;
-        }
-      } else { // The older segment alone does not have enough data, check younger segment
-        std::size_t availableItemCount = availableSegmentItemCount + this->endIndex;
-        if(availableItemCount >= count) { // Is there enough data with both segments together?
-
-          // Move the items from the older segment into the caller-provided buffer
-          TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
-          for(std::size_t index = 0; index < availableSegmentItemCount; ++index) {
-            new(items) TItem(std::move(*sourceAddress));
-            sourceAddress->~TItem();
-            ++sourceAddress;
-            ++items;
-          }
-
-          count -= availableSegmentItemCount;
-
-          // Move some or all items from the younger segment into the caller-provided buffer
-          sourceAddress = reinterpret_cast<TItem *>(this->itemMemory);
-          for(std::size_t index = 0; index < count; ++index) {
-            new(items) TItem(std::move(*sourceAddress));
-            sourceAddress->~TItem();
-            ++sourceAddress;
-            ++items;
-          }
-
-          // If all data was taken from the buffer, then the ring buffer is empty now
-          if(count == availableItemCount - availableSegmentItemCount) {
-            this->startIndex = InvalidIndex;
-          } else { // Otherwise, the new start index is one past the last read position
-            this->startIndex = count;
-          }
-        } else { // There is insufficient data in the ring buffer
-          throw std::logic_error(u8"Ring buffer contains fewer items than requested");
-        }
-      }
-    }
-#endif
     /// <summary>Calculates the next power of two for the specified value</summary>
     /// <param name="value">Value of which the next power of two will be calculated</param>
     /// <returns>The next power of two to the specified value</returns>
@@ -324,7 +241,9 @@ namespace Nuclex { namespace Support { namespace Collections {
       catch(...) {
         if(count == itemCount) {
           this->startIndex = InvalidIndex;
+#if !defined(NDEBUG)
           this->endIndex = InvalidIndex;
+#endif
         } else {
           this->startIndex = 0;
           this->endIndex = (itemCount - count);
@@ -764,6 +683,136 @@ namespace Nuclex { namespace Support { namespace Collections {
       
       return targetItems;
     }
+
+    /// <summary>Removes items from the beginning of the ring buffer</summary>
+    /// <param name="targetItems">Buffer in which the dequeued items will be stored</param>
+    /// <param name="itemCount">Number of items that will be dequeued</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<
+      !std::is_trivially_copyable<T>::value || !std::is_trivially_destructible<T>::value
+    >::type extractFromLinear(TItem *targetItems, std::size_t itemCount) {
+      std::size_t availableItemCount = this->endIndex - this->startIndex;
+      if(likely(availableItemCount >= itemCount)) {
+        TItem *sourceItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        sourceItems += this->startIndex;
+        std::size_t count = itemCount;
+        try {
+          while(count > 0) {
+            *targetItems = std::move(*sourceItems);
+            ++sourceItems;
+            ++targetItems;
+            --count;
+          }
+        }
+        catch(...) {
+          this->startIndex += (itemCount - count);
+          throw;
+        }
+        if(count == availableItemCount) {
+          this->startIndex = InvalidIndex;
+#if !defined(NDEBUG)
+          this->endIndex = InvalidIndex;
+#endif
+        } else {
+          this->startIndex += itemCount;
+        }
+      } else {
+        assert(
+          (availableItemCount >= itemCount) &&
+          u8"Ring buffer must contain at least the requested number of items"
+        );
+      }
+    }
+
+    /// <summary>Removes items from the beginning of the ring buffer</summary>
+    /// <param name="targetItems">Buffer in which the dequeued items will be stored</param>
+    /// <param name="itemCount">Number of items that will be dequeued</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<
+      std::is_trivially_copyable<T>::value && std::is_trivially_destructible<T>::value
+    >::type extractFromLinear(TItem *targetItems, std::size_t itemCount) {
+      std::size_t availableItemCount = this->endIndex - this->startIndex;
+      if(likely(availableItemCount >= itemCount)) {
+        TItem *sourceItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        sourceItems += this->startIndex;
+        std::memcpy(targetItems, sourceItems, sizeof(TItem) * itemCount);
+        if(itemCount == availableItemCount) {
+          this->startIndex = InvalidIndex;
+#if !defined(NDEBUG)
+          this->endIndex = InvalidIndex;
+#endif
+        } else {
+          this->startIndex += itemCount;
+        }
+      } else {
+        assert(
+          (availableItemCount >= itemCount) &&
+          u8"Ring buffer must contain at least the requested number of items"
+        );
+      }
+    }
+
+#if 0
+
+    /// <summary>Removes items from the beginning of the ring buffer</summary>
+    /// <param name="items">Buffer in which the dequeued items will be stored</param>
+    /// <param name="count">Number of items that will be dequeued</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<std::is_trivially_copyable<T>::value>::type dequeueFromWrapped(
+      TItem *items, std::size_t count
+    ) {
+      std::size_t availableSegmentItemCount = this->capacity - this->startIndex;
+      if(availableSegmentItemCount >= count) { // Enough data in older segment
+        TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
+        for(std::size_t index = 0; index < count; ++index) {
+          new(items) TItem(std::move(*sourceAddress));
+          sourceAddress->~TItem();
+          ++sourceAddress;
+          ++items;
+        }
+
+        // Was all data in the segment consumed?
+        if(count == availableSegmentItemCount) {
+          this->startIndex = 0;
+        } else {
+          this->startIndex += count;
+        }
+      } else { // The older segment alone does not have enough data, check younger segment
+        std::size_t availableItemCount = availableSegmentItemCount + this->endIndex;
+        if(availableItemCount >= count) { // Is there enough data with both segments together?
+
+          // Move the items from the older segment into the caller-provided buffer
+          TItem *sourceAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
+          for(std::size_t index = 0; index < availableSegmentItemCount; ++index) {
+            new(items) TItem(std::move(*sourceAddress));
+            sourceAddress->~TItem();
+            ++sourceAddress;
+            ++items;
+          }
+
+          count -= availableSegmentItemCount;
+
+          // Move some or all items from the younger segment into the caller-provided buffer
+          sourceAddress = reinterpret_cast<TItem *>(this->itemMemory);
+          for(std::size_t index = 0; index < count; ++index) {
+            new(items) TItem(std::move(*sourceAddress));
+            sourceAddress->~TItem();
+            ++sourceAddress;
+            ++items;
+          }
+
+          // If all data was taken from the buffer, then the ring buffer is empty now
+          if(count == availableItemCount - availableSegmentItemCount) {
+            this->startIndex = InvalidIndex;
+          } else { // Otherwise, the new start index is one past the last read position
+            this->startIndex = count;
+          }
+        } else { // There is insufficient data in the ring buffer
+          throw std::logic_error(u8"Ring buffer contains fewer items than requested");
+        }
+      }
+    }
+#endif
 
     /// <summary>Holds the items stored in the ring buffer</summary>
     private: std::unique_ptr<std::uint8_t[]> itemMemory;

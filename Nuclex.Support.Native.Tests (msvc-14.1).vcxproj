@@ -330,6 +330,7 @@
     <ClCompile Include="Tests\Collections\ShiftBufferTest.cpp" />
     <ClCompile Include="Tests\Events\DelegateTests.cpp" />
     <ClCompile Include="Tests\Events\EventTests.cpp" />
+    <ClCompile Include="Tests\OptionalTests.cpp" />
     <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp" />
     <ClCompile Include="Tests\Services\ServiceContainerTest.cpp" />
     <ClCompile Include="Tests\Text\LexicalTest.cpp" />

@@ -263,60 +263,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(RingBufferTest, DequeuingFromEmptyBufferCausesException) {
-    RingBuffer<std::uint8_t> test;
-
-    std::uint8_t items[128];
-    EXPECT_THROW(
-      test.Read(items, 1),
-      std::logic_error
-    );
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  TEST(RingBufferTest, DequeuingTooManyItemsCausesException) {
-    RingBuffer<std::uint8_t> test;
-
-    std::uint8_t items[100];
-    test.Write(items, 99);
-
-    EXPECT_THROW(
-      test.Read(items, 100),
-      std::logic_error
-    );
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  TEST(RingBufferTest, DequeuingTooManyItemsInWrappedBufferCausesException) {
-    RingBuffer<std::uint8_t> test;
-
-    std::size_t capacity = test.GetCapacity();
-
-    std::vector<std::uint8_t> items(capacity);
-    for(std::size_t index = 0; index < capacity; ++index) {
-      items[index] = static_cast<std::uint8_t>(index);
-    }
-
-    std::vector<std::uint8_t> retrieved(capacity);
-
-    std::size_t oneThirdCapacity = capacity / 3;
-    test.Write(&items[0], oneThirdCapacity * 2);
-    test.Read(&retrieved[0], oneThirdCapacity);
-    test.Write(&items[0], oneThirdCapacity * 2);
-    test.Read(&retrieved[0], oneThirdCapacity);
-
-    EXPECT_EQ(test.Count(), oneThirdCapacity * 2);
-
-    EXPECT_THROW(
-      test.Read(&items[0], oneThirdCapacity * 2 + 1),
-      std::logic_error
-    );
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   TEST(RingBufferTest, ItemsCanBeAppendedAndDequeued) {
     RingBuffer<std::uint8_t> test;
 

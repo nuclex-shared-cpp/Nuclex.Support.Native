@@ -110,7 +110,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <returns>The number of items the shift buffer has reserved space for</returns>
     /// <remarks>
     ///   Just like std::vector::capacity(), this is not a limit. If the capacity is
-    ///   exceeded, the shift buffer will allocate a large memory block and use that one.
+    ///   exceeded, the shift buffer will allocate a larger memory block and use that one.
     /// </remarks>
     public: std::size_t GetCapacity() const {
       return this->capacity;
