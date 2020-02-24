@@ -35,6 +35,7 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Tracks what happens with its associated test item</summary>
   struct TestItemStats {
 
     /// <summary>Number of times the item was the source of a copy</summary>

@@ -23,14 +23,12 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#include <algorithm> // for std::copy_n()
-#include <stdexcept> // for std::out_of_range
-
 #include <cstddef> // for std::size_t
 #include <cstdint> // for std::uint8_t
 #include <memory> // for std::unique_ptr
 #include <type_traits> // for std::enable_if<>
 #include <cstring> // for std::memcpy()
+#include <cassert> // for assert()
 
 namespace Nuclex { namespace Support { namespace Collections {
 
@@ -61,43 +59,21 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: RingBuffer(const RingBuffer &other) :
       itemMemory(new std::uint8_t[sizeof(TItem[2]) * other.capacity / 2]),
       capacity(other.capacity),
-      startIndex(0),
-      endIndex(other.Count()) {
+      startIndex(InvalidIndex),
+      endIndex(InvalidIndex) {
 
       if(other.startIndex == InvalidIndex) {
-        this->startIndex = InvalidIndex;
+        //this->startIndex = InvalidIndex;
       } else if(other.startIndex < other.endIndex) {
-
-        // Copy all items from first to last
         TItem *sourceAddress = reinterpret_cast<TItem *>(other.itemMemory.get());
-        sourceAddress += other.startIndex;
-        TItem *targetAddress = reinterpret_cast<TItem *>(this->itemMemory.get());
-        for(std::size_t index = 0; index < this->endIndex; ++index) {
-          new(targetAddress) TItem(*sourceAddress);
-          ++sourceAddress;
-          ++targetAddress;
-        }
-
+        emplaceInEmpty(sourceAddress, other.endIndex - other.startIndex);
       } else {
-        std::size_t segmentItemCount = other.capacity - other.startIndex;
-        TItem *targetAddress = reinterpret_cast<TItem *>(this->itemMemory.get());
-
-        // Copy all items from the start index up to the end of the other buffer
         TItem *sourceAddress = reinterpret_cast<TItem *>(other.itemMemory.get());
         sourceAddress += other.startIndex;
-        for(std::size_t index = 0; index < segmentItemCount; ++index) {
-          new(targetAddress) TItem(*sourceAddress);
-          ++sourceAddress;
-          ++targetAddress;
-        }
+        emplaceInEmpty(sourceAddress, other.capacity - other.startIndex);
 
-        // Copy all items from the beginning of the other buffer up to the end index
         sourceAddress = reinterpret_cast<TItem *>(other.itemMemory.get());
-        for(std::size_t index = 0; index < other.endIndex; ++index) {
-          new(targetAddress) TItem(*sourceAddress);
-          ++sourceAddress;
-          ++targetAddress;
-        }
+        emplaceInLinear(sourceAddress, other.endIndex);
       }
     }
 
@@ -173,6 +149,10 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="items">Items that will be added to the ring buffer</param>
     /// <param name="count">Number of items that will be added</param>
     public: void Write(const TItem *items, std::size_t count) {
+      if(count == 0) {
+        return;
+      }
+
       if(this->startIndex == InvalidIndex) {
         if(unlikely(count > this->capacity)) {
           std::size_t newCapacity = getNextPowerOfTwo(count);
@@ -184,7 +164,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         }
         emplaceInEmpty(items, count);
       } else if(this->endIndex > this->startIndex) {
-        //appendToLinear(items, count);
+        emplaceInLinear(items, count);
       } else {
         emplaceInWrapped(items, count);
       }
@@ -194,10 +174,14 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="items">Buffer in which the dequeued items will be stored</param>
     /// <param name="count">Number of items that will be dequeued</param>
     public: void Read(TItem *items, std::size_t count) {
+      if(count == 0) {
+        return;
+      }
       if(this->startIndex == InvalidIndex) {
-        if(count > 0) {
-          throw std::logic_error(u8"Ring buffer contains fewer items than requested");
-        }
+        assert(
+          (this->startIndex != InvalidIndex) &&
+          u8"Ring buffer must contains at least the requested number of items"
+        );
       } else if(this->endIndex > this->startIndex) {
         //dequeueFromLinear(items, count);
       } else {
@@ -205,145 +189,9 @@ namespace Nuclex { namespace Support { namespace Collections {
       }
     }
 
-    /// <summary>Emplaces the specified items into an empty ring buffer</summary>
-    /// <param name="sourceItems">Items that will be emplaced into the buffer</param>
-    /// <param name="itemCount">Number of items that will be emplaced</param>
-    private: template<typename T = TItem>
-    typename std::enable_if<!std::is_trivially_copyable<T>::value>::type emplaceInEmpty(
-      const TItem *sourceItems, std::size_t itemCount
-    ) {
-      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
-      targetItems += this->endIndex;
-
-      std::size_t count = itemCount;
-      try {
-        while(count > 0) {
-          new(targetItems) TItem(*sourceItems);
-          ++sourceItems;
-          ++targetItems;
-          --count;
-        }
-      }
-      catch(...) {
-        this->endIndex = (itemCount - count);
-        if(this->endIndex == 0) {
-          this->startIndex = InvalidIndex;
-        } else {
-          this->startIndex = 0;
-        }
-        throw;
-      }
-
-      this->endIndex = itemCount;
-    }
-
-    /// <summary>Emplaces the specified items into an empty ring buffer</summary>
-    /// <param name="sourceItems">Items that will be emplaced into the buffer</param>
-    /// <param name="itemCount">Number of items that will be emplaced</param>
-    private: template<typename T = TItem>
-    typename std::enable_if<std::is_trivially_copyable<T>::value>::type emplaceInEmpty(
-      const TItem *sourceItems, std::size_t itemCount
-    ) {
-      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
-      targetItems += this->endIndex;
-      std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
-      this->endIndex += itemCount;
-    }
-
-    /// <summary>Appends items to a ring buffer with items that have wrapped around</summary>
-    /// <param name="items">Items that will be appended to the ring buffer</param>
-    /// <param name="itemCount">Number of items that will be appended</param>
-    private: template<typename T = TItem>
-    typename std::enable_if<std::is_trivially_copyable<T>::value>::type emplaceInWrapped(
-      const TItem *sourceItems, std::size_t itemCount
-    ) {
-      std::size_t remainingItemCount = this->startIndex - this->endIndex;
-      if(likely(remainingItemCount >= itemCount)) { // New data fits, simplest case there is
-        TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
-        targetItems += this->endIndex;
-        std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
-        this->endIndex += itemCount;
-      } else { // New data doesn't fit, ring buffer needs to be extended
-        std::size_t totalItemCount = this->capacity - remainingItemCount + itemCount;
-
-        // Expand the ring buffer to the required capacity
-        TItem *targetItems = reallocateWhenWrapped(totalItemCount);
-
-        // Copy the items the caller wanted to write into the ring buffer
-        std::memcpy(targetItems, sourceItems, itemCount);
-
-        this->startIndex = 0;
-        this->endIndex = totalItemCount;
-      }
-    }
-
 
 
 #if 0
-    /// <summary>Appends items to a ring buffer with items stored linearly</summary>
-    /// <param name="items">Items that will be appended to the ring buffer</param>
-    /// <param name="count">Number of items that will be appended</param>
-    private: void appendToLinear(const TItem *items, std::size_t count) {
-      std::size_t remainingSegmentItemCount = this->capacity - this->endIndex;
-      if(remainingSegmentItemCount >= count) { // New data fits between end and capacity
-        std::copy_n(
-          items,
-          count,
-          reinterpret_cast<TItem *>(this->itemMemory) + this->endIndex
-        );
-        this->endIndex += count;
-      } else { // New data must be wrapped or ring buffer needs to be extended
-        std::size_t remainingItemCount = remainingSegmentItemCount + this->startIndex;
-        if(likely(remainingItemCount >= count)) {
-          std::copy_n(
-            items,
-            remainingSegmentItemCount,
-            reinterpret_cast<TItem *>(this->itemMemory) + this->endIndex
-          );
-          this->endIndex = count - remainingSegmentItemCount;
-          std::copy_n(
-            items + remainingSegmentItemCount,
-            this->endIndex,
-            reinterpret_cast<TItem *>(this->itemMemory)
-          );
-        } else { // New data doesn't fit, ring buffer needs to be extended
-          std::size_t oldItemCount = this->endIndex - this->startIndex;
-
-          // Allocate new memory for the items
-          {
-            std::size_t newCapacity = getNextPowerOfTwo(oldItemCount + count);
-            std::uint8_t *newItemMemory = new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2];
-
-            // Move-construct the items into the new memory block and destroy them
-            // in their old memory block
-            {
-              TItem *oldAddress = reinterpret_cast<TItem *>(this->itemMemory) + this->startIndex;
-              TItem *newAddress = reinterpret_cast<TItem *>(newItemMemory);
-              for(std::size_t index = this->startIndex; index < this->endIndex; ++index) {
-                new(newAddress) TItem(std::move(*oldAddress));
-                oldAddress->~TItem();
-                ++oldAddress;
-                ++newAddress;
-              }
-            }
-
-            // Move completed, we can free the old memory block early
-            delete[] this->itemMemory;
-            this->itemMemory = newItemMemory;
-            this->capacity = newCapacity;
-          }
-
-          std::copy_n(
-            items,
-            count,
-            reinterpret_cast<TItem *>(this->itemMemory) + oldItemCount
-          );
-
-          this->startIndex = 0;
-          this->endIndex = oldItemCount + count;
-        }
-      }
-    }
 
     /// <summary>Removes items from the beginning of the ring buffer</summary>
     /// <param name="items">Buffer in which the dequeued items will be stored</param>
@@ -455,14 +303,263 @@ namespace Nuclex { namespace Support { namespace Collections {
       return (value + 1);
     }
 
-    /// <summary>Reallocates the ring buffers memory to fit the required items</summary>
+    /// <summary>Emplaces the specified items into an empty ring buffer</summary>
+    /// <param name="sourceItems">Items that will be emplaced into the buffer</param>
+    /// <param name="itemCount">Number of items that will be emplaced</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<!std::is_trivially_copyable<T>::value>::type emplaceInEmpty(
+      const TItem *sourceItems, std::size_t itemCount
+    ) {
+      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+
+      std::size_t count = itemCount;
+      try {
+        while(count > 0) {
+          new(targetItems) TItem(*sourceItems);
+          ++sourceItems;
+          ++targetItems;
+          --count;
+        }
+      }
+      catch(...) {
+        if(count == itemCount) {
+          this->startIndex = InvalidIndex;
+          this->endIndex = InvalidIndex;
+        } else {
+          this->startIndex = 0;
+          this->endIndex = (itemCount - count);
+        }
+        throw;
+      }
+
+      this->startIndex = 0;
+      this->endIndex = itemCount;
+    }
+
+    /// <summary>Emplaces the specified items into an empty ring buffer</summary>
+    /// <param name="sourceItems">Items that will be emplaced into the buffer</param>
+    /// <param name="itemCount">Number of items that will be emplaced</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<std::is_trivially_copyable<T>::value>::type emplaceInEmpty(
+      const TItem *sourceItems, std::size_t itemCount
+    ) {
+      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+      std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
+
+      this->startIndex = 0;
+      this->endIndex = itemCount;
+    }
+
+    /// <summary>Appends items to a ring buffer with items that have wrapped around</summary>
+    /// <param name="items">Items that will be appended to the ring buffer</param>
+    /// <param name="itemCount">Number of items that will be appended</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<!std::is_trivially_copyable<T>::value>::type emplaceInWrapped(
+      const TItem *sourceItems, std::size_t itemCount
+    ) {
+      std::size_t remainingItemCount = this->startIndex - this->endIndex;
+      if(likely(remainingItemCount >= itemCount)) { // New data fits, simplest case there is
+        TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        targetItems += this->endIndex;
+        std::size_t count = itemCount;
+        try {
+          while(count > 0) {
+            new(targetItems) TItem(*sourceItems);
+            ++sourceItems;
+            ++targetItems;
+            --count;
+          }
+        }
+        catch(...) {
+          this->endIndex += (itemCount - count);
+          throw;
+        }
+        this->endIndex += itemCount;
+      } else { // New data doesn't fit, ring buffer needs to be extended
+        std::size_t totalItemCount = (this->capacity - remainingItemCount) + itemCount;
+        TItem *targetItems = reallocateWhenWrapped(totalItemCount);
+        this->startIndex = 0;
+        std::size_t count = itemCount;
+        try {
+          while(count > 0) {
+            new(targetItems) TItem(*sourceItems);
+            ++sourceItems;
+            ++targetItems;
+            --count;
+          }
+        }
+        catch(...) {
+          this->endIndex = (totalItemCount - count);
+          throw;
+        }
+
+        this->endIndex = totalItemCount;
+      }
+    }
+
+    /// <summary>Appends items to a ring buffer with items that have wrapped around</summary>
+    /// <param name="items">Items that will be appended to the ring buffer</param>
+    /// <param name="itemCount">Number of items that will be appended</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<std::is_trivially_copyable<T>::value>::type emplaceInWrapped(
+      const TItem *sourceItems, std::size_t itemCount
+    ) {
+      std::size_t remainingItemCount = this->startIndex - this->endIndex;
+      if(likely(remainingItemCount >= itemCount)) { // New data fits, simplest case there is
+        TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        targetItems += this->endIndex;
+        std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
+        this->endIndex += itemCount;
+      } else { // New data doesn't fit, ring buffer needs to be extended
+        std::size_t totalItemCount = this->capacity - remainingItemCount + itemCount;
+        TItem *targetItems = reallocateWhenWrapped(totalItemCount);
+        std::memcpy(targetItems, sourceItems, itemCount);
+        this->startIndex = 0;
+        this->endIndex = totalItemCount;
+      }
+    }
+
+    /// <summary>Appends items to a ring buffer with items stored linearly</summary>
+    /// <param name="items">Items that will be appended to the ring buffer</param>
+    /// <param name="count">Number of items that will be appended</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<!std::is_trivially_copyable<T>::value>::type emplaceInLinear(
+      const TItem *sourceItems, std::size_t itemCount
+    ) {
+      std::size_t remainingSegmentItemCount = this->capacity - this->endIndex;
+      if(likely(remainingSegmentItemCount >= itemCount)) { // New data fits
+        TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        targetItems += this->endIndex;
+
+        std::size_t count = itemCount;
+        try {
+          while(count > 0) {
+            new(targetItems) TItem(*sourceItems);
+            ++sourceItems;
+            ++targetItems;
+            --count;
+          }
+        }
+        catch(...) {
+          this->endIndex += (itemCount - count);
+          throw;
+        }
+
+        this->endIndex += itemCount;
+      } else { // New data must be wrapped or ring buffer needs to be extended
+        std::size_t wrappedItemCount = itemCount - remainingSegmentItemCount;
+        //std::size_t remainingItemCount = remainingSegmentItemCount + this->startIndex;
+        if(likely(this->startIndex < wrappedItemCount)) {
+          if(remainingSegmentItemCount > 0) {
+            TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+            targetItems += this->endIndex;
+
+            std::size_t count = remainingSegmentItemCount;
+            try {
+              while(count > 0) {
+                new(targetItems) TItem(*sourceItems);
+                ++sourceItems;
+                ++targetItems;
+                --count;
+              }
+            }
+            catch(...) {
+              this->endIndex += (itemCount - count);
+              throw;
+            }
+
+            this->endIndex += itemCount;
+          }
+          {
+            TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+
+            std::size_t count = wrappedItemCount;
+            try {
+              while(count > 0) {
+                new(targetItems) TItem(*sourceItems);
+                ++sourceItems;
+                ++targetItems;
+                --count;
+              }
+            }
+            catch(...) {
+              if(count < wrappedItemCount) {
+                this->endIndex += (wrappedItemCount - count);
+              }
+              throw;
+            }
+
+            this->endIndex = wrappedItemCount;
+          }
+
+        } else { // New data doesn't fit
+          std::size_t totalItemCount = (this->endIndex - this->startIndex) + itemCount;
+          TItem *targetItems = reallocateWhenLinear(totalItemCount);
+          this->startIndex = 0;
+          std::size_t count = itemCount;
+          try {
+            while(count > 0) {
+              new(targetItems) TItem(*sourceItems);
+              ++sourceItems;
+              ++targetItems;
+              --count;
+            }
+          }
+          catch(...) {
+            this->endIndex = (totalItemCount - count);
+            throw;
+          }
+
+          this->endIndex = totalItemCount;
+        }
+      }
+    }
+
+    /// <summary>Appends items to a ring buffer with items stored linearly</summary>
+    /// <param name="items">Items that will be appended to the ring buffer</param>
+    /// <param name="count">Number of items that will be appended</param>
+    private: template<typename T = TItem>
+    typename std::enable_if<std::is_trivially_copyable<T>::value>::type emplaceInLinear(
+      const TItem *sourceItems, std::size_t itemCount
+    ) {
+      std::size_t remainingSegmentItemCount = this->capacity - this->endIndex;
+      if(likely(remainingSegmentItemCount >= itemCount)) { // New data fits
+        TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        targetItems += this->endIndex;
+        std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
+        this->endIndex += itemCount;
+      } else { // New data must be wrapped or ring buffer needs to be extended
+        std::size_t remainingItemCount = remainingSegmentItemCount + this->startIndex;
+        if(likely(remainingItemCount >= itemCount)) {
+          TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+          targetItems += this->endIndex;
+          std::memcpy(targetItems, sourceItems, remainingSegmentItemCount * sizeof(TItem));
+          this->endIndex = itemCount - remainingSegmentItemCount;
+          targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+          std::memcpy(targetItems, sourceItems, this->endIndex * sizeof(TItem));
+        } else { // New data doesn't fit, ring buffer needs to be extended
+          std::size_t totalItemCount = this->endIndex - this->startIndex + itemCount;
+          TItem *targetItems = reallocateWhenLinear(totalItemCount);
+          std::memcpy(targetItems, sourceItems, itemCount);
+          this->startIndex = 0;
+          this->endIndex = totalItemCount;
+        }
+      }
+    }
+
+    /// <summary>Reallocates the ring buffer's memory to fit the required items</summary>
     /// <param name="requiredItemCount">Number of items the buffer needs to hold</param>
+    /// <returns>The address at which the next item can be written</returns>
+    /// <remarks>
+    ///   Careful: this method does not update the startIndex and endIndex variables,
+    ///   as this operation is always followed by writing additional items into the buffer.
+    /// </remarks>
     private: template<typename T = TItem>
     typename std::enable_if<
       !std::is_trivially_destructible<T>::value || !std::is_trivially_copyable<T>::value, TItem *
     >::type reallocateWhenWrapped(std::size_t requiredItemCount) {
       std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
-      
+
       // Allocate new memory for the enlarged buffer
       std::unique_ptr<std::uint8_t[]> newItemMemory(
         new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2]
@@ -533,14 +630,19 @@ namespace Nuclex { namespace Support { namespace Collections {
       return targetItems;
     }
 
-    /// <summary>Reallocates the ring buffers memory to fit the required items</summary>
+    /// <summary>Reallocates the ring buffer's memory to fit the required items</summary>
     /// <param name="requiredItemCount">Number of items the buffer needs to hold</param>
+    /// <returns>The address at which the next item can be written</returns>
+    /// <remarks>
+    ///   Careful: this method does not update the startIndex and endIndex variables,
+    ///   as this operation is always followed by writing additional items into the buffer.
+    /// </remarks>
     private: template<typename T = TItem>
     typename std::enable_if<
       std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, TItem *
     >::type reallocateWhenWrapped(std::size_t requiredItemCount) {
       std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
-      
+
       // Allocate new memory for the enlarged buffer
       std::unique_ptr<std::uint8_t[]> newItemMemory(
         new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2]
@@ -562,6 +664,98 @@ namespace Nuclex { namespace Support { namespace Collections {
         TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
         std::memcpy(targetItems, existingItems, this->endIndex);
         targetItems += this->endIndex;
+      }
+
+      // Apply the changes. Note that we do not update startIndex and endIndex here.
+      this->itemMemory.swap(newItemMemory);
+      this->capacity = newCapacity;
+      
+      return targetItems;
+    }
+
+    /// <summary>Reallocates the ring buffer's memory to fit the required items</summary>
+    /// <param name="requiredItemCount">Number of items the buffer needs to hold</param>
+    /// <returns>The address at which the next item can be written</returns>
+    /// <remarks>
+    ///   Careful: this method does not update the startIndex and endIndex variables,
+    ///   as this operation is always followed by writing additional items into the buffer.
+    /// </remarks>
+    private: template<typename T = TItem>
+    typename std::enable_if<
+      !std::is_trivially_destructible<T>::value || !std::is_trivially_copyable<T>::value, TItem *
+    >::type reallocateWhenLinear(std::size_t requiredItemCount) {
+      std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
+
+      // Allocate new memory for the enlarged buffer
+      std::unique_ptr<std::uint8_t[]> newItemMemory(
+        new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2]
+      );
+      TItem *targetItems = reinterpret_cast<TItem *>(newItemMemory.get());
+
+      // Copy the older segment of the existing items into the new buffer
+      {
+        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        existingItems += this->startIndex;
+
+        std::size_t count = this->endIndex - this->startIndex;
+        try {
+          while(count > 0) {
+            new(targetItems) TItem(std::move(*existingItems));
+            existingItems->~TItem();
+            ++existingItems;
+            ++targetItems;
+            --count;
+          }
+        }
+        catch(...) {
+          count = (this->endIndex - this->startIndex) - count;
+
+          this->startIndex += count;
+
+          while(count > 0) {
+            --targetItems;
+            targetItems->~TItem();
+            --count;
+          }
+
+          throw;
+        }
+      }
+
+      // Apply the changes. Note that we do not update startIndex and endIndex here.
+      this->itemMemory.swap(newItemMemory);
+      this->capacity = newCapacity;
+
+      return targetItems;
+    }
+
+    /// <summary>Reallocates the ring buffer's memory to fit the required items</summary>
+    /// <param name="requiredItemCount">Number of items the buffer needs to hold</param>
+    /// <returns>The address at which the next item can be written</returns>
+    /// <remarks>
+    ///   Careful: this method does not update the startIndex and endIndex variables,
+    ///   as this operation is always followed by writing additional items into the buffer.
+    /// </remarks>
+    private: template<typename T = TItem>
+    typename std::enable_if<
+      std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, TItem *
+    >::type reallocateWhenLinear(std::size_t requiredItemCount) {
+      std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
+
+      // Allocate new memory for the enlarged buffer
+      std::unique_ptr<std::uint8_t[]> newItemMemory(
+        new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2]
+      );
+      TItem *targetItems = reinterpret_cast<TItem *>(newItemMemory.get());
+
+      // Copy the older segment of the existing items into the new buffer
+      {
+        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        existingItems += this->startIndex;
+
+        std::size_t count = this->endIndex - this->startIndex;
+        std::memcpy(targetItems, existingItems, count);
+        targetItems += count;
       }
 
       // Apply the changes. Note that we do not update startIndex and endIndex here.
