@@ -123,7 +123,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     std::uint8_t items[128];
     test.Write(items, 128);
-    
+
     EXPECT_EQ(test.Count(), 128U);
   }
 
@@ -137,7 +137,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       items[index] = static_cast<std::uint8_t>(index);
     }
     test.Write(items, 128);
-    
+
     EXPECT_EQ(test.Count(), 128U);
 
     std::uint8_t retrieved[128];
@@ -156,7 +156,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     RingBuffer<std::uint8_t> test;
 
     std::size_t capacity = test.GetCapacity();
-    
+
     std::vector<std::uint8_t> items(capacity);
     for(std::size_t index = 0; index < capacity; ++index) {
       items[index] = static_cast<std::uint8_t>(index);
@@ -220,7 +220,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     RingBuffer<std::uint8_t> test;
 
     std::size_t capacity = test.GetCapacity();
-    
+
     std::vector<std::uint8_t> items(capacity);
     for(std::size_t index = 0; index < capacity; ++index) {
       items[index] = static_cast<std::uint8_t>(index);
@@ -267,7 +267,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     RingBuffer<std::uint8_t> test;
 
     std::size_t capacity = test.GetCapacity();
-    
+
     std::vector<std::uint8_t> items(capacity);
     for(std::size_t index = 0; index < capacity; ++index) {
       items[index] = static_cast<std::uint8_t>(index);

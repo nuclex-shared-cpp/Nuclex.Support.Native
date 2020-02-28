@@ -215,9 +215,4 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-
-#if 0
-
-
-#endif
 }}} // namespace Nuclex::Support::Collections

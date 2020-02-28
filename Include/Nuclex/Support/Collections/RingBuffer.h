@@ -369,7 +369,6 @@ namespace Nuclex { namespace Support { namespace Collections {
         this->endIndex += itemCount;
       } else { // New data must be wrapped or ring buffer needs to be extended
         std::size_t wrappedItemCount = itemCount - remainingSegmentItemCount;
-        //std::size_t remainingItemCount = remainingSegmentItemCount + this->startIndex;
         if(likely(this->startIndex < wrappedItemCount)) {
           if(remainingSegmentItemCount > 0) {
             TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
@@ -456,6 +455,7 @@ namespace Nuclex { namespace Support { namespace Collections {
           targetItems += this->endIndex;
           std::memcpy(targetItems, sourceItems, remainingSegmentItemCount * sizeof(TItem));
           this->endIndex = itemCount - remainingSegmentItemCount;
+          sourceItems += remainingSegmentItemCount;
           targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
           std::memcpy(targetItems, sourceItems, this->endIndex * sizeof(TItem));
         } else { // New data doesn't fit, ring buffer needs to be extended
