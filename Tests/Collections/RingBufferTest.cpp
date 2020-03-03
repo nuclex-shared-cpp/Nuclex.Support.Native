@@ -207,7 +207,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     // Remove the first 1/3rd, we end up with data in the middle ofthe ring
     std::vector<std::uint8_t> retrieved(capacity);
     test.Read(&retrieved[0], capacity);
-    EXPECT_EQ(test.Count(), 0);
+    EXPECT_EQ(test.Count(), 0U);
 
     for(std::size_t index = 0; index < capacity; ++index) {
       EXPECT_EQ(retrieved[index], items[index]);

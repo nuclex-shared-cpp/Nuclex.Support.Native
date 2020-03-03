@@ -155,7 +155,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<template<typename TItem> typename TBuffer>
+  template<template<typename TItem> class TBuffer>
   void checkWritingInvokesCopyConstructor() {
     std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
     std::vector<TestItem> items;
@@ -182,7 +182,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<template<typename TItem> typename TBuffer>
+  template<template<typename TItem> class TBuffer>
   void checkShovingInvokesMoveConstructor() {
     std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
     std::vector<TestItem> items;
@@ -209,7 +209,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<template<typename TItem> typename TBuffer>
+  template<template<typename TItem> class TBuffer>
   void checkMoveSemanticsAreUsedWhenCapacityChanges() {
     std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(17);
     std::vector<TestItem> items;
@@ -249,7 +249,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<template<typename TItem> typename TBuffer>
+  template<template<typename TItem> class TBuffer>
   void checkReadUsesMoveSemanticsAndCallsDestructor() {
     std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
     std::vector<TestItem> items;
@@ -295,7 +295,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<template<typename TItem> typename TBuffer>
+  template<template<typename TItem> class TBuffer>
   void checkBufferDestroysLeftOverItemsWhenDestroyed() {
     std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
     std::vector<TestItem> items;
@@ -330,7 +330,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<template<typename TItem> typename TBuffer>
+  template<template<typename TItem> class TBuffer>
   void checkExceptionDuringCapacityChangeCausesNoLeaks() {
     std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(17);
     std::vector<TestItem> items;
@@ -383,7 +383,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<template<typename TItem> typename TBuffer>
+  template<template<typename TItem> class TBuffer>
   void checkExceptionDuringWriteCausesNoLeaks() {
     std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
     std::vector<TestItem> items;
@@ -426,7 +426,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<template<typename TItem> typename TBuffer>
+  template<template<typename TItem> class TBuffer>
   void checkExceptionDuringShoveCausesNoLeaks() {
     std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
     std::vector<TestItem> items;
@@ -469,7 +469,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<template<typename TItem> typename TBuffer>
+  template<template<typename TItem> class TBuffer>
   void checkExceptionDuringReadCausesNoLeaks() {
     std::vector<std::shared_ptr<TestItemStats>> stats = makeStats(16);
     std::vector<TestItem> items;

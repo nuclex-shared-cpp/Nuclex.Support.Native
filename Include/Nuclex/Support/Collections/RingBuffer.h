@@ -369,7 +369,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         this->endIndex += itemCount;
       } else { // New data must be wrapped or ring buffer needs to be extended
         std::size_t wrappedItemCount = itemCount - remainingSegmentItemCount;
-        if(likely(this->startIndex < wrappedItemCount)) {
+        if(likely(wrappedItemCount < this->startIndex)) {
           if(remainingSegmentItemCount > 0) {
             TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
             targetItems += this->endIndex;
@@ -482,14 +482,16 @@ namespace Nuclex { namespace Support { namespace Collections {
       std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
 
       // Allocate new memory for the enlarged buffer
-      std::unique_ptr<std::uint8_t[]> newItemMemory(
+      std::unique_ptr<std::uint8_t[]> swappedItemMemory(
         new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2]
       );
-      TItem *targetItems = reinterpret_cast<TItem *>(newItemMemory.get());
+      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+
+      this->capacity = newCapacity;
 
       // Copy the older segment of the existing items into the new buffer
       {
-        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        TItem *existingItems = reinterpret_cast<TItem *>(swappedItemMemory.get());
         existingItems += this->endIndex;
 
         std::size_t count = this->capacity - this->startIndex;
@@ -503,15 +505,26 @@ namespace Nuclex { namespace Support { namespace Collections {
           }
         }
         catch(...) {
-          count = (this->capacity - this->startIndex) - count;
+          this->endIndex = (this->capacity - this->startIndex) - count;
 
-          this->startIndex += count;
-
+          // Delete remainder of current segment
           while(count > 0) {
-            --targetItems;
-            targetItems->~TItem();
+            existingItems->~TItem();
+            ++existingItems;
             --count;
           }
+
+          count = this->startIndex;
+          existingItems = reinterpret_cast<TItem *>(swappedItemMemory.get());
+
+          // Delete older segment
+          while(count > 0) {
+            existingItems->~TItem();
+            ++existingItems;
+            --count;
+          }
+
+          this->startIndex = 0;
 
           throw;
         }
@@ -519,7 +532,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
       // Copy the newer segment of the existing items into the new buffer
       {
-        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        TItem *existingItems = reinterpret_cast<TItem *>(swappedItemMemory.get());
 
         std::size_t count = this->endIndex;
         try {
@@ -532,21 +545,18 @@ namespace Nuclex { namespace Support { namespace Collections {
           }
         }
         catch(...) {
-          count = (this->endIndex - count) + (this->capacity - this->startIndex);
+          this->startIndex = 0;
+          this->endIndex = (this->endIndex - count) + (this->capacity - this->startIndex);
 
           while(count > 0) {
-            --targetItems;
-            targetItems->~TItem();
+            existingItems->~TItem();
+            ++existingItems;
             --count;
           }
 
           throw;
         }
       }
-
-      // Apply the changes. Note that we do not update startIndex and endIndex here.
-      this->itemMemory.swap(newItemMemory);
-      this->capacity = newCapacity;
       
       return targetItems;
     }
@@ -608,14 +618,17 @@ namespace Nuclex { namespace Support { namespace Collections {
       std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
 
       // Allocate new memory for the enlarged buffer
-      std::unique_ptr<std::uint8_t[]> newItemMemory(
+      std::unique_ptr<std::uint8_t[]> swappedItemMemory(
         new std::uint8_t[sizeof(TItem[2]) * newCapacity / 2]
       );
-      TItem *targetItems = reinterpret_cast<TItem *>(newItemMemory.get());
+      swappedItemMemory.swap(this->itemMemory);
+      this->capacity = newCapacity;
+
+      TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
 
       // Copy the older segment of the existing items into the new buffer
       {
-        TItem *existingItems = reinterpret_cast<TItem *>(this->itemMemory.get());
+        TItem *existingItems = reinterpret_cast<TItem *>(swappedItemMemory.get());
         existingItems += this->startIndex;
 
         std::size_t count = this->endIndex - this->startIndex;
@@ -629,23 +642,18 @@ namespace Nuclex { namespace Support { namespace Collections {
           }
         }
         catch(...) {
-          count = (this->endIndex - this->startIndex) - count;
-
-          this->startIndex += count;
+          this->endIndex = (this->endIndex - this->startIndex) - count;
+          this->startIndex = 0;
 
           while(count > 0) {
-            --targetItems;
-            targetItems->~TItem();
+            existingItems->~TItem();
+            ++existingItems;
             --count;
           }
 
           throw;
         }
       }
-
-      // Apply the changes. Note that we do not update startIndex and endIndex here.
-      this->itemMemory.swap(newItemMemory);
-      this->capacity = newCapacity;
 
       return targetItems;
     }
@@ -701,6 +709,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         try {
           while(count > 0) {
             *targetItems = std::move(*sourceItems);
+            sourceItems->~TItem();
             ++sourceItems;
             ++targetItems;
             --count;
@@ -710,7 +719,7 @@ namespace Nuclex { namespace Support { namespace Collections {
           this->startIndex += (itemCount - count);
           throw;
         }
-        if(count == availableItemCount) {
+        if(itemCount == availableItemCount) {
           this->startIndex = InvalidIndex;
 #if !defined(NDEBUG)
           this->endIndex = InvalidIndex;
@@ -770,6 +779,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         try {
           while(count > 0) {
             *targetItems = std::move(*sourceItems);
+            sourceItems->~TItem();
             ++sourceItems;
             ++targetItems;
             --count;
@@ -781,7 +791,8 @@ namespace Nuclex { namespace Support { namespace Collections {
         }
 
         // Was all data in the segment consumed?
-        if(count == availableSegmentItemCount) {
+        // (Note: we know we're wrapped, so we don't need to check if we're empty)
+        if(itemCount == availableSegmentItemCount) {
           this->startIndex = 0;
         } else {
           this->startIndex += count;
@@ -799,6 +810,7 @@ namespace Nuclex { namespace Support { namespace Collections {
             try {
               while(count > 0) {
                 *targetItems = std::move(*sourceItems);
+                sourceItems->~TItem();
                 ++sourceItems;
                 ++targetItems;
                 --count;
@@ -821,6 +833,7 @@ namespace Nuclex { namespace Support { namespace Collections {
             try {
               while(count > 0) {
                 *targetItems = std::move(*sourceItems);
+                sourceItems->~TItem();
                 ++sourceItems;
                 ++targetItems;
                 --count;
