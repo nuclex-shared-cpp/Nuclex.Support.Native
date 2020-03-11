@@ -28,6 +28,19 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
+  // Typical C-style macro to concatenate two names in the preprocessor
+  #define NUCLEX_SUPPORT_CONCAT_IMPL(x, y) x##y
+  #define NUCLEX_SUPPORT_CONCAT(x, y) NUCLEX_SUPPORT_CONCAT_IMPL(x, y)
+
+  // Macro to give scope guards unique names, either sequential or line numbers
+  #if defined(__COUNTER__)
+    #define NUCLEX_SUPPORT_UNIQUE_VARIABLE(name) NUCLEX_SUPPORT_CONCAT(name, __COUNTER__)
+  #else
+    #define NUCLEX_SUPPORT_UNIQUE_VARIABLE(name) NUCLEX_SUPPORT_CONCAT(name, __LINE__)
+  #endif
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>RAII helper that executes a lambda expression when going out of scope</summary>
   /// <typeparam name="TLambda">Lambda expression that will be executed</typeparam>
   template<typename TLambda>
@@ -53,17 +66,90 @@ namespace Nuclex { namespace Support {
   };
 
   // ------------------------------------------------------------------------------------------- //
+#if 0
+  /// <summary>Creates scope guard running the specified clean-up code</summary>
+  /// <param name="cleanUpExpression">Lambda expression with the clean-up code</param>
+  /// <returns>A scope guard running the specified clean-up code</returns>
+  template<typename TLambda>
+  ScopeGuard<TLambda> MakeScopeGuard(TLambda &&cleanUpExpression) {
+    return ScopeGuard<TLambda>(std::forward<TLambda>(cleanUpExpression));
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
 
-  // Typical C-style macro to concatenate two names in the preprocessor
-  #define NUCLEX_SUPPORT_CONCAT_IMPL(x, y) x##y
-  #define NUCLEX_SUPPORT_CONCAT(x, y) NUCLEX_SUPPORT_CONCAT_IMPL(x, y)
+  /// <summary>Creates scope guard running the specified clean-up code</summary>
+  /// <param name="cleanUpExpression">Lambda expression with the clean-up code</param>
+  /// <returns>A scope guard running the specified clean-up code</returns>
+  template<typename TLambda>
+  ScopeGuard<TLambda> operator +(std::nullptr_t, TLambda &&cleanUpExpression) {
+    return ScopeGuard<TLambda>(std::forward<TLambda>(cleanUpExpression));
+  }
 
-  // Macro to give scope guards unique names, either sequential or line numbers
-  #if defined(__COUNTER__)
-    #define NUCLEX_SUPPORT_UNIQUE_VARIABLE(name) NUCLEX_SUPPORT_CONCAT(name, __COUNTER__)
-  #else
-    #define NUCLEX_SUPPORT_UNIQUE_VARIABLE(name) NUCLEX_SUPPORT_CONCAT(name, __LINE__)
-  #endif
+  // Macro that allows you to conveniently define some code to be run at scope exit
+  #define ON_SCOPE_EXIT auto NUCLEX_SUPPORT_UNIQUE_VARIABLE(onScopeExit) = nullptr + [&]()
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>RAII helper that executes a lambda expression when going out of scope</summary>
+  /// <typeparam name="TLambda">Lambda expression that will be executed</typeparam>
+  template<typename TLambda>
+  class TransactionalScopeGuard {
+
+    /// <summary>
+    ///   Initializes a new scope guard running the specified expression upon destruction
+    /// </summary>
+    /// <param name="cleanUpExpression">
+    ///   Lambda expression with the clean up code that needs to be executed
+    /// </param>
+    public: TransactionalScopeGuard(TLambda &&cleanUpExpression) :
+      cleanUpExpression(std::forward<TLambda>(cleanUpExpression)),
+      armed(true) {}
+
+    /// <summary>Executes the cleanup code as the scope guard leaves scope</summary>
+    public: ~TransactionalScopeGuard() {
+      if(this->armed) {
+        cleanUpExpression();
+      }
+    }
+
+    /// <summary>Disarms the scope guard, preventing the clean up code from running</summary>
+    /// <remarks>
+    ///   This method is typically used when your cleanup code reverts some change
+    ///   the should become permanent unless the scope is exited through an exception.
+    /// </remarks>
+    public: void Commit() {
+      this->armed = false;
+    }
+
+    /// <summary>Lambda expression containing the cleanup code</summary>
+    private: TLambda cleanUpExpression;
+    /// <summary>Whether the scope guard will execute the clean upcode</summary>
+    private: bool armed;
+
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+#if 0
+  /// <summary>Creates scope guard running the specified clean-up code</summary>
+  /// <param name="cleanUpExpression">Lambda expression with the clean-up code</param>
+  /// <returns>A scope guard running the specified clean-up code</returns>
+  template<typename TLambda>
+  TransactionalScopeGuard<TLambda> MakeTransactionalScopeGuard(TLambda &&cleanUpExpression) {
+    return TransactionalScopeGuard<TLambda>(std::forward<TLambda>(cleanUpExpression));
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Creates scope guard running the specified clean-up code</summary>
+  /// <param name="cleanUpExpression">Lambda expression with the clean-up code</param>
+  /// <returns>A scope guard running the specified clean-up code</returns>
+  template<typename TLambda>
+  TransactionalScopeGuard<TLambda> operator -(std::nullptr_t, TLambda &&cleanUpExpression) {
+    return TransactionalScopeGuard<TLambda>(std::forward<TLambda>(cleanUpExpression));
+  }
+
+  // Macro that allows you to conveniently define some code to be run at scope exit
+  #define ON_SCOPE_EXIT_TRANSACTION nullptr - [&]()
 
   // ------------------------------------------------------------------------------------------- //
 
