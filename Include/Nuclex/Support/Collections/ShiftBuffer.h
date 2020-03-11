@@ -22,6 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_COLLECTIONS_SHIFTBUFFER_H
 
 #include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/ScopeGuard.h"
 
 #include <cstddef> // for std::size_t
 #include <cstdint> // for std::uint8_t
@@ -315,7 +316,11 @@ namespace Nuclex { namespace Support { namespace Collections {
       targetItems += this->endIndex;
 
       std::size_t count = itemCount;
-      try {
+      {
+        ON_SCOPE_EXIT {
+          this->endIndex += itemCount - count;
+        };
+
         while(count > 0) {
           new(targetItems) TItem(*sourceItems);
           ++sourceItems;
@@ -323,12 +328,6 @@ namespace Nuclex { namespace Support { namespace Collections {
           --count;
         }
       }
-      catch(...) {
-        this->endIndex += itemCount - count;
-        throw;
-      }
-
-      this->endIndex += itemCount;
     }
 
     /// <summary>Copies the specified items into the already available buffer</summary>
@@ -355,7 +354,11 @@ namespace Nuclex { namespace Support { namespace Collections {
       targetItems += this->endIndex;
 
       std::size_t count = itemCount;
-      try {
+      {
+        ON_SCOPE_EXIT {
+          this->endIndex += itemCount - count;
+        };
+
         while(count > 0) {
           new(targetItems) TItem(std::move(*sourceItems));
           // no d'tor call here, source isn't ours and will be destroyed externally
@@ -364,12 +367,6 @@ namespace Nuclex { namespace Support { namespace Collections {
           --count;
         }
       }
-      catch(...) {
-        this->endIndex += itemCount - count;
-        throw;
-      }
-
-      this->endIndex += itemCount;
     }
 
     /// <summary>Moves the specified items into the already available buffer</summary>
