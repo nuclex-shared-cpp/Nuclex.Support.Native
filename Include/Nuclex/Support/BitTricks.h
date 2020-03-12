@@ -37,6 +37,45 @@ namespace Nuclex { namespace Support {
 
   /// <summary>A few helper methods for bit manipulation</summary>
   class BitTricks {
+
+    /// <summary>Counts the number of bits set in a 32 bit integer</summary>
+    /// <param name="value">Value whose bits will be counted</param>
+    /// <returns>The number of bits set in the 32 bit integer</returns>
+    public: static inline constexpr unsigned char CountBits(std::uint32_t value) {
+#if defined(_MSC_VER)
+      return __popcnt(value);
+#elif defined(__clang__)
+      return static_cast<unsigned char>(::__builtin_popcount(value));
+#elif (defined(__GNUC__) || defined(__GNUG__))
+      return static_cast<unsigned char>(::__builtin_popcount(value));
+#else
+      // http://stackoverflow.com/questions/109023
+      value = value - ((value >> 1) & 0x55555555U);
+      value = (value & 0x33333333U) + ((value >> 2) & 0x33333333U);
+      return (((value + (value >> 4)) & 0xF0F0F0FU) * 0x1010101U) >> 24;
+#endif
+    }
+
+    /// <summary>Counts the number of bits set in a 64 bit integer</summary>
+    /// <param name="value">Value whose bits will be counted</param>
+    /// <returns>The number of bits set in the 64 bit integer</returns>
+    public: static inline constexpr unsigned char CountBits(std::uint64_t value) {
+#if defined(_MSC_VER)
+      return __popcnt64(value);
+#elif defined(__clang__)
+      return static_cast<unsigned char>(::__builtin_popcountll(value));
+#elif (defined(__GNUC__) || defined(__GNUG__))
+      return static_cast<unsigned char>(::__builtin_popcountll(value));
+#else
+      // http://stackoverflow.com/questions/2709430
+      value = value - ((value >> 1) & 0x5555555555555555ULL);
+      value = (value & 0x3333333333333333ULL) + ((value >> 2) & 0x3333333333333333ULL);
+      return (
+        (((value + (value >> 4)) & 0xF0F0F0F0F0F0F0FULL) * 0x101010101010101ULL) >> 56
+      );
+#endif
+    }
+
     /// <summary>Counts the number of leading zero bits in a value</summary>
     /// <param name="value">Value in which the leading zero bits will be couned</param>
     /// <returns>The number of leading zero bits in the value</returns>
