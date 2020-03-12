@@ -45,9 +45,9 @@ namespace Nuclex { namespace Support {
 #if defined(_MSC_VER)
       return __popcnt(value);
 #elif defined(__clang__)
-      return static_cast<unsigned char>(::__builtin_popcount(value));
+      return static_cast<unsigned char>(__builtin_popcount(value));
 #elif (defined(__GNUC__) || defined(__GNUG__))
-      return static_cast<unsigned char>(::__builtin_popcount(value));
+      return static_cast<unsigned char>(__builtin_popcount(value));
 #else
       // http://stackoverflow.com/questions/109023
       value = value - ((value >> 1) & 0x55555555U);
@@ -63,9 +63,9 @@ namespace Nuclex { namespace Support {
 #if defined(_MSC_VER)
       return __popcnt64(value);
 #elif defined(__clang__)
-      return static_cast<unsigned char>(::__builtin_popcountll(value));
+      return static_cast<unsigned char>(__builtin_popcountll(value));
 #elif (defined(__GNUC__) || defined(__GNUG__))
-      return static_cast<unsigned char>(::__builtin_popcountll(value));
+      return static_cast<unsigned char>(__builtin_popcountll(value));
 #else
       // http://stackoverflow.com/questions/2709430
       value = value - ((value >> 1) & 0x5555555555555555ULL);
@@ -81,11 +81,11 @@ namespace Nuclex { namespace Support {
     /// <returns>The number of leading zero bits in the value</returns>
     public: static inline constexpr unsigned char CountLeadingZeroBits(std::uint32_t value) {
 #if defined(_MSC_VER)
-      return ::__lzcnt(value);
+      return __lzcnt(value);
 #elif defined(__clang__)
-      return static_cast<unsigned char>(::__builtin_clz(value));
+      return static_cast<unsigned char>(__builtin_clz(value));
 #elif (defined(__GNUC__) || defined(__GNUG__))
-      return static_cast<unsigned char>(::__builtin_clz(value));
+      return static_cast<unsigned char>(__builtin_clz(value));
 #else
       // https://www.chessprogramming.org/BitScan#Bitscan_reverse
       // https://stackoverflow.com/questions/2589096/
@@ -109,11 +109,11 @@ namespace Nuclex { namespace Support {
     /// <returns>The number of leading zero bits in the value</returns>
     public: static inline constexpr unsigned char CountLeadingZeroBits(std::uint64_t value) {
 #if defined(_MSC_VER)
-      return ::__lzcnt64(value);
+      return __lzcnt64(value);
 #elif defined(__clang__)
-      return static_cast<unsigned char>(::__builtin_clzll(value));
+      return static_cast<unsigned char>(__builtin_clzll(value));
 #elif (defined(__GNUC__) || defined(__GNUG__))
-      return static_cast<unsigned char>(::__builtin_clzll(value));
+      return static_cast<unsigned char>(__builtin_clzll(value));
 #else
       // https://stackoverflow.com/questions/21888140/
       const unsigned char deBruijnBitPosition[64] = {
@@ -131,6 +131,65 @@ namespace Nuclex { namespace Support {
       value |= value >> 32;
 
       return deBruijnBitPosition[(value * 0x03F79D71B4CB0A89ULL) >> 58];
+#endif
+    }
+
+    /// <summary>
+    ///   Returns the nearest power of two that is greater than or equal to the input value
+    /// </summary>
+    /// <param name="value">Value in which the next power of two will be returned</param>
+    /// <returns>
+    ///   The nearest power of two that is greater than or equal to the input value
+    /// </returns>
+    public: static inline constexpr std::uint32_t GetUpperPowerOfTwo(std::uint32_t value) {
+#if 0 // defined(_MSC_VER)
+      //::_BitScanReverse(value); ??
+#elif defined(__clang__)
+      std::uint32_t lowerBound = 2147483648U >> __builtin_clz(value);
+      return lowerBound << (value > lowerBound);
+#elif (defined(__GNUC__) || defined(__GNUG__))
+      std::uint32_t lowerBound = 2147483648U >> __builtin_clz(value);
+      return lowerBound << (value > lowerBound);
+#else
+      --value;
+
+      value |= value >> 1;
+      value |= value >> 2;
+      value |= value >> 4;
+      value |= value >> 8;
+      value |= value >> 16;
+
+      return (value + 1);
+#endif
+    }
+
+    /// <summary>
+    ///   Returns the nearest power of two that is greater than or equal to the input value
+    /// </summary>
+    /// <param name="value">Value in which the next power of two will be returned</param>
+    /// <returns>
+    ///   The nearest power of two that is greater than or equal to the input value
+    /// </returns>
+    public: static inline constexpr std::uint64_t GetUpperPowerOfTwo(std::uint64_t value) {
+#if 0 // defined(_MSC_VER)
+      //::_BitScanReverse(value); ??
+#elif defined(__clang__)
+      std::uint64_t lowerBound = 9223372036854775808ULL >> __builtin_clzll(value);
+      return lowerBound << (value > lowerBound);
+#elif (defined(__GNUC__) || defined(__GNUG__))
+      std::uint64_t lowerBound = 9223372036854775808ULL >> __builtin_clzll(value);
+      return lowerBound << (value > lowerBound);
+#else
+      --value;
+
+      value |= value >> 1;
+      value |= value >> 2;
+      value |= value >> 4;
+      value |= value >> 8;
+      value |= value >> 16;
+      value |= value >> 32;
+
+      return (value + 1);
 #endif
     }
 

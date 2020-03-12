@@ -24,6 +24,8 @@ License along with this library
 #include "Nuclex/Support/BitTricks.h"
 #include <gtest/gtest.h>
 
+#include <random>
+
 namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
@@ -77,6 +79,60 @@ namespace Nuclex { namespace Support {
         63 - index,
         BitTricks::CountLeadingZeroBits(std::uint64_t(1ULL << index))
       );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(BitTricksTest, CanFindPowerOfTwoFor32BitsValue) {
+    std::mt19937 generator;
+
+    for(std::size_t index = 0; index < 31; ++index) {
+      EXPECT_EQ(
+        (1U << index),
+        BitTricks::GetUpperPowerOfTwo(std::uint32_t(1U << index))
+      );
+
+      // Do some random checks for 10 numbers below the searched for power-of-two
+      {
+        std::uint32_t upperBound = 1U << index;
+        std::uint32_t lowerBound = (upperBound >> 1) + 1U;
+        std::uniform_int_distribution<std::uint32_t> distribution(lowerBound, upperBound);
+        for(std::size_t extra = 0; extra < 10; ++extra) {
+          EXPECT_EQ(
+            (1U << index),
+            BitTricks::GetUpperPowerOfTwo(distribution(generator))
+          );
+        }
+      }
+
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(BitTricksTest, CanFindPowerOfTwoFor64BitsValue) {
+    std::mt19937 generator;
+
+    for(std::size_t index = 0; index < 63; ++index) {
+      EXPECT_EQ(
+        (1ULL << index),
+        BitTricks::GetUpperPowerOfTwo(std::uint64_t(1ULL << index))
+      );
+
+      // Do some random checks for 10 numbers below the searched for power-of-two
+      {
+        std::uint64_t upperBound = 1ULL << index;
+        std::uint64_t lowerBound = (upperBound >> 1) + 1ULL;
+        std::uniform_int_distribution<std::uint64_t> distribution(lowerBound, upperBound);
+        for(std::size_t extra = 0; extra < 10; ++extra) {
+          EXPECT_EQ(
+            (1ULL << index),
+            BitTricks::GetUpperPowerOfTwo(distribution(generator))
+          );
+        }
+      }
+
     }
   }
 
