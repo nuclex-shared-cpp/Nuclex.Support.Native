@@ -104,6 +104,27 @@ namespace Nuclex { namespace Support {
 #endif
     }
 
+    /// <summary>Counts the number of leading zero bits in a value</summary>
+    /// <param name="value">Value in which the leading zero bits will be couned</param>
+    /// <returns>The number of leading zero bits in the value</returns>
+    public: static inline constexpr unsigned char CountLeadingZeroBits(std::uint64_t value) {
+#if defined(_MSC_VER)
+      return ::__lzcnt(value);
+#elif defined(__clang__)
+      return static_cast<unsigned char>(::__builtin_clz(value));
+#elif false // (defined(__GNUC__) || defined(__GNUG__))
+      return static_cast<unsigned char>(::__builtin_clz(value));
+#else
+      value |= value >> 1;
+      value |= value >> 2;
+      value |= value >> 4;
+      value |= value >> 8;
+      value |= value >> 16;
+      value |= value >> 32;
+      return 64 - CountBits(value);
+#endif
+    }
+
   };
 
   // ------------------------------------------------------------------------------------------- //

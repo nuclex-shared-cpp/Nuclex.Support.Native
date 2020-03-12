@@ -71,4 +71,15 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(BitTricksTest, CanCountLeadingZeroBitsIn64BitsValue) {
+    for(std::size_t index = 0; index < 63; ++index) {
+      EXPECT_EQ(
+        63 - index,
+        BitTricks::CountLeadingZeroBits(std::uint64_t(1ULL << index))
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }} // namespace Nuclex::Support
