@@ -115,13 +115,22 @@ namespace Nuclex { namespace Support {
 #elif false // (defined(__GNUC__) || defined(__GNUG__))
       return static_cast<unsigned char>(::__builtin_clz(value));
 #else
+      // https://stackoverflow.com/questions/21888140/
+      const unsigned char deBruijnBitPosition[64] = {
+        63, 16, 62, 7, 15, 36, 61, 3, 6, 14, 22, 26, 35, 47, 60, 2,
+        9, 5, 28, 11, 13, 21, 42, 19, 25, 31, 34, 40, 46, 52, 59, 1,
+        17, 8, 37, 4, 23, 27, 48, 10, 29, 12, 43, 20, 32, 41, 53, 18,
+        38, 24, 49, 30, 44, 33, 54, 39, 50, 45, 55, 51, 56, 57, 58, 0
+      };
+
       value |= value >> 1;
       value |= value >> 2;
       value |= value >> 4;
       value |= value >> 8;
       value |= value >> 16;
       value |= value >> 32;
-      return 64 - CountBits(value);
+
+      return deBruijnBitPosition[(value * 0x03F79D71B4CB0A89ULL) >> 58];
 #endif
     }
 
