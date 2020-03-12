@@ -109,11 +109,11 @@ namespace Nuclex { namespace Support {
     /// <returns>The number of leading zero bits in the value</returns>
     public: static inline constexpr unsigned char CountLeadingZeroBits(std::uint64_t value) {
 #if defined(_MSC_VER)
-      return ::__lzcnt(value);
+      return ::__lzcnt64(value);
 #elif defined(__clang__)
-      return static_cast<unsigned char>(::__builtin_clz(value));
-#elif false // (defined(__GNUC__) || defined(__GNUG__))
-      return static_cast<unsigned char>(::__builtin_clz(value));
+      return static_cast<unsigned char>(::__builtin_clzll(value));
+#elif (defined(__GNUC__) || defined(__GNUG__))
+      return static_cast<unsigned char>(::__builtin_clzll(value));
 #else
       // https://stackoverflow.com/questions/21888140/
       const unsigned char deBruijnBitPosition[64] = {
