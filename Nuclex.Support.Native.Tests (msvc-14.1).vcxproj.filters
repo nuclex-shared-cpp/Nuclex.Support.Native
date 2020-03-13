@@ -263,6 +263,15 @@
     <ClCompile Include="Tests\OptionalTests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="Source\BitTricks.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\BitTricksTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\ScopeGuardTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Text\Utf8\checked.h">
@@ -467,6 +476,9 @@
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\BitTricks.h">
       <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>

@@ -41,9 +41,11 @@ namespace Nuclex { namespace Support {
     /// <summary>Counts the number of bits set in a 32 bit integer</summary>
     /// <param name="value">Value whose bits will be counted</param>
     /// <returns>The number of bits set in the 32 bit integer</returns>
-    public: static inline constexpr unsigned char CountBits(std::uint32_t value) {
+    public: NUCLEX_SUPPORT_API static inline unsigned char CountBits(
+      std::uint32_t value
+    ) {
 #if defined(_MSC_VER)
-      return __popcnt(value);
+      return static_cast<unsigned char>(__popcnt(value));
 #elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       return static_cast<unsigned char>(__builtin_popcount(value));
 #else
@@ -57,9 +59,11 @@ namespace Nuclex { namespace Support {
     /// <summary>Counts the number of bits set in a 64 bit integer</summary>
     /// <param name="value">Value whose bits will be counted</param>
     /// <returns>The number of bits set in the 64 bit integer</returns>
-    public: static inline constexpr unsigned char CountBits(std::uint64_t value) {
+    public: NUCLEX_SUPPORT_API static inline unsigned char CountBits(
+      std::uint64_t value
+    ) {
 #if defined(_MSC_VER)
-      return __popcnt64(value);
+      return static_cast<unsigned char>(__popcnt64(value));
 #elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       return static_cast<unsigned char>(__builtin_popcountll(value));
 #else
@@ -78,15 +82,20 @@ namespace Nuclex { namespace Support {
     /// <remarks>
     ///   The result is undefined if the input value is 0
     /// </remarks>
-    public: static inline constexpr unsigned char CountLeadingZeroBits(std::uint32_t value) {
+    public: NUCLEX_SUPPORT_API static inline unsigned char CountLeadingZeroBits(
+      std::uint32_t value
+    ) {
 #if defined(_MSC_VER)
-      return __lzcnt(value);
+      //return static_cast<unsigned char>(__lzcnt(value));
+      unsigned long bitIndex;
+      _BitScanReverse(&bitIndex, value);
+      return static_cast<unsigned char>(31 - bitIndex);
 #elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       return static_cast<unsigned char>(__builtin_clz(value));
 #else
       // https://www.chessprogramming.org/BitScan#Bitscan_reverse
       // https://stackoverflow.com/questions/2589096/
-      const unsigned char deBruijnBitPosition[32] = {
+      static const unsigned char deBruijnBitPosition[32] = {
         31, 22, 30, 21, 18, 10, 29, 2, 20, 17, 15, 13, 9, 6, 28, 1,
         23, 19, 11, 3, 16, 14, 7, 24, 12, 4, 8, 25, 5, 26, 27, 0
       };
@@ -107,14 +116,19 @@ namespace Nuclex { namespace Support {
     /// <remarks>
     ///   The result is undefined if the input value is 0
     /// </remarks>
-    public: static inline constexpr unsigned char CountLeadingZeroBits(std::uint64_t value) {
+    public: NUCLEX_SUPPORT_API static inline unsigned char CountLeadingZeroBits(
+      std::uint64_t value
+    ) {
 #if defined(_MSC_VER)
-      return __lzcnt64(value);
+      //return static_cast<unsigned char>(__lzcnt64(value));
+      unsigned long bitIndex;
+      _BitScanReverse64(&bitIndex, value);
+      return static_cast<unsigned char>(63 - bitIndex);
 #elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       return static_cast<unsigned char>(__builtin_clzll(value));
 #else
       // https://stackoverflow.com/questions/21888140/
-      const unsigned char deBruijnBitPosition[64] = {
+      static const unsigned char deBruijnBitPosition[64] = {
         63, 16, 62, 7, 15, 36, 61, 3, 6, 14, 22, 26, 35, 47, 60, 2,
         9, 5, 28, 11, 13, 21, 42, 19, 25, 31, 34, 40, 46, 52, 59, 1,
         17, 8, 37, 4, 23, 27, 48, 10, 29, 12, 43, 20, 32, 41, 53, 18,
@@ -139,9 +153,14 @@ namespace Nuclex { namespace Support {
     /// <returns>
     ///   The nearest power of two that is greater than or equal to the input value
     /// </returns>
-    public: static inline constexpr std::uint32_t GetUpperPowerOfTwo(std::uint32_t value) {
-#if 0 // defined(_MSC_VER)
-      //::_BitScanReverse(value); ??
+    public: NUCLEX_SUPPORT_API static inline std::uint32_t GetUpperPowerOfTwo(
+      std::uint32_t value
+    ) {
+#if defined(_MSC_VER)
+      unsigned long bitIndex;
+      _BitScanReverse(&bitIndex, value);
+      std::uint32_t lowerBound = 1U << bitIndex;
+      return lowerBound << static_cast<int>(value > lowerBound);
 #elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       std::uint32_t lowerBound = 2147483648U >> __builtin_clz(value);
       return lowerBound << (value > lowerBound);
@@ -165,9 +184,14 @@ namespace Nuclex { namespace Support {
     /// <returns>
     ///   The nearest power of two that is greater than or equal to the input value
     /// </returns>
-    public: static inline constexpr std::uint64_t GetUpperPowerOfTwo(std::uint64_t value) {
-#if 0 // defined(_MSC_VER)
-      //::_BitScanReverse(value); ??
+    public: NUCLEX_SUPPORT_API static inline std::uint64_t GetUpperPowerOfTwo(
+      std::uint64_t value
+    ) {
+#if defined(_MSC_VER)
+      unsigned long bitIndex;
+      _BitScanReverse64(&bitIndex, value);
+      std::uint64_t lowerBound = 1ULL << bitIndex;
+      return lowerBound << static_cast<int>(value > lowerBound);
 #elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       std::uint64_t lowerBound = 9223372036854775808ULL >> __builtin_clzll(value);
       return lowerBound << (value > lowerBound);

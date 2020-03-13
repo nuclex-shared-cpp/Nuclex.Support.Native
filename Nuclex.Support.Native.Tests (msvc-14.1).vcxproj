@@ -197,6 +197,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Nuclex\Support\BitTricks.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h" />
@@ -243,6 +244,7 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\BitTricks.cpp" />
     <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
@@ -324,6 +326,7 @@
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Tests\BitTricksTest.cpp" />
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp" />
     <ClCompile Include="Tests\Collections\RingBufferTest.cpp" />
     <ClCompile Include="Tests\Collections\ShiftBufferDeathTest.cpp" />
@@ -331,6 +334,7 @@
     <ClCompile Include="Tests\Events\DelegateTests.cpp" />
     <ClCompile Include="Tests\Events\EventTests.cpp" />
     <ClCompile Include="Tests\OptionalTests.cpp" />
+    <ClCompile Include="Tests\ScopeGuardTest.cpp" />
     <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp" />
     <ClCompile Include="Tests\Services\ServiceContainerTest.cpp" />
     <ClCompile Include="Tests\Text\LexicalTest.cpp" />
