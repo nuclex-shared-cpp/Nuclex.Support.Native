@@ -22,6 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_COLLECTIONS_RINGBUFFER_H
 
 #include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/BitTricks.h"
 
 #include <cstddef> // for std::size_t
 #include <cstdint> // for std::uint8_t
@@ -49,8 +50,8 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Initializes a new ring buffer</summary>
     /// <param name="capacity">Storage space in the ring buffer at the beginning</param>
     public: RingBuffer(std::size_t capacity = 256) :
-      itemMemory(new std::uint8_t[sizeof(TItem[2]) * getNextPowerOfTwo(capacity) / 2]),
-      capacity(getNextPowerOfTwo(capacity)),
+      itemMemory(new std::uint8_t[sizeof(TItem[2]) * BitTricks::GetUpperPowerOfTwo(capacity) / 2]),
+      capacity(BitTricks::GetUpperPowerOfTwo(capacity)),
       startIndex(InvalidIndex),
       endIndex(InvalidIndex) {}
 
@@ -157,7 +158,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
       if(this->startIndex == InvalidIndex) {
         if(unlikely(count > this->capacity)) {
-          std::size_t newCapacity = getNextPowerOfTwo(count);
+          std::size_t newCapacity = BitTricks::GetUpperPowerOfTwo(count);
           std::unique_ptr<std::uint8_t[]> newItemMemory(
             new std::uint8_t[sizeof(TItem[2]) * capacity / 2]
           );
@@ -189,37 +190,6 @@ namespace Nuclex { namespace Support { namespace Collections {
       } else {
         extractFromWrapped(items, count);
       }
-    }
-
-    /// <summary>Calculates the next power of two for the specified value</summary>
-    /// <param name="value">Value of which the next power of two will be calculated</param>
-    /// <returns>The next power of two to the specified value</returns>
-    private: static std::uint32_t getNextPowerOfTwo(std::uint32_t value) {
-      --value;
-
-      value |= value >> 1;
-      value |= value >> 2;
-      value |= value >> 4;
-      value |= value >> 8;
-      value |= value >> 16;
-
-      return (value + 1);
-    }
-
-    /// <summary>Calculates the next power of two for the specified value</summary>
-    /// <param name="value">Value of which the next power of two will be calculated</param>
-    /// <returns>The next power of two to the specified value</returns>
-    private: static std::uint64_t getNextPowerOfTwo(std::uint64_t value) {
-      --value;
-
-      value |= value >> 1;
-      value |= value >> 2;
-      value |= value >> 4;
-      value |= value >> 8;
-      value |= value >> 16;
-      value |= value >> 32;
-
-      return (value + 1);
     }
 
     /// <summary>Emplaces the specified items into an empty ring buffer</summary>
@@ -479,7 +449,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     typename std::enable_if<
       !std::is_trivially_destructible<T>::value || !std::is_trivially_copyable<T>::value, TItem *
     >::type reallocateWhenWrapped(std::size_t requiredItemCount) {
-      std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
+      std::size_t newCapacity = BitTricks::GetUpperPowerOfTwo(requiredItemCount);
 
       // Allocate new memory for the enlarged buffer
       std::unique_ptr<std::uint8_t[]> swappedItemMemory(
@@ -572,7 +542,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     typename std::enable_if<
       std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, TItem *
     >::type reallocateWhenWrapped(std::size_t requiredItemCount) {
-      std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
+      std::size_t newCapacity = BitTricks::GetUpperPowerOfTwo(requiredItemCount);
 
       // Allocate new memory for the enlarged buffer
       std::unique_ptr<std::uint8_t[]> newItemMemory(
@@ -615,7 +585,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     typename std::enable_if<
       !std::is_trivially_destructible<T>::value || !std::is_trivially_copyable<T>::value, TItem *
     >::type reallocateWhenLinear(std::size_t requiredItemCount) {
-      std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
+      std::size_t newCapacity = BitTricks::GetUpperPowerOfTwo(requiredItemCount);
 
       // Allocate new memory for the enlarged buffer
       std::unique_ptr<std::uint8_t[]> swappedItemMemory(
@@ -669,7 +639,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     typename std::enable_if<
       std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, TItem *
     >::type reallocateWhenLinear(std::size_t requiredItemCount) {
-      std::size_t newCapacity = getNextPowerOfTwo(requiredItemCount);
+      std::size_t newCapacity = BitTricks::GetUpperPowerOfTwo(requiredItemCount);
 
       // Allocate new memory for the enlarged buffer
       std::unique_ptr<std::uint8_t[]> newItemMemory(

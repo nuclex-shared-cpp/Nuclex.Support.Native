@@ -23,6 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/ScopeGuard.h"
+#include "Nuclex/Support/BitTricks.h"
 
 #include <cstddef> // for std::size_t
 #include <cstdint> // for std::uint8_t
@@ -68,8 +69,8 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Initializes a new shift buffer</summary>
     /// <param name="capacity">Storage space in the shift  buffer at the beginning</param>
     public: ShiftBuffer(std::size_t capacity = 256) :
-      itemMemory(new std::uint8_t[sizeof(TItem[2]) * getNextPowerOfTwo(capacity) / 2]),
-      capacity(getNextPowerOfTwo(capacity)),
+      itemMemory(new std::uint8_t[sizeof(TItem[2]) * BitTricks::GetUpperPowerOfTwo(capacity) / 2]),
+      capacity(BitTricks::GetUpperPowerOfTwo(capacity)),
       startIndex(0),
       endIndex(0) {}
 
@@ -218,37 +219,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
 #endif
 
-    /// <summary>Calculates the next power of two for the specified value</summary>
-    /// <param name="value">Value of which the next power of two will be calculated</param>
-    /// <returns>The next power of two to the specified value</returns>
-    private: static std::uint32_t getNextPowerOfTwo(std::uint32_t value) {
-      --value;
-
-      value |= value >> 1;
-      value |= value >> 2;
-      value |= value >> 4;
-      value |= value >> 8;
-      value |= value >> 16;
-
-      return (value + 1);
-    }
-
-    /// <summary>Calculates the next power of two for the specified value</summary>
-    /// <param name="value">Value of which the next power of two will be calculated</param>
-    /// <returns>The next power of two to the specified value</returns>
-    private: static std::uint64_t getNextPowerOfTwo(std::uint64_t value) {
-      --value;
-
-      value |= value >> 1;
-      value |= value >> 2;
-      value |= value >> 4;
-      value |= value >> 8;
-      value |= value >> 16;
-      value |= value >> 32;
-
-      return (value + 1);
-    }
-
     /// <summary>Ensures that space is available for the specified number of items</summary>
     /// <param name="itemCount">Number of items for which space will be made available</param>
     /// <remarks>
@@ -269,7 +239,7 @@ namespace Nuclex { namespace Support { namespace Collections {
           TItem *items = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex;
           shiftItems(items, usedItemCount);
         } else { // No buffer resize needed, just shift the items back
-          this->capacity = getNextPowerOfTwo(this->startIndex + totalItemCount);
+          this->capacity = BitTricks::GetUpperPowerOfTwo(this->startIndex + totalItemCount);
           {
             std::unique_ptr<std::uint8_t[]> newItemMemory(
               new std::uint8_t[sizeof(TItem[2]) * this->capacity / 2]
@@ -290,7 +260,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         if(likely(freeItemCount >= itemCount)) {
           // Enough space available, no action needed
         } else {
-          this->capacity = getNextPowerOfTwo((usedItemCount + itemCount) * 2);
+          this->capacity = BitTricks::GetUpperPowerOfTwo((usedItemCount + itemCount) * 2);
           {
             std::unique_ptr<std::uint8_t[]> newItemMemory(
               new std::uint8_t[sizeof(TItem[2]) * this->capacity / 2]
