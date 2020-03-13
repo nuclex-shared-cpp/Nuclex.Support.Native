@@ -27,7 +27,7 @@ License along with this library
 #include <cstdint>
 
 // Microsoft compilers need a special header to know their intrinsics
-#if defined(_MSC_VER) && (_MSC_VER >= 1900)
+#if defined(_MSC_VER)
 #include <intrin.h>
 #endif
 
@@ -119,7 +119,7 @@ namespace Nuclex { namespace Support {
     public: NUCLEX_SUPPORT_API static inline unsigned char CountLeadingZeroBits(
       std::uint64_t value
     ) {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && defined(_M_X64)
       //return static_cast<unsigned char>(__lzcnt64(value));
       unsigned long bitIndex;
       _BitScanReverse64(&bitIndex, value);
@@ -187,7 +187,7 @@ namespace Nuclex { namespace Support {
     public: NUCLEX_SUPPORT_API static inline std::uint64_t GetUpperPowerOfTwo(
       std::uint64_t value
     ) {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && defined(_M_X64)
       unsigned long bitIndex;
       _BitScanReverse64(&bitIndex, value);
       std::uint64_t lowerBound = 1ULL << bitIndex;
