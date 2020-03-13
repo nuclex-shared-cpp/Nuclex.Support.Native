@@ -44,9 +44,7 @@ namespace Nuclex { namespace Support {
     public: static inline constexpr unsigned char CountBits(std::uint32_t value) {
 #if defined(_MSC_VER)
       return __popcnt(value);
-#elif defined(__clang__)
-      return static_cast<unsigned char>(__builtin_popcount(value));
-#elif (defined(__GNUC__) || defined(__GNUG__))
+#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       return static_cast<unsigned char>(__builtin_popcount(value));
 #else
       // http://stackoverflow.com/questions/109023
@@ -62,9 +60,7 @@ namespace Nuclex { namespace Support {
     public: static inline constexpr unsigned char CountBits(std::uint64_t value) {
 #if defined(_MSC_VER)
       return __popcnt64(value);
-#elif defined(__clang__)
-      return static_cast<unsigned char>(__builtin_popcountll(value));
-#elif (defined(__GNUC__) || defined(__GNUG__))
+#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       return static_cast<unsigned char>(__builtin_popcountll(value));
 #else
       // http://stackoverflow.com/questions/2709430
@@ -79,12 +75,13 @@ namespace Nuclex { namespace Support {
     /// <summary>Counts the number of leading zero bits in a value</summary>
     /// <param name="value">Value in which the leading zero bits will be couned</param>
     /// <returns>The number of leading zero bits in the value</returns>
+    /// <remarks>
+    ///   The result is undefined if the input value is 0
+    /// </remarks>
     public: static inline constexpr unsigned char CountLeadingZeroBits(std::uint32_t value) {
 #if defined(_MSC_VER)
       return __lzcnt(value);
-#elif defined(__clang__)
-      return static_cast<unsigned char>(__builtin_clz(value));
-#elif (defined(__GNUC__) || defined(__GNUG__))
+#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       return static_cast<unsigned char>(__builtin_clz(value));
 #else
       // https://www.chessprogramming.org/BitScan#Bitscan_reverse
@@ -94,7 +91,7 @@ namespace Nuclex { namespace Support {
         23, 19, 11, 3, 16, 14, 7, 24, 12, 4, 8, 25, 5, 26, 27, 0
       };
 
-      value |= value >> 1; // first round down to one less than a power of 2
+      value |= value >> 1;
       value |= value >> 2;
       value |= value >> 4;
       value |= value >> 8;
@@ -107,12 +104,13 @@ namespace Nuclex { namespace Support {
     /// <summary>Counts the number of leading zero bits in a value</summary>
     /// <param name="value">Value in which the leading zero bits will be couned</param>
     /// <returns>The number of leading zero bits in the value</returns>
+    /// <remarks>
+    ///   The result is undefined if the input value is 0
+    /// </remarks>
     public: static inline constexpr unsigned char CountLeadingZeroBits(std::uint64_t value) {
 #if defined(_MSC_VER)
       return __lzcnt64(value);
-#elif defined(__clang__)
-      return static_cast<unsigned char>(__builtin_clzll(value));
-#elif (defined(__GNUC__) || defined(__GNUG__))
+#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       return static_cast<unsigned char>(__builtin_clzll(value));
 #else
       // https://stackoverflow.com/questions/21888140/
@@ -144,10 +142,7 @@ namespace Nuclex { namespace Support {
     public: static inline constexpr std::uint32_t GetUpperPowerOfTwo(std::uint32_t value) {
 #if 0 // defined(_MSC_VER)
       //::_BitScanReverse(value); ??
-#elif defined(__clang__)
-      std::uint32_t lowerBound = 2147483648U >> __builtin_clz(value);
-      return lowerBound << (value > lowerBound);
-#elif (defined(__GNUC__) || defined(__GNUG__))
+#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       std::uint32_t lowerBound = 2147483648U >> __builtin_clz(value);
       return lowerBound << (value > lowerBound);
 #else
@@ -173,10 +168,7 @@ namespace Nuclex { namespace Support {
     public: static inline constexpr std::uint64_t GetUpperPowerOfTwo(std::uint64_t value) {
 #if 0 // defined(_MSC_VER)
       //::_BitScanReverse(value); ??
-#elif defined(__clang__)
-      std::uint64_t lowerBound = 9223372036854775808ULL >> __builtin_clzll(value);
-      return lowerBound << (value > lowerBound);
-#elif (defined(__GNUC__) || defined(__GNUG__))
+#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       std::uint64_t lowerBound = 9223372036854775808ULL >> __builtin_clzll(value);
       return lowerBound << (value > lowerBound);
 #else
