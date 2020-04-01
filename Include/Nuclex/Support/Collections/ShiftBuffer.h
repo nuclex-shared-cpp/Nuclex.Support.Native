@@ -69,7 +69,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Initializes a new shift buffer</summary>
     /// <param name="capacity">Storage space in the shift  buffer at the beginning</param>
     public: ShiftBuffer(std::size_t capacity = 256) :
-      itemMemory(new std::uint8_t[sizeof(TItem[2]) * BitTricks::GetUpperPowerOfTwo(capacity) / 2]),
+      itemMemory(
+        new std::uint8_t[sizeof(TItem[2]) * BitTricks::GetUpperPowerOfTwo(capacity) / 2]
+      ),
       capacity(BitTricks::GetUpperPowerOfTwo(capacity)),
       startIndex(0),
       endIndex(0) {}
@@ -457,7 +459,19 @@ namespace Nuclex { namespace Support { namespace Collections {
       this->startIndex = 0;
 
       std::size_t count = itemCount;
-      try {
+      {
+        auto cleanUp = ON_SCOPE_EXIT_TRANSACTION {
+          this->endIndex = itemCount - count;
+
+          // Move failed, kill all items that remain in the source buffer. Moving
+          // the rest would result in skipping an item in the buffer and risking
+          // another exception. We can't deal with segmented buffers either.
+          while(count > 0) {
+            sourceItems->~TItem();
+            ++sourceItems;
+            --count;
+          }
+        };
 
         // Move all items from their old location to their new location
         while(count > 0) {
@@ -468,24 +482,11 @@ namespace Nuclex { namespace Support { namespace Collections {
           --count;
         }
 
-        // Move succeeded, the new end index is the number of items we have moved
-        this->endIndex = itemCount;
-
+        cleanUp.Commit();
       }
-      catch(...) {
-        this->endIndex = itemCount - count;
 
-        // Move failed, kill all items that remain in the source buffer. Moving
-        // the rest would result in skipping an item in the buffer and risking
-        // another exception. We can't deal with segmented buffers either.
-        while(count > 0) {
-          sourceItems->~TItem();
-          ++sourceItems;
-          --count;
-        }
-
-        throw;
-      }
+      // Move succeeded, the new end index is the number of items we have moved
+      this->endIndex = itemCount;
     }
 
     /// <summary>Moves the items from another location into the buffer</summary>

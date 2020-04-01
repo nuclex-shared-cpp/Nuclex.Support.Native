@@ -31,6 +31,23 @@ License along with this library
 #include <intrin.h>
 #endif
 
+// Whether the popcnt CPU instruction is supported by the targeted architecture
+//
+// This could be checked at runtime, but I don't want that complexity. You either
+// compile this library for post-2012 CPUs or you target something earlier.
+#if defined(_MSC_VER)
+  // The Microsoft compiler only offers an AVX constant, so for a bunch of CPUs
+  // between 2008 and 2012 popcnt is available but we have no way of knowing...
+  #if defined(__AVX__)
+    #define NUCLEX_SUPPORT_POPCNT_SUPPORTED 1
+  #endif
+#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
+  // The popcnt instruction was introduced with SSE4A (AMD) and SSE 4.1 (Intel)
+  #if defined(__SSE4A__) || defined(__SSE4_1__)
+    #define NUCLEX_SUPPORT_POPCNT_SUPPORTED 1
+  #endif
+#endif
+
 namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
@@ -44,9 +61,12 @@ namespace Nuclex { namespace Support {
     public: NUCLEX_SUPPORT_API static inline unsigned char CountBits(
       std::uint32_t value
     ) {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && defined(NUCLEX_SUPPORT_POPCNT_SUPPORTED)
       return static_cast<unsigned char>(__popcnt(value));
-#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
+#elif ( \
+  (defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))) && \
+  defined(NUCLEX_SUPPORT_POPCNT_SUPPORTED) \
+)
       return static_cast<unsigned char>(__builtin_popcount(value));
 #else
       // http://stackoverflow.com/questions/109023
@@ -62,9 +82,12 @@ namespace Nuclex { namespace Support {
     public: NUCLEX_SUPPORT_API static inline unsigned char CountBits(
       std::uint64_t value
     ) {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && defined(NUCLEX_SUPPORT_POPCNT_SUPPORTED)
       return static_cast<unsigned char>(__popcnt64(value));
-#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
+#elif ( \
+  (defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))) && \
+  defined(NUCLEX_SUPPORT_POPCNT_SUPPORTED) \
+)
       return static_cast<unsigned char>(__builtin_popcountll(value));
 #else
       // http://stackoverflow.com/questions/2709430
