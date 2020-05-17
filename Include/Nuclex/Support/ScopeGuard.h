@@ -30,6 +30,37 @@ namespace Nuclex { namespace Support {
 
   /// <summary>RAII helper that executes a lambda expression when going out of scope</summary>
   /// <typeparam name="TLambda">Lambda expression that will be executed</typeparam>
+  /// <remarks>
+  ///   <para>
+  ///     This is a C++14 implementation of the well-known scope guard concept. A scope guard
+  ///     is a stack-allocated empty object which will run some cleanup code when the scope in
+  ///     which it lives is exited.
+  ///   </para>
+  ///   <para>
+  ///     This ensures that the cleanup code always runs, even when the method is terminated
+  ///     early by an exception. It is faster and better than try..catch..(re-)throw because
+  ///     it will not interupt the exception (this keeping the original site of the exception
+  ///     for any debuggers or error reporting tools).
+  ///   </para>
+  ///   <para>
+  ///     <code>
+  ///       void Dummy() {
+  ///         FILE *file = ::fopen(u8"myfile", "rb");
+  ///         if(file == nullptr) {
+  ///           throw std::runtime_error(u8"Could not open 'myfile' for reading");
+  ///         }
+  ///
+  ///         ON_SCOPE_EXIT { ::fclose(file); }
+  ///
+  ///         std::uint32_t magic = 0;
+  ///         ::fread(&magic, sizeof(magic), 1, file);
+  ///         enforceMatchingSignature(magic);
+  ///
+  ///         complexCodeThatMightThrow(file);
+  ///       }
+  ///     </code>
+  ///   </para>
+  /// </remarks>
   template<typename TLambda>
   class ScopeGuard {
 
@@ -66,6 +97,36 @@ namespace Nuclex { namespace Support {
 
   /// <summary>RAII helper that executes a lambda expression when going out of scope</summary>
   /// <typeparam name="TLambda">Lambda expression that will be executed</typeparam>
+  /// <remarks>
+  ///   <para>
+  ///     See the <see cref="ScopeGuard" /> class for a general introduction into scope guards.
+  ///     This variant of the scope guard can be 'disarmed' in case you only want to run
+  ///     the cleanup code if the scope is exited due to an error.
+  ///   </para>
+  ///   <para>
+  ///     <code>
+  ///       void Dummy(SceneGraph &sceneGraph) {
+  ///         Entity *spider = sceneGraph.NewEntity();
+  ///         auto spiderSceneGraphGuard = ON_SCOPE_EXIT_TRANSACTION {
+  ///           sceneGraph.RemoveEntity(spider);
+  ///         }
+  ///
+  ///         spider->FindClosestPlayer();
+  ///         spider->SetAggroMode();
+  ///
+  ///         // If no exception was thrown up to this point, the spider is ready
+  ///         // to attack and we can keep it in the scene graph.
+  ///         spiderSceneGraphGuard.Commit();
+  ///       }
+  ///     </code>
+  ///   </para>
+  ///   <para>
+  ///     In the above example, the call to 'Commit()' will disable the scope guard and
+  ///     prevent it from removing the spider from the scene graph again. In other words,
+  ///     the transaction (that is, the whole process of creating and setting up the spider)
+  ///     is complete and can be committed, thus no longer needs to be rolled back on exit.
+  ///   </para>
+  /// </remarks>
   template<typename TLambda>
   class TransactionalScopeGuard {
 

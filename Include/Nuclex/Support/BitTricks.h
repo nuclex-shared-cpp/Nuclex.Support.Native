@@ -42,6 +42,7 @@ License along with this library
     #define NUCLEX_SUPPORT_POPCNT_SUPPORTED 1
   #endif
 #elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
+  // GCC and clang split the target architecture into individual feature sets.
   // The popcnt instruction was introduced with SSE4A (AMD) and SSE 4.1 (Intel)
   #if defined(__SSE4A__) || defined(__SSE4_1__)
     #define NUCLEX_SUPPORT_POPCNT_SUPPORTED 1
@@ -186,7 +187,7 @@ namespace Nuclex { namespace Support {
       return lowerBound << static_cast<int>(value > lowerBound);
 #elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       std::uint32_t lowerBound = 2147483648U >> __builtin_clz(value);
-      return lowerBound << (value > lowerBound);
+      return lowerBound << static_cast<int>(value > lowerBound);
 #else
       --value;
 
@@ -217,7 +218,7 @@ namespace Nuclex { namespace Support {
       return lowerBound << static_cast<int>(value > lowerBound);
 #elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
       std::uint64_t lowerBound = 9223372036854775808ULL >> __builtin_clzll(value);
-      return lowerBound << (value > lowerBound);
+      return lowerBound << static_cast<int>(value > lowerBound);
 #else
       --value;
 

@@ -123,7 +123,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   Folded lowercase is a special variant of lowercase that will result in a string of
     ///   equal or shorter length (codepoint-wise). It is not guaranteed to always give the
     ///   correct result for a human reading the string (though in the vast majority of cases
-    ///   it does) -- it's purpose is to enable case-insensitive comparison of strings. 
+    ///   it does) -- its purpose is to enable case-insensitive comparison of strings.
     /// </remarks>
     public: NUCLEX_SUPPORT_API static std::string FoldedLowercaseFromUtf8(
       const std::string &utf8String
