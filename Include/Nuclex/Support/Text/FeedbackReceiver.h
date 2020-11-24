@@ -55,6 +55,8 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <remarks>
     ///   This is typically the text you'd want displayed in an applications status bar
     ///   or in a progress window. It shouldn't be too technical or change at a fast pace.
+    ///   Console applications can print the string reported through this method, so also
+    ///   avoid calling it repeatedly if the text hasn't changed.
     /// </remarks>
     public: virtual void SetStatus(const std::string &status) = 0;
 

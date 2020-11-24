@@ -409,6 +409,9 @@
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\BitTricks.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Nuclex.Support.Native.def">
