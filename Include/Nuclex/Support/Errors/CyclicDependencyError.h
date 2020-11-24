@@ -18,34 +18,36 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_SERVICES_UNRESOLVEDDEPENDENCYERROR_H
-#define NUCLEX_SUPPORT_SERVICES_UNRESOLVEDDEPENDENCYERROR_H
+#ifndef NUCLEX_SUPPORT_ERRORS_CYCLICDEPENDENCYERROR_H
+#define NUCLEX_SUPPORT_ERRORS_CYCLICDEPENDENCYERROR_H
 
 #include "Nuclex/Support/Config.h"
 
-#include <stdexcept>
+#include <stdexcept> // for std::logic_error
 
-namespace Nuclex { namespace Support { namespace Services {
+namespace Nuclex { namespace Support { namespace Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Indicates that a service injector was unable to resolve a dependency</summary>
-  class UnresolvedDependencyError : public std::logic_error {
+  /// <summary>
+  ///   Indicates that a service depends on a chain of other services leading back to itself
+  /// </summary>
+  class CyclicDependencyError : public std::logic_error {
 
     /// <summary>Initializes a new cyclic dependency error</summary>
     /// <param name="message">Message that describes the error</param>
-    public: explicit UnresolvedDependencyError(const std::string &message) :
+    public: explicit CyclicDependencyError(const std::string &message) :
       std::logic_error(message) {}
 
     /// <summary>Initializes a new cyclic dependency error</summary>
     /// <param name="message">Message that describes the error</param>
-    public: explicit UnresolvedDependencyError(const char *message) :
+    public: explicit CyclicDependencyError(const char *message) :
       std::logic_error(message) {}
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Services
+}}} // namespace Nuclex::Support::Errors
 
-#endif // NUCLEX_SUPPORT_SERVICES_UNRESOLVEDDEPENDENCYERROR_H
+#endif // NUCLEX_SUPPORT_ERRORS_CYCLICDEPENDENCYERROR_H

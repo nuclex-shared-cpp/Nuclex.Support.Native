@@ -22,7 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Services/LazyServiceInjector.h"
-#include "Nuclex/Support/Services/UnresolvedDependencyError.h"
+#include "Nuclex/Support/Errors/UnresolvedDependencyError.h"
 
 #include <stdexcept>
 
@@ -58,10 +58,10 @@ namespace Nuclex { namespace Support { namespace Services {
     // speaking against doing so: a) we don't have the type in template form anymore,
     // b) the service is not registered as a container singleton and creating a per-request
     // service would be confusing.
-    std::string message = "Service '";
+    std::string message = u8"Service '";
     message += serviceType.name();
-    message += " is not known to the injector. Please register it before requesting.";
-    throw UnresolvedDependencyError(message);
+    message += u8" is not known to the injector. Please register it before requesting.";
+    throw Errors::UnresolvedDependencyError(message);
 
   }
 
@@ -108,10 +108,10 @@ namespace Nuclex { namespace Support { namespace Services {
     // speaking against doing so: a) we don't have the type in template form anymore,
     // b) the service is not registered as a container singleton and creating a per-request
     // service would be confusing.
-    std::string message = "Service '";
+    std::string message = u8"Service '";
     message += serviceType.name();
-    message += " is not known to the injector. Please register it before requesting.";
-    throw UnresolvedDependencyError(message);
+    message += u8" is not known to the injector. Please register it before requesting.";
+    throw Errors::UnresolvedDependencyError(message);
 
   }
 

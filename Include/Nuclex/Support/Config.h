@@ -46,7 +46,13 @@ License along with this library
 #elif (defined(__GNUC__) || defined(__GNUG__)) && defined(__cplusplus) && (__cplusplus >= 201402)
   #define NUCLEX_SUPPORT_CXX14 1
 #else
-  #error The Nuclex.Pixels.Native library requires a C++14 compiler
+  #error The Nuclex.Support.Native library requires a C++14 compiler
+#endif
+
+// We've got tons of u8"hello" strings that will become char8_t in C++20 and fail to build!
+// Complain here instead of letting the user scratch their head over weird compiler errors.
+#if defined(__cplusplus) && (__cplusplus >= 202002)
+  #error The Nuclex.Support.Native library does not work in C++20 mode yet!
 #endif
 
 // --------------------------------------------------------------------------------------------- //

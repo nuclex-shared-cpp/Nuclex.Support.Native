@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Services/ServiceContainer.h"
 
-#include <stdexcept>
+#include <stdexcept> // for std::logic_error
 
 namespace Nuclex { namespace Support { namespace Services {
 
@@ -32,7 +32,10 @@ namespace Nuclex { namespace Support { namespace Services {
   const Any &ServiceContainer::Get(const std::type_info &serviceType) const {
     ServiceMap::const_iterator iterator = this->services.find(&serviceType);
     if(iterator == this->services.end()) {
-      throw std::runtime_error("Unknown service type");
+      std::string message(u8"Service of type '");
+      message.append(serviceType.name());
+      message.append(u8"' not present");
+      throw std::logic_error(message);
     }
 
     return iterator->second;
@@ -54,7 +57,10 @@ namespace Nuclex { namespace Support { namespace Services {
   void ServiceContainer::Add(const std::type_info &serviceType, const Any &service) {
     ServiceMap::const_iterator iterator = this->services.find(&serviceType);
     if(iterator != this->services.end()) {
-      throw std::runtime_error("Service has already been registered");
+      std::string message(u8"Service type '");
+      message.append(serviceType.name());
+      message.append(u8"' already added");
+      throw std::logic_error(message);
     }
 
     this->services.insert(ServiceMap::value_type(&serviceType, service));
