@@ -6,7 +6,7 @@ import os
 import platform
 
 # Nuclex SCons libraries
-sys.path.append('../References/scripts/scons')
+sys.path.append('../BuildSystem/scons')
 nuclex = importlib.import_module('nuclex')
 
 # ----------------------------------------------------------------------------------------------- #

@@ -23,6 +23,8 @@ License along with this library
 
 #include "Nuclex/Support/Services/ServiceContainer.h"
 
+#include <stdexcept>
+
 namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
