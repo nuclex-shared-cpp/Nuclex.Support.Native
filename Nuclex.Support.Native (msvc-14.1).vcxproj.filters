@@ -71,152 +71,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Collections\Collection.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\ConcurrentMap.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\ConcurrentQueue.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\ConcurrentSet.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\IndexedCollection.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\Variegator.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Events\Event.cpp">
-      <Filter>Source\Events</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
-      <Filter>Source\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Services\ServiceContainer.cpp">
-      <Filter>Source\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Lexical.cpp">
-      <Filter>Source\Text</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\StringConverter.cpp">
-      <Filter>Source\Text</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\LinuxThreadPool.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\Mutex.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\ReaderWriterLock.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\Thread.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\ThreadPool.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\WindowsThreadPool.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\WinRTThreadPool.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\CommandLine.cpp">
-      <Filter>Source\Text</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\CommandLineArgument.cpp">
-      <Filter>Source\Text</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\DynamicArray.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Dragon4\Math.cpp">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Dragon4\PrintFloat.cpp">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Events\Delegate.cpp">
-      <Filter>Source\Events</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\ObservableCollection.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\ObservableDynamicArray.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\ObservableIndexedCollection.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\StackArray.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Services\ServiceProvider.cpp">
-      <Filter>Source\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Optional.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Ryu\d2fixed.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Ryu\d2s.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Ryu\f2s.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Ryu\generic_128.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Ryu\s2d.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\StringMatcher.cpp">
-      <Filter>Source\Text</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\RingBuffer.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\BitTricks.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\ScopeGuard.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Errors\CyclicDependencyError.cpp">
-      <Filter>Source\Errors</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp">
-      <Filter>Source\Errors</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp">
-      <Filter>Source\Errors</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Any.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Config.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Variant.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\VariantType.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Collections\ShiftBuffer.cpp">
-      <Filter>Source\Collections</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Events\Event.h">
       <Filter>Include\Events</Filter>
     </ClInclude>
@@ -251,6 +105,9 @@
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\RingBuffer.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftBuffer.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\StackArray.h">
@@ -331,10 +188,10 @@
     <ClInclude Include="Include\Nuclex\Support\Any.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Config.h">
+    <ClInclude Include="Include\Nuclex\Support\BitTricks.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\BitTricks.h">
+    <ClInclude Include="Include\Nuclex\Support\Config.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Optional.h">
@@ -348,6 +205,92 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Collections\Collection.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\ConcurrentMap.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\ConcurrentQueue.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\ConcurrentSet.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\DynamicArray.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\IndexedCollection.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\ObservableCollection.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\ObservableDynamicArray.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\ObservableIndexedCollection.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\RingBuffer.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\ShiftBuffer.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\StackArray.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\Variegator.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Errors\CyclicDependencyError.cpp">
+      <Filter>Source\Errors</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp">
+      <Filter>Source\Errors</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp">
+      <Filter>Source\Errors</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Events\Delegate.cpp">
+      <Filter>Source\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Events\Event.cpp">
+      <Filter>Source\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
+      <Filter>Source\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services\ServiceContainer.cpp">
+      <Filter>Source\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services\ServiceProvider.cpp">
+      <Filter>Source\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Dragon4\Math.cpp">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Dragon4\PrintFloat.cpp">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Text\Dragon4\Dragon4.h">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Dragon4\Math.h">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Dragon4\PrintFloat.h">
+      <Filter>Source\Text\Dragon4</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Dragon4\Standard.h">
+      <Filter>Source\Text\Dragon4</Filter>
     </ClInclude>
     <ClInclude Include="Source\Text\Erthink\erthink.h">
       <Filter>Source\Text\Erthink</Filter>
@@ -364,27 +307,21 @@
     <ClInclude Include="Source\Text\Erthink\erthink_u2a.h">
       <Filter>Source\Text\Erthink</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Text\Utf8\checked.h">
-      <Filter>Source\Text\Utf8</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Utf8\core.h">
-      <Filter>Source\Text\Utf8</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Utf8\unchecked.h">
-      <Filter>Source\Text\Utf8</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Dragon4\Dragon4.h">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Dragon4\Math.h">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Dragon4\PrintFloat.h">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Dragon4\Standard.h">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClInclude>
+    <ClCompile Include="Source\Text\Ryu\d2fixed.c">
+      <Filter>Source\Text\Ryu</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Ryu\d2s.c">
+      <Filter>Source\Text\Ryu</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Ryu\f2s.c">
+      <Filter>Source\Text\Ryu</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Ryu\generic_128.c">
+      <Filter>Source\Text\Ryu</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Ryu\s2d.c">
+      <Filter>Source\Text\Ryu</Filter>
+    </ClCompile>
     <ClInclude Include="Source\Text\Ryu\common.h">
       <Filter>Source\Text\Ryu</Filter>
     </ClInclude>
@@ -418,12 +355,75 @@
     <ClInclude Include="Source\Text\Ryu\ryu_parse.h">
       <Filter>Source\Text\Ryu</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Text\Utf8\checked.h">
+      <Filter>Source\Text\Utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Utf8\core.h">
+      <Filter>Source\Text\Utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Text\Utf8\unchecked.h">
+      <Filter>Source\Text\Utf8</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Text\Utf8Fold\Utf8Fold.h">
       <Filter>Source\Text\Utf8Fold</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftBuffer.h">
-      <Filter>Include\Collections</Filter>
-    </ClInclude>
+    <ClCompile Include="Source\Text\CommandLine.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\CommandLineArgument.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Lexical.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\StringConverter.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\StringMatcher.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\LinuxThreadPool.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\Mutex.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\ReaderWriterLock.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\Thread.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\ThreadPool.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\WindowsThreadPool.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\WinRTThreadPool.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Any.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\BitTricks.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Config.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Optional.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ScopeGuard.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Variant.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VariantType.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Nuclex.Support.Native.def">
