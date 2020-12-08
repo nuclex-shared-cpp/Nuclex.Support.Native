@@ -38,21 +38,33 @@ License along with this library
 
 // --------------------------------------------------------------------------------------------- //
 
-// C++ language features
-#if defined(_MSC_VER) && (_MSC_VER >= 1900) // Visual Studio 2015 has the C++14 features we use
-  #define NUCLEX_SUPPORT_CXX14 1
-#elif defined(__clang__) && defined(__cplusplus) && (__cplusplus >= 201402)
-  #define NUCLEX_SUPPORT_CXX14 1
-#elif (defined(__GNUC__) || defined(__GNUG__)) && defined(__cplusplus) && (__cplusplus >= 201402)
-  #define NUCLEX_SUPPORT_CXX14 1
+// Compiler support checking
+#if defined(_MSC_VER)
+  #if (_MSC_VER < 1910) // Visual Studio 2017 has the C++17 features we use
+    #error At least Visual Studio 2017 is required to compile Nuclex.Support.Native
+  #endif
+#elif defined(__clang__) && defined(__clang_major__)
+  #if (__clang_major__ < 5) // clang 5.0 has the C++17 features we use
+    #error At least clang 5.0 is required to compile Nuclex.Support.Native
+  #endif
+#elif defined(__GNUC__)
+  #if (__GNUC__ < 8) // GCC 8.0 has the C++17 features we use
+    #error At least GCC 8.0 is required to compile Nuclex.Support.Native
+  #endif
 #else
-  #error The Nuclex.Support.Native library requires a C++14 compiler
+  #error Unknown compiler. Nuclex.Support.Native is tested with GCC, clang and MSVC only
+#endif
+
+// Due to features like std::optional, std::any and 'if constexpr' anything earlier
+// than ISO C++ 17 will only result in compilation errors.
+#if defined(__cplusplus) && (__cplusplus < 201703L)
+  #error The Nuclex.Support.Native library must be compiled in least C++17 mode
 #endif
 
 // We've got tons of u8"hello" strings that will become char8_t in C++20 and fail to build!
-// Complain here instead of letting the user scratch their head over weird compiler errors.
+// Bail out instead of letting the user scratch their head over weird compiler errors.
 #if defined(__cplusplus) && (__cplusplus >= 202002)
-  #error The Nuclex.Support.Native library does not work in C++20 mode yet!
+  #error The Nuclex.Support.Native library does not work in C++20 mode yet
 #endif
 
 // --------------------------------------------------------------------------------------------- //
@@ -110,6 +122,7 @@ License along with this library
 
 // --------------------------------------------------------------------------------------------- //
 
+// Optimization macros
 #if defined(__GNUC__)
 
   #if !defined(likely)

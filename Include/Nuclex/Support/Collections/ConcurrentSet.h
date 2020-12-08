@@ -21,11 +21,7 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTSET_H
 #define NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTSET_H
 
-#include "../Config.h"
-
-#if !defined(NUCLEX_SUPPORT_CXX14)
-  #error This class requires C++14 support
-#endif
+#include "Nuclex/Support/Config.h"
 
 #include <atomic>
 

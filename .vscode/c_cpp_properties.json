@@ -7,11 +7,12 @@
                 "${workspaceFolder}/../ThirdParty/gtest/Include/**"
             ],
             "defines": [
-                "NUCLEX_SUPPORT_EXECUTABLE"
+                "NUCLEX_SUPPORT_EXECUTABLE",
+                "NUCLEX_SUPPORT_SOURCE"
             ],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c11",
-            "cppStandard": "c++14",
+            "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64",
             "compilerArgs": [
                 "-fvisibility=hidden",
@@ -21,7 +22,7 @@
                 "-Wno-unknown-pragmas",
                 "-fpic",
                 "-funsafe-math-optimizations",
-                "-std=c++14",
+                "-std=c++17",
                 "-fvisibility-inlines-hidden"
             ]
         }

@@ -23,7 +23,10 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-//#include <typeinfo>
+#if !defined(NUCLEX_SUPPORT_SOURCE)
+  #warning Nuclex::Support::Optional has been deprecated in favor of C++17 std::optional
+#endif
+
 #include <type_traits>
 #include <stdexcept>
 
