@@ -29,7 +29,7 @@ License along with this library
 
 // Platform recognition
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
-  #define NUCLEX_SUPPORT_WINRT 1
+  #error The Nuclex.Support.Native library does not support WinRT
 #elif defined(WIN32) || defined(_WIN32)
   #define NUCLEX_SUPPORT_WIN32 1
 #else
@@ -42,14 +42,20 @@ License along with this library
 #if defined(_MSC_VER)
   #if (_MSC_VER < 1910) // Visual Studio 2017 has the C++17 features we use
     #error At least Visual Studio 2017 is required to compile Nuclex.Support.Native
+  #elif defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L)
+    #define NUCLEX_SUPPORT_CXX17 1
   #endif
 #elif defined(__clang__) && defined(__clang_major__)
   #if (__clang_major__ < 5) // clang 5.0 has the C++17 features we use
     #error At least clang 5.0 is required to compile Nuclex.Support.Native
+  #elif defined(__cplusplus) && (__cplusplus >= 201703L)
+    #define NUCLEX_SUPPORT_CXX17 1
   #endif
 #elif defined(__GNUC__)
   #if (__GNUC__ < 8) // GCC 8.0 has the C++17 features we use
     #error At least GCC 8.0 is required to compile Nuclex.Support.Native
+  #elif defined(__cplusplus) && (__cplusplus >= 201703L)
+    #define NUCLEX_SUPPORT_CXX17 1
   #endif
 #else
   #error Unknown compiler. Nuclex.Support.Native is tested with GCC, clang and MSVC only
@@ -57,13 +63,16 @@ License along with this library
 
 // Due to features like std::optional, std::any and 'if constexpr' anything earlier
 // than ISO C++ 17 will only result in compilation errors.
-#if defined(__cplusplus) && (__cplusplus < 201703L)
+#if !defined(NUCLEX_SUPPORT_CXX17)
   #error The Nuclex.Support.Native library must be compiled in least C++17 mode
 #endif
 
 // We've got tons of u8"hello" strings that will become char8_t in C++20 and fail to build!
 // Bail out instead of letting the user scratch their head over weird compiler errors.
 #if defined(__cplusplus) && (__cplusplus >= 202002)
+  #error The Nuclex.Support.Native library does not work in C++20 mode yet
+#endif
+#if defined(_MSVC_LANG) && (_MSVC_LANG >= 202002)
   #error The Nuclex.Support.Native library does not work in C++20 mode yet
 #endif
 

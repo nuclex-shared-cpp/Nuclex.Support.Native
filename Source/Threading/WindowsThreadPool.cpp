@@ -25,7 +25,8 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WIN32)
 
-#include <stdexcept>
+#include <exception>
+#include <cassert>
 
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
@@ -75,7 +76,13 @@ namespace {
       if(::InterlockedDecrement(&task->second) == 0) {
         delete task;
       }
-      std::unexpected();
+
+      // Termination is neccessary. If the ThreadPool worker fails, another part of
+      // the application might wait forever on a mutex or never discover some data was
+      // not processed. Make as much noise here as possible, then terminate the program!
+      assert(!u8"Unhandled exception in ThreadPool worker thread. TERMINATING PROGRAM.");
+      std::terminate();
+      //std::unexpected();
     }
 
     if(::InterlockedDecrement(&task->second) == 0) {
@@ -175,12 +182,12 @@ namespace Nuclex { namespace Support { namespace Threading {
     osVersionInfo.dwOSVersionInfoSize = sizeof(osVersionInfo);
 
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable: 4996) // method was declared deprecated
+  #pragma warning(push)
+  #pragma warning(disable: 4996) // method was declared deprecated
 #endif
     BOOL result = ::GetVersionExW(&osVersionInfo);
 #ifdef _MSC_VER
-#pragma warning(pop)
+  #pragma warning(pop)
 #endif
     if(result == FALSE) {
       throw std::runtime_error(u8"Could not determine operating system version");
