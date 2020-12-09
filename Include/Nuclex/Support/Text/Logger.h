@@ -18,48 +18,65 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_TEXT_FEEDBACKRECEIVER_H
-#define NUCLEX_SUPPORT_TEXT_FEEDBACKRECEIVER_H
+#ifndef NUCLEX_SUPPORT_TEXT_LOGGER_H
+#define NUCLEX_SUPPORT_TEXT_LOGGER_H
 
 #include "Nuclex/Support/Config.h"
 
 #include <string>
 
-// CHECK: FeedbackReceiver is pretty UI-centric (either console or GUI) - rename?
-//   UiFeedbackReceiver?
+// DONE: Rename FeedbackReceiver to Logger?
+//   This class is purely for logging and many other logging libraries, such as
+//   log4j / log4net, use an ILogger interface in their design.
+//
+//   But: this is just an interface, it doesn't 'log' per se. And 'LogSink'
+//   is shorter but nobody understands Microsoftese (nor do we want it...)
+
+// CHECK: Use simple verbs for the logging methods?
+//   LogMessage()  ->  Inform()
+//   LogWarning()  ->  Warn()
+//   LogError()    ->  ? Complain() ?
 
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Interface that accepts feedback from a long-running task</summary>
-  class FeedbackReceiver {
+  /// <summary>Interface to accept diagnostic messages and information</summary>
+  class Logger {
 
-    /// <summary>Frees all resources owned by the feedback receiver</summary>
-    public: NUCLEX_SUPPORT_API virtual ~FeedbackReceiver() = default;
+    public: class IndentationScope {
+    };
 
-    /// <summary>Updates the current progress of the operation</summary>
-    /// <param name="progress">Achieved rogress in a range of 0.0 .. 1.0</param>
+    /// <summary>Frees all resources owned by the logger</summary>
+    public: NUCLEX_SUPPORT_API virtual ~Logger() = default;
+
+    /// <summary>Advises the logger that all successive output should be indented</summary>
     /// <remarks>
-    ///   Progress should stay within the specified range. Ideally, progress should never
-    ///   go backwards, but that may be better than just freezing progress if your operation
-    ///   encounters a major unexpected roadblock.
+    ///   <para>
+    ///     This method is provided because logging often involves printing status in
+    ///     multiple lines. Having an official method to indent output in the basic logger
+    ///     interface helps keep output readable.
+    ///   </para>
+    ///   <para>
+    ///     This method can be called any number of times and will apply increasing
+    ///     indentation to all log output performed. It needs to be followed by an equal
+    ///     number of calls to the Unindent() method eventually.
+    ///   </para>
     /// </remarks>
-    public: virtual void SetProgress(float progress) = 0;
+    public: NUCLEX_SUPPORT_API virtual void Indent() {}
 
-    /// <summary>Updates the major operation status</summary>
-    /// <param name="status">
+    /// <summary>Advises the logger to go back up by one level of indentation</summary>
     /// <remarks>
-    ///   This is typically the text you'd want displayed in an applications status bar
-    ///   or in a progress window. It shouldn't be too technical or change at a fast pace.
-    ///   Console applications can print the string reported through this method, so also
-    ///   avoid calling it repeatedly if the text hasn't changed.
+    ///   <para>
+    ///     This is the counterpart to the <see cref="Indent" /> method. It needs to be
+    ///     called exactly one time for each call to the <see cref="Indent" /> method.
+    ///     In order to ensure the logger isn't accumulating indentation levels, use
+    ///     the nested <see cref="IndentationScope" /> class provided by the logger interface.
+    ///   </para>
     /// </remarks>
-    public: virtual void SetStatus(const std::string &status) = 0;
+    public: NUCLEX_SUPPORT_API virtual void Unindent() {}
 
-#if 0
-
-    /// <summary>Whether the feedback receiver is doing anything with the log messages</summary>
+    /// <summary>Whether the logger is actually doing anything with the log messages</summary>
     /// <returns>True if the log messages are processed in any way, false otherwise</returns>
     /// <remarks>
     ///   Forming the log message strings may be non-trivial and cause memory allocations, too,
@@ -114,8 +131,6 @@ namespace Nuclex { namespace Support { namespace Text {
       (void)error;
     }
 
-#endif
-
 #if defined(WOULD_BE_NICE_IF_PORTABLE)
 
     /// <summary>Whether the feedback receiver is checking logged messages at all</summary>
@@ -142,4 +157,4 @@ namespace Nuclex { namespace Support { namespace Text {
 
 }}} // namespace Nuclex::Support::Text
 
-#endif // NUCLEX_SUPPORT_TEXT_FEEDBACKRECEIVER_H
+#endif // NUCLEX_SUPPORT_TEXT_LOGGER_H
