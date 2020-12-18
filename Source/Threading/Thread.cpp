@@ -23,9 +23,56 @@ License along with this library
 
 #include "Nuclex/Support/Threading/Thread.h"
 
-// --------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_WIN32) || defined(NUCLEX_SUPPORT_WINRT)
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <Windows.h>
+#else
+#include <time.h>
+#endif
 
-// This file is only here to guarantee that its associated header has no hidden
-// dependencies and can be included on its own
+#include <thread>
 
-// --------------------------------------------------------------------------------------------- //
+namespace Nuclex { namespace Support { namespace Threading {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void Thread::Sleep(std::chrono::microseconds time) {
+#if defined(NUCLEX_SUPPORT_WIN32) || defined(NUCLEX_SUPPORT_WINRT)
+    std::int64_t milliseconds = time.count();
+    if(milliseconds > 0) {
+      milliseconds += std::int64_t(500);
+      milliseconds /= std::int64_t(1000);
+    } else {
+      return; // why does C++ even allow negative durations to exist?
+    }
+
+    ::Sleep(static_cast<DWORD>(milliseconds));
+#elif defined(NUCLEX_SUPPORT_LINUX)
+    timespec delay;
+    {
+      const long int MicrosecondsPerSecond = 1000000L;
+      const long int NanosecondsPerMicrosecond = 1000L;
+
+      ldiv_t result = ::ldiv(static_cast<long int>(time.count()), MicrosecondsPerSecond);
+      delay.tv_sec = static_cast<time_t>(result.quot);
+      delay.tv_nsec = static_cast<time_t>(result.rem * NanosecondsPerMicrosecond);
+    }
+
+    // CHECK: is nanosleep() the right choice?
+    //   It can be interrupted by signals and return failure.
+    ::nanosleep(&delay, nullptr);
+#else
+    std::this_thread::sleep_for(time);
+#endif
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool Thread::BelongsToThreadPool() {
+    return false;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+}}} // namespace Nuclex::Support::Threading

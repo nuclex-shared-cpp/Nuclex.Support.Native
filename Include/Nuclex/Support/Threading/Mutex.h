@@ -21,7 +21,11 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_THREADING_MUTEX_H
 #define NUCLEX_SUPPORT_THREADING_MUTEX_H
 
-#include "../Config.h"
+#include "Nuclex/Support/Config.h"
+
+#if !defined(NUCLEX_SUPPORT_SOURCE)
+  #warning Nuclex::Support::Threading::Mutex has been deprecated in favor of C++14 std::mutex
+#endif
 
 #include <functional>
 

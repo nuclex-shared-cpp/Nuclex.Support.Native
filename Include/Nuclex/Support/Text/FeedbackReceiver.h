@@ -27,6 +27,7 @@ License along with this library
 
 // CHECK: FeedbackReceiver is pretty UI-centric (either console or GUI) - rename?
 //   UiFeedbackReceiver?
+//   StatusObserver?
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -56,85 +57,6 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   avoid calling it repeatedly if the text hasn't changed.
     /// </remarks>
     public: virtual void SetStatus(const std::string &status) = 0;
-
-#if 0
-
-    /// <summary>Whether the feedback receiver is doing anything with the log messages</summary>
-    /// <returns>True if the log messages are processed in any way, false otherwise</returns>
-    /// <remarks>
-    ///   Forming the log message strings may be non-trivial and cause memory allocations, too,
-    ///   so by checking this method just once, you can skip all logging if they would be
-    ///   discarded anyway.
-    /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual bool IsLogging() const { return false; }
-
-    /// <summary>Logs a diagnostic message</summary>
-    /// <param name="message">Message the operation wishes to log</param>
-    /// <remarks>
-    ///   Use this for diagnostic output that may help with debugging or verifying that
-    ///   things are indeed happening the way you intended to. These messages typically
-    ///   go into some log, a details window or are discarded outright.
-    /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void LogMessage(const std::string &message) {
-      (void)message;
-    }
-
-    /// <summary>Logs a warning</summary>
-    /// <param name="warning">Warning the operation wishes to log</param>
-    /// <remarks>
-    ///   <para>
-    ///     Use this if your operation encounters a problem that isn't fatal but means
-    ///     that the outcome will not be as intended. Also use if your operation discovers
-    ///     something that isn't the way it should be (i.e. a filename doesn't follow
-    ///     conventions, data uses deprecated format, etc.)
-    ///   </para>
-    ///   <para>
-    ///     Logged warnings may be displayed to the user, for example as a summary after
-    ///     the operation completed with warnings.
-    ///   </para>
-    /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void LogWarning(const std::string &warning) {
-      (void)warning;
-    }
-
-    /// <summary>Logs an error</summary>
-    /// <param name="error">Error the operation wishes to log</param>
-    /// <remarks>
-    ///   <para>
-    ///     Only use this if the operation is bound to fail. An exception should be thrown
-    ///     from the operation as a result.
-    ///   </para>
-    ///   <para>
-    ///     The error logger may provide additional information beyond the exception
-    ///     message and may be displayed to the user, for example in an error dialog after
-    ///     the operation has failed.
-    ///   </para>
-    /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void LogError(const std::string &error) {
-      (void)error;
-    }
-
-#endif
-
-#if defined(WOULD_BE_NICE_IF_PORTABLE)
-
-    /// <summary>Whether the feedback receiver is checking logged messages at all</summary>
-    /// <returns>True if the feedback receiver is checking logged messages, false otherwise</returns>
-    /// <remarks>
-    ///   If your messages are costly to form, you can check this property once in your
-    ///   operation to see whether issuing log messages is needed at all.
-    /// </remarks>
-    public: inline bool IsLogging() const {
-      //FeedbackReceiver *dummy = nullptr;
-      //(FeedbackReceiver::void (*baseMethod)(const std::string &)) =
-      return (
-        (&this->LogMessage != &FeedbackReceiver::LogMessage) ||
-        (&this->LogWarning != &FeedbackReceiver::LogWarning) ||
-        (&this->LogError != &FeedbackReceiver::LogError)
-      );
-    }
-
-#endif
 
   };
 

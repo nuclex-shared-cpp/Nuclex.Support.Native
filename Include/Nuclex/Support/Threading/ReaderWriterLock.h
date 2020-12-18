@@ -21,7 +21,11 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_THREADING_READERWRITERLOCK_H
 #define NUCLEX_SUPPORT_THREADING_READERWRITERLOCK_H
 
-#include "../Config.h"
+#include "Nuclex/Support/Config.h"
+
+#if !defined(NUCLEX_SUPPORT_SOURCE)
+  #warning Nuclex::Support::Threading::ReaderWriterLock has been deprecated in favor of C++17 std::shared_mutex
+#endif
 
 #include <atomic>
 #include <mutex>

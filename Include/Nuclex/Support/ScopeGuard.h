@@ -21,6 +21,8 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_SCOPEGUARD_H
 #define NUCLEX_SUPPORT_SCOPEGUARD_H
 
+#include "Nuclex/Support/Config.h"
+
 #include <type_traits>
 #include <utility>
 

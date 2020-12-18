@@ -35,7 +35,7 @@ License along with this library
 // CHECK: Use simple verbs for the logging methods?
 //   LogMessage()  ->  Inform()
 //   LogWarning()  ->  Warn()
-//   LogError()    ->  ? Complain() ?
+//   LogError()    ->  ? Complain() ? Panic() ? Bail() ?
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -44,8 +44,28 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <summary>Interface to accept diagnostic messages and information</summary>
   class Logger {
 
+    #pragma region class IndentationScope
+
+    /// <summary>Simple scope that adds indentation to a logger while it exists</summary>
     public: class IndentationScope {
+
+      /// <summary>Adds indentation to the specified logger</summary>
+      /// <param name="logger">Logger to which an indentation level will be added</param>
+      public: IndentationScope(Logger &logger) : logger(logger) {
+        this->logger.Indent();
+      }
+
+      /// <summary>Goes back up by one indentation level on the logger</summary>
+      public: ~IndentationScope() {
+        this->logger.Unindent();
+      }
+
+      /// <summary>Logger this scope is dealing with</summary>
+      private: Logger &logger;
+
     };
+
+    #pragma endregion // class IndentationScope
 
     /// <summary>Frees all resources owned by the logger</summary>
     public: NUCLEX_SUPPORT_API virtual ~Logger() = default;

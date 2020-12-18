@@ -69,10 +69,9 @@ License along with this library
 
 // We've got tons of u8"hello" strings that will become char8_t in C++20 and fail to build!
 // Bail out instead of letting the user scratch their head over weird compiler errors.
-#if defined(__cplusplus) && (__cplusplus >= 202002)
-  #error The Nuclex.Support.Native library does not work in C++20 mode yet
-#endif
 #if defined(_MSVC_LANG) && (_MSVC_LANG >= 202002)
+  #error The Nuclex.Support.Native library does not work in C++20 mode yet
+#elif defined(__cplusplus) && (__cplusplus >= 202002)
   #error The Nuclex.Support.Native library does not work in C++20 mode yet
 #endif
 
@@ -80,11 +79,11 @@ License along with this library
 
 // Endianness detection
 #if defined(_MSC_VER) // MSVC is always little endian, including Windows on ARM
-  #define NUCLEX_SUPPORT_LITTLE_ENDIAN
+  #define NUCLEX_SUPPORT_LITTLE_ENDIAN 1
 #elif defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) // GCC
-  #define NUCLEX_SUPPORT_LITTLE_ENDIAN
+  #define NUCLEX_SUPPORT_LITTLE_ENDIAN 1
 #elif defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) // GCC
-  #define NUCLEX_SUPPORT_BIG_ENDIAN
+  #define NUCLEX_SUPPORT_BIG_ENDIAN 1
 #else
   #error Could not determine whether platform is big or little endian
 #endif
@@ -108,7 +107,7 @@ License along with this library
     #endif
   #endif
 
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined(__clang__)
 
   #if defined(NUCLEX_SUPPORT_STATICLIB) || defined(NUCLEX_SUPPORT_EXECUTABLE)
     #define NUCLEX_SUPPORT_API
@@ -132,7 +131,7 @@ License along with this library
 // --------------------------------------------------------------------------------------------- //
 
 // Optimization macros
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
 
   #if !defined(likely)
     #define likely(x) __builtin_expect((x), 1)

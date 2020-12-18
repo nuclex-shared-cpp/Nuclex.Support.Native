@@ -21,6 +21,8 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_THREADING_THREAD_H
 #define NUCLEX_SUPPORT_THREADING_THREAD_H
 
+#include "Nuclex/Support/Config.h"
+
 #include <cstddef>
 #include <chrono>
 
@@ -33,11 +35,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Lets the calling thread wait for the specified amount of time</summary>
     /// <param name="time">Duration for which the thread will wait</param>
-    public: static void Sleep(std::chrono::microseconds time);
+    public: NUCLEX_SUPPORT_API static void Sleep(std::chrono::microseconds time);
 
     /// <summary>Determines whether the calling thread belongs to the thread pool</summary>
     /// <returns>True if the calling thread belongs to the thread pool</returns>
-    public: static bool BelongsToThreadPool();
+    public: NUCLEX_SUPPORT_API static bool BelongsToThreadPool();
 
     private: Thread(const Thread &);
     private: Thread&operator =(const Thread &);

@@ -197,7 +197,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Include\Nuclex\Support\BitTricks.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h" />
@@ -216,12 +215,10 @@
     <ClInclude Include="Include\Nuclex\Support\Errors\UnresolvedDependencyError.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Event.h" />
-    <ClInclude Include="Include\Nuclex\Support\Optional.h" />
-    <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h" />
-    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignature.inl" />
-    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignatureDetector.inl" />
-    <ClInclude Include="Include\Nuclex\Support\Services\IntegerSequence.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\Checks.inl" />
+    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignatureDetector.inl" />
+    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignature.inl" />
+    <ClInclude Include="Include\Nuclex\Support\Services\IntegerSequence.inl" />
     <ClInclude Include="Include\Nuclex\Support\Services\LazyServiceInjector.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceContainer.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceFactory.inl" />
@@ -239,12 +236,14 @@
     <ClInclude Include="Include\Nuclex\Support\Threading\WindowsThreadPool.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\WinRTThreadPool.h" />
     <ClInclude Include="Include\Nuclex\Support\Any.h" />
+    <ClInclude Include="Include\Nuclex\Support\BitTricks.h" />
     <ClInclude Include="Include\Nuclex\Support\Config.h" />
+    <ClInclude Include="Include\Nuclex\Support\Optional.h" />
+    <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h" />
     <ClInclude Include="Include\Nuclex\Support\Variant.h" />
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\BitTricks.cpp" />
     <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
@@ -263,13 +262,10 @@
     <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp" />
     <ClCompile Include="Source\Events\Delegate.cpp" />
     <ClCompile Include="Source\Events\Event.cpp" />
-    <ClCompile Include="Source\Optional.cpp" />
-    <ClCompile Include="Source\ScopeGuard.cpp" />
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp" />
     <ClCompile Include="Source\Services\ServiceContainer.cpp" />
     <ClCompile Include="Source\Services\ServiceProvider.cpp" />
     <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp" />
-    <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClInclude Include="Source\Text\Dragon4\Dragon4.h" />
     <ClInclude Include="Source\Text\Dragon4\Math.h" />
     <ClCompile Include="Source\Text\Dragon4\PrintFloat.cpp" />
@@ -282,16 +278,21 @@
     <ClInclude Include="Source\Text\Erthink\erthink_misc.h" />
     <ClInclude Include="Source\Text\Erthink\erthink_u2a.h" />
     <ClInclude Include="Source\Text\Ryu\common.h" />
+    <ClCompile Include="Source\Text\Ryu\d2fixed.c" />
     <ClInclude Include="Source\Text\Ryu\d2fixed_full_table.h" />
+    <ClCompile Include="Source\Text\Ryu\d2s.c" />
     <ClInclude Include="Source\Text\Ryu\d2s_full_table.h" />
     <ClInclude Include="Source\Text\Ryu\d2s_intrinsics.h" />
     <ClInclude Include="Source\Text\Ryu\d2s_small_table.h" />
     <ClInclude Include="Source\Text\Ryu\digit_table.h" />
+    <ClCompile Include="Source\Text\Ryu\f2s.c" />
     <ClInclude Include="Source\Text\Ryu\f2s_full_table.h" />
     <ClInclude Include="Source\Text\Ryu\generic_128.h" />
+    <ClCompile Include="Source\Text\Ryu\generic_128.c" />
     <ClInclude Include="Source\Text\Ryu\ryu.h" />
     <ClInclude Include="Source\Text\Ryu\ryu_generic_128.h" />
     <ClInclude Include="Source\Text\Ryu\ryu_parse.h" />
+    <ClCompile Include="Source\Text\Ryu\s2d.c" />
     <ClInclude Include="Source\Text\Utf8Fold\Utf8Fold.h" />
     <ClInclude Include="Source\Text\Utf8\checked.h" />
     <ClInclude Include="Source\Text\Utf8\core.h" />
@@ -299,12 +300,8 @@
     <ClCompile Include="Source\Text\CommandLine.cpp" />
     <ClCompile Include="Source\Text\CommandLineArgument.cpp" />
     <ClCompile Include="Source\Text\Lexical.cpp" />
-    <ClCompile Include="Source\Text\Ryu\d2fixed.c" />
-    <ClCompile Include="Source\Text\Ryu\d2s.c" />
-    <ClCompile Include="Source\Text\Ryu\f2s.c" />
-    <ClCompile Include="Source\Text\Ryu\generic_128.c" />
-    <ClCompile Include="Source\Text\Ryu\s2d.c" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
+    <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />
     <ClCompile Include="Source\Threading\Mutex.cpp" />
     <ClCompile Include="Source\Threading\ReaderWriterLock.cpp" />
@@ -313,7 +310,10 @@
     <ClCompile Include="Source\Threading\WindowsThreadPool.cpp" />
     <ClCompile Include="Source\Threading\WinRTThreadPool.cpp" />
     <ClCompile Include="Source\Any.cpp" />
+    <ClCompile Include="Source\BitTricks.cpp" />
     <ClCompile Include="Source\Config.cpp" />
+    <ClCompile Include="Source\Optional.cpp" />
+    <ClCompile Include="Source\ScopeGuard.cpp" />
     <ClCompile Include="Source\Variant.cpp" />
     <ClCompile Include="Source\VariantType.cpp" />
   </ItemGroup>

@@ -99,7 +99,7 @@ namespace Nuclex { namespace Support {
     #pragma endregion // struct ValueHolder
 
     /// <summary>Initializes a new any not holding a value</summary>
-    public: Any() :
+    public: NUCLEX_SUPPORT_API Any() :
       valueHolder(nullptr) {}
 
     /// <summary>Initializes a new any containing the specified value</summary>
