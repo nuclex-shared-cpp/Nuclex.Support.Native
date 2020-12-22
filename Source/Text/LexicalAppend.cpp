@@ -22,6 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Text/LexicalAppend.h"
+#include "Nuclex/Support/BitTricks.h"
 
 #include "Dragon4/PrintFloat.h"
 #include "Erthink/erthink_u2a.h"
@@ -67,6 +68,58 @@ namespace {
         return 2U;
       } else {
         return 3U;
+      }
+    }
+  } 
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Counts the number of digits in a value</summary>
+  /// <param name="value">Value for which the printed digits will be counted</param>
+  /// <returns>The number of digits the value has when printed</returns>
+  std::size_t countDigits(std::uint16_t value) {
+    if(value < 10U) {
+      return 1U;
+    } else if(value < 100U) {
+      return 2U;
+    } else if(value < 1000U) {
+      return 3U;
+    } else if(value < 10000U) {
+      return 4U;
+    } else {
+      return 5U;
+    }
+  } 
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Counts the number of digits in a value</summary>
+  /// <param name="value">Value for which the printed digits will be counted</param>
+  /// <returns>The number of digits the value has when printed</returns>
+  std::size_t countDigits(std::int16_t value) {
+    if(value < 0) {
+      if(value > -10) {
+        return 2U;
+      } else if(value > -100) {
+        return 3U;
+      } else if(value > -1000) {
+        return 4U;
+      } else if(value > -10000) {
+        return 5U;
+      } else {
+        return 6U;
+      }
+    } else {
+      if(value < 10) {
+        return 1U;
+      } else if(value < 100) {
+        return 2U;
+      } else if(value < 1000) {
+        return 3U;
+      } else if(value < 10000) {
+        return 4U;
+      } else {
+        return 5U;
       }
     }
   } 
@@ -237,6 +290,113 @@ namespace Nuclex { namespace Support { namespace Text {
     }
 
     return requiredBytes;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void lexical_append<>(std::string &target, const std::uint16_t &from) {
+    std::string::size_type length = target.length();
+    target.resize(length + countDigits(from));
+    erthink::u2a(static_cast<std::uint32_t>(from), target.data() + length);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::size_t lexical_append<>(
+    char *target, std::size_t availableBytes, const std::uint16_t &from
+  ) {
+    std::size_t requiredBytes = countDigits(from);
+    if(availableBytes >= requiredBytes) {
+      erthink::u2a(static_cast<std::uint32_t>(from), target);
+    }
+
+    return requiredBytes;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void lexical_append<>(std::string &target, const std::int16_t &from) {
+    std::string::size_type length = target.length();
+    target.resize(length + countDigits(from));
+    erthink::i2a(static_cast<std::int32_t>(from), target.data() + length);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::size_t lexical_append<>(
+    char *target, std::size_t availableBytes, const std::int16_t &from
+  ) {
+    std::size_t requiredBytes = countDigits(from);
+    if(availableBytes >= requiredBytes) {
+      erthink::i2a(static_cast<std::int32_t>(from), target);
+    }
+
+    return requiredBytes;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void lexical_append<>(std::string &target, const std::uint32_t &from) {
+    std::string::size_type length = target.length();
+    if(from >= 1) {
+      target.resize(length + BitTricks::GetLogBase10(from) + 1);
+      erthink::u2a(from, target.data() + length);
+    } else {
+      target.push_back('0');
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::size_t lexical_append<>(
+    char *target, std::size_t availableBytes, const std::uint32_t &from
+  ) {
+    std::size_t requiredBytes = (from >= 1) ? (BitTricks::GetLogBase10(from) + 1) : 1;
+    if(availableBytes >= requiredBytes) {
+      erthink::u2a(from, target);
+    }
+
+    return requiredBytes;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void lexical_append<>(std::string &target, const std::int32_t &from) {
+    std::string::size_type length = target.length();
+    if(from >= 1) {
+      target.resize(length + BitTricks::GetLogBase10(static_cast<std::uint32_t>(from)) + 1);
+      erthink::u2a(static_cast<std::uint32_t>(from), target.data() + length);
+    } else if(from == 0) {
+      target.push_back('0');
+    } else {
+      target.resize(length + BitTricks::GetLogBase10(static_cast<std::uint32_t>(-from)) + 2);
+      erthink::i2a(from, target.data() + length);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::size_t lexical_append<>(
+    char *target, std::size_t availableBytes, const std::int32_t &from
+  ) {
+    if(from >= 1) {
+      std::size_t requiredBytes = BitTricks::GetLogBase10(static_cast<std::uint32_t>(from)) + 1;
+      if(availableBytes >= requiredBytes) {
+        erthink::u2a(static_cast<std::uint32_t>(from), target);
+      }
+      return requiredBytes;
+    } else if(from == 0) {
+      if(availableBytes >= 1) {
+        target[0] = '0';
+      }
+      return 1U;
+    } else {
+      std::size_t requiredBytes = BitTricks::GetLogBase10(static_cast<std::uint32_t>(-from)) + 2;
+      if(availableBytes >= requiredBytes) {
+        erthink::i2a(from, target);
+      }
+      return requiredBytes;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

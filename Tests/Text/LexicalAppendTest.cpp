@@ -250,4 +250,353 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(LexicalAppendTest, CanAppendUInt16ToString) {
+    std::string resultString(u8"Value equals ");
+    lexical_append(resultString, std::uint16_t(56789));
+
+    EXPECT_EQ(resultString.length(), 18U);
+    EXPECT_EQ(resultString, u8"Value equals 56789");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, CanAppendUInt16ToCharacterArray) {
+    char characters[7] = { 0 };
+
+    characters[0] = 120;
+    characters[6] = 121;
+    std::size_t characterCount = lexical_append(characters + 1, 5U, std::uint16_t(56789));
+    EXPECT_EQ(characterCount, 5U);
+
+    EXPECT_EQ(characters[0], 120);
+    EXPECT_EQ(characters[1], '5');
+    EXPECT_EQ(characters[2], '6');
+    EXPECT_EQ(characters[3], '7');
+    EXPECT_EQ(characters[4], '8');
+    EXPECT_EQ(characters[5], '9');
+    EXPECT_EQ(characters[6], 121);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, ReturnsNeededByteCountForUInt16) {
+    char characters[1] = { 0 };
+
+    std::size_t characterCount = lexical_append(characters, 1U, std::uint16_t(9));
+    EXPECT_EQ(characterCount, 1U);
+    characterCount = lexical_append(characters, 1U, std::uint16_t(10));
+    EXPECT_EQ(characterCount, 2U);
+    characterCount = lexical_append(characters, 1U, std::uint16_t(99));
+    EXPECT_EQ(characterCount, 2U);
+    characterCount = lexical_append(characters, 1U, std::uint16_t(100));
+    EXPECT_EQ(characterCount, 3U);
+    characterCount = lexical_append(characters, 1U, std::uint16_t(999));
+    EXPECT_EQ(characterCount, 3U);
+    characterCount = lexical_append(characters, 1U, std::uint16_t(1000));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::uint16_t(9999));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::uint16_t(10000));
+    EXPECT_EQ(characterCount, 5U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, CanAppendInt16ToString) {
+    std::string resultString(u8"Value equals ");
+    lexical_append(resultString, std::int16_t(-23456));
+
+    EXPECT_EQ(resultString.length(), 19U);
+    EXPECT_EQ(resultString, u8"Value equals -23456");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, CanAppendInt16ToCharacterArray) {
+    char characters[8] = { 0 };
+
+    characters[0] = 121;
+    characters[7] = 122;
+    std::size_t characterCount = lexical_append(characters + 1, 6U, std::int16_t(-23456));
+    EXPECT_EQ(characterCount, 6U);
+
+    EXPECT_EQ(characters[0], 121);
+    EXPECT_EQ(characters[1], '-');
+    EXPECT_EQ(characters[2], '2');
+    EXPECT_EQ(characters[3], '3');
+    EXPECT_EQ(characters[4], '4');
+    EXPECT_EQ(characters[5], '5');
+    EXPECT_EQ(characters[6], '6');
+    EXPECT_EQ(characters[7], 122);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, ReturnsNeededByteCountForInt16) {
+    char characters[1] = { 0 };
+
+    std::size_t characterCount = lexical_append(characters, 1U, std::int16_t(-9));
+    EXPECT_EQ(characterCount, 2U);
+    characterCount = lexical_append(characters, 1U, std::int16_t(-99));
+    EXPECT_EQ(characterCount, 3U);
+    characterCount = lexical_append(characters, 1U, std::int16_t(-100));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::int16_t(-999));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::int16_t(-1000));
+    EXPECT_EQ(characterCount, 5U);
+    characterCount = lexical_append(characters, 1U, std::int16_t(-9999));
+    EXPECT_EQ(characterCount, 5U);
+    characterCount = lexical_append(characters, 1U, std::int16_t(-10000));
+    EXPECT_EQ(characterCount, 6U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, CanAppendUInt32ToString) {
+    std::string resultString(u8"Value equals ");
+    lexical_append(resultString, std::uint32_t(1234567890));
+
+    EXPECT_EQ(resultString.length(), 23U);
+    EXPECT_EQ(resultString, u8"Value equals 1234567890");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, CanAppendUInt32ToCharacterArray) {
+    char characters[12] = { 0 };
+
+    {
+      characters[0] = 122;
+      characters[2] = 123;
+      std::size_t characterCount = lexical_append(characters + 1, 1U, std::uint32_t(0));
+      EXPECT_EQ(characterCount, 1U);
+
+      EXPECT_EQ(characters[0], 122);
+      EXPECT_EQ(characters[1], '0');
+      EXPECT_EQ(characters[2], 123);
+    }
+
+    {
+      characters[0] = 123;
+      characters[11] = 124;
+      std::size_t characterCount = lexical_append(characters + 1, 10U, std::uint32_t(1234567890));
+      EXPECT_EQ(characterCount, 10U);
+
+      EXPECT_EQ(characters[0], 123);
+      EXPECT_EQ(characters[1], '1');
+      EXPECT_EQ(characters[2], '2');
+      EXPECT_EQ(characters[3], '3');
+      EXPECT_EQ(characters[4], '4');
+      EXPECT_EQ(characters[5], '5');
+      EXPECT_EQ(characters[6], '6');
+      EXPECT_EQ(characters[7], '7');
+      EXPECT_EQ(characters[8], '8');
+      EXPECT_EQ(characters[9], '9');
+      EXPECT_EQ(characters[10], '0');
+      EXPECT_EQ(characters[11], 124);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, ReturnsNeededByteCountForUInt32) {
+    char characters[1] = { 0 };
+
+    std::size_t characterCount = lexical_append(characters, 1U, std::uint32_t(0));
+    EXPECT_EQ(characterCount, 1U);
+
+    characterCount = lexical_append(characters, 1U, std::uint32_t(9));
+    EXPECT_EQ(characterCount, 1U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(99));
+    EXPECT_EQ(characterCount, 2U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(100));
+    EXPECT_EQ(characterCount, 3U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(999));
+    EXPECT_EQ(characterCount, 3U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(1000));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(9999));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(99999));
+    EXPECT_EQ(characterCount, 5U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(10000));
+    EXPECT_EQ(characterCount, 5U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(100000));
+    EXPECT_EQ(characterCount, 6U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(999999));
+    EXPECT_EQ(characterCount, 6U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(1000000));
+    EXPECT_EQ(characterCount, 7U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(9999999));
+    EXPECT_EQ(characterCount, 7U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(10000000));
+    EXPECT_EQ(characterCount, 8U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(99999999));
+    EXPECT_EQ(characterCount, 8U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(100000000));
+    EXPECT_EQ(characterCount, 9U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(999999999));
+    EXPECT_EQ(characterCount, 9U);
+    characterCount = lexical_append(characters, 1U, std::uint32_t(1000000000));
+    EXPECT_EQ(characterCount, 10U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, CanAppendInt32ToString) {
+    std::string resultString(u8"Value equals ");
+
+    lexical_append(resultString, std::int32_t(0));
+    EXPECT_EQ(resultString.length(), 14U);
+    EXPECT_EQ(resultString, u8"Value equals 0");
+
+    lexical_append(resultString, std::int32_t(1234567890));
+    EXPECT_EQ(resultString.length(), 24U);
+    EXPECT_EQ(resultString, u8"Value equals 01234567890");
+
+    lexical_append(resultString, std::int32_t(-1234567890));
+    EXPECT_EQ(resultString.length(), 35U);
+    EXPECT_EQ(resultString, u8"Value equals 01234567890-1234567890");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, CanAppendInt32ToCharacterArray) {
+    char characters[13] = { 0 };
+
+    {
+      characters[0] = 124;
+      characters[2] = 125;
+      std::size_t characterCount = lexical_append(characters + 1, 1U, std::int32_t(0));
+      EXPECT_EQ(characterCount, 1U);
+      EXPECT_EQ(characters[0], 124);
+      EXPECT_EQ(characters[1], '0');
+      EXPECT_EQ(characters[2], 125);
+    }
+
+    {
+      characters[0] = 125;
+      characters[11] = 126;
+      std::size_t characterCount = lexical_append(characters + 1, 10U, std::int32_t(1234567890));
+      EXPECT_EQ(characterCount, 10U);
+
+      EXPECT_EQ(characters[0], 125);
+      EXPECT_EQ(characters[1], '1');
+      EXPECT_EQ(characters[2], '2');
+      EXPECT_EQ(characters[3], '3');
+      EXPECT_EQ(characters[4], '4');
+      EXPECT_EQ(characters[5], '5');
+      EXPECT_EQ(characters[6], '6');
+      EXPECT_EQ(characters[7], '7');
+      EXPECT_EQ(characters[8], '8');
+      EXPECT_EQ(characters[9], '9');
+      EXPECT_EQ(characters[10], '0');
+      EXPECT_EQ(characters[11], 126);
+    }
+
+    {
+      characters[0] = 126;
+      characters[12] = 127;
+      std::size_t characterCount = lexical_append(characters + 1, 11U, std::int32_t(-1234567890));
+      EXPECT_EQ(characterCount, 11U);
+
+      EXPECT_EQ(characters[0], 126);
+      EXPECT_EQ(characters[1], '-');
+      EXPECT_EQ(characters[2], '1');
+      EXPECT_EQ(characters[3], '2');
+      EXPECT_EQ(characters[4], '3');
+      EXPECT_EQ(characters[5], '4');
+      EXPECT_EQ(characters[6], '5');
+      EXPECT_EQ(characters[7], '6');
+      EXPECT_EQ(characters[8], '7');
+      EXPECT_EQ(characters[9], '8');
+      EXPECT_EQ(characters[10], '9');
+      EXPECT_EQ(characters[11], '0');
+      EXPECT_EQ(characters[12], 127);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, ReturnsNeededByteCountForInt32) {
+    char characters[1] = { 0 };
+
+    std::size_t characterCount = lexical_append(characters, 1U, std::int32_t(0));
+    EXPECT_EQ(characterCount, 1U);
+
+    characterCount = lexical_append(characters, 1U, std::int32_t(-9));
+    EXPECT_EQ(characterCount, 2U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-99));
+    EXPECT_EQ(characterCount, 3U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-100));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-999));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-1000));
+    EXPECT_EQ(characterCount, 5U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-9999));
+    EXPECT_EQ(characterCount, 5U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-10000));
+    EXPECT_EQ(characterCount, 6U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-99999));
+    EXPECT_EQ(characterCount, 6U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-100000));
+    EXPECT_EQ(characterCount, 7U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-999999));
+    EXPECT_EQ(characterCount, 7U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-1000000));
+    EXPECT_EQ(characterCount, 8U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-9999999));
+    EXPECT_EQ(characterCount, 8U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-10000000));
+    EXPECT_EQ(characterCount, 9U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-99999999));
+    EXPECT_EQ(characterCount, 9U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-100000000));
+    EXPECT_EQ(characterCount, 10U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-999999999));
+    EXPECT_EQ(characterCount, 10U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(-1000000000));
+    EXPECT_EQ(characterCount, 11U);
+
+    characterCount = lexical_append(characters, 1U, std::int32_t(9));
+    EXPECT_EQ(characterCount, 1U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(99));
+    EXPECT_EQ(characterCount, 2U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(100));
+    EXPECT_EQ(characterCount, 3U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(999));
+    EXPECT_EQ(characterCount, 3U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(1000));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(9999));
+    EXPECT_EQ(characterCount, 4U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(99999));
+    EXPECT_EQ(characterCount, 5U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(10000));
+    EXPECT_EQ(characterCount, 5U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(100000));
+    EXPECT_EQ(characterCount, 6U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(999999));
+    EXPECT_EQ(characterCount, 6U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(1000000));
+    EXPECT_EQ(characterCount, 7U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(9999999));
+    EXPECT_EQ(characterCount, 7U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(10000000));
+    EXPECT_EQ(characterCount, 8U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(99999999));
+    EXPECT_EQ(characterCount, 8U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(100000000));
+    EXPECT_EQ(characterCount, 9U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(999999999));
+    EXPECT_EQ(characterCount, 9U);
+    characterCount = lexical_append(characters, 1U, std::int32_t(1000000000));
+    EXPECT_EQ(characterCount, 10U);
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text
