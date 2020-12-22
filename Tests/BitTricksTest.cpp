@@ -174,66 +174,28 @@ namespace Nuclex { namespace Support {
 
   TEST(BitTricksTest, CanGetLogBase10Of32BitsValue) {
     EXPECT_EQ(0U, BitTricks::GetLogBase10(std::uint32_t(1)));
-    EXPECT_EQ(0U, BitTricks::GetLogBase10(std::uint32_t(9)));
-    EXPECT_EQ(1U, BitTricks::GetLogBase10(std::uint32_t(10)));
-    EXPECT_EQ(1U, BitTricks::GetLogBase10(std::uint32_t(99)));
-    EXPECT_EQ(2U, BitTricks::GetLogBase10(std::uint32_t(100)));
-    EXPECT_EQ(2U, BitTricks::GetLogBase10(std::uint32_t(999)));
-    EXPECT_EQ(3U, BitTricks::GetLogBase10(std::uint32_t(1000)));
-    EXPECT_EQ(3U, BitTricks::GetLogBase10(std::uint32_t(9999)));
-    EXPECT_EQ(4U, BitTricks::GetLogBase10(std::uint32_t(10000)));
-    EXPECT_EQ(4U, BitTricks::GetLogBase10(std::uint32_t(99999)));
-    EXPECT_EQ(5U, BitTricks::GetLogBase10(std::uint32_t(100000)));
-    EXPECT_EQ(5U, BitTricks::GetLogBase10(std::uint32_t(999999)));
-    EXPECT_EQ(6U, BitTricks::GetLogBase10(std::uint32_t(1000000)));
-    EXPECT_EQ(6U, BitTricks::GetLogBase10(std::uint32_t(9999999)));
-    EXPECT_EQ(7U, BitTricks::GetLogBase10(std::uint32_t(10000000)));
-    EXPECT_EQ(7U, BitTricks::GetLogBase10(std::uint32_t(99999999)));
-    EXPECT_EQ(8U, BitTricks::GetLogBase10(std::uint32_t(100000000)));
-    EXPECT_EQ(8U, BitTricks::GetLogBase10(std::uint32_t(999999999)));
-    EXPECT_EQ(9U, BitTricks::GetLogBase10(std::uint32_t(1000000000)));
+
+    for(std::size_t log10 = 1; log10 < 10; ++log10) {
+      std::uint32_t nextHigher = static_cast<std::uint32_t>(std::pow(10, log10));
+      std::uint32_t nextLower = nextHigher - 1;
+
+      EXPECT_EQ(log10 - 1, BitTricks::GetLogBase10(std::uint32_t(nextLower)));
+      EXPECT_EQ(log10, BitTricks::GetLogBase10(std::uint32_t(nextHigher)));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(BitTricksTest, CanGetLogBase10Of64BitsValue) {
-    EXPECT_EQ(0U, BitTricks::GetLogBase10(std::uint64_t(1ULL)));
-    EXPECT_EQ(0U, BitTricks::GetLogBase10(std::uint64_t(9ULL)));
-    EXPECT_EQ(1U, BitTricks::GetLogBase10(std::uint64_t(10ULL)));
-    EXPECT_EQ(1U, BitTricks::GetLogBase10(std::uint64_t(99ULL)));
-    EXPECT_EQ(2U, BitTricks::GetLogBase10(std::uint64_t(100ULL)));
-    EXPECT_EQ(2U, BitTricks::GetLogBase10(std::uint64_t(999ULL)));
-    EXPECT_EQ(3U, BitTricks::GetLogBase10(std::uint64_t(1000ULL)));
-    EXPECT_EQ(3U, BitTricks::GetLogBase10(std::uint64_t(9999ULL)));
-    EXPECT_EQ(4U, BitTricks::GetLogBase10(std::uint64_t(10000ULL)));
-    EXPECT_EQ(4U, BitTricks::GetLogBase10(std::uint64_t(99999ULL)));
-    EXPECT_EQ(5U, BitTricks::GetLogBase10(std::uint64_t(100000ULL)));
-    EXPECT_EQ(5U, BitTricks::GetLogBase10(std::uint64_t(999999ULL)));
-    EXPECT_EQ(6U, BitTricks::GetLogBase10(std::uint64_t(1000000ULL)));
-    EXPECT_EQ(6U, BitTricks::GetLogBase10(std::uint64_t(9999999ULL)));
-    EXPECT_EQ(7U, BitTricks::GetLogBase10(std::uint64_t(10000000ULL)));
-    EXPECT_EQ(7U, BitTricks::GetLogBase10(std::uint64_t(99999999ULL)));
-    EXPECT_EQ(8U, BitTricks::GetLogBase10(std::uint64_t(100000000ULL)));
-    EXPECT_EQ(8U, BitTricks::GetLogBase10(std::uint64_t(999999999ULL)));
-    EXPECT_EQ(9U, BitTricks::GetLogBase10(std::uint64_t(1000000000ULL)));
-    EXPECT_EQ(9U, BitTricks::GetLogBase10(std::uint64_t(9999999999ULL)));
-    EXPECT_EQ(10U, BitTricks::GetLogBase10(std::uint64_t(10000000000ULL)));
-    EXPECT_EQ(10U, BitTricks::GetLogBase10(std::uint64_t(99999999999ULL)));
-    EXPECT_EQ(11U, BitTricks::GetLogBase10(std::uint64_t(100000000000ULL)));
-    EXPECT_EQ(11U, BitTricks::GetLogBase10(std::uint64_t(999999999999ULL)));
-    EXPECT_EQ(12U, BitTricks::GetLogBase10(std::uint64_t(1000000000000ULL)));
-    EXPECT_EQ(12U, BitTricks::GetLogBase10(std::uint64_t(9999999999999ULL)));
-    EXPECT_EQ(13U, BitTricks::GetLogBase10(std::uint64_t(10000000000000ULL)));
-    EXPECT_EQ(13U, BitTricks::GetLogBase10(std::uint64_t(99999999999999ULL)));
-    EXPECT_EQ(14U, BitTricks::GetLogBase10(std::uint64_t(100000000000000ULL)));
-    EXPECT_EQ(14U, BitTricks::GetLogBase10(std::uint64_t(999999999999999ULL)));
-    EXPECT_EQ(15U, BitTricks::GetLogBase10(std::uint64_t(1000000000000000ULL)));
-    EXPECT_EQ(15U, BitTricks::GetLogBase10(std::uint64_t(9999999999999999ULL)));
-    EXPECT_EQ(16U, BitTricks::GetLogBase10(std::uint64_t(10000000000000000ULL)));
-    EXPECT_EQ(16U, BitTricks::GetLogBase10(std::uint64_t(99999999999999999ULL)));
-    EXPECT_EQ(17U, BitTricks::GetLogBase10(std::uint64_t(100000000000000000ULL)));
-    EXPECT_EQ(17U, BitTricks::GetLogBase10(std::uint64_t(999999999999999999ULL)));
-    EXPECT_EQ(18U, BitTricks::GetLogBase10(std::uint64_t(1000000000000000000ULL)));
+    EXPECT_EQ(0U, BitTricks::GetLogBase10(std::uint64_t(1)));
+
+    for(std::size_t log10 = 1; log10 < 20; ++log10) {
+      std::uint64_t nextHigher = static_cast<std::uint64_t>(std::pow(10, log10));
+      std::uint64_t nextLower = nextHigher - 1;
+
+      EXPECT_EQ(log10 - 1, BitTricks::GetLogBase10(std::uint64_t(nextLower)));
+      EXPECT_EQ(log10, BitTricks::GetLogBase10(std::uint64_t(nextHigher)));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

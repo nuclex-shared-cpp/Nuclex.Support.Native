@@ -320,11 +320,11 @@ namespace Nuclex { namespace Support {
     ///   The result is undefined if the input value is 0
     /// </remarks>
     public: NUCLEX_SUPPORT_API static inline unsigned char GetLogBase10(std::uint64_t value) {
-      static const std::uint64_t powersOfTen[19] = {
+      static const std::uint64_t powersOfTen[20] = {
         1ULL, 10ULL, 100ULL, 1000ULL, 10000ULL, 100000ULL, 1000000ULL, 10000000ULL, 100000000U,
         1000000000ULL, 10000000000ULL, 100000000000ULL, 1000000000000ULL, 10000000000000ULL,
         100000000000000ULL, 1000000000000000ULL, 10000000000000000ULL, 100000000000000000ULL,
-        1000000000000000000ULL
+        1000000000000000000ULL, 10000000000000000000ULL
       };
 
       // http://graphics.stanford.edu/~seander/bithacks.html#IntegerLog10
