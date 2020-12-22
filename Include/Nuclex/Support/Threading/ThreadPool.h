@@ -21,8 +21,9 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_THREADING_THREADPOOL_H
 #define NUCLEX_SUPPORT_THREADING_THREADPOOL_H
 
-#include "../Config.h"
+#include "Nuclex/Support/Config.h"
 
+#include <cstddef>
 #include <functional>
 #include <memory>
 
@@ -34,10 +35,10 @@ namespace Nuclex { namespace Support { namespace Threading {
   class ThreadPool {
 
     /// <summary>Initializes a new thread pool</summary>
-    protected: NUCLEX_SUPPORT_API ThreadPool() {}
+    protected: NUCLEX_SUPPORT_API ThreadPool() = default;
 
     /// <summary>Stops all threads and frees all resources used</summary>
-    public: NUCLEX_SUPPORT_API virtual ~ThreadPool() {}
+    public: NUCLEX_SUPPORT_API virtual ~ThreadPool() = default;
 
     /// <summary>Create a default thread pool for the system</summary>
     /// <returns>The default thread pool on the current system</returns>

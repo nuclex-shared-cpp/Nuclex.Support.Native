@@ -104,7 +104,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(LexicalTest, CanConvertBoolToString) {
+  TEST(LexicalTest, CanConvertBooleanToString) {
     std::string text = lexical_cast<std::string>(true);
     EXPECT_EQ(text, u8"true");
     text = lexical_cast<std::string>(false);
@@ -113,7 +113,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(LexicalTest, CanConvertStringToBool) {
+  TEST(LexicalTest, CanConvertStringToBoolean) {
     bool boolean_from_true_string = lexical_cast<bool>(u8"true");
     EXPECT_TRUE(boolean_from_true_string);
     bool boolean_from_false_string = lexical_cast<bool>(u8"false");

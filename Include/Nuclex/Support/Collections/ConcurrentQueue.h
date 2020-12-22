@@ -21,10 +21,22 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
 #define NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
 
+// References:
 // https://github.com/rigtorp/awesome-lockfree
 // https://github.com/mpoeter/xenium
+// https://liblfds.org/ (<-- Public Domain!)
+//
+// Interesting implementations:
+// https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++.htm
+// https://moodycamel.com/blog/2014/a-fast-general-purpose-lock-free-queue-for-c++.htm
+//
+// Fastest known implementation:
+// https://github.com/oneapi-src/oneTBB/blob/master/include/oneapi/tbb/concurrent_queue.h
+//
+// "Battle Tested" implementation:
+// https://github.com/rigtorp/MPMCQueue
 
-#include "../Config.h"
+#include "Nuclex/Support/Config.h"
 
 #if defined(NUCLEX_SUPPORT_WIN32) || defined(NUCLEX_SUPPORT_WINRT)
 
