@@ -138,4 +138,38 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(BitTricksTest, CanGetLogBase2Of32BitsValue) {
+    for(std::size_t index = 0; index < 31; ++index) {
+      if(index >= 1) {
+        EXPECT_EQ(
+          index - 1U,
+          BitTricks::GetLogBase2(std::uint32_t((1U << index) - 1))
+        );
+      }
+      EXPECT_EQ(
+        index,
+        BitTricks::GetLogBase2(std::uint32_t(1U << index))
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(BitTricksTest, CanGetLogBase2Of64BitsValue) {
+    for(std::size_t index = 0; index < 63; ++index) {
+      if(index >= 1) {
+        EXPECT_EQ(
+          index - 1U,
+          BitTricks::GetLogBase2(std::uint64_t((1ULL << index) - 1))
+        );
+      }
+      EXPECT_EQ(
+        index,
+        BitTricks::GetLogBase2(std::uint64_t(1ULL << index))
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }} // namespace Nuclex::Support
