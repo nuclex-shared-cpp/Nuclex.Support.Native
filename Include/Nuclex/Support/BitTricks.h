@@ -269,9 +269,7 @@ namespace Nuclex { namespace Support {
     /// <remarks>
     ///   The result is undefined if the input value is 0
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static inline unsigned char GetLogBase2(
-      std::uint64_t value
-    ) {
+    public: NUCLEX_SUPPORT_API static inline unsigned char GetLogBase2(std::uint64_t value) {
 #if defined(_MSC_VER) && defined(_M_X64)
       //return static_cast<unsigned char>(__lzcnt64(value));
       unsigned long bitIndex;
@@ -297,6 +295,41 @@ namespace Nuclex { namespace Support {
 
       return deBruijnBitPosition[(value * 0x03F79D71B4CB0A89ULL) >> 58];
 #endif
+    }
+
+    /// <summary>Calculates the log base-10 of a 32 bit integer</summary>
+    /// <param name="value">Value of which the log base-10 will be calculated</param>
+    /// <returns>The log base-10 of the specified value</returns>
+    /// <remarks>
+    ///   The result is undefined if the input value is 0
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static inline unsigned char GetLogBase10(std::uint32_t value) {
+      static const std::uint32_t powersOfTen[10] = {
+        1U, 10U, 100U, 1000U, 10000U, 100000U, 1000000U, 10000000U, 100000000U, 1000000000U,
+      };
+
+      // http://graphics.stanford.edu/~seander/bithacks.html#IntegerLog10
+      std::uint32_t temp = (GetLogBase2(value) + 1) * 1233U >> 12;
+      return static_cast<unsigned char>(temp - (value < powersOfTen[temp]));
+    }
+
+    /// <summary>Calculates the log base-10 of a 64 bit integer</summary>
+    /// <param name="value">Value of which the log base-10 will be calculated</param>
+    /// <returns>The log base-10 of the specified value</returns>
+    /// <remarks>
+    ///   The result is undefined if the input value is 0
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static inline unsigned char GetLogBase10(std::uint64_t value) {
+      static const std::uint64_t powersOfTen[19] = {
+        1ULL, 10ULL, 100ULL, 1000ULL, 10000ULL, 100000ULL, 1000000ULL, 10000000ULL, 100000000U,
+        1000000000ULL, 10000000000ULL, 100000000000ULL, 1000000000000ULL, 10000000000000ULL,
+        100000000000000ULL, 1000000000000000ULL, 10000000000000000ULL, 100000000000000000ULL,
+        1000000000000000000ULL
+      };
+
+      // http://graphics.stanford.edu/~seander/bithacks.html#IntegerLog10
+      std::uint64_t temp = (GetLogBase2(value) + 1) * 1233U >> 12;
+      return static_cast<unsigned char>(temp - (value < powersOfTen[temp]));
     }
 
   };
