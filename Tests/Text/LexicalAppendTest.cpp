@@ -23,8 +23,8 @@ License along with this library
 
 #include "Nuclex/Support/Text/LexicalAppend.h"
 
-#include <cmath>
-#include <clocale>
+#include <cmath> // for std::pow()
+#include <limits> // for std::numeric_limits
 
 #include <gtest/gtest.h>
 
@@ -683,6 +683,17 @@ namespace Nuclex { namespace Support { namespace Text {
     EXPECT_EQ(lexical_append(characters, 1U, float(-123.456f)), 8U);
   }
 
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, BufferFitsExtremeFloatLengths) {
+    std::string resultString(u8"Longest float: ");
+
+    // Doubles can print as up to 64 decimal digits, so test these edge cases
+    lexical_append(resultString, std::numeric_limits<float>::min());
+    lexical_append(resultString, std::numeric_limits<float>::max());
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendDoubleToString) {
@@ -753,6 +764,16 @@ namespace Nuclex { namespace Support { namespace Text {
     EXPECT_EQ(lexical_append(characters, 1U, double(0.0)), 1U);
     EXPECT_EQ(lexical_append(characters, 1U, double(12345.06789)), 11U);
     EXPECT_EQ(lexical_append(characters, 1U, double(-12345.06789)), 12U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LexicalAppendTest, BufferFitsExtremeDoubleLengths) {
+    std::string resultString(u8"Longest double: ");
+
+    // Doubles can print as up to 256 decimal digits, so test these edge cases
+    lexical_append(resultString, std::numeric_limits<double>::min());
+    lexical_append(resultString, std::numeric_limits<double>::max());
   }
 
   // ------------------------------------------------------------------------------------------- //

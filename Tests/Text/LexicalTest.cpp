@@ -23,9 +23,6 @@ License along with this library
 
 #include "Nuclex/Support/Text/Lexical.h"
 
-#include <cmath>
-#include <clocale>
-
 #include <gtest/gtest.h>
 
 namespace {

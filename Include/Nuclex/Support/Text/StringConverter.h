@@ -68,6 +68,13 @@ namespace Nuclex { namespace Support { namespace Text {
   /// </remarks>
   class StringConverter {
 
+    /// <summary>Counts the number of UTF-8 characters in a string</summary>
+    /// <param name="from">UTF-8 string whose characters will be counted</param>
+    /// <returns>The number of UTF-8 characters the string is holding</returns>
+    public: NUCLEX_SUPPORT_API static std::string::size_type CountUtf8Characters(
+      const std::string &from
+    );
+
     /// <summary>Converts a UTF-8 string into a wide (UTF-16 or UTF-32) string</summary>
     /// <param name="from">UTF-8 string that will be converted</param>
     /// <returns>A wide version of the provided UTF-8 string</returns>

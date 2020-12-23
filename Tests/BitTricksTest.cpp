@@ -24,7 +24,7 @@ License along with this library
 #include "Nuclex/Support/BitTricks.h"
 #include <gtest/gtest.h>
 
-#include <random>
+#include <random> // lots, for testing with random numbers
 
 namespace Nuclex { namespace Support {
 
