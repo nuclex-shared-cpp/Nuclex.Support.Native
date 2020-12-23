@@ -179,8 +179,8 @@ namespace Nuclex { namespace Support {
       std::uint32_t nextHigher = static_cast<std::uint32_t>(std::pow(10, log10));
       std::uint32_t nextLower = nextHigher - 1;
 
-      EXPECT_EQ(log10 - 1, BitTricks::GetLogBase10(std::uint32_t(nextLower)));
-      EXPECT_EQ(log10, BitTricks::GetLogBase10(std::uint32_t(nextHigher)));
+      EXPECT_EQ(log10 - 1, BitTricks::GetLogBase10(nextLower));
+      EXPECT_EQ(log10, BitTricks::GetLogBase10(nextHigher));
     }
   }
 
@@ -193,8 +193,8 @@ namespace Nuclex { namespace Support {
       std::uint64_t nextHigher = static_cast<std::uint64_t>(std::pow(10, log10));
       std::uint64_t nextLower = nextHigher - 1;
 
-      EXPECT_EQ(log10 - 1, BitTricks::GetLogBase10(std::uint64_t(nextLower)));
-      EXPECT_EQ(log10, BitTricks::GetLogBase10(std::uint64_t(nextHigher)));
+      EXPECT_EQ(log10 - 1, BitTricks::GetLogBase10(nextLower));
+      EXPECT_EQ(log10, BitTricks::GetLogBase10(nextHigher));
     }
   }
 

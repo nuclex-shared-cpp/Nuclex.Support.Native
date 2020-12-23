@@ -29,6 +29,7 @@ License along with this library
 #include "Ryu/ryu_parse.h"
 
 #include <limits> // for std::numeric_limits
+#include <algorithm> // for std::copy_n()
 
 namespace {
 
@@ -386,7 +387,7 @@ namespace Nuclex { namespace Support { namespace Text {
       }
       return requiredBytes;
     } else if(from == 0) {
-      if(availableBytes >= 1) {
+      if(availableBytes >= 1U) {
         target[0] = '0';
       }
       return 1U;
@@ -396,6 +397,146 @@ namespace Nuclex { namespace Support { namespace Text {
         erthink::i2a(from, target);
       }
       return requiredBytes;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void lexical_append<>(std::string &target, const std::uint64_t &from) {
+    std::string::size_type length = target.length();
+    if(from >= 1) {
+      target.resize(length + BitTricks::GetLogBase10(from) + 1);
+      erthink::u2a(from, target.data() + length);
+    } else {
+      target.push_back('0');
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::size_t lexical_append<>(
+    char *target, std::size_t availableBytes, const std::uint64_t &from
+  ) {
+    std::size_t requiredBytes = (from >= 1) ? (BitTricks::GetLogBase10(from) + 1) : 1;
+    if(availableBytes >= requiredBytes) {
+      erthink::u2a(from, target);
+    }
+
+    return requiredBytes;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void lexical_append<>(std::string &target, const std::int64_t &from) {
+    std::string::size_type length = target.length();
+    if(from >= 1) {
+      target.resize(length + BitTricks::GetLogBase10(static_cast<std::uint64_t>(from)) + 1);
+      erthink::u2a(static_cast<std::uint64_t>(from), target.data() + length);
+    } else if(from == 0) {
+      target.push_back('0');
+    } else {
+      target.resize(length + BitTricks::GetLogBase10(static_cast<std::uint64_t>(-from)) + 2);
+      erthink::i2a(from, target.data() + length);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::size_t lexical_append<>(
+    char *target, std::size_t availableBytes, const std::int64_t &from
+  ) {
+    if(from >= 1) {
+      std::size_t requiredBytes = BitTricks::GetLogBase10(static_cast<std::uint64_t>(from)) + 1;
+      if(availableBytes >= requiredBytes) {
+        erthink::u2a(static_cast<std::uint64_t>(from), target);
+      }
+      return requiredBytes;
+    } else if(from == 0) {
+      if(availableBytes >= 1U) {
+        target[0] = '0';
+      }
+      return 1U;
+    } else {
+      std::size_t requiredBytes = BitTricks::GetLogBase10(static_cast<std::uint64_t>(-from)) + 2;
+      if(availableBytes >= requiredBytes) {
+        erthink::i2a(from, target);
+      }
+      return requiredBytes;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void lexical_append<>(std::string &target, const float &from) {
+    std::string::size_type length = target.length();
+
+    target.resize(length + 64U);
+
+    tU32 actualLength = ::PrintFloat32(
+      target.data() + length, 64U, from, PrintFloatFormat_Positional, -1
+    );
+
+    target.resize(length + static_cast<std::string::size_type>(actualLength));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::size_t lexical_append<>(
+    char *target, std::size_t availableBytes, const float &from
+  ) {
+    if(availableBytes >= 64U) {
+      tU32 actualLength = ::PrintFloat32(
+        target, availableBytes, from, PrintFloatFormat_Positional, -1
+      );
+      return static_cast<std::size_t>(actualLength);
+    } else {
+      char characters[64];
+      std::size_t actualLength = static_cast<std::size_t>(
+        ::PrintFloat32(characters, sizeof(characters), from, PrintFloatFormat_Positional, -1)
+      );
+      if(availableBytes >= actualLength) {
+        std::copy_n(characters, actualLength, target);
+      }
+
+      return actualLength;
+    }
+  }
+
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void lexical_append<>(std::string &target, const double &from) {
+    std::string::size_type length = target.length();
+
+    target.resize(length + 256U);
+
+    tU32 actualLength = ::PrintFloat64(
+      target.data() + length, 256U, from, PrintFloatFormat_Positional, -1
+    );
+
+    target.resize(length + static_cast<std::string::size_type>(actualLength));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::size_t lexical_append<>(
+    char *target, std::size_t availableBytes, const double &from
+  ) {
+    if(availableBytes >= 256U) {
+      tU32 actualLength = ::PrintFloat64(
+        target, availableBytes, from, PrintFloatFormat_Positional, -1
+      );
+      return static_cast<std::size_t>(actualLength);
+    } else {
+      char characters[256];
+      std::size_t actualLength = static_cast<std::size_t>(
+        ::PrintFloat64(characters, sizeof(characters), from, PrintFloatFormat_Positional, -1)
+      );
+      if(availableBytes >= actualLength) {
+        std::copy_n(characters, actualLength, target);
+      }
+
+      return actualLength;
     }
   }
 
