@@ -293,7 +293,10 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalTest, FloatToStringIsLocaleIndependent) {
-    std::setlocale(LC_NUMERIC, "de_DE.UTF-8");
+    {
+      using namespace std;
+      setlocale(LC_NUMERIC, "de_DE.UTF-8");
+    }
     std::string text = lexical_cast<std::string>(0.125f);
     EXPECT_EQ(text, "0.125");
   }
@@ -352,7 +355,10 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalTest, DoubleToStringIsLocaleIndependent) {
-    std::setlocale(LC_NUMERIC, "de_DE.UTF-8");
+    {
+      using namespace std;
+      setlocale(LC_NUMERIC, "de_DE.UTF-8");
+    }
     std::string text = lexical_cast<std::string>(0.125);
     EXPECT_EQ(text, "0.125");
   }

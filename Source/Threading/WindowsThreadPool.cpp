@@ -26,6 +26,7 @@ License along with this library
 #if defined(NUCLEX_SUPPORT_WIN32)
 
 #include <exception>
+#include <stdexcept>
 #include <cassert>
 
 #define WIN32_LEAN_AND_MEAN
