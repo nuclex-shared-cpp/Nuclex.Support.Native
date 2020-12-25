@@ -25,9 +25,9 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WIN32)
 
-#include <exception>
-#include <stdexcept>
-#include <cassert>
+#include <exception> // for std::runtime_error
+#include <stdexcept> // for std::runtime_error (should be in <exception> but MSVC is weird)
+#include <cassert> // for assert()
 
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN

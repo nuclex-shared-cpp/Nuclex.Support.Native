@@ -170,7 +170,16 @@
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLineArgument.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h">
+    <ClInclude Include="Include\Nuclex\Support\Text\LexicalAppend.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\LexicalCast.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\Logger.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\StatusObserver.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h">
@@ -388,7 +397,16 @@
     <ClCompile Include="Source\Text\CommandLineArgument.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Text\Lexical.cpp">
+    <ClCompile Include="Source\Text\LexicalAppend.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\LexicalCast.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\Logger.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\StatusObserver.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
     <ClCompile Include="Source\Text\StringConverter.cpp">
@@ -465,7 +483,10 @@
     <ClCompile Include="Tests\Services\ServiceContainerTest.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\Text\LexicalTest.cpp">
+    <ClCompile Include="Tests\Text\LexicalCastTest.cpp">
+      <Filter>Tests\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Text\LexicalAppendTest.cpp">
       <Filter>Tests\Text</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Text\StringConverterTest.cpp">
@@ -506,8 +527,6 @@
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf">
       <Filter>Documents</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="Documents\Copyright.md">
       <Filter>Documents</Filter>
     </Text>

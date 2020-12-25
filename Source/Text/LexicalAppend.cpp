@@ -486,7 +486,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ) {
     if(availableBytes >= 64U) {
       tU32 actualLength = ::PrintFloat32(
-        target, availableBytes, from, PrintFloatFormat_Positional, -1
+        target, static_cast<tU32>(availableBytes), from, PrintFloatFormat_Positional, -1
       );
       return static_cast<std::size_t>(actualLength);
     } else {
@@ -524,7 +524,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ) {
     if(availableBytes >= 256U) {
       tU32 actualLength = ::PrintFloat64(
-        target, availableBytes, from, PrintFloatFormat_Positional, -1
+        target, static_cast<tU32>(availableBytes), from, PrintFloatFormat_Positional, -1
       );
       return static_cast<std::size_t>(actualLength);
     } else {

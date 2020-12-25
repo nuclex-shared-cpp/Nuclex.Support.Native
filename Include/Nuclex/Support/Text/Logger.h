@@ -25,18 +25,6 @@ License along with this library
 
 #include <string>
 
-// DONE: Rename FeedbackReceiver to Logger?
-//   This class is purely for logging and many other logging libraries, such as
-//   log4j / log4net, use an ILogger interface in their design.
-//
-//   But: this is just an interface, it doesn't 'log' per se. And 'LogSink'
-//   is shorter but nobody understands Microsoftese (nor do we want it...)
-
-// CHECK: Use simple verbs for the logging methods?
-//   LogMessage()  ->  Inform()
-//   LogWarning()  ->  Warn()
-//   LogError()    ->  ? Complain() ? Panic() ? Bail() ?
-
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
@@ -112,7 +100,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   things are indeed happening the way you intended to. These messages typically
     ///   go into some log, a details window or are discarded outright.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void LogMessage(const std::string &message) {
+    public: NUCLEX_SUPPORT_API virtual void Inform(const std::string &message) {
       (void)message;
     }
 
@@ -130,7 +118,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     the operation completed with warnings.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void LogWarning(const std::string &warning) {
+    public: NUCLEX_SUPPORT_API virtual void Warn(const std::string &warning) {
       (void)warning;
     }
 
@@ -147,7 +135,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     the operation has failed.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void LogError(const std::string &error) {
+    public: NUCLEX_SUPPORT_API virtual void Complain(const std::string &error) {
       (void)error;
     }
 

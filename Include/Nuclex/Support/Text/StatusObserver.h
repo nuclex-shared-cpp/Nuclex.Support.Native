@@ -18,14 +18,14 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_TEXT_FEEDBACKRECEIVER_H
-#define NUCLEX_SUPPORT_TEXT_FEEDBACKRECEIVER_H
+#ifndef NUCLEX_SUPPORT_TEXT_STATUSOBSERVER_H
+#define NUCLEX_SUPPORT_TEXT_STATUSOBSERVER_H
 
 #include "Nuclex/Support/Config.h"
 
 #include <string>
 
-// CHECK: FeedbackReceiver is pretty UI-centric (either console or GUI) - rename?
+// DONE: FeedbackReceiver is pretty UI-centric (either console or GUI) - rename?
 //   UiFeedbackReceiver?
 //   StatusObserver?
 
@@ -34,10 +34,10 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Interface that accepts feedback from a long-running task</summary>
-  class FeedbackReceiver {
+  class StatusObserver {
 
     /// <summary>Frees all resources owned by the feedback receiver</summary>
-    public: NUCLEX_SUPPORT_API virtual ~FeedbackReceiver() = default;
+    public: NUCLEX_SUPPORT_API virtual ~StatusObserver() = default;
 
     /// <summary>Updates the current progress of the operation</summary>
     /// <param name="progress">Achieved rogress in a range of 0.0 .. 1.0</param>
@@ -64,4 +64,4 @@ namespace Nuclex { namespace Support { namespace Text {
 
 }}} // namespace Nuclex::Support::Text
 
-#endif // NUCLEX_SUPPORT_TEXT_FEEDBACKRECEIVER_H
+#endif // NUCLEX_SUPPORT_TEXT_STATUSOBSERVER_H

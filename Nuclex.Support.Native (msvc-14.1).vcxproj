@@ -219,7 +219,10 @@
     <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLine.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLineArgument.h" />
-    <ClInclude Include="Include\Nuclex\Support\Text\Lexical.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\LexicalAppend.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\LexicalCast.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\Logger.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\StatusObserver.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\LinuxThreadPool.h" />
@@ -293,7 +296,10 @@
     <ClInclude Include="Source\Text\Utf8\unchecked.h" />
     <ClCompile Include="Source\Text\CommandLine.cpp" />
     <ClCompile Include="Source\Text\CommandLineArgument.cpp" />
-    <ClCompile Include="Source\Text\Lexical.cpp" />
+    <ClCompile Include="Source\Text\LexicalAppend.cpp" />
+    <ClCompile Include="Source\Text\LexicalCast.cpp" />
+    <ClCompile Include="Source\Text\Logger.cpp" />
+    <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />

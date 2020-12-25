@@ -24,7 +24,7 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Text/StringConverter.h"
 
-#include <string>
+#include <string> // for std::string
 
 // CHECK: Rename to AppendString? - aka append_string() similar to to_string()?
 //   It does lexical conversion, so does it deserve the lexical in its name?
