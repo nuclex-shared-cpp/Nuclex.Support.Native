@@ -364,7 +364,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
     EXPECT_EQ(lexical_append(characters, 1U, std::int16_t(-1)), 2U);
     for(std::size_t log10 = 1; log10 < 5; ++log10) {
-      std::int16_t nextLower = static_cast<std::int16_t>(-Pow10<std::uint16_t>(log10));
+      std::int16_t nextLower = -static_cast<std::int16_t>(Pow10<std::uint16_t>(log10));
       std::int16_t nextHigher = nextLower + 1;
       EXPECT_EQ(lexical_append(characters, 1U, nextLower), log10 + 2);
       EXPECT_EQ(lexical_append(characters, 1U, nextHigher), log10 + 1);
@@ -508,7 +508,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
     EXPECT_EQ(lexical_append(characters, 1U, std::int32_t(-1)), 2U);
     for(std::size_t log10 = 1; log10 < 10; ++log10) {
-      std::int32_t nextLower = static_cast<std::int32_t>(-Pow10<std::uint32_t>(log10));
+      std::int32_t nextLower = -static_cast<std::int32_t>(Pow10<std::uint32_t>(log10));
       std::int32_t nextHigher = nextLower + 1;
       EXPECT_EQ(lexical_append(characters, 1U, nextLower), log10 + 2);
       EXPECT_EQ(lexical_append(characters, 1U, nextHigher), log10 + 1);
@@ -657,7 +657,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
     EXPECT_EQ(lexical_append(characters, 1U, std::int64_t(-1)), 2U);
     for(std::size_t log10 = 1; log10 < 19; ++log10) {
-      std::int64_t nextLower = static_cast<std::int64_t>(-Pow10<std::uint64_t>(log10));
+      std::int64_t nextLower = -static_cast<std::int64_t>(Pow10<std::uint64_t>(log10));
       std::int64_t nextHigher = nextLower + 1;
       EXPECT_EQ(lexical_append(characters, 1U, nextLower), log10 + 2);
       EXPECT_EQ(lexical_append(characters, 1U, nextHigher), log10 + 1);
