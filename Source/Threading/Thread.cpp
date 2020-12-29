@@ -31,7 +31,8 @@ License along with this library
 #include <time.h>
 #endif
 
-#include <thread>
+#include <thread> // for std::thread
+#include <cstdlib> // for ldiv_t
 
 namespace Nuclex { namespace Support { namespace Threading {
 

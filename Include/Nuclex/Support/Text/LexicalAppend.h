@@ -26,10 +26,6 @@ License along with this library
 
 #include <string> // for std::string
 
-// CHECK: Rename to AppendString? - aka append_string() similar to to_string()?
-//   It does lexical conversion, so does it deserve the lexical in its name?
-//   The target is always a string, though.
-
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //

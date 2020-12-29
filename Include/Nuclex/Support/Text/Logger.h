@@ -39,12 +39,12 @@ namespace Nuclex { namespace Support { namespace Text {
 
       /// <summary>Adds indentation to the specified logger</summary>
       /// <param name="logger">Logger to which an indentation level will be added</param>
-      public: IndentationScope(Logger &logger) : logger(logger) {
+      public: NUCLEX_SUPPORT_API IndentationScope(Logger &logger) : logger(logger) {
         this->logger.Indent();
       }
 
       /// <summary>Goes back up by one indentation level on the logger</summary>
-      public: ~IndentationScope() {
+      public: NUCLEX_SUPPORT_API ~IndentationScope() {
         this->logger.Unindent();
       }
 

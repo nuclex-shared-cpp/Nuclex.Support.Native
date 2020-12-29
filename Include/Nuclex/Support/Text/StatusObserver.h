@@ -25,10 +25,6 @@ License along with this library
 
 #include <string>
 
-// DONE: FeedbackReceiver is pretty UI-centric (either console or GUI) - rename?
-//   UiFeedbackReceiver?
-//   StatusObserver?
-
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
