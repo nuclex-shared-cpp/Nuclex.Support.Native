@@ -83,7 +83,7 @@ namespace Nuclex { namespace Support {
     public: NUCLEX_SUPPORT_API static inline unsigned char CountBits(
       std::uint64_t value
     ) {
-#if defined(_MSC_VER) && defined(NUCLEX_SUPPORT_POPCNT_SUPPORTED)
+#if defined(_MSC_VER) && defined(NUCLEX_SUPPORT_POPCNT_SUPPORTED) && defined(_M_X64)
       return static_cast<unsigned char>(__popcnt64(value));
 #elif ( \
   (defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))) && \
@@ -280,7 +280,7 @@ namespace Nuclex { namespace Support {
 #else
       // https://stackoverflow.com/questions/21888140/
       static const unsigned char deBruijnBitPosition[64] = {
-        0, 47, 1, 56, 48, 27, 2, 60, 57, 49, 41, 36, 28, 16, 3, 61,
+        0, 47, 1, 56, 48, 27, 2, 60, 57, 49, 41, 37, 28, 16, 3, 61,
         54, 58, 35, 52, 50, 42, 21, 44, 38, 32, 29, 23, 17, 11, 4, 62,
         46, 55, 26, 59, 40, 36, 15, 53, 34, 51, 20, 43, 31, 22, 10, 45,
         25, 39, 14, 33, 19, 30, 9, 24, 13, 18, 8, 12, 7, 6, 5, 63
