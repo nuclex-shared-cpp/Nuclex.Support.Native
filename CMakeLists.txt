@@ -11,10 +11,14 @@ project(
 
 include("../BuildSystem/cmake/cplusplus.cmake")
 
-#variable_watch(sourceFiles)
-#variable_watch(headerFiles)
+# -------------------------------------------------------------------------------------------------
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/../ThirdParty/gtest ${CMAKE_BINARY_DIR}/gtest)
+
+#set(GoogleTest_DIR "../ThirdParty/gtest")
+#find_package(GoogleTest REQUIRED CONFIG)
+
+find_package(Threads REQUIRED)
 
 # -------------------------------------------------------------------------------------------------
 
@@ -36,6 +40,7 @@ file(
 	CONFIGURE_DEPENDS
 	"Include/Nuclex/Support/*.h"
 )
+
 file(
 	GLOB_RECURSE unittestFiles
 	CONFIGURE_DEPENDS
@@ -57,15 +62,18 @@ target_sources(
 	PRIVATE ${sourceFiles}
 )
 
-install(
-	TARGETS NuclexSupportNative
-	LIBRARY
-	DESTINATION ${PROJECT_SOURCE_DIR}/bin/${CMAKE_COMPILER_TAG}
-)
+if(WIN32)
+	set_target_properties(NuclexSupportNative PROPERTIES OUTPUT_NAME "Nuclex.Support.Native")
+endif()
 
 # -------------------------------------------------------------------------------------------------
 
 add_executable(NuclexSupportNativeTests)
+
+target_compile_definitions(
+	NuclexSupportNativeTests
+	PRIVATE NUCLEX_SUPPORT_EXECUTABLE
+)
 
 target_include_directories(
 	NuclexSupportNativeTests
@@ -79,8 +87,6 @@ target_sources(
 	PRIVATE ${unittestFiles}
 )
 
-find_package(Threads REQUIRED)
-
 target_link_libraries(
 	NuclexSupportNativeTests
 	PRIVATE GoogleTest
@@ -88,10 +94,24 @@ target_link_libraries(
 	PRIVATE Threads::Threads
 )
 
+if(WIN32)
+	set_target_properties(
+		NuclexSupportNativeTests PROPERTIES OUTPUT_NAME "Nuclex.Support.Native.Tests"
+	)
+endif()
+
+# -------------------------------------------------------------------------------------------------
+
+install(
+	TARGETS NuclexSupportNative
+	ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
+	LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
+	RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
+)
+
 install(
 	TARGETS NuclexSupportNativeTests
-	RUNTIME
-	DESTINATION ${PROJECT_SOURCE_DIR}/bin/${CMAKE_COMPILER_TAG}
+	RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
 )
 
 # -------------------------------------------------------------------------------------------------
