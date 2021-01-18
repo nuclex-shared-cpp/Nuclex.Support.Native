@@ -18,48 +18,36 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_TEXT_LOGGER_H
-#define NUCLEX_SUPPORT_TEXT_LOGGER_H
+#ifndef NUCLEX_SUPPORT_TEXT_ROLLINGLOGGER_H
+#define NUCLEX_SUPPORT_TEXT_ROLLINGLOGGER_H
 
 #include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Text/Logger.h"
+#include "Nuclex/Support/Text/LexicalAppend.h"
 
-#include <string> // for std::string
+#include <vector> // for std::vector
 
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Interface to accept diagnostic messages and information</summary>
-  class Logger {
+  /// <summary>Logger that buffers lines cheaply in memory until they're needed</summary>
+  /// <remarks>
+  ///   <para>
+  ///     
+  ///   </para>     
+  /// </remarks>
+  class RollingLogger : public Logger {
 
-    /// <summary>A logger that doesn't log anything</summary>
-    public: NUCLEX_SUPPORT_API static Logger &Null;
-
-    #pragma region class IndentationScope
-
-    /// <summary>Simple scope that adds indentation to a logger while it exists</summary>
-    public: class IndentationScope {
-
-      /// <summary>Adds indentation to the specified logger</summary>
-      /// <param name="logger">Logger to which an indentation level will be added</param>
-      public: NUCLEX_SUPPORT_API IndentationScope(Logger &logger) : logger(logger) {
-        this->logger.Indent();
-      }
-
-      /// <summary>Goes back up by one indentation level on the logger</summary>
-      public: NUCLEX_SUPPORT_API ~IndentationScope() {
-        this->logger.Unindent();
-      }
-
-      /// <summary>Logger this scope is dealing with</summary>
-      private: Logger &logger;
-
-    };
-
-    #pragma endregion // class IndentationScope
+    /// <summary>initialized a new rolling logger</summary>
+    /// <param name="historyLineCount">Number of lines the logger will keep</param>
+    /// <param name="lineSizeHint">Length the logger expects most lines to stay under</param>
+    public: NUCLEX_SUPPORT_API RollingLogger(
+      std::size_t historyLineCount = 1024U, std::size_t lineSizeHint = 100U
+    );
 
     /// <summary>Frees all resources owned by the logger</summary>
-    public: NUCLEX_SUPPORT_API virtual ~Logger() = default;
+    public: NUCLEX_SUPPORT_API virtual ~RollingLogger() = default;
 
     /// <summary>Advises the logger that all successive output should be indented</summary>
     /// <remarks>
@@ -74,7 +62,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     number of calls to the Unindent() method eventually.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void Indent() {}
+    public: NUCLEX_SUPPORT_API void Indent() override;
 
     /// <summary>Advises the logger to go back up by one level of indentation</summary>
     /// <remarks>
@@ -85,7 +73,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     the nested <see cref="IndentationScope" /> class provided by the logger interface.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void Unindent() {}
+    public: NUCLEX_SUPPORT_API void Unindent() override;
 
     /// <summary>Whether the logger is actually doing anything with the log messages</summary>
     /// <returns>True if the log messages are processed in any way, false otherwise</returns>
@@ -94,7 +82,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   so by checking this method just once, you can skip all logging if they would be
     ///   discarded anyway.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual bool IsLogging() const { return true; }
+    public: NUCLEX_SUPPORT_API bool IsLogging() const override;
 
     /// <summary>Logs a diagnostic message</summary>
     /// <param name="message">Message the operation wishes to log</param>
@@ -103,9 +91,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   things are indeed happening the way you intended to. These messages typically
     ///   go into some log, a details window or are discarded outright.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void Inform(const std::string &message) {
-      (void)message;
-    }
+    public: NUCLEX_SUPPORT_API void Inform(const std::string &message) override;
 
     /// <summary>Logs a warning</summary>
     /// <param name="warning">Warning the operation wishes to log</param>
@@ -121,9 +107,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     the operation completed with warnings.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void Warn(const std::string &warning) {
-      (void)warning;
-    }
+    public: NUCLEX_SUPPORT_API void Warn(const std::string &warning) override;
 
     /// <summary>Logs an error</summary>
     /// <param name="error">Error the operation wishes to log</param>
@@ -138,9 +122,66 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     the operation has failed.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void Complain(const std::string &error) {
-      (void)error;
+    public: NUCLEX_SUPPORT_API void Complain(const std::string &error) override;
+
+    /// <summary>Appends something to the log line currently being formed</summary>
+    /// <param name="value">
+    ///   Value that will be appended to the line-in-progress as text.
+    ///   Must be a primitive type or std::string
+    /// </param>
+    /// <remarks>
+    ///   This method appends the specified value to the logger's internal line buffer.
+    ///   When you call <see cref="Inform" />, <see cref="Warn" /> or <see cref="Complain" />,
+    ///   the line will be closed and appear in the log history.
+    /// </remarks>
+    public: template<typename TValue> inline void Append(const TValue &value) {
+      lexical_append(*this->currentLine, value);
     }
+
+    /// <summary>Appends text from a buffer to the line currently being formed</summary>
+    /// <param name="buffer">Buffer holding the characters that will be appended</param>
+    /// <param name="count">Number of bytes to append from the buffer</param>
+    public: NUCLEX_SUPPORT_API void Append(const char *buffer, std::size_t count);
+
+    /// <summary>Removes all history and clears the line currently being formed</summary>
+    public: NUCLEX_SUPPORT_API void Clear();
+
+    /// <summary>Returns a vector holding all lines currently in the log history</summary>
+    /// <returns>A vector of all lines in the log history</returns>
+    /// <remarks>
+    ///   <para>
+    ///     The rolling logger is designed as a logger you can feed all the time at a low
+    ///     performance price (achieved by efficient append operations and by not writing
+    ///     anything to a file).
+    ///   </para>
+    ///   <para>
+    ///     If and when an error happens, you can log it and then use this method to obtain
+    ///     the recent log history. This will let you save the error details themselves as
+    ///     well as the actions leading up to it when needed.
+    ///   </para>
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API std::vector<std::string> GetLines() const;
+
+    /// <summary>Advances to the next line</summary>
+    private: void advanceLine();
+
+    /// <summary>Updates the time stamp stored in the line with the specified index</summary>
+    /// <param name="lineIndex">Index of the line in which the time stamp will be stored</param>
+    /// <remarks>
+    ///   Assumes that the line is long enough have the time stamp written into it.
+    /// </remarks>
+    private: static void updateTimeInLine(std::string &line);
+
+    /// <summary>Index of the line that is currently being formed</summary>
+    private: std::size_t nextLineIndex;
+    /// <summary>Index of the oldest line in the ring buffer</summary>
+    private: std::size_t oldestLineIndex;
+    /// <summary>Ring buffer holding the log history as strings that get reused</summary>
+    private: std::vector<std::string> lines;
+    /// <summary>String from the lines array with index nextLineIndex</summary>
+    private: std::string *currentLine;
+    /// <summary>Number of spaces the current line is indented by</summary>
+    private: std::size_t indentationCount;
 
   };
 
@@ -148,4 +189,4 @@ namespace Nuclex { namespace Support { namespace Text {
 
 }}} // namespace Nuclex::Support::Text
 
-#endif // NUCLEX_SUPPORT_TEXT_LOGGER_H
+#endif // NUCLEX_SUPPORT_TEXT_ROLLINGLOGGER_H

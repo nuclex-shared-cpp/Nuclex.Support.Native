@@ -26,8 +26,6 @@ License along with this library
 
 #include <string>
 
-// TODO: Rename to LexicalCast.h
-
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
