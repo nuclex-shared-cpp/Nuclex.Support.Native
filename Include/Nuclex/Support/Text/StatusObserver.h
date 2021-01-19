@@ -30,6 +30,25 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Interface that accepts feedback from a long-running task</summary>
+  /// <remarks>
+  ///   <para>
+  ///     If you implement a method or entire class that performs a long-running task,
+  ///     you can allow an observer under this standard interface to be assigned in order
+  ///     to report your long-running task's progress.
+  ///   </para>
+  ///   <para>
+  ///     The purpose is to entertain the user (or at least show them that something is
+  ///     happening in the background) via simple feedback (a progress value going from
+  ///     0.0 to 1.0 and an updateable status message). This can then be displayed in
+  ///     a progress panel, dialog or written into a console window.
+  ///   </para>
+  ///   <para>
+  ///     Having this standard interface in Nuclex::Support lets you support this kind of
+  ///     feedback even in code that should have no UI dependency. Localization of these
+  ///     messages is recommended (as they're not internal technical information the way
+  ///     log files or exception/error messages are, but user-displayable).
+  ///   </para>
+  /// </remarks>
   class StatusObserver {
 
     /// <summary>Frees all resources owned by the feedback receiver</summary>
