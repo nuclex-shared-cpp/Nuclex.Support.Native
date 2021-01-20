@@ -329,22 +329,21 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Documents\Copyright.md" />
+    <None Include="Documents\Adam Morrison - Fast Concurrent queues for x86 Processors.pdf" />
     <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf" />
     <Text Include="Documents\EventBenchmark.md" />
     <None Include="Documents\Florian Loitsch - Printing Floating-Point Numbers Quickly and Accurately with Integers.pdf" />
+    <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf" />
     <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf" />
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\BitTricksTest.cpp" />
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp" />
     <ClCompile Include="Tests\Collections\RingBufferTest.cpp" />
     <ClCompile Include="Tests\Collections\ShiftBufferDeathTest.cpp" />
     <ClCompile Include="Tests\Collections\ShiftBufferTest.cpp" />
     <ClCompile Include="Tests\Events\DelegateTests.cpp" />
     <ClCompile Include="Tests\Events\EventTests.cpp" />
-    <ClCompile Include="Tests\OptionalTests.cpp" />
-    <ClCompile Include="Tests\ScopeGuardTest.cpp" />
     <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp" />
     <ClCompile Include="Tests\Services\ServiceContainerTest.cpp" />
     <ClCompile Include="Tests\Text\LexicalAppendTest.cpp" />
@@ -352,7 +351,11 @@
     <ClCompile Include="Tests\Text\RollingLoggerTest.cpp" />
     <ClCompile Include="Tests\Text\StringConverterTest.cpp" />
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp" />
+    <ClCompile Include="Tests\Threading\ThreadTest.cpp" />
     <ClCompile Include="Tests\AnyTests.cpp" />
+    <ClCompile Include="Tests\BitTricksTest.cpp" />
+    <ClCompile Include="Tests\OptionalTests.cpp" />
+    <ClCompile Include="Tests\ScopeGuardTest.cpp" />
     <ClCompile Include="Tests\VariantTests.cpp" />
   </ItemGroup>
   <ItemGroup>

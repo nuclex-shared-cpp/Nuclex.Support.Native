@@ -84,6 +84,9 @@
     <Filter Include="Source\Errors">
       <UniqueIdentifier>{3f6da7d5-6d44-4081-8eda-bafe5849e090}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\Threading">
+      <UniqueIdentifier>{2781deb4-4664-4b67-a3ae-7d695e2ed2fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h">
@@ -463,9 +466,6 @@
     <ClCompile Include="Source\Text\RollingLogger.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\Text\RollingLoggerTest.cpp">
-      <Filter>Tests\Text</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp">
@@ -498,11 +498,17 @@
     <ClCompile Include="Tests\Text\LexicalAppendTest.cpp">
       <Filter>Tests\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\Text\RollingLoggerTest.cpp">
+      <Filter>Tests\Text</Filter>
+    </ClCompile>
     <ClCompile Include="Tests\Text\StringConverterTest.cpp">
       <Filter>Tests\Text</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp">
       <Filter>Tests\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Threading\ThreadTest.cpp">
+      <Filter>Tests\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Tests\AnyTests.cpp">
       <Filter>Tests</Filter>
@@ -542,5 +548,11 @@
     <Text Include="Documents\EventBenchmark.md">
       <Filter>Documents</Filter>
     </Text>
+    <None Include="Documents\Adam Morrison - Fast Concurrent queues for x86 Processors.pdf">
+      <Filter>Documents</Filter>
+    </None>
+    <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf">
+      <Filter>Documents</Filter>
+    </None>
   </ItemGroup>
 </Project>

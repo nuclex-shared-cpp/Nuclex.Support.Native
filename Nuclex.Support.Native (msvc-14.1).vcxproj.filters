@@ -465,5 +465,11 @@
     <Text Include="Documents\EventBenchmark.md">
       <Filter>Documents</Filter>
     </Text>
+    <None Include="Documents\Adam Morrison - Fast Concurrent queues for x86 Processors.pdf">
+      <Filter>Documents</Filter>
+    </None>
+    <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf">
+      <Filter>Documents</Filter>
+    </None>
   </ItemGroup>
 </Project>
