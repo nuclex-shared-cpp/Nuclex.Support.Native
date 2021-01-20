@@ -230,6 +230,9 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\RollingLogger.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Collection.cpp">
@@ -456,6 +459,12 @@
     </ClCompile>
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\RollingLogger.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Text\RollingLoggerTest.cpp">
+      <Filter>Tests\Text</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

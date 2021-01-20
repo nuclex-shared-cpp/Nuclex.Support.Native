@@ -11,6 +11,8 @@ project(
 
 include("../BuildSystem/cmake/cplusplus.cmake")
 
+set(BUILD_DOCS OFF CACHE BOOL "Whether to generate documentation via Doxygen")
+
 # -------------------------------------------------------------------------------------------------
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/../ThirdParty/gtest ${CMAKE_BINARY_DIR}/gtest)
@@ -19,6 +21,8 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/../ThirdParty/gtest ${CMAKE_BINARY_DIR}/g
 #find_package(GoogleTest REQUIRED CONFIG)
 
 find_package(Threads REQUIRED)
+
+find_package(Doxygen)
 
 # -------------------------------------------------------------------------------------------------
 
@@ -51,6 +55,9 @@ file(
 
 add_library(NuclexSupportNative SHARED)
 
+# Custom function in cplusplus.cmake that turns on all compiler warnings
+enable_target_compiler_warnings(NuclexSupportNative)
+
 target_include_directories(
 	NuclexSupportNative
 	PUBLIC "Include"
@@ -69,6 +76,9 @@ endif()
 # -------------------------------------------------------------------------------------------------
 
 add_executable(NuclexSupportNativeTests)
+
+# Custom function in cplusplus.cmake that turns on all compiler warnings
+enable_target_compiler_warnings(NuclexSupportNativeTests)
 
 target_compile_definitions(
 	NuclexSupportNativeTests
