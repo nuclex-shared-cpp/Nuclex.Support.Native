@@ -64,7 +64,7 @@ namespace Nuclex { namespace Support { namespace Text {
     public: virtual void SetProgress(float progress) = 0;
 
     /// <summary>Updates the major operation status</summary>
-    /// <param name="status">
+    /// <param name="status">Status message that will be reported to the observer</param>
     /// <remarks>
     ///   This is typically the text you'd want displayed in an applications status bar
     ///   or in a progress window. It shouldn't be too technical or change at a fast pace.
