@@ -23,8 +23,9 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#include <cstddef>
-#include <chrono>
+#include <cstddef> // for std::size_t
+#include <cstdint> // for for std::uintptr_t
+#include <chrono> // for std::chrono::microseconds etc.
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -41,8 +42,19 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <returns>True if the calling thread belongs to the thread pool</returns>
     public: NUCLEX_SUPPORT_API static bool BelongsToThreadPool();
 
-    private: Thread(const Thread &);
-    private: Thread&operator =(const Thread &);
+#if defined(NUCLEX_SUPPORT_WANT_USELESS_THREAD_ID_QUERY)
+    /// <summary>Returns a unique ID for the calling thread</summary>
+    /// <returns>
+    ///   A unique ID that no other thread that's running at the same time will have
+    /// </returns>
+    /// <remarks>
+    ///   This is useful for some lock-free synchronization techniques.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static std::uintptr_t GetCurrentThreadId();
+#endif
+
+    private: Thread(const Thread &) = delete;
+    private: Thread&operator =(const Thread &) = delete;
 
   };
 
