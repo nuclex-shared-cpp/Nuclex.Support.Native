@@ -48,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       milliseconds /= std::int64_t(1000);
       ::Sleep(static_cast<DWORD>(milliseconds));
     }
-#elif defined(NUCLEX_SUPPORT_LINUX)
+#elif false && defined(NUCLEX_SUPPORT_LINUX)
     const static long int MicrosecondsPerSecond = 1000000L;
     const static long int NanosecondsPerMicrosecond = 1000L;
 
