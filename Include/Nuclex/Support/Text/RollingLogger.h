@@ -45,6 +45,23 @@ namespace Nuclex { namespace Support { namespace Text {
   ///     obtain the last 1024 lines from the log's history and display this as technical
   ///     error information, save it to an error report file or upload it in a reporting tool.
   ///   </para>
+  ///   <example>
+  ///     <code>
+  ///       logger.Inform(u8"Saving configuration {");
+  ///       {
+  ///         Logger::IndentationScope configurationLogScope(logger);
+  ///
+  ///         logger.Append(u8"ResolutionX = ");
+  ///         logger.Append(1920);
+  ///         logger.Inform(std::string());
+  ///
+  ///         logger.Append(u8"ResolutionY = ");
+  ///         logger.Append(1080);
+  ///         logger.Inform(std::string());
+  ///       }
+  ///       logger.Inform(u8"}");
+  ///     </code>
+  ///   </example>
   /// </remarks>
   class RollingLogger : public Logger {
 
