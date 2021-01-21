@@ -79,7 +79,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     )
   >
   class ConcurrentQueue {
-
+#if 0
     /// <summary>Initializes an empty concurrent queue</summary>
     public: ConcurrentQueue() {}
 
@@ -106,17 +106,11 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Concurrent queue this class is acting as an adapter for</summary>
     private: concurrency::concurrent_queue<TElement> wrappedQueue;
-
+#endif
   };
 
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections
-
-#else
-
-  //#error Please implement ConcurrentQueue for your compiler
-
-#endif
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
