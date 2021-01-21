@@ -21,42 +21,66 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
 #define NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
 
-// References:
+#include "Nuclex/Support/Config.h"
+
+// Known implementations besides this one for reference:
+//
+// Libraries of Lock-Free data structures:
 // https://github.com/rigtorp/awesome-lockfree
 // https://github.com/mpoeter/xenium
+// https://github.com/oneapi-src/oneTBB (Intel TBB under its new name)
 // https://liblfds.org/ (<-- Public Domain!)
 //
 // Interesting implementations:
 // https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++.htm
 // https://moodycamel.com/blog/2014/a-fast-general-purpose-lock-free-queue-for-c++.htm
 //
-// Fastest known implementation:
+// Intel's implementation (curiously not that good in benchmarks):
 // https://github.com/oneapi-src/oneTBB/blob/master/include/oneapi/tbb/concurrent_queue.h
 //
 // "Battle Tested" implementation:
 // https://github.com/rigtorp/MPMCQueue
 
-#include "Nuclex/Support/Config.h"
-
-#if defined(NUCLEX_SUPPORT_WIN32) || defined(NUCLEX_SUPPORT_WINRT)
-
-#include <concurrent_queue.h>
-
 namespace Nuclex { namespace Support { namespace Collections {
 
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>How a concurrent queue is being accessed</summary>
+  /// <remarks>
+  ///   There fewer threads need to access the queue, the faster our implementation
+  ///   can be. This is used as a template parameter to decide implementation.
+  /// </remarks>
   enum class ConcurrentQueueAccessBehavior {
+
+    /// <summary>
+    ///   Only one thread is taking data and another, but only one, is producing it
+    /// </summary>
     SingleProducerSingleConsumer,
+
+    /// <summary>
+    ///   Only one thread is taking data, but multiple threads are adding data
+    /// </summary>
     MultipleProducersSingleConsumer,
+
+    /// <summary>
+    ///   Any number of threads is taking data and any number of threads is adding it
+    /// </summary>
     MultipleProducersMultipleConsumers
+
   };
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Queue that can safely be used from multiple threads</summary>
-  template<typename TElement>
+  template<
+    typename TElement,
+    ConcurrentQueueAccessBehavior accessBehavior = (
+      ConcurrentQueueAccessBehavior::MultipleProducersMultipleConsumers
+    )
+  >
   class ConcurrentQueue {
 
-    /// <summary>Initializes a new concurrent queue</summary>
+    /// <summary>Initializes an empty concurrent queue</summary>
     public: ConcurrentQueue() {}
 
     /// <summary>Destroys the concurrent queue</summary>
