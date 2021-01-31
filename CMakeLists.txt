@@ -122,10 +122,14 @@ install(
 	RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
 )
 
+install_debug_symbols(NuclexSupportNative)
+
 install(
 	TARGETS NuclexSupportNativeTests
 	RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
 )
+
+install_debug_symbols(NuclexSupportNativeTests)
 
 # -------------------------------------------------------------------------------------------------
 

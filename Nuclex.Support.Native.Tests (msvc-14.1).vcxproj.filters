@@ -92,6 +92,9 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentCollection.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
@@ -136,6 +139,9 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Errors\UnresolvedDependencyError.h">
       <Filter>Include\Errors</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\ConcurrentEvent.h">
+      <Filter>Include\Events</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Events\Event.h">
       <Filter>Include\Events</Filter>
@@ -241,6 +247,9 @@
     <ClCompile Include="Source\Collections\Collection.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Collections\ConcurrentCollection.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
@@ -285,6 +294,9 @@
     </ClCompile>
     <ClCompile Include="Source\Errors\CyclicDependencyError.cpp">
       <Filter>Source\Errors</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Events\ConcurrentEvent.cpp">
+      <Filter>Source\Events</Filter>
     </ClCompile>
     <ClCompile Include="Source\Events\Delegate.cpp">
       <Filter>Source\Events</Filter>
@@ -412,6 +424,9 @@
     <ClCompile Include="Source\Text\Logger.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Text\RollingLogger.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Text\StatusObserver.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
@@ -463,9 +478,6 @@
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Text\RollingLogger.cpp">
-      <Filter>Source\Text</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp">
@@ -479,6 +491,9 @@
     </ClCompile>
     <ClCompile Include="Tests\Collections\ShiftBufferDeathTest.cpp">
       <Filter>Tests\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Events\ConcurrentEventTests.cpp">
+      <Filter>Tests\Events</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Events\DelegateTests.cpp">
       <Filter>Tests\Events</Filter>

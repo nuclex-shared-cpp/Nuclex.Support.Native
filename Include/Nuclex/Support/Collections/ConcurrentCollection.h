@@ -28,6 +28,7 @@ License along with this library
 // Libraries of Lock-Free data structures:
 // https://github.com/mpoeter/xenium
 // https://liblfds.org/ (<-- Public Domain!)
+// https://github.com/khizmax/libcds
 //
 // Interesting implementations:
 // https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++.htm
@@ -67,6 +68,39 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   Any number of threads is taking data and any number of threads is adding it
     /// </summary>
     MultipleProducersMultipleConsumers
+
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Collection that can safely be used from multiple threads</summary>
+  template<
+    typename TElement,
+    ConcurrentAccessBehavior accessBehavior = (
+      ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
+    )
+  >
+  class ConcurrentCollection {
+
+    /*
+    /// <summary>Initializes a concurrent collection</summary>
+    public: ConcurrentCollection() {}
+    */
+
+    /// <summary>Destroys the concurrent queue</summary>
+    public: virtual ~ConcurrentCollection() = default;
+
+    /// <summary>Tries to appends an element to the collection in a thread-safe manner</summary>
+    /// <param name="element">Element that will be appended to the collection</param>
+    /// <returns>True if the element was appended, false if there was no space left</returns>
+    public: virtual bool TryAppend(const TElement &element) = 0;
+
+    /// <summary>Tries to take an element from the queue</summary>
+    /// <param name="element">Will receive the element taken from the queue</param>
+    /// <returns>
+    ///   True if an element was taken from the collection, false if the collection was empty
+    /// </returns>
+    public: virtual bool TryPop(TElement &element) = 0;
 
   };
 

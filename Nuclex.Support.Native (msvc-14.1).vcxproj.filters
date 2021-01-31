@@ -71,13 +71,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Include\Nuclex\Support\Events\Event.h">
-      <Filter>Include\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h">
-      <Filter>Include\Events</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentCollection.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h">
@@ -124,6 +121,15 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Errors\UnresolvedDependencyError.h">
       <Filter>Include\Errors</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\ConcurrentEvent.h">
+      <Filter>Include\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\Event.h">
+      <Filter>Include\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h">
+      <Filter>Include\Events</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\LazyServiceInjector.h">
       <Filter>Include\Services</Filter>
@@ -220,6 +226,9 @@
     <ClCompile Include="Source\Collections\Collection.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Collections\ConcurrentCollection.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
@@ -264,6 +273,9 @@
     </ClCompile>
     <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp">
       <Filter>Source\Errors</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Events\ConcurrentEvent.cpp">
+      <Filter>Source\Events</Filter>
     </ClCompile>
     <ClCompile Include="Source\Events\Delegate.cpp">
       <Filter>Source\Events</Filter>

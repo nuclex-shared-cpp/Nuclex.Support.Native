@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -200,6 +200,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentSet.h" />
@@ -215,6 +216,7 @@
     <ClInclude Include="Include\Nuclex\Support\Errors\CyclicDependencyError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\UnresolvedDependencyError.h" />
+    <ClInclude Include="Include\Nuclex\Support\Events\ConcurrentEvent.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Event.h" />
     <ClInclude Include="Include\Nuclex\Support\Services\Checks.inl" />
@@ -251,6 +253,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Collection.cpp" />
+    <ClCompile Include="Source\Collections\ConcurrentCollection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentSet.cpp" />
@@ -266,6 +269,7 @@
     <ClCompile Include="Source\Errors\CyclicDependencyError.cpp" />
     <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp" />
     <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp" />
+    <ClCompile Include="Source\Events\ConcurrentEvent.cpp" />
     <ClCompile Include="Source\Events\Delegate.cpp" />
     <ClCompile Include="Source\Events\Event.cpp" />
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp" />
@@ -342,6 +346,7 @@
     <ClCompile Include="Tests\Collections\RingBufferTest.cpp" />
     <ClCompile Include="Tests\Collections\ShiftBufferDeathTest.cpp" />
     <ClCompile Include="Tests\Collections\ShiftBufferTest.cpp" />
+    <ClCompile Include="Tests\Events\ConcurrentEventTests.cpp" />
     <ClCompile Include="Tests\Events\DelegateTests.cpp" />
     <ClCompile Include="Tests\Events\EventTests.cpp" />
     <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp" />
