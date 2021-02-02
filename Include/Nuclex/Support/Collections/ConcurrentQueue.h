@@ -48,27 +48,61 @@ namespace Nuclex { namespace Support { namespace Collections {
   template<typename TElement>
   class ConcurrentQueue<TElement, ConcurrentAccessBehavior::SingleProducerSingleConsumer> {
 
+    /// <summary>Value indicating an invalid index for the next write</summary>
+    private: static const std::size_t InvalidIndex = static_cast<std::size_t>(-1);
+
     /// <summary>Initializeda new concurrent queue for a single producer and consumer</summary>
     /// <param name="capacity">Maximum amount of items the queue can hold</param>
     public: ConcurrentQueue(std::size_t capacity) :
       capacity(capacity),
       readIndex(0),
       writeIndex(0),
-      itemMemory(new std::uint8_t(sizeof(TElement[capacity]))) {}
+      itemMemory(new std::uint8_t(sizeof(TElement[2]) * capacity / 2U)) {}
     
+    /// <summary>Frees all memory owned by the concurrent queue and the items therein</summary>
     public: ~ConcurrentQueue() {
-      // TODO: Destroy items that are currently filled
+      if constexpr(!std::is_trivially_destructible<TElement>::value) {
+        std::size_t safeWriteIndex = this->writeIndex.load(std::memory_order::memory_order_acquire);
+        std::size_t safeReadIndex = this->readIndex.load(std::memory_order::memory_order_acquire);
+        while(safeReadIndex != safeWriteIndex) {
+          reinterpret_cast<TElement *>(this->itemMemory)[safeReadIndex].~TElement();
+        }
+      }
+
       delete[] this->itemMemory;
     }
     
-    public: void Append(const TElement &element) {
+    /// <summary>Tries to append the specified element to the queue</summary>
+    /// <param name="element">Element that will be appended to the queue</param>
+    /// <returns>True if the element was appended, false if the queue has no space left</returns>
+    public: bool TryAppend(const TElement &element) {
+      std::size_t safeWriteIndex = this->writeIndex.load(std::memory_order::memory_order_acquire);
+      std::size_t safeReadIndex = this->readIndex.load(std::memory_order::memory_order_acquire);
+      
+      std::size_t nextWriteIndex = (safeWriteIndex + 1) % this->capacity;
+      if(nextWriteIndex == safeReadIndex) {
+        return false; // Queue is full
+      } else {
+        new(reinterpret_cast<TElement *>(this->itemMemory)) TElement(element);
+        this->writeIndex.store(nextWriteIndex, std::memory_order_release);
+      }
+    }
+
+    public: bool TryTake(TElement &element) {
+      return false;
+      
     }
 
     /// <summary>Number of items the ring buffer can hold</summary>
     private: std::size_t capacity;
     /// <summary>Index from which the next item will be read</summary>
     private: std::atomic<std::size_t> readIndex;
-    /// <summary>Index at which the next item will be written</summary>
+    /// <summary>Index at which the most recently written item is stored</summary>
+    /// <remarks>
+    ///   Notice that contrary to usual practice, this does not point one past the last
+    ///   item (i.e. position for next to the written), but is the index of the last item
+    ///   that has been stored in the queue. The lock-free synchronization is easier this way.
+    /// </remarks>
     private: std::atomic<std::size_t> writeIndex;
     /// <summary>Memory block that holds the items currently stored in the queue</summary>
     private: std::uint8_t *itemMemory;
