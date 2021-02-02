@@ -62,4 +62,24 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(SingleProducerSingleConsumerConcurrentQueueTest, QueueCanBeReadAgain) {
+    typedef ConcurrentQueue<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestQueue;
+
+    TestQueue test(5);
+    EXPECT_TRUE(test.TryAppend(123));
+    EXPECT_TRUE(test.TryAppend(456));
+    EXPECT_TRUE(test.TryAppend(789));
+
+    int value;
+    EXPECT_TRUE(test.TryTake(value));
+    EXPECT_EQ(value, 123);
+    EXPECT_TRUE(test.TryTake(value));
+    EXPECT_EQ(value, 456);
+    EXPECT_TRUE(test.TryTake(value));
+    EXPECT_EQ(value, 789);
+    EXPECT_FALSE(test.TryTake(value));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Collections

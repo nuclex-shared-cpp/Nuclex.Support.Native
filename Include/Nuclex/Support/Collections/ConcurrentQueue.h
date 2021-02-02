@@ -48,8 +48,10 @@ namespace Nuclex { namespace Support { namespace Collections {
   template<typename TElement>
   class ConcurrentQueue<TElement, ConcurrentAccessBehavior::SingleProducerSingleConsumer> {
 
+    /*
     /// <summary>Value indicating an invalid index for the next write</summary>
     private: static const std::size_t InvalidIndex = static_cast<std::size_t>(-1);
+    */
 
     /// <summary>Initializes a new concurrent queue for a single producer and consumer</summary>
     /// <param name="capacity">Maximum amount of items the queue can hold</param>
@@ -116,9 +118,21 @@ namespace Nuclex { namespace Support { namespace Collections {
       }
     }
 
+    /// <summary>Tries to remove an element from the queue</summary>
+    /// <param name="element">Element into which the queue's element will be placed</param>
     public: bool TryTake(TElement &element) {
-      return false;
-      
+      std::size_t safeReadIndex = this->readIndex.load(std::memory_order::memory_order_acquire);
+      std::size_t safeWriteIndex = this->writeIndex.load(std::memory_order::memory_order_acquire);
+
+      if(safeReadIndex == safeWriteIndex) {
+        return false; // Queue is empty
+      } else {
+        TElement *readAddress = reinterpret_cast<TElement *>(this->itemMemory) + safeReadIndex;
+        element = std::move(*readAddress);
+        readAddress->~TElement();
+        this->readIndex.store((safeReadIndex + 1) % this->capacity, std::memory_order_release);
+        return true; // Item was read
+      }
     }
 
     /// <summary>Number of items the ring buffer can hold</summary>
