@@ -23,6 +23,12 @@ License along with this library
 
 #include "Nuclex/Support/Collections/ConcurrentCollection.h"
 
+#include <atomic> // for std::atomic
+#include <cstdint> // for std::uint8_t
+
+//#include "Nuclex/Support/Collections/MoodyCamel/concurrentqueue.h"
+//#include "Nuclex/Support/Collections/MoodyCamel/readerwriterqueue.h"
+
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
@@ -38,37 +44,49 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Fixed-size list that can safely be used from multiple threads</summary>
+  template<typename TElement>
+  class ConcurrentQueue<TElement, ConcurrentAccessBehavior::SingleProducerSingleConsumer> {
+
+    /// <summary>Initializeda new concurrent queue for a single producer and consumer</summary>
+    /// <param name="capacity">Maximum amount of items the queue can hold</param>
+    public: ConcurrentQueue(std::size_t capacity) :
+      capacity(capacity),
+      readIndex(0),
+      writeIndex(0),
+      itemMemory(new std::uint8_t(sizeof(TElement[capacity]))) {}
+    
+    public: ~ConcurrentQueue() {
+      // TODO: Destroy items that are currently filled
+      delete[] this->itemMemory;
+    }
+    
+    public: void Append(const TElement &element) {
+    }
+
+    /// <summary>Number of items the ring buffer can hold</summary>
+    private: std::size_t capacity;
+    /// <summary>Index from which the next item will be read</summary>
+    private: std::atomic<std::size_t> readIndex;
+    /// <summary>Index at which the next item will be written</summary>
+    private: std::atomic<std::size_t> writeIndex;
+    /// <summary>Memory block that holds the items currently stored in the queue</summary>
+    private: std::uint8_t *itemMemory;
+    //private: std::atomic<std::size_t> 
+
+
+
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Queue that can safely be used from multiple threads</summary>
   template<typename TElement>
   class ConcurrentQueue<TElement, ConcurrentAccessBehavior::MultipleProducersMultipleConsumers> {
-#if 0
-    /// <summary>Initializes an empty concurrent queue</summary>
-    public: ConcurrentQueue() {}
-
-    /// <summary>Destroys the concurrent queue</summary>
-    public: ~ConcurrentQueue() {}
-
-    /// <summary>Appends an element to the queue in a thread-safe manner</summary>
-    /// <param name="element">Element that will be appended to the queue</param>
-    public: void Append(const TElement &element) {
-      this->wrappedQueue.push(element);
-    }
-
-    /// <summary>Tries to take an element from the queue</summary>
-    /// <param name="element">Will receive the element taken from the queue</param>
-    /// <returns>
-    ///   True if an element was taken from the queue, false if the queue was empty
-    /// </returns>
-    public: bool TryPop(TElement &element) {
-      return this->wrappedQueue.try_pop(element);
-    }
-
-    private: ConcurrentQueue(const ConcurrentQueue &);
-    private: ConcurrentQueue &operator =(const ConcurrentQueue &);
-
-    /// <summary>Concurrent queue this class is acting as an adapter for</summary>
-    private: concurrency::concurrent_queue<TElement> wrappedQueue;
-#endif
+/*
+    /// <summary>Queue that is wrapped to provide all functionality</summary>
+    private: moodycamel::ConcurrentQueue<TElement> wrappedQueue;
+*/
   };
 
   // ------------------------------------------------------------------------------------------- //
