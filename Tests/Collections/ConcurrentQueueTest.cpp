@@ -37,4 +37,29 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(SingleProducerSingleConsumerConcurrentQueueTest, ItemsCanBeAppended) {
+    typedef ConcurrentQueue<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestQueue;
+
+    TestQueue test(10);
+    EXPECT_TRUE(test.TryAppend(123));
+    EXPECT_TRUE(test.TryAppend(456));
+    EXPECT_TRUE(test.TryAppend(789));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(SingleProducerSingleConsumerConcurrentQueueTest, QueueCanBeFull) {
+    typedef ConcurrentQueue<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestQueue;
+
+    TestQueue test(5);
+    EXPECT_TRUE(test.TryAppend(123));
+    EXPECT_TRUE(test.TryAppend(456));
+    EXPECT_TRUE(test.TryAppend(789));
+    EXPECT_TRUE(test.TryAppend(321));
+    EXPECT_TRUE(test.TryAppend(654));
+    EXPECT_FALSE(test.TryAppend(987));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Collections
