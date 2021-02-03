@@ -18,8 +18,8 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_COLLECTIONS_SHIFTBUFFER_H
-#define NUCLEX_SUPPORT_COLLECTIONS_SHIFTBUFFER_H
+#ifndef NUCLEX_SUPPORT_COLLECTIONS_SHIFTQUEUE_H
+#define NUCLEX_SUPPORT_COLLECTIONS_SHIFTQUEUE_H
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/ScopeGuard.h"
@@ -64,11 +64,11 @@ namespace Nuclex { namespace Support { namespace Collections {
   ///   </para>
   /// </remarks>
   template<typename TItem>
-  class ShiftBuffer {
+  class ShiftQueue {
 
     /// <summary>Initializes a new shift buffer</summary>
     /// <param name="capacity">Storage space in the shift  buffer at the beginning</param>
-    public: ShiftBuffer(std::size_t capacity = 256) :
+    public: ShiftQueue(std::size_t capacity = 256) :
       itemMemory(
         new std::uint8_t[sizeof(TItem[2]) * BitTricks::GetUpperPowerOfTwo(capacity) / 2]
       ),
@@ -78,7 +78,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Initializes a shift buffer as a copy of another shift buffer</summary>
     /// <param name="other">Other shift buffer that will be copied</param>
-    public: ShiftBuffer(const ShiftBuffer &other) :
+    public: ShiftQueue(const ShiftQueue &other) :
       itemMemory(new std::uint8_t[sizeof(TItem[2]) * other.capacity / 2]),
       capacity(other.capacity),
       startIndex(0),
@@ -91,7 +91,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Initializes a shift buffer taking over another shift buffer</summary>
     /// <param name="other">Other shift buffer that will be taken over</param>
-    public: ShiftBuffer(ShiftBuffer &&other) :
+    public: ShiftQueue(ShiftQueue &&other) :
       itemMemory(std::move(other.itemMemory)),
       capacity(other.capacity),
       startIndex(other.startIndex),
@@ -100,7 +100,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     }
 
     /// <summary>Destroys the shift buffer and all items in it</summary>
-    public: ~ShiftBuffer() {
+    public: ~ShiftQueue() {
       if(this->startIndex != this->endIndex) {
         TItem *items = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex;
         for(std::size_t index = this->startIndex; index < this->endIndex; ++index) {
@@ -436,7 +436,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="itemCount">Number of items that will be moved</param>
     /// <remarks>
     ///   <para>
-    ///     The source buffer can be the ShiftBuffer's own memory so long as there is
+    ///     The source buffer can be the ShiftQueue's own memory so long as there is
     ///     no overlap between the items to be moved and the target memory range.
     ///   </para>
     ///   <para>
@@ -523,4 +523,4 @@ namespace Nuclex { namespace Support { namespace Collections {
 
 }}} // namespace Nuclex::Support::Collections
 
-#endif // NUCLEX_SUPPORT_COLLECTIONS_SHIFTBUFFER_H
+#endif // NUCLEX_SUPPORT_COLLECTIONS_SHIFTQUEUE_H
