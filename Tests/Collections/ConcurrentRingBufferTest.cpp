@@ -21,26 +21,26 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "Nuclex/Support/Collections/ConcurrentQueue.h"
+#include "Nuclex/Support/Collections/ConcurrentRingBuffer.h"
 #include <gtest/gtest.h>
 
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SingleProducerSingleConsumerConcurrentQueueTest, InstancesCanBeCreated) {
-    typedef ConcurrentQueue<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestQueue;
+  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, InstancesCanBeCreated) {
+    typedef ConcurrentRingBuffer<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestRingBuffer;
     EXPECT_NO_THROW(
-      TestQueue test(10);
+      TestRingBuffer test(10);
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SingleProducerSingleConsumerConcurrentQueueTest, ItemsCanBeAppended) {
-    typedef ConcurrentQueue<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestQueue;
+  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, ItemsCanBeAppended) {
+    typedef ConcurrentRingBuffer<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestRingBuffer;
 
-    TestQueue test(10);
+    TestRingBuffer test(10);
     EXPECT_TRUE(test.TryAppend(123));
     EXPECT_TRUE(test.TryAppend(456));
     EXPECT_TRUE(test.TryAppend(789));
@@ -48,10 +48,10 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SingleProducerSingleConsumerConcurrentQueueTest, QueueCanBeFull) {
-    typedef ConcurrentQueue<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestQueue;
+  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, RingBufferCanBeFull) {
+    typedef ConcurrentRingBuffer<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestRingBuffer;
 
-    TestQueue test(5);
+    TestRingBuffer test(5);
     EXPECT_TRUE(test.TryAppend(123));
     EXPECT_TRUE(test.TryAppend(456));
     EXPECT_TRUE(test.TryAppend(789));
@@ -62,10 +62,10 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SingleProducerSingleConsumerConcurrentQueueTest, QueueCanBeReadAgain) {
-    typedef ConcurrentQueue<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestQueue;
+  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, RingBufferCanBeReadAgain) {
+    typedef ConcurrentRingBuffer<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestRingBuffer;
 
-    TestQueue test(5);
+    TestRingBuffer test(5);
     EXPECT_TRUE(test.TryAppend(123));
     EXPECT_TRUE(test.TryAppend(456));
     EXPECT_TRUE(test.TryAppend(789));
@@ -78,6 +78,27 @@ namespace Nuclex { namespace Support { namespace Collections {
     EXPECT_TRUE(test.TryTake(value));
     EXPECT_EQ(value, 789);
     EXPECT_FALSE(test.TryTake(value));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  int positiveModulo(int value, int divisor) {
+    value %= divisor;
+    if(value < 0) {
+      return value + divisor;
+    } else {
+      return value;
+    }
+  }
+
+  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, WrapAroundWorksWithNegativeNumbers) {
+    int test = 123;
+    test = positiveModulo(test, 100);
+    EXPECT_EQ(test, 23);
+
+    test -= 100;
+    test = positiveModulo(test, 100);
+    EXPECT_EQ(test, 23);
   }
 
   // ------------------------------------------------------------------------------------------- //
