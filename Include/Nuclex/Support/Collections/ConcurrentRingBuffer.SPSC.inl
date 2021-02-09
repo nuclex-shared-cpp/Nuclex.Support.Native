@@ -59,7 +59,48 @@ namespace Nuclex { namespace Support { namespace Collections {
       this->itemMemory = nullptr;
 #endif
     }
-    
+
+    /// <summary>Counts the items in the queue</summary>
+    /// <returns>The number of items stored in the queue at the time of the call</returns>
+    /// <remarks>
+    ///   <para>
+    ///     This method may be called from both the consuming and the producing thread.
+    ///   </para>
+    ///   <para>
+    ///     So long as you conform to the single producer, single consumer requirement, you
+    ///     can use this method a) in the consumer thread to find the number of items that
+    ///     will <em>at least</em> be available via the <see cref="TryPop" /> method or
+    ///     b) in the producer thread to find the amount of free space that will <em>at
+    ///     least</em> be available to fill via the <see cref="Append" /> method.
+    ///   </para>
+    ///   <para>
+    ///     If you call this method from an unrelated thread, there's a low but non-zero
+    ///     chance that it will return complete garbage. So don't do that.
+    ///   </para>
+    /// </remarks>
+    public: std::size_t Count() const {
+
+      // Obtain read and write indices. Order is important here since this method can be
+      // called from both the consumer and the producer thread.
+      std::size_t safeReadIndex = this->readIndex.load(
+        std::memory_order::memory_order_consume // consume: if() below carries dependency
+      );
+      // If this method is called from a third thread, it is possible that between the two
+      // loads, both consumer and producer thread do work, moving the read index to
+      // a position that has no more relation to the read index we just loaded.
+      std::size_t safeWriteIndex = this->writeIndex.load(
+        std::memory_order::memory_order_acquire // acquire: access must happen after readIndex
+      );
+
+      // Are the items in the queue fragmented?
+      if(safeWriteIndex < safeReadIndex) {
+        return (this->capacity - safeReadIndex + safeWriteIndex + 1);
+      } else { // Items are linear
+        return (safeWriteIndex - safeReadIndex);
+      }
+
+    }
+
     /// <summary>Tries to append the specified element to the queue</summary>
     /// <param name="element">Element that will be appended to the queue</param>
     /// <returns>True if the element was appended, false if the queue had no space left</returns>
@@ -72,20 +113,81 @@ namespace Nuclex { namespace Support { namespace Collections {
       std::size_t safeReadIndex = this->readIndex.load(
         std::memory_order::memory_order_acquire // consume: if() below carries dependency
       );
-      if(nextWriteIndex == safeReadIndex) {
-        return false; // Queue was full
-      } else {
+      if(likely(nextWriteIndex != safeReadIndex)) {
         TElement *writeAddress = reinterpret_cast<TElement *>(this->itemMemory) + safeWriteIndex;
         new(writeAddress) TElement(element);
         this->writeIndex.store(nextWriteIndex, std::memory_order_release);
         return true; // Item was appended
+      } else {
+        return false; // Queue was full
       }
     }
+
+#if 0 // untested
+
+    /// <summary>Tries to append multiple elements to the queue</summary>
+    /// <param name="first">First of a list of elements that will be appended</param>
+    /// <param name="count">Number of elements available from the list</param>
+    /// <returns>The number of items that have been appended to the queue</returns>
+    public: std::size_t TryAppend(const TElement *first, std::size_t count) {
+      std::size_t safeWriteIndex = this->writeIndex.load(
+        std::memory_order::memory_order_consume // consume: if() below carries dependency
+      );
+      std::size_t safeReadIndex = this->readIndex.load(
+        std::memory_order::memory_order_consume // consume: if() below carries dependency
+      );
+
+      // Is the used space fragmented? Then the free space is linear, easiest case!
+      if(safeWriteIndex < safeReadIndex) {
+
+        count = std::min(count, safeReadIndex - (safeWriteIndex + 1));
+        if(likely(count >= 1)) {
+          std::copy_n(first, count, this->itemMemory + safeWriteIndex + 1);
+          this->writeIndex.store(
+            safeWriteIndex + count, std::memory_order::memory_order_release
+          );
+        }
+        return count;
+
+      } else { // Used space was linear, so free sapce might be fragmented...
+
+        std::size_t availableItemCount = this->capacity - (safeWriteIndex + 1);
+        if(likely(availableItemCount >= count)) {
+          std::copy_n(first, count, this->itemMemory + safeWriteIndex + 1);
+          this->writeIndex.store(
+            safeWriteIndex + count, std::memory_order::memory_order_release
+          );
+          return count;
+        } else {
+          // Write the first fragment at the end of the buffer
+          if(availableItemCount >= 1) {
+            std::copy_n(first, availableItemCount, this->itemMemory + safeWriteIndex + 1);
+            this->writeIndex.store(
+              this->capacity - 1, std::memory_order::memory_order_release
+            ); // Intermediate store, allows reading threads to begin reading early
+          }
+
+          // Write the second fragment at the start of the buffer
+          count = std::min(safeReadIndex, count - availableItemCount);
+          if(likely(count >= 1)) { // Buffer may happen to be full!
+            std::copy_n(first + availableItemCount, count, this->itemMemory);
+            this->writeIndex.store(
+              count - 1, std::memory_order::memory_order_release
+            );
+          }
+
+          return (availableItemCount + count);
+        }
+
+      }
+    }
+
+#endif
 
     /// <summary>Tries to move-append the specified element to the queue</summary>
     /// <param name="element">Element that will be move-appended to the queue</param>
     /// <returns>True if the element was appended, false if the queue had no space left</returns>
-    public: bool TryAppend(TElement &&element) {
+    public: bool TryShove(TElement &&element) {
       std::size_t safeWriteIndex = this->writeIndex.load(
         std::memory_order::memory_order_consume // consume: math below carries dependency
       );
@@ -94,13 +196,13 @@ namespace Nuclex { namespace Support { namespace Collections {
       std::size_t safeReadIndex = this->readIndex.load(
         std::memory_order::memory_order_acquire // consume: if() below carries dependency
       );
-      if(nextWriteIndex == safeReadIndex) {
-        return false; // Queue was full
-      } else {
+      if(likely(nextWriteIndex != safeReadIndex)) {
         TElement *writeAddress = reinterpret_cast<TElement *>(this->itemMemory) + safeWriteIndex;
         new(writeAddress) TElement(std::move(element)); // with move semantics
         this->writeIndex.store(nextWriteIndex, std::memory_order_release);
         return true; // Item was appended
+      } else {
+        return false; // Queue was full
       }
     }
 

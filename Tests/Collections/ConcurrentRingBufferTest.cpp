@@ -22,25 +22,43 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Collections/ConcurrentRingBuffer.h"
+#include "BufferTest.h"
 #include <gtest/gtest.h>
+
+namespace {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>A concurrent single producer, single consumer ring buffer of integers</summary>
+  typedef Nuclex::Support::Collections::ConcurrentRingBuffer<
+    int, Nuclex::Support::Collections::ConcurrentAccessBehavior::SingleProducerSingleConsumer
+  > IntegerRingBuffer;
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, InstancesCanBeCreated) {
-    typedef ConcurrentRingBuffer<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestRingBuffer;
+  TEST(ConcurrentRingBufferTest_SPSC, InstancesCanBeCreated) {
     EXPECT_NO_THROW(
-      TestRingBuffer test(10);
+      IntegerRingBuffer test(10);
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, ItemsCanBeAppended) {
-    typedef ConcurrentRingBuffer<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestRingBuffer;
+  TEST(ConcurrentRingBufferTest_SPSC, CanReportCapacity) {
+    IntegerRingBuffer test(124);
+    EXPECT_EQ(test.GetCapacity(), 124U);
+  }
 
-    TestRingBuffer test(10);
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentRingBufferTest_SPSC, SingleItemsCanBeAppended) {
+    IntegerRingBuffer test(10);
     EXPECT_TRUE(test.TryAppend(123));
     EXPECT_TRUE(test.TryAppend(456));
     EXPECT_TRUE(test.TryAppend(789));
@@ -48,24 +66,29 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, RingBufferCanBeFull) {
-    typedef ConcurrentRingBuffer<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestRingBuffer;
-
-    TestRingBuffer test(5);
+  TEST(ConcurrentRingBufferTest_SPSC, SingleAppendFailsIfBufferFull) {
+    IntegerRingBuffer test(3);
     EXPECT_TRUE(test.TryAppend(123));
     EXPECT_TRUE(test.TryAppend(456));
     EXPECT_TRUE(test.TryAppend(789));
-    EXPECT_TRUE(test.TryAppend(321));
-    EXPECT_TRUE(test.TryAppend(654));
-    EXPECT_FALSE(test.TryAppend(987));
+    EXPECT_FALSE(test.TryAppend(0));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, RingBufferCanBeReadAgain) {
-    typedef ConcurrentRingBuffer<int, ConcurrentAccessBehavior::SingleProducerSingleConsumer> TestRingBuffer;
+  TEST(ConcurrentRingBufferTest_SPSC, ItemsCanBeCounted) {
+    IntegerRingBuffer test(3);
+    EXPECT_EQ(test.Count(), 0U);
+    EXPECT_TRUE(test.TryAppend(123));
+    EXPECT_EQ(test.Count(), 1U);
+    EXPECT_TRUE(test.TryAppend(456));
+    EXPECT_EQ(test.Count(), 2U);
+  }
 
-    TestRingBuffer test(5);
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentRingBufferTest_SPSC, SingleItemsCanBeRead) {
+    IntegerRingBuffer test(5);
     EXPECT_TRUE(test.TryAppend(123));
     EXPECT_TRUE(test.TryAppend(456));
     EXPECT_TRUE(test.TryAppend(789));
@@ -81,26 +104,15 @@ namespace Nuclex { namespace Support { namespace Collections {
   }
 
   // ------------------------------------------------------------------------------------------- //
+#if 0
+  TEST(ConcurrentRingBufferTest_SPSC, ItemsCanBeBatchAppended) {
+    IntegerRingBuffer test(10);
+    int items[] = { 1, 2, 3, 4, 5, 6, 7 };
 
-  int positiveModulo(int value, int divisor) {
-    value %= divisor;
-    if(value < 0) {
-      return value + divisor;
-    } else {
-      return value;
-    }
+    std::size_t appendedItemCount = test.TryAppend(items, 7);
+    EXPECT_EQ(appendedItemCount, 7);
   }
-
-  TEST(SingleProducerSingleConsumerConcurrentRingBufferTest, WrapAroundWorksWithNegativeNumbers) {
-    int test = 123;
-    test = positiveModulo(test, 100);
-    EXPECT_EQ(test, 23);
-
-    test -= 100;
-    test = positiveModulo(test, 100);
-    EXPECT_EQ(test, 23);
-  }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections
