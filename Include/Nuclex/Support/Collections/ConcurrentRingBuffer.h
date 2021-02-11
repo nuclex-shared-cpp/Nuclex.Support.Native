@@ -28,6 +28,8 @@ License along with this library
 #include <exception> // for std::terminate()
 #include <algorithm> // for std::copy_n()
 
+#include "Nuclex/Support/ScopeGuard.h" // for ON_SCOPE_EXIT macros
+
 // CHECK: Rename this to ConcurrentRingBuffer? or something else?
 //
 // I decided that "Buffers" are fixed-size (bounded) and "Queues" are not

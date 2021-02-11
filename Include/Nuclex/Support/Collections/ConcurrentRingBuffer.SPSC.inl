@@ -150,7 +150,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       }
     }
 
-#if 1 // mostly untested
+#ifdef NUCLEX_SUPPORT_COLLECTIONS_UNTESTED_BATCH_OPERATIONS // no exception guarantee yet, too!
 
     /// <summary>Tries to append multiple elements to the queue</summary>
     /// <param name="first">First of a list of elements that will be appended</param>

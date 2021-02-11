@@ -141,7 +141,7 @@ namespace Nuclex { namespace Support { namespace Collections {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
+#ifdef NUCLEX_SUPPORT_COLLECTIONS_UNTESTED_BATCH_OPERATIONS
   TEST(ConcurrentRingBufferTest_SPSC, ItemsCanBeBatchAppended) {
     IntegerRingBuffer test(10);
     int items[] = { 1, 2, 3, 4, 5, 6, 7 };
@@ -149,9 +149,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     EXPECT_EQ(test.TryAppend(items, 7), 7U);
     EXPECT_EQ(test.Count(), 7U); // Ensure consistency, not just correct return
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
-
+#ifdef NUCLEX_SUPPORT_COLLECTIONS_UNTESTED_BATCH_OPERATIONS
   TEST(ConcurrentRingBufferTest_SPSC, BatchAppendCanFragmentItems) {
     IntegerRingBuffer test(10);
     int items[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
@@ -182,7 +182,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     // Expected buffer state: ##########
     EXPECT_EQ(test.Count(), 10U);
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections
