@@ -26,7 +26,19 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Fixed-size circular buffer that can safely be used from multiple threads</summary>
+  /// <summary>Fixed-size circular buffer that can safely be used from two threads</summary>
+  /// <remarks>
+  ///   <para>
+  ///     The single-producer, single-consumer version of the concurrent buffer lets one
+  ///     thread add items to the buffer and another take items from the buffer. No other
+  ///     threads are allowed to interact with the buffer.
+  ///   </para>
+  ///   <para>
+  ///     This implementation is lock-free and also wait-free (i.e. no compare-and-swap loops).
+  ///     Batch operations are supported and this variant gives a strong exception guarantee:
+  ///     if an operation fails, the buffer's state remains as if it never happened.
+  ///   </para>
+  /// </remarks>
   template<typename TElement>
   class ConcurrentRingBuffer<TElement, ConcurrentAccessBehavior::SingleProducerSingleConsumer> {
 
@@ -138,7 +150,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       }
     }
 
-#if 1 // untested
+#if 1 // mostly untested
 
     /// <summary>Tries to append multiple elements to the queue</summary>
     /// <param name="first">First of a list of elements that will be appended</param>

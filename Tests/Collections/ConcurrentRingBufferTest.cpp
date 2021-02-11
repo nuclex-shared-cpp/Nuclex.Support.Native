@@ -87,6 +87,43 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(ConcurrentRingBufferTest_SPSC, ItemsCanBeCountedWhenFragmented) {
+    IntegerRingBuffer test(10);
+
+    for(std::size_t index = 0; index < 8; ++index) {
+      EXPECT_TRUE(test.TryAppend(12345));
+    }
+    // Expected buffer state: ########--
+    EXPECT_EQ(test.Count(), 8U);
+
+    for(std::size_t index = 0; index < 6; ++index) {
+      int dummy;
+      EXPECT_TRUE(test.TryTake(dummy));
+    }
+    // Expected buffer state: ------##--
+    EXPECT_EQ(test.Count(), 2U);
+
+    for(std::size_t index = 0; index < 4; ++index) {
+      EXPECT_TRUE(test.TryAppend(12345));
+    }
+    // Expected buffer state: ##----####
+    EXPECT_EQ(test.Count(), 6U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentRingBufferTest_SPSC, BufferCanBeEmpty) {
+    IntegerRingBuffer test(5);
+    
+    int value;
+    EXPECT_FALSE(test.TryTake(value)); // Starts out empty
+    EXPECT_TRUE(test.TryAppend(100));
+    EXPECT_TRUE(test.TryTake(value));
+    EXPECT_FALSE(test.TryTake(value)); // Was emptied again with call above
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(ConcurrentRingBufferTest_SPSC, SingleItemsCanBeRead) {
     IntegerRingBuffer test(5);
     EXPECT_TRUE(test.TryAppend(123));
@@ -104,15 +141,48 @@ namespace Nuclex { namespace Support { namespace Collections {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if 0
+
   TEST(ConcurrentRingBufferTest_SPSC, ItemsCanBeBatchAppended) {
     IntegerRingBuffer test(10);
     int items[] = { 1, 2, 3, 4, 5, 6, 7 };
 
-    std::size_t appendedItemCount = test.TryAppend(items, 7);
-    EXPECT_EQ(appendedItemCount, 7);
+    EXPECT_EQ(test.TryAppend(items, 7), 7U);
+    EXPECT_EQ(test.Count(), 7U); // Ensure consistency, not just correct return
   }
-#endif
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentRingBufferTest_SPSC, BatchAppendCanFragmentItems) {
+    IntegerRingBuffer test(10);
+    int items[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+
+    EXPECT_EQ(test.TryAppend(items, 6), 6U);
+    // Expected buffer state: ######----
+    EXPECT_EQ(test.Count(), 6U);
+
+    for(std::size_t index = 0; index < 4; ++index) {
+      int dummy;
+      EXPECT_TRUE(test.TryTake(dummy));
+    }
+    // Expected buffer state: ----##----
+    EXPECT_EQ(test.Count(), 2U);
+
+    EXPECT_EQ(test.TryAppend(items, 6), 6U);
+    // Expected buffer state: ##--######
+    EXPECT_EQ(test.Count(), 8U);
+
+    for(std::size_t index = 0; index < 4; ++index) {
+      int dummy;
+      EXPECT_TRUE(test.TryTake(dummy));
+    }
+    // Expected buffer state: ##------##
+    EXPECT_EQ(test.Count(), 4U);
+
+    EXPECT_EQ(test.TryAppend(items, 6), 6U);
+    // Expected buffer state: ##########
+    EXPECT_EQ(test.Count(), 10U);
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections
