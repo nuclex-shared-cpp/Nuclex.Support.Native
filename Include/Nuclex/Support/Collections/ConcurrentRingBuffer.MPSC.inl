@@ -26,12 +26,27 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Fixed-size list that can safely be used from multiple threads</summary>
+  /// <summary>Fixed-size circular buffer for one consumer and multiple producers</summary>
+  /// <remarks>
   ///   <para>
-  ///     <strong>Thread safety:</strong> any thread depending on selected specialization
+  ///     This multi-producer, single-consumer version of the concurrent buffer lets any
+  ///     number of threads add items to the buffer. A single thread can take items from
+  ///     the buffer.
   ///   </para>
   ///   <para>
-  ///     <strong>Container type:</strong> bounded ring buffer
+  ///     This implementation is lock-free and also wait-free (i.e. no compare-and-swap loops).
+  ///     Batch operations are supported and this variant gives a strong-ish exception
+  ///     guarantee: if an operation fails, the buffer's state remains as if it never happened,
+  ///     but the buffer's capacity will be temporarily reduced.
+  ///   </para>
+  ///   <para>
+  ///     <strong>Container type</strong>: bounded ring buffer
+  ///   </para>
+  ///   <para>
+  ///     <strong>Thread safety</strong>: unlimited producing threads + one consuming thread
+  ///   </para>
+  ///   <para>
+  ///     <strong>Exception guarantee</strong>: strong-ish (exception = buffer unchanged)
   ///   </para>
   template<typename TElement>
   class ConcurrentRingBuffer<TElement, ConcurrentAccessBehavior::MultipleProducersSingleConsumer> {
@@ -144,19 +159,6 @@ namespace Nuclex { namespace Support { namespace Collections {
       // Mark the slot as being filled currently for the reading thread
       //this->itemStatus[targetSlotIndex].store(1, std::memory_order_release);
       // ^^ Not really needed, read thread behaviour on encountering empty + filling is same
-
-      // AARGH!
-      //
-      // - If the consumer thread uses writeIndex, it'll see occupied slots before
-      //   the status is updated (race between constructing into slot and status update)
-      //
-      // - If we use writeIndex, it'll be a race on that index, two producing threads
-      //   could finish in opposite order they started, so second thread increments
-      //   write index but thereby exposes item still being filled
-      //
-      // ? If the read thread sets the item status to free (which it must), is this problem
-      //   avoided in both cases?
-      //
 
       // Copy the item into the slot. If its copy constructor throws, the slot must be
       // marked as broken so the reading thread will skip it.

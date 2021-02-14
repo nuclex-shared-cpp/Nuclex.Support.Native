@@ -38,6 +38,15 @@ namespace Nuclex { namespace Support { namespace Collections {
   ///     Batch operations are supported and this variant gives a strong exception guarantee:
   ///     if an operation fails, the buffer's state remains as if it never happened.
   ///   </para>
+  ///   <para>
+  ///     <strong>Container type</strong>: bounded ring buffer
+  ///   </para>
+  ///   <para>
+  ///     <strong>Thread safety</strong>: one producing thread + one consuming thread
+  ///   </para>
+  ///   <para>
+  ///     <strong>Exception guarantee</strong>: strong (exception = buffer unchanged)
+  ///   </para>
   /// </remarks>
   template<typename TElement>
   class ConcurrentRingBuffer<TElement, ConcurrentAccessBehavior::SingleProducerSingleConsumer> {
