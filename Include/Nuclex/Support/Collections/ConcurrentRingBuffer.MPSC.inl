@@ -39,25 +39,25 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Initializes a new concurrent queue for a single producer and consumer</summary>
     /// <param name="capacity">Maximum amount of items the queue can hold</param>
     public: ConcurrentRingBuffer(std::size_t capacity) :
-      capacity(capacity + 1),
+      capacity(capacity),
       itemMemory(nullptr),
       itemStatus(nullptr),
-      freeSlotCount(capacity),
+      count(0),
       readIndex(0),
-      writeIndex(0),
-      occupiedIndex(0) {
-      std::uint8_t *buffer = new std::uint8_t[sizeof(TElement[2]) * (capacity + 1U) / 2U];
+      writeIndex(0) {
+
+      std::uint8_t *buffer = new std::uint8_t[sizeof(TElement[2]) * capacity / 2U];
       {
         auto itemMemoryDeleter = ON_SCOPE_EXIT_TRANSACTION {
           delete[] buffer;
         };
-        this->itemStatus = new std::atomic<std::uint8_t>[capacity + 1U];
+        this->itemStatus = new std::atomic<std::uint8_t>[capacity];
         itemMemoryDeleter.Commit();
       }
       this->itemMemory = reinterpret_cast<TElement *>(buffer);
 
       // Initialize the status of all items
-      for(std::size_t index = 0; index < capacity + 1; ++index) {
+      for(std::size_t index = 0; index < capacity; ++index) {
         this->itemStatus[index].store(0, std::memory_order_relaxed);
       }
     }
@@ -65,18 +65,20 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Frees all memory owned by the concurrent queue and the items therein</summary>
     public: ~ConcurrentRingBuffer() {
       if constexpr(!std::is_trivially_destructible<TElement>::value) {
-/*      
-        std::size_t safeReadIndex = this->readIndex.load(
-          std::memory_order::memory_order_consume // consume: while() below carries dependency
+        std::size_t safeCount = this->count.load(
+          std::memory_order::memory_order_consume // consume: if() below carries dependency
         );
-        int safeWriteIndex = this->writeIndex.load(
-          std::memory_order::memory_order_consume // consume: while() below carries dependency
-        );
-        while(safeReadIndex != positiveModulo(safeWriteIndex)) {
-          reinterpret_cast<TElement *>(this->itemMemory)[safeReadIndex].~TElement();
-          safeReadIndex = (safeReadIndex + 1) % this->capacity;
+        if(safeCount >= 1) {
+          std::size_t safeReadIndex = this->readIndex.load(
+            std::memory_order::memory_order_consume // consume: while() below carries dependency
+          );
+          while(safeCount >= 1) {
+            this->itemMemory[safeReadIndex].~TElement();
+            safeReadIndex = (safeReadIndex + 1) % this->capacity;
+            --safeCount;
+            // Don't update free slot count, read index, item status because it's the d'tor
+          }
         }
-*/
       }
 
       delete[] this->itemStatus;
@@ -89,6 +91,23 @@ namespace Nuclex { namespace Support { namespace Collections {
 #endif
     }
 
+    /// <summary>Estimates the number of items stored in the queue</summary>
+    /// <returns>The probably number of itemsthe queue held at the time of the call</returns>
+    /// <remarks>
+    ///   This method can be called from any thread and will have just about the same
+    ///   accuracy as when it is called from the consumer thread or one of the producers.
+    ///   If an item constructor throws an exception while the item is being copied/moved
+    ///   into the buffer's memory, this will still increase the count (until )
+    /// </remarks>
+    public: std::size_t Count() const {
+
+      // If many producers add at the same time, count may for a moment jump above 'capacity'
+      // (the producer who incremented it above capacity silently decrements it again and
+      // reports to its caller that the queue was full).
+      return std::min(this->count.load(std::memory_order_relaxed), this->capacity);
+
+    }
+
     /// <summary>Tries to append the specified element to the queue</summary>
     /// <param name="element">Element that will be appended to the queue</param>
     /// <returns>True if the element was appended, false if the queue had no space left</returns>
@@ -97,38 +116,39 @@ namespace Nuclex { namespace Support { namespace Collections {
       // Try to reserve a slot. If the queue is full, the value will be zero (or even less,
       // if highly contested), in which case we just hand the unusable slot back and return.
       {
-        int safeFreeSlotCount = this->freeSlotCount.fetch_sub(
+        std::size_t safeCount = this->count.fetch_add(
           1, std::memory_order_consume // consume: if() below carries dependency
         );
-        if(safeFreeSlotCount < 1) { // 1 because fetch_sub() returns the previous value
-          this->freeSlotCount.fetch_add(1, std::memory_order_release);
+        if(safeCount >= this->capacity) { // can happen under high contestion of this code spot
+          this->count.fetch_sub(1, std::memory_order_release);
           return false;
         }
       }
 
       // If we reach this spot, we know there was at least 1 slot free in the queue and we
       // just captured it (i.e. no other thread will cause less than 1 slot to remain free).
-      // So we just need to 'take' a slot index from the occupied index list
+      // So we just need to 'take' a slot index from the write index list
       std::size_t targetSlotIndex;
       {
-        int safeOccupiedIndex = this->occupiedIndex.fetch_add(
+        int safeOccupiedIndex = this->writeIndex.fetch_add(
           1, std::memory_order_consume // consume: if() below carries dependency
         );
         if(safeOccupiedIndex > 0) {
           if(static_cast<std::size_t>(safeOccupiedIndex) >= this->capacity) {
-            this->occupiedIndex.fetch_sub(this->capacity, std::memory_order_relaxed);
+            this->writeIndex.fetch_sub(this->capacity, std::memory_order_relaxed);
           }
         }
         targetSlotIndex = positiveModulo(safeOccupiedIndex, this->capacity);
       }
 
       // Mark the slot as being filled currently for the reading thread
-      this->itemStatus[targetSlotIndex].store(1, std::memory_order_release);
+      //this->itemStatus[targetSlotIndex].store(1, std::memory_order_release);
+      // ^^ Not really needed, read thread behaviour on encountering empty + filling is same
 
       // AARGH!
       //
-      // - If the consumer thread uses occupiedSlotIndex, it'll see occupied slots
-      //   before the status is updated (race between constructing into slot and status update)
+      // - If the consumer thread uses writeIndex, it'll see occupied slots before
+      //   the status is updated (race between constructing into slot and status update)
       //
       // - If we use writeIndex, it'll be a race on that index, two producing threads
       //   could finish in opposite order they started, so second thread increments
@@ -148,16 +168,89 @@ namespace Nuclex { namespace Support { namespace Collections {
         brokenSlotScope.Commit();
       }
 
-
+      // Mark the slot as available for the reading thread
+      this->itemStatus[targetSlotIndex].store(2, std::memory_order_release);
 
       // Item was appended!
       return true;
 
     }
 
+    /// <summary>Tries to remove an element from the queue</summary>
+    /// <param name="element">Element into which the queue's element will be placed</param>
+    /// <remarks>
+    ///   This method always attempts to use move semantics because item in the buffer is
+    ///   rendered inaccessible and eventually destroyed anyway.
+    /// </remarks>
+    public: bool TryTake(TElement &element) {
+      std::size_t safeCount = this->count.load(
+        std::memory_order::memory_order_consume // consume: if() below carries dependency
+      );
+      if(safeCount < 1) {
+        return false; // No more potential items in queue
+      }
+
+      // If we reach this point, there is at least one taken slot (which may contain
+      // a valid item or represent a gap due to a constructor exception while adding the item)
+      std::size_t safeReadIndex = this->readIndex.load(
+        std::memory_order::memory_order_consume // consume: access below carries dependency
+      );
+      for(;;) { // Typical case: loop runs once. Case w/gaps: multiple runs, but deterministic
+        std::uint8_t safeItemStatus = this->itemStatus[safeReadIndex].load(
+          std::memory_order::memory_order_consume // consume: if() below carries dependency
+        );
+        if(safeItemStatus < 2) { // 0: item is empty, 1: item is under construction
+          return false; // If the item is missing, act as if the queue had no more items
+        }
+
+        // safeItemStatus was 2, so an item is present in this slot
+        if(safeItemStatus == 2) {
+          break;
+        }
+
+        // safeItemStatus was 3, so the current item is a gap and can be skipped
+        // (this happens when an item constructor throws an exception)
+        if constexpr(!std::is_trivially_destructible<TElement>::value) {
+          this->itemMemory[safeReadIndex].~TElement();
+        }
+        this->itemStatus[safeReadIndex].store(0, std::memory_order_release);
+
+        // Why read again? Because 'count' may have been equal to or larger than our capacity
+        // (if many threads try to append at the same time), so for those cases, we re-read
+        // to make sure we re-enter accurate territory at (capacity - 1).
+        // CHECK: A simple std::min() at the top of the method would suffice, too, wouldn't it?
+        safeCount = (
+          this->count.fetch_sub(1, std::memory_order_consume) - 1 // if() below = dependency
+        );
+        if(safeCount < 1) {
+          return false; // No more potential items in queue (everything was a gap)
+        }
+
+        safeReadIndex = (safeReadIndex + 1) % this->capacity;
+      }
+
+      // Move the item to the caller-provided memory. This may throw.
+      TElement *readAddress = this->itemMemory + safeReadIndex;
+      element = std::move(*readAddress);
+
+      if constexpr(!std::is_trivially_destructible<TElement>::value) {
+        readAddress->~TElement();
+      }
+      this->itemStatus[safeReadIndex].store(0, std::memory_order_release);
+
+      // For a single reader, the ordering here is not that important, i.e. another
+      // reader thread can't come by, see the free slot and read the un-updated read index
+      this->readIndex.store(
+        (safeReadIndex + 1) % this->capacity, std::memory_order::memory_order_relaxed
+      );
+      this->count.fetch_sub(1, std::memory_order_release);
+
+      return true; // Item was read
+    }
+
     /// <summary>Returns the maximum number of items the queue can hold</summary>
     /// <returns>The maximum number of items the queue can hold</returns>
-    public: std::size_t GetCapacity() const { return this->capacity - 1U; }
+    public: std::size_t GetCapacity() const { return this->capacity; }
 
     /// <summary>Performs the modulo operation, but returns 0..divisor-1</summary>
     /// <param name="value">Value for which the positive modulo will be calculated</param>
@@ -198,11 +291,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///     returned), but no item will be in it.
     ///   </para>
     /// </remarks>
-    private: std::atomic<int> freeSlotCount;
-
+    private: std::atomic<std::size_t> count;
     /// <summary>Index from which the next item will be read</summary>
     private: std::atomic<std::size_t> readIndex;
-
     /// <summary>Index at which the most recently written item is stored</summary>
     /// <remarks>
     ///   Notice that contrary to normal practice, this does not point one past the last
@@ -210,8 +301,6 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   that has been stored in the buffer. The lock-free synchronization is easier this way.
     /// </remarks>
     private: std::atomic<int> writeIndex;
-    /// <summary>Like write index, but for the next item to be filled</summary>
-    private: std::atomic<int> occupiedIndex;
 
   };
 
