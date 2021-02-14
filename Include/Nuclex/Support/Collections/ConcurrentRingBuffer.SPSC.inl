@@ -55,13 +55,13 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="capacity">Maximum number of items the ring buffer can hold</param>
     public: ConcurrentRingBuffer(std::size_t capacity) :
       capacity(capacity + 1), // One item is wasted in return for simpler full/empty math
-      readIndex(0),
-      writeIndex(0),
       itemMemory(
         reinterpret_cast<TElement *>(
           new std::uint8_t[sizeof(TElement[2]) * (capacity + 1U) / 2U]
         )
-      ) {}
+      ),
+      readIndex(0),
+      writeIndex(0) {}
     
     /// <summary>Frees all memory owned by the concurrent queue and the items therein</summary>
     /// <remarks>
@@ -276,6 +276,12 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Number of items the ring buffer can hold</summary>
     private: const std::size_t capacity;
+    /// <summary>Memory block that holds the items currently stored in the queue</summary>
+    /// <remarks>
+    ///   Careful. This is allocated as an std::uint8_t buffer and absolutely will contain
+    ///   uninitialized memory.
+    /// </remarks>
+    private: TElement *itemMemory;
     /// <summary>Index from which the next item will be read</summary>
     private: std::atomic<std::size_t> readIndex;
     /// <summary>Index at which the most recently written item is stored</summary>
@@ -285,12 +291,6 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   that has been stored in the buffer. The lock-free synchronization is easier this way.
     /// </remarks>
     private: std::atomic<std::size_t> writeIndex;
-    /// <summary>Memory block that holds the items currently stored in the queue</summary>
-    /// <remarks>
-    ///   Careful. This is allocated as an std::uint8_t buffer and absolutely will contain
-    ///   uninitialized memory.
-    /// </remarks>
-    private: TElement *itemMemory;
 
   };
 

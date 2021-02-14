@@ -26,30 +26,11 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Fixed-size circular buffer for one consumer and multiple producers</summary>
-  /// <remarks>
-  ///   <para>
-  ///     This multi-producer, single-consumer version of the concurrent buffer lets any
-  ///     number of threads add items to the buffer. A single thread can take items from
-  ///     the buffer.
-  ///   </para>
-  ///   <para>
-  ///     This implementation is lock-free and also wait-free (i.e. no compare-and-swap loops).
-  ///     Batch operations are supported and this variant gives a strong-ish exception
-  ///     guarantee: if an operation fails, the buffer's state remains as if it never happened,
-  ///     but the buffer's capacity will be temporarily reduced.
-  ///   </para>
-  ///   <para>
-  ///     <strong>Container type</strong>: bounded ring buffer
-  ///   </para>
-  ///   <para>
-  ///     <strong>Thread safety</strong>: unlimited producing threads + one consuming thread
-  ///   </para>
-  ///   <para>
-  ///     <strong>Exception guarantee</strong>: strong-ish (exception = buffer unchanged)
-  ///   </para>
+  /// <summary>Fixed-size circular buffer for multiple consumers and producers</summary>
   template<typename TElement>
-  class ConcurrentRingBuffer<TElement, ConcurrentAccessBehavior::MultipleProducersSingleConsumer> {
+  class ConcurrentRingBuffer<
+    TElement, ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
+  > {
 
     /// <summary>Initializes a new concurrent queue for a single producer and consumer</summary>
     /// <param name="capacity">Maximum amount of items the queue can hold</param>
@@ -185,6 +166,10 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   rendered inaccessible and eventually destroyed anyway.
     /// </remarks>
     public: bool TryTake(TElement &element) {
+      throw u8"Missing multi-consumer implementation";
+
+#ifdef NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTRINGBUFFER_MPMC_DONE
+
       std::size_t safeCount = this->count.load(
         std::memory_order::memory_order_consume // consume: if() below carries dependency
       );
@@ -246,6 +231,8 @@ namespace Nuclex { namespace Support { namespace Collections {
         (safeReadIndex + 1) % this->capacity, std::memory_order::memory_order_relaxed
       );
       this->count.fetch_sub(1, std::memory_order_release);
+
+#endif // NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTRINGBUFFER_MPMC_DONE
 
       return true; // Item was read
     }

@@ -77,23 +77,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
 #include "ConcurrentRingBuffer.SPSC.inl"
 #include "ConcurrentRingBuffer.MPSC.inl"
-//#include "ConcurrentRingBuffer.MPMC.inl"
-
-namespace Nuclex { namespace Support { namespace Collections {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Queue that can safely be used from multiple threads</summary>
-  template<typename TElement>
-  class ConcurrentRingBuffer<TElement, ConcurrentAccessBehavior::MultipleProducersMultipleConsumers> {
-/*
-    /// <summary>Queue that is wrapped to provide all functionality</summary>
-    private: moodycamel::ConcurrentQueue<TElement> wrappedQueue;
-*/
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-}}} // namespace Nuclex::Support::Collections
+#include "ConcurrentRingBuffer.MPMC.inl"
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTRINGBUFFER_H
