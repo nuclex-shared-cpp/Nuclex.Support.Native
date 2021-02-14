@@ -39,6 +39,12 @@ namespace Nuclex { namespace Support { namespace Collections {
   /// <summary>A buffer that acts like a ring buffer but guarantees linear memory</summary>
   /// <remarks>
   ///   <para>
+  ///     <strong>Thread safety:</strong> each instance should be accessed by a single thread
+  ///   </para>
+  ///   <para>
+  ///     <strong>Container type:</strong> unbounded linear buffer with batch operations
+  ///   </para>
+  ///   <para>
   ///     This is a buffer for FIFO batch operations like the ring buffer, but instead of
   ///     wrapping data around, it will keep all data linear. This can be less efficient than
   ///     a ring buffer if there are lots of partial updates, but can also be more efficient

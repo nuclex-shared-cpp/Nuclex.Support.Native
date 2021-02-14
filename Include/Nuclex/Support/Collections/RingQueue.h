@@ -37,9 +37,17 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   /// <summary>A ring buffer that can grow and read/write in batches</summary>
   /// <remarks>
-  ///   This differs from std::queue in two ways: 1) it is optimized for a constant
-  ///   ring buffer size (i.e. the capacity can grow, but is assumed to settle quickly)
-  ///   and 2) it provides efficient batch operations.
+  ///   <para>
+  ///     <strong>Thread safety:</strong> each instance should be accessed by a single thread
+  ///   </para>
+  ///   <para>
+  ///     <strong>Container type:</strong> unbounded ring buffer with batch operations
+  ///   </para>
+  ///   <para>
+  ///     This differs from std::queue in two ways: 1) it is optimized for a constant
+  ///     ring buffer size (i.e. the capacity can grow, but is assumed to settle quickly)
+  ///     and 2) it provides efficient batch operations.
+  ///   </para>
   /// </remarks>
   template<typename TItem>
   class RingQueue {
