@@ -61,7 +61,9 @@ namespace Nuclex { namespace Support { namespace Collections {
         )
       ),
       readIndex(0),
-      writeIndex(0) {}
+      writeIndex(0) {
+      std::atomic_thread_fence(std::memory_order_release);
+    }
     
     /// <summary>Frees all memory owned by the concurrent queue and the items therein</summary>
     /// <remarks>

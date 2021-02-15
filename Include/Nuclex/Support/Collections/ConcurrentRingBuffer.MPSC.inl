@@ -67,7 +67,7 @@ namespace Nuclex { namespace Support { namespace Collections {
           delete[] buffer;
         };
         this->itemStatus = new std::atomic<std::uint8_t>[capacity];
-        itemMemoryDeleter.Commit();
+        itemMemoryDeleter.Commit(); // disarm the item memory deleter
       }
       this->itemMemory = reinterpret_cast<TElement *>(buffer);
 
@@ -75,6 +75,8 @@ namespace Nuclex { namespace Support { namespace Collections {
       for(std::size_t index = 0; index < capacity; ++index) {
         this->itemStatus[index].store(0, std::memory_order_relaxed);
       }
+
+      std::atomic_thread_fence(std::memory_order_release);
     }
     
     /// <summary>Frees all memory owned by the concurrent queue and the items therein</summary>
@@ -116,9 +118,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// </remarks>
     public: std::size_t Count() const {
 
-      // If many producers add at the same time, count may for a moment jump above 'capacity'
-      // (the producer who incremented it above capacity silently decrements it again and
-      // reports to its caller that the queue was full).
+      // If many producers add at the same time, the item count may for a moment jump above
+      // 'capacity' (the producer that incremented it above capacity silently decrements it
+      // again and reports to its caller that the queue was full).
       return std::min(this->count.load(std::memory_order_relaxed), this->capacity);
 
     }
@@ -128,8 +130,70 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <returns>True if the element was appended, false if the queue had no space left</returns>
     public: bool TryAppend(const TElement &element) {
 
-      // Try to reserve a slot. If the queue is full, the value will be zero (or even less,
-      // if highly contested), in which case we just hand the unusable slot back and return.
+      // Try to reserve a slot. If the queue is full, the value will hit the capacity (or even
+      // exceed it if highly contested), in which case we just hand the unusable slot back.
+      {
+        std::size_t safeCount = this->count.fetch_add(
+          1, std::memory_order_consume // consume: if() below carries dependency
+        );
+        if(safeCount >= this->capacity) { // can happen under high contention of this code spot
+          this->count.fetch_sub(1, std::memory_order_release);
+          return false;
+        }
+      }
+
+      // If we reach this spot, we know there was at least 1 slot free in the queue and we
+      // just captured it (i.e. no other thread will cause less than 1 slot to remain free
+      // while the following code runs). So we can happily increment the write index here.
+      std::size_t targetSlotIndex;
+      {
+        int safeOccupiedIndex = this->writeIndex.fetch_add(
+          1, std::memory_order_consume // consume: if() below carries dependency
+        );
+
+        // If the write index goes past 'capacity', do a wrap-around (ring buffer).
+        // Multiple threads may simultaneously hit this spot, moving write index
+        // into the negative. That is fine (we do a positive modulo on the index).
+        if(
+          (safeOccupiedIndex > 0) && // To ensure static_cast below is safe
+          (static_cast<std::size_t>(safeOccupiedIndex) >= this->capacity)
+        ) {
+          this->writeIndex.fetch_sub(this->capacity, std::memory_order_relaxed);
+        }
+
+        targetSlotIndex = positiveModulo(safeOccupiedIndex, this->capacity);
+      }
+
+      // Mark the slot as under construction for the reading thread
+#if !defined(NDEBUG) // not really needed, empty and under construction are treated the same
+      this->itemStatus[targetSlotIndex].store(1, std::memory_order_release);
+#endif
+
+      // Copy the item into the slot. If its copy constructor throws, the slot must be
+      // marked as broken so the reading thread will skip it.
+      {
+        auto brokenSlotScope = ON_SCOPE_EXIT_TRANSACTION {
+          this->itemStatus[targetSlotIndex].store(3, std::memory_order_release);
+        };
+        new(this->itemMemory + targetSlotIndex) TElement(element);
+        brokenSlotScope.Commit();
+      }
+
+      // Mark the slot as available for the reading thread
+      this->itemStatus[targetSlotIndex].store(2, std::memory_order_release);
+
+      // Item was appended!
+      return true;
+
+    }
+
+    /// <summary>Tries to move-append the specified element to the queue</summary>
+    /// <param name="element">Element that will be appended to the queue</param>
+    /// <returns>True if the element was appended, false if the queue had no space left</returns>
+    public: bool TryShove(const TElement &&element) {
+
+      // Try to reserve a slot. If the queue is full, the value will hit the capacity (or even
+      // exceed it if highly contested), in which case we just hand the unusable slot back.
       {
         std::size_t safeCount = this->count.fetch_add(
           1, std::memory_order_consume // consume: if() below carries dependency
@@ -141,32 +205,39 @@ namespace Nuclex { namespace Support { namespace Collections {
       }
 
       // If we reach this spot, we know there was at least 1 slot free in the queue and we
-      // just captured it (i.e. no other thread will cause less than 1 slot to remain free).
-      // So we just need to 'take' a slot index from the write index list
+      // just captured it (i.e. no other thread will cause less than 1 slot to remain free
+      // while the following code runs). So we can happily increment the write index here.
       std::size_t targetSlotIndex;
       {
         int safeOccupiedIndex = this->writeIndex.fetch_add(
           1, std::memory_order_consume // consume: if() below carries dependency
         );
-        if(safeOccupiedIndex > 0) {
-          if(static_cast<std::size_t>(safeOccupiedIndex) >= this->capacity) {
-            this->writeIndex.fetch_sub(this->capacity, std::memory_order_relaxed);
-          }
+
+        // If the write index goes past 'capacity', do a wrap-around (ring buffer).
+        // Multiple threads may simultaneously hit this spot, moving write index
+        // into the negative. That is fine (we do a positive modulo on the index).
+        if(
+          (safeOccupiedIndex > 0) && // To ensure static_cast below is safe
+          (static_cast<std::size_t>(safeOccupiedIndex) >= this->capacity)
+        ) {
+          this->writeIndex.fetch_sub(this->capacity, std::memory_order_relaxed);
         }
+
         targetSlotIndex = positiveModulo(safeOccupiedIndex, this->capacity);
       }
 
-      // Mark the slot as being filled currently for the reading thread
-      //this->itemStatus[targetSlotIndex].store(1, std::memory_order_release);
-      // ^^ Not really needed, read behaviour on encountering empty + under constr. is same
+      // Mark the slot as under construction for the reading thread
+#if !defined(NDEBUG) // not really needed, empty and under construction are treated the same
+      this->itemStatus[targetSlotIndex].store(1, std::memory_order_release);
+#endif
 
-      // Copy the item into the slot. If its copy constructor throws, the slot must be
+      // Move the item into the slot. If its move constructor throws, the slot must be
       // marked as broken so the reading thread will skip it.
       {
         auto brokenSlotScope = ON_SCOPE_EXIT_TRANSACTION {
           this->itemStatus[targetSlotIndex].store(3, std::memory_order_release);
         };
-        new(this->itemMemory + targetSlotIndex) TElement(element);
+        new(this->itemMemory + targetSlotIndex) TElement(std::move(element));
         brokenSlotScope.Commit();
       }
 
@@ -205,7 +276,7 @@ namespace Nuclex { namespace Support { namespace Collections {
           return false; // If the item is missing, act as if the queue had no more items
         }
 
-        // safeItemStatus was 2, so an item is present in this slot
+        // Item status 2 means there is an item present in the slot
         if(safeItemStatus == 2) {
           break;
         }
