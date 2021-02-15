@@ -177,73 +177,55 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   rendered inaccessible and eventually destroyed anyway.
     /// </remarks>
     public: bool TryTake(TElement &element) {
-      throw u8"Missing multi-consumer implementation";
 
-#ifdef NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTRINGBUFFER_MPMC_DONE
-
-      std::size_t safeCount = this->occupiedCount.load(
-        std::memory_order::memory_order_consume // consume: if() below carries dependency
+#if 0
+      // Take the write index. We know it only moves forward, so if we calculate
+      // the available items from this, we avoid a race condition reading 'occupiedCount'.
+      int safeWriteIndex = this->writeIndex.load(
+        std::memory_order_consume // math below carries dependency
       );
-      if(safeCount < 1) {
-        return false; // No more potential items in queue
+      std::size_t wrappedSafeWriteIndex = positiveModulo(safeWriteIndex, this->capacity);
+#endif
+
+      int safeAvailableCount = this->availableCount.fetch_sub(1, std::memory_order_release);
+      if(safeAvailableCount < 1) {
+        this->availableCount.fetch_add(1, std::memory_order_relaxed);
+        return false;
       }
 
-      // If we reach this point, there is at least one taken slot (which may contain
-      // a valid item or represent a gap due to a constructor exception while adding the item)
-      std::size_t safeReadIndex = this->readIndex.load(
-        std::memory_order::memory_order_consume // consume: access below carries dependency
-      );
-      for(;;) { // Typical case: loop runs once. Case w/gaps: multiple runs, but deterministic
-        std::uint8_t safeItemStatus = this->itemStatus[safeReadIndex].load(
-          std::memory_order::memory_order_consume // consume: if() below carries dependency
+      // At this point, we know there's at least one item in the queue and no other thread
+      // is going to take it (because we reserved it through the availableCount).
+      std::size_t sourceSlotIndex;
+      {
+        int safeReadIndex = this->readIndex.fetch_add(
+          1, std::memory_order_consume // consume: if() below carries dependency
         );
-        if(safeItemStatus < 2) { // 0: item is empty, 1: item is under construction
-          return false; // If the item is missing, act as if the queue had no more items
+
+        // If the write index goes past 'capacity', do a wrap-around (ring buffer).
+        // Multiple threads may simultaneously hit this spot, moving write index
+        // into the negative. That is fine (we do a positive modulo on the index).
+        if(safeReadIndex > 0) {
+          if(static_cast<std::size_t>(safeReadIndex) >= this->capacity) {
+            this->readIndex.fetch_sub(this->capacity, std::memory_order_relaxed);
+          }
         }
 
-        // Item status 2 means there is an item present in the slot
-        if(safeItemStatus == 2) {
-          break;
-        }
-
-        // safeItemStatus was 3, so the current item is a gap and can be skipped
-        // (this happens when an item constructor throws an exception)
-        if constexpr(!std::is_trivially_destructible<TElement>::value) {
-          this->itemMemory[safeReadIndex].~TElement();
-        }
-        this->itemStatus[safeReadIndex].store(0, std::memory_order_relaxed);
-
-        // Why read again? Because 'occupiedCount' may have been equal to or larger than our capacity
-        // (if many threads try to append at the same time), so for those cases, we re-read
-        // to make sure we re-enter accurate territory at (capacity - 1).
-        // CHECK: A simple std::min() at the top of the method would suffice, too, wouldn't it?
-        safeCount = (
-          this->occupiedCount.fetch_sub(1, std::memory_order_consume) - 1 // if() below = dependency
-        );
-        if(safeCount < 1) {
-          return false; // No more potential items in queue (everything was a gap)
-        }
-
-        safeReadIndex = (safeReadIndex + 1) % this->capacity;
+        sourceSlotIndex = positiveModulo(safeReadIndex, this->capacity);
       }
 
       // Move the item to the caller-provided memory. This may throw.
-      TElement *readAddress = this->itemMemory + safeReadIndex;
-      element = std::move(*readAddress);
+      TElement *readAddress = this->itemMemory + sourceSlotIndex;
+      {
+        auto removeItemScope = ON_SCOPE_EXIT_TRANSACTION {
+          this->itemStatus[sourceSlotIndex].store(0, std::memory_order_release);
+          this->occupiedCount.fetch_sub(this->capacity, std::memory_order_release);
+          if constexpr(!std::is_trivially_destructible<TElement>::value) {
+            readAddress->~TElement();
+          }
+        };
 
-      if constexpr(!std::is_trivially_destructible<TElement>::value) {
-        readAddress->~TElement();
+        element = std::move(*readAddress);
       }
-      this->itemStatus[safeReadIndex].store(0, std::memory_order_release);
-
-      // For a single reader, the ordering here is not that important, i.e. another
-      // reader thread can't come by, see the free slot and read the un-updated read index
-      this->readIndex.store(
-        (safeReadIndex + 1) % this->capacity, std::memory_order::memory_order_relaxed
-      );
-      this->occupiedCount.fetch_sub(1, std::memory_order_release);
-
-#endif // NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTRINGBUFFER_MPMC_DONE
 
       return true; // Item was read
     }
@@ -251,16 +233,6 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Returns the maximum number of items the queue can hold</summary>
     /// <returns>The maximum number of items the queue can hold</returns>
     public: std::size_t GetCapacity() const { return this->capacity; }
-
-    private: int countAvailable(int readIndex) const {
-      int safeWriteIndex = this->writeIndex.load(
-        std::memory_order_consume // if() below carries dependency
-      );
-      if(safeWriteIndex >= readIndex) {
-        
-      }
-
-    }
 
     /// <summary>Performs the modulo operation, but returns 0..divisor-1</summary>
     /// <param name="value">Value for which the positive modulo will be calculated</param>
