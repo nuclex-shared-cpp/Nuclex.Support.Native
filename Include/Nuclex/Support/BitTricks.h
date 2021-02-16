@@ -332,6 +332,36 @@ namespace Nuclex { namespace Support {
       return static_cast<unsigned char>(temp - (value < powersOfTen[temp]));
     }
 
+    /// <summary>Very fast random number generation from a seed value</summary>
+    /// <param name="seed">Seed from which a random number will be generated</param>
+    /// <returns>The next random number after the seed value</returns>
+    /// <remarks>
+    ///   This is a blazingly fast method of generating random numbers, but the entropy
+    ///   is not very high. It's useful if one need to generate kilobytes or megabytes of
+    ///   semi-random data. Don't even think about using this with cryptographic algorithms!
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static inline std::uint32_t XorShiftRandom(std::uint32_t seed) {
+      seed ^= (seed << 13);
+	seed ^= (seed >> 17);
+	seed ^= (seed << 5);
+	return seed;
+    }
+
+    /// <summary>Very fast random number generation from a seed value</summary>
+    /// <param name="seed">Seed from which a random number will be generated</param>
+    /// <returns>The next random number after the seed value</returns>
+    /// <remarks>
+    ///   This is a blazingly fast method of generating random numbers, but the entropy
+    ///   is not very high. It's useful if one need to generate kilobytes or megabytes of
+    ///   semi-random data. Don't even think about using this with cryptographic algorithms!
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static inline std::uint64_t XorShiftRandom(std::uint64_t seed) {
+      seed ^= (seed << 13);
+	seed ^= (seed >> 7);
+	seed ^= (seed << 17);
+      return seed;
+    }
+
   };
 
   // ------------------------------------------------------------------------------------------- //
