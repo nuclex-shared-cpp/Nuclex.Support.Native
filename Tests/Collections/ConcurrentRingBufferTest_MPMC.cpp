@@ -25,37 +25,18 @@ License along with this library
 #include "BufferTest.h"
 #include "ConcurrentBufferTest.h"
 #include <gtest/gtest.h>
-#include <chrono>
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>A concurrent single producer, single consumer ring buffer</summary>
+  /// <summary>A concurrent multi producer, multi consumer ring buffer</summary>
   template<typename TItem>
   using TestedBuffer = Nuclex::Support::Collections::ConcurrentRingBuffer<
     TItem,
-    Nuclex::Support::Collections::ConcurrentAccessBehavior::SingleProducerSingleConsumer
+    Nuclex::Support::Collections::ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
   >;
 
-  // ------------------------------------------------------------------------------------------- //
-#if 0
-  /// <summary>Generates the first pseudo-random number following a fixed seed</summary>
-  /// <param name="seed">Seed value, same seeds produce same pseudo-random numbers</param>
-  /// <returns>The first random number that followed the specified seed</returns>
-  /// <remarks>
-  ///   In some implementations of the C++ standard library (*cough* MSVC *cough*),
-  ///   std::default_random_engine has a substantial setup and/or processing time,
-  ///   taking 30+ seconds on a modern CPU to generate 128 KiB of data. Since quality
-  ///   of random numbers is not important here, we use this fast "Xor-Shift" generator.
-  /// </remarks>
-  std::size_t fastRandomNumber(std::size_t seed) {
-    seed ^= (seed << 21);
-    seed ^= (seed >> 35);
-    seed ^= (seed << 4);
-    return seed;
-  }
-#endif
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -64,7 +45,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ConcurrentRingBufferTest_SPSC, InstancesCanBeCreated) {
+  TEST(ConcurrentRingBufferTest_MPMC, InstancesCanBeCreated) {
     EXPECT_NO_THROW(
       TestedBuffer<int> test(10);
     );
@@ -72,14 +53,14 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ConcurrentRingBufferTest_SPSC, CanReportCapacity) {
+  TEST(ConcurrentRingBufferTest_MPMC, CanReportCapacity) {
     TestedBuffer<int> test(124);
     EXPECT_EQ(test.GetCapacity(), 124U);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ConcurrentRingBufferTest_SPSC, SingleItemsCanBeAppended) {
+  TEST(ConcurrentRingBufferTest_MPMC, SingleItemsCanBeAppended) {
     TestedBuffer<int> test(10);
     EXPECT_TRUE(test.TryAppend(123));
     EXPECT_TRUE(test.TryAppend(456));
@@ -88,7 +69,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ConcurrentRingBufferTest_SPSC, SingleAppendFailsIfBufferFull) {
+  TEST(ConcurrentRingBufferTest_MPMC, SingleAppendFailsIfBufferFull) {
     TestedBuffer<int> test(3);
     EXPECT_TRUE(test.TryAppend(123));
     EXPECT_TRUE(test.TryAppend(456));
@@ -98,7 +79,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ConcurrentRingBufferTest_SPSC, ItemsCanBeCounted) {
+  TEST(ConcurrentRingBufferTest_MPMC, ItemsCanBeCounted) {
     TestedBuffer<int> test(3);
     EXPECT_EQ(test.Count(), 0U);
     EXPECT_TRUE(test.TryAppend(123));
@@ -109,7 +90,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ConcurrentRingBufferTest_SPSC, ItemsCanBeCountedWhenFragmented) {
+  TEST(ConcurrentRingBufferTest_MPMC, ItemsCanBeCountedWhenFragmented) {
     TestedBuffer<int> test(10);
 
     for(std::size_t index = 0; index < 8; ++index) {
@@ -134,7 +115,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ConcurrentRingBufferTest_SPSC, ItemsStayOrderedWhenFragmented) {
+  TEST(ConcurrentRingBufferTest_MPMC, ItemsStayOrderedWhenFragmented) {
     TestedBuffer<int> test(10);
 
     for(std::size_t index = 0; index < 8; ++index) {
@@ -174,7 +155,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ConcurrentRingBufferTest_SPSC, BufferCanBeEmpty) {
+  TEST(ConcurrentRingBufferTest_MPMC, BufferCanBeEmpty) {
     TestedBuffer<int> test(5);
     
     int value;
@@ -186,7 +167,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ConcurrentRingBufferTest_SPSC, SingleItemsCanBeRead) {
+  TEST(ConcurrentRingBufferTest_MPMC, SingleItemsCanBeRead) {
     TestedBuffer<int> test(5);
     EXPECT_TRUE(test.TryAppend(123));
     EXPECT_TRUE(test.TryAppend(456));
@@ -203,55 +184,12 @@ namespace Nuclex { namespace Support { namespace Collections {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if 0
-  TEST(ConcurrentRingBufferTest_SPSC, BenchmarkAddingItems) {
+
+  TEST(ConcurrentRingBufferTest_MPMC, BenchmarkAddingItems) {
   //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
     benchmarkSingleItemAppends<TestedBuffer>();
   }
-#endif
-  // ------------------------------------------------------------------------------------------- //
-#ifdef NUCLEX_SUPPORT_COLLECTIONS_UNTESTED_BATCH_OPERATIONS
-  TEST(ConcurrentRingBufferTest_SPSC, ItemsCanBeBatchAppended) {
-    TestedBuffer<int> test(10);
-    int items[] = { 1, 2, 3, 4, 5, 6, 7 };
 
-    EXPECT_EQ(test.TryAppend(items, 7), 7U);
-    EXPECT_EQ(test.Count(), 7U); // Ensure consistency, not just correct return
-  }
-#endif
-  // ------------------------------------------------------------------------------------------- //
-#ifdef NUCLEX_SUPPORT_COLLECTIONS_UNTESTED_BATCH_OPERATIONS
-  TEST(ConcurrentRingBufferTest_SPSC, BatchAppendCanFragmentItems) {
-    TestedBuffer<int> test(10);
-    int items[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-
-    EXPECT_EQ(test.TryAppend(items, 6), 6U);
-    // Expected buffer state: ######----
-    EXPECT_EQ(test.Count(), 6U);
-
-    for(std::size_t index = 0; index < 4; ++index) {
-      int dummy;
-      EXPECT_TRUE(test.TryTake(dummy));
-    }
-    // Expected buffer state: ----##----
-    EXPECT_EQ(test.Count(), 2U);
-
-    EXPECT_EQ(test.TryAppend(items, 6), 6U);
-    // Expected buffer state: ##--######
-    EXPECT_EQ(test.Count(), 8U);
-
-    for(std::size_t index = 0; index < 4; ++index) {
-      int dummy;
-      EXPECT_TRUE(test.TryTake(dummy));
-    }
-    // Expected buffer state: ##------##
-    EXPECT_EQ(test.Count(), 4U);
-
-    EXPECT_EQ(test.TryAppend(items, 6), 6U);
-    // Expected buffer state: ##########
-    EXPECT_EQ(test.Count(), 10U);
-  }
-#endif
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections

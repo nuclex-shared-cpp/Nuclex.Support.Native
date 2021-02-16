@@ -178,15 +178,6 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// </remarks>
     public: bool TryTake(TElement &element) {
 
-#if 0
-      // Take the write index. We know it only moves forward, so if we calculate
-      // the available items from this, we avoid a race condition reading 'occupiedCount'.
-      int safeWriteIndex = this->writeIndex.load(
-        std::memory_order_consume // math below carries dependency
-      );
-      std::size_t wrappedSafeWriteIndex = positiveModulo(safeWriteIndex, this->capacity);
-#endif
-
       int safeAvailableCount = this->availableCount.fetch_sub(1, std::memory_order_release);
       if(safeAvailableCount < 1) {
         this->availableCount.fetch_add(1, std::memory_order_relaxed);
@@ -216,12 +207,12 @@ namespace Nuclex { namespace Support { namespace Collections {
       // Move the item to the caller-provided memory. This may throw.
       TElement *readAddress = this->itemMemory + sourceSlotIndex;
       {
-        auto removeItemScope = ON_SCOPE_EXIT_TRANSACTION {
-          this->itemStatus[sourceSlotIndex].store(0, std::memory_order_release);
-          this->occupiedCount.fetch_sub(this->capacity, std::memory_order_release);
+        ON_SCOPE_EXIT {
           if constexpr(!std::is_trivially_destructible<TElement>::value) {
             readAddress->~TElement();
           }
+          this->itemStatus[sourceSlotIndex].store(0, std::memory_order_release);
+          this->occupiedCount.fetch_sub(1, std::memory_order_release);
         };
 
         element = std::move(*readAddress);
