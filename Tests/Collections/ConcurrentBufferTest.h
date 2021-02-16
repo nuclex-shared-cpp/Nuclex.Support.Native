@@ -23,6 +23,8 @@ License along with this library
 
 #include <gtest/gtest.h>
 
+#include "Nuclex/Support/BitTricks.h"
+
 #include <vector> // for std::vector
 #include <memory> // for std::unique_ptr
 #include <thread> // for std::thread
@@ -147,6 +149,8 @@ namespace Nuclex { namespace Support { namespace Collections {
   template<template<typename TItem> class TConcurrentBuffer>
   void benchmarkSingleItemAppends() {
 
+    const std::size_t BenchmarkedItemCount = 1000000 * 8; // 8 Million items
+
     /// <summary>Benchmark that tests the performance of appending single items</summary>
     class Benchmark : public HighContentionBufferTest {
 
@@ -154,12 +158,12 @@ namespace Nuclex { namespace Support { namespace Collections {
       /// <param name="threadCount">Number of threads that will be hammering the buffer</param>
       public: Benchmark(std::size_t threadCount) :
         HighContentionBufferTest(threadCount),
-        buffer(1048576 * 4),
+        buffer(BenchmarkedItemCount),
         addedItemCount(0),
         constructionTime(std::chrono::high_resolution_clock::now()),
         startMicroseconds(0),
         endMicroseconds(0) {}
-
+      
       /// <summary>Thread worker method, performs the work being benchmarked</summary>
       /// <param name="threadIndex">Index of the thread this method is running in</param>
       protected: void Thread(std::size_t threadIndex) override {
@@ -167,14 +171,14 @@ namespace Nuclex { namespace Support { namespace Collections {
 
         // Fill items into the queue until it accepts no more items
         {
-          std::size_t randomNumber = fastRandomNumber(threadIndex);
+          std::size_t randomNumber = BitTricks::XorShiftRandom(threadIndex);
           for(;;) {
             bool wasAdded = this->buffer.TryAppend(randomNumber);
-            this->addedItemCount.fetch_add(1, std::memory_order_relaxed);
             if(!wasAdded) {
               break;
             }
-            randomNumber = fastRandomNumber(randomNumber);
+            this->addedItemCount.fetch_add(1, std::memory_order_relaxed);
+            randomNumber = BitTricks::XorShiftRandom(randomNumber);
           }
         }
 
@@ -192,22 +196,6 @@ namespace Nuclex { namespace Support { namespace Collections {
       /// <returns>The elapsed number of microseconds</returns>
       public: std::size_t CountAddedItems() const {
         return this->addedItemCount.load(std::memory_order_acquire);
-      }
-
-      /// <summary>Generates the first pseudo-random number following a fixed seed</summary>
-      /// <param name="seed">Seed value, same seeds produce same pseudo-random numbers</param>
-      /// <returns>The first random number that followed the specified seed</returns>
-      /// <remarks>
-      ///   In some implementations of the C++ standard library (*cough* MSVC *cough*),
-      ///   std::default_random_engine has a substantial setup and/or processing time,
-      ///   taking 30+ seconds on a modern CPU to generate 128 KiB of data. Since quality
-      ///   of random numbers is not important here, we use this fast "Xor-Shift" generator.
-      /// </remarks>
-      private: static std::size_t fastRandomNumber(std::size_t seed) {
-        seed ^= (seed << 21);
-        seed ^= (seed >> 35);
-        seed ^= (seed << 4);
-        return seed;
       }
 
       /// <summary>Marks the benchmark starting time if this is the first call</summary>
@@ -250,15 +238,17 @@ namespace Nuclex { namespace Support { namespace Collections {
       bench.StartThreads();
       bench.JoinThreads();
 
-      double itemsPerSecond = static_cast<double>(bench.CountAddedItems());
-      itemsPerSecond /= static_cast<double>(bench.GetElapsedMicroseconds());
-      itemsPerSecond *= static_cast<double>(1000000.0); // microseconds -> seconds
+      EXPECT_EQ(bench.CountAddedItems(), BenchmarkedItemCount);
+
+      double kitemsPerSecond = static_cast<double>(bench.CountAddedItems());
+      kitemsPerSecond /= static_cast<double>(bench.GetElapsedMicroseconds());
+      kitemsPerSecond *= static_cast<double>(1000.0); // items/microsecond -> kitems/second
 
       std::cout <<
-        "Adding 1048576 items " <<
+        "Adding " << BenchmarkedItemCount << " items " <<
         "from " << threadCount << " threads: " <<
-        bench.GetElapsedMicroseconds() << " μs" <<
-        " (" << std::fixed << itemsPerSecond << " adds/second)" <<
+        std::fixed << (static_cast<double>(bench.GetElapsedMicroseconds()) / 1000.0)  << " ms" <<
+        " (" << std::fixed << kitemsPerSecond << "K adds/second)" <<
         std::endl;
     }
 
