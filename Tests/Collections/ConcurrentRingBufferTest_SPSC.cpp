@@ -203,12 +203,27 @@ namespace Nuclex { namespace Support { namespace Collections {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if 0
+
   TEST(ConcurrentRingBufferTest_SPSC, BenchmarkAddingItems) {
-  //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
-    benchmarkSingleItemAppends<TestedBuffer>();
+    const std::size_t MaximumThreadCount = 1;
+    benchmarkSingleItemAppends<TestedBuffer>(MaximumThreadCount);
   }
-#endif
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentRingBufferTest_SPSC, BenchmarkTakingItems) {
+    const std::size_t MaximumThreadCount = 1;
+    benchmarkSingleItemTakes<TestedBuffer>(MaximumThreadCount);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentRingBufferTest_SPSC, BenchmarkMixedItems) {
+  //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
+    const std::size_t MaximumThreadCount = 2; // one producer, one consumer
+    benchmarkSingleItemMixed<TestedBuffer>(MaximumThreadCount);
+  }
+
   // ------------------------------------------------------------------------------------------- //
 #ifdef NUCLEX_SUPPORT_COLLECTIONS_UNTESTED_BATCH_OPERATIONS
   TEST(ConcurrentRingBufferTest_SPSC, ItemsCanBeBatchAppended) {

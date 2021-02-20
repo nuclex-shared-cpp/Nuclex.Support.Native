@@ -138,11 +138,13 @@ namespace Nuclex { namespace Support { namespace Collections {
         // into the negative. That is fine (we do a positive modulo on the index).
         if(safeOccupiedIndex > 0) {
           if(static_cast<std::size_t>(safeOccupiedIndex) >= this->capacity) {
-            this->writeIndex.fetch_sub(this->capacity, std::memory_order_relaxed);
+            this->writeIndex.fetch_sub(
+              static_cast<int>(this->capacity), std::memory_order_relaxed
+            );
           }
         }
 
-        targetSlotIndex = positiveModulo(safeOccupiedIndex, this->capacity);
+        targetSlotIndex = positiveModulo(safeOccupiedIndex, static_cast<int>(this->capacity));
       }
 
       // Mark the slot as under construction for the reading thread
@@ -172,6 +174,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     /// <summary>Tries to remove an element from the queue</summary>
     /// <param name="element">Element into which the queue's element will be placed</param>
+    /// <returns>True if an item was available and return, false otherwise</returns>
     /// <remarks>
     ///   This method always attempts to use move semantics because item in the buffer is
     ///   rendered inaccessible and eventually destroyed anyway.
@@ -195,13 +198,13 @@ namespace Nuclex { namespace Support { namespace Collections {
         // If the write index goes past 'capacity', do a wrap-around (ring buffer).
         // Multiple threads may simultaneously hit this spot, moving write index
         // into the negative. That is fine (we do a positive modulo on the index).
-        if(safeReadIndex > 0) {
-          if(static_cast<std::size_t>(safeReadIndex) >= this->capacity) {
-            this->readIndex.fetch_sub(this->capacity, std::memory_order_relaxed);
-          }
+        if(safeReadIndex > static_cast<int>(this->capacity)) {
+          this->readIndex.fetch_sub(
+            static_cast<int>(this->capacity), std::memory_order_relaxed
+          );
         }
 
-        sourceSlotIndex = positiveModulo(safeReadIndex, this->capacity);
+        sourceSlotIndex = positiveModulo(safeReadIndex, static_cast<int>(this->capacity));
       }
 
       // Move the item to the caller-provided memory. This may throw.
@@ -283,7 +286,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     // reads access the same item. Can availableCount be calculated from readIndex?
 
     /// <summary>Index from which the next item will be read</summary>
-    private: std::atomic<std::size_t> readIndex;
+    private: std::atomic<int> readIndex;
     /// <summary>Index at which the most recently written item is stored</summary>
     /// <remarks>
     ///   Notice that contrary to normal practice, this does not point one past the last

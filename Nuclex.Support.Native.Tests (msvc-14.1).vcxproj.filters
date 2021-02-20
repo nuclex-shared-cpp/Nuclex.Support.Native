@@ -98,7 +98,16 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h">
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.MPSC.inl">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.SPSC.inl">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.MPMC.inl">
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentSet.h">
@@ -119,10 +128,10 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableIndexedCollection.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\RingBuffer.h">
+    <ClInclude Include="Include\Nuclex\Support\Collections\RingQueue.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftBuffer.h">
+    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftQueue.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\StackArray.h">
@@ -242,6 +251,12 @@
     <ClInclude Include="Include\Nuclex\Support\Text\RollingLogger.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
+    <ClInclude Include="Tests\Collections\BufferTest.h">
+      <Filter>Tests\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\Collections\ConcurrentBufferTest.h">
+      <Filter>Tests\Collections</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Collection.cpp">
@@ -253,7 +268,7 @@
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Collections\ConcurrentQueue.cpp">
+    <ClCompile Include="Source\Collections\ConcurrentRingBuffer.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
     <ClCompile Include="Source\Collections\ConcurrentSet.cpp">
@@ -274,10 +289,10 @@
     <ClCompile Include="Source\Collections\ObservableIndexedCollection.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Collections\RingBuffer.cpp">
+    <ClCompile Include="Source\Collections\RingQueue.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Collections\ShiftBuffer.cpp">
+    <ClCompile Include="Source\Collections\ShiftQueue.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
     <ClCompile Include="Source\Collections\StackArray.cpp">
@@ -480,16 +495,34 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Tests\Collections\BufferTest.cpp">
+      <Filter>Tests\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Collections\ConcurrentBufferTest.cpp">
+      <Filter>Tests\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_MPMC.cpp">
+      <Filter>Tests\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_MPSC.cpp">
+      <Filter>Tests\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_SPSC.cpp">
+      <Filter>Tests\Collections</Filter>
+    </ClCompile>
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp">
       <Filter>Tests\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\Collections\RingBufferTest.cpp">
+    <ClCompile Include="Tests\Collections\RingQueueDeathTest.cpp">
       <Filter>Tests\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\Collections\ShiftBufferTest.cpp">
+    <ClCompile Include="Tests\Collections\RingQueueTest.cpp">
       <Filter>Tests\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\Collections\ShiftBufferDeathTest.cpp">
+    <ClCompile Include="Tests\Collections\ShiftQueueTest.cpp">
+      <Filter>Tests\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Collections\ShiftQueueDeathTest.cpp">
       <Filter>Tests\Collections</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Events\ConcurrentEventTests.cpp">

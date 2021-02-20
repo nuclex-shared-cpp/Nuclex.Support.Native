@@ -192,4 +192,20 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(ConcurrentRingBufferTest_MPSC, BenchmarkTakingItems) {
+  //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
+    const std::size_t MaximumThreadCount = 1;
+    benchmarkSingleItemTakes<TestedBuffer>(MaximumThreadCount);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentRingBufferTest_MPSC, BenchmarkMixedItems) {
+  //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
+    const std::size_t MaximumThreadCount = 3; // two producers, one consumer
+    benchmarkSingleItemMixed<TestedBuffer>(MaximumThreadCount);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Collections

@@ -80,7 +80,16 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h">
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.MPSC.inl">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.SPSC.inl">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.MPMC.inl">
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentSet.h">
@@ -101,10 +110,10 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableIndexedCollection.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\RingBuffer.h">
+    <ClInclude Include="Include\Nuclex\Support\Collections\RingQueue.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftBuffer.h">
+    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftQueue.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\StackArray.h">
@@ -232,7 +241,7 @@
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Collections\ConcurrentQueue.cpp">
+    <ClCompile Include="Source\Collections\ConcurrentRingBuffer.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
     <ClCompile Include="Source\Collections\ConcurrentSet.cpp">
@@ -253,10 +262,10 @@
     <ClCompile Include="Source\Collections\ObservableIndexedCollection.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Collections\RingBuffer.cpp">
+    <ClCompile Include="Source\Collections\RingQueue.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Collections\ShiftBuffer.cpp">
+    <ClCompile Include="Source\Collections\ShiftQueue.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
     <ClCompile Include="Source\Collections\StackArray.cpp">

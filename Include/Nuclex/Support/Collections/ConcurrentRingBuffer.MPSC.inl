@@ -158,10 +158,12 @@ namespace Nuclex { namespace Support { namespace Collections {
           (safeOccupiedIndex > 0) && // To ensure static_cast below is safe
           (static_cast<std::size_t>(safeOccupiedIndex) >= this->capacity)
         ) {
-          this->writeIndex.fetch_sub(this->capacity, std::memory_order_relaxed);
+          this->writeIndex.fetch_sub(
+            static_cast<int>(this->capacity), std::memory_order_relaxed
+          );
         }
 
-        targetSlotIndex = positiveModulo(safeOccupiedIndex, this->capacity);
+        targetSlotIndex = positiveModulo(safeOccupiedIndex, static_cast<int>(this->capacity));
       }
 
       // Mark the slot as under construction for the reading thread

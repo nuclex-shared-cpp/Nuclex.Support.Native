@@ -54,15 +54,42 @@ License along with this library
 //   - ConcurrentRingQueue
 //   - 
 
-
-//#include "Nuclex/Support/Collections/MoodyCamel/concurrentqueue.h"
-//#include "Nuclex/Support/Collections/MoodyCamel/readerwriterqueue.h"
-
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-  // Forward declaration for clarity and to move all specializations into separate files
+  /// <summary>
+  ///   Lock-free bounded ring buffer for 1:1, 1:n and n:n producer/consumer threads
+  /// </summary>
+  /// <typeparam name="TElement">
+  ///   Type of elements that will be stored in the ring buffer
+  /// </typeparam>
+  /// <typeparam name="accessBehavior">
+  ///   How the ring buffer will be accessed from different threads
+  /// </typeparam>
+  /// <remarks>
+  ///   <para>
+  ///     This is a triplet of ring buffer implementations that are designed to be used from
+  ///     multiple threads and synchronize based purely on atomic variables. There are no
+  ///     mutexes used and there is no spinning (spinlock or CaS) in any of these variants,
+  ///     so they're fully wait-free.
+  ///   </para>
+  ///   <para>
+  ///     Please ensure to select the correct variant (or err on the side of caution and use
+  ///     the multiple producer, multiple consumer variant) because otherwise, all kinds of
+  ///     hard-to-find synchronization issues will pop up, just as if you used a single-threaded
+  ///     ring buffer from multiple threads.
+  ///   </para>
+  ///   <para>
+  ///     <strong>Container type</strong>: bounded ring buffer
+  ///   </para>
+  ///   <para>
+  ///     <strong>Thread safety</strong>: depends on chosen variant, up to free-threaded
+  ///   </para>
+  ///   <para>
+  ///     <strong>Exception guarantee</strong>: strong (exception = buffer unchanged)
+  ///   </para>
+  /// </remarks>
   template<
     typename TElement,
     ConcurrentAccessBehavior accessBehavior = (

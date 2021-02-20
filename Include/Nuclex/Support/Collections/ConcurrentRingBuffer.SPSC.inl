@@ -267,7 +267,9 @@ namespace Nuclex { namespace Support { namespace Collections {
         if constexpr(!std::is_trivially_destructible<TElement>::value) {
           readAddress->~TElement(); // Even after move, destructor would still have to be called
         }
-        this->readIndex.store((safeReadIndex + 1) % this->capacity, std::memory_order_release);
+        this->readIndex.store(
+          (safeReadIndex + 1) % static_cast<int>(this->capacity), std::memory_order_release
+        );
         return true; // Item was read
       }
     }
@@ -285,7 +287,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// </remarks>
     private: TElement *itemMemory;
     /// <summary>Index from which the next item will be read</summary>
-    private: std::atomic<std::size_t> readIndex;
+    private: std::atomic<int> readIndex;
     /// <summary>Index at which the most recently written item is stored</summary>
     /// <remarks>
     ///   Notice that contrary to normal practice, this does not point one past the last

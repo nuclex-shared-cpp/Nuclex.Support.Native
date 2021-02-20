@@ -202,15 +202,18 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
-    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.MPMC.inl" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.MPSC.inl" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.SPSC.inl" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentSet.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\DynamicArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\IndexedCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableDynamicArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableIndexedCollection.h" />
-    <ClInclude Include="Include\Nuclex\Support\Collections\RingBuffer.h" />
-    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftBuffer.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\RingQueue.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ShiftQueue.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\StackArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\CyclicDependencyError.h" />
@@ -250,20 +253,22 @@
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h" />
     <ClInclude Include="Include\Nuclex\Support\Variant.h" />
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
+    <ClInclude Include="Tests\Collections\BufferTest.h" />
+    <ClInclude Include="Tests\Collections\ConcurrentBufferTest.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentCollection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
-    <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
+    <ClCompile Include="Source\Collections\ConcurrentRingBuffer.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentSet.cpp" />
     <ClCompile Include="Source\Collections\DynamicArray.cpp" />
     <ClCompile Include="Source\Collections\IndexedCollection.cpp" />
     <ClCompile Include="Source\Collections\ObservableCollection.cpp" />
     <ClCompile Include="Source\Collections\ObservableDynamicArray.cpp" />
     <ClCompile Include="Source\Collections\ObservableIndexedCollection.cpp" />
-    <ClCompile Include="Source\Collections\RingBuffer.cpp" />
-    <ClCompile Include="Source\Collections\ShiftBuffer.cpp" />
+    <ClCompile Include="Source\Collections\RingQueue.cpp" />
+    <ClCompile Include="Source\Collections\ShiftQueue.cpp" />
     <ClCompile Include="Source\Collections\StackArray.cpp" />
     <ClCompile Include="Source\Collections\Variegator.cpp" />
     <ClCompile Include="Source\Errors\CyclicDependencyError.cpp" />
@@ -342,10 +347,16 @@
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Tests\Collections\BufferTest.cpp" />
+    <ClCompile Include="Tests\Collections\ConcurrentBufferTest.cpp" />
+    <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_MPMC.cpp" />
+    <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_MPSC.cpp" />
+    <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_SPSC.cpp" />
     <ClCompile Include="Tests\Collections\DynamicArrayTest.cpp" />
-    <ClCompile Include="Tests\Collections\RingBufferTest.cpp" />
-    <ClCompile Include="Tests\Collections\ShiftBufferDeathTest.cpp" />
-    <ClCompile Include="Tests\Collections\ShiftBufferTest.cpp" />
+    <ClCompile Include="Tests\Collections\RingQueueDeathTest.cpp" />
+    <ClCompile Include="Tests\Collections\RingQueueTest.cpp" />
+    <ClCompile Include="Tests\Collections\ShiftQueueDeathTest.cpp" />
+    <ClCompile Include="Tests\Collections\ShiftQueueTest.cpp" />
     <ClCompile Include="Tests\Events\ConcurrentEventTests.cpp" />
     <ClCompile Include="Tests\Events\DelegateTests.cpp" />
     <ClCompile Include="Tests\Events\EventTests.cpp" />

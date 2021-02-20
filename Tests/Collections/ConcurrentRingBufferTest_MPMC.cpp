@@ -192,4 +192,18 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(ConcurrentRingBufferTest_MPMC, BenchmarkTakingItems) {
+  //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
+    benchmarkSingleItemTakes<TestedBuffer>();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentRingBufferTest_MPMC, BenchmarkMixedItems) {
+  //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
+    benchmarkSingleItemMixed<TestedBuffer>();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Collections
