@@ -17,6 +17,9 @@
     <Filter Include="Include\Collections">
       <UniqueIdentifier>{bb7bb4c9-39c3-4ac7-b033-c752c0cec4d7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\Errors">
+      <UniqueIdentifier>{0efb8298-425d-438c-ac9c-e1aba6120891}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Include\Events">
       <UniqueIdentifier>{6309d6df-9d85-4228-a827-5c27b5922499}</UniqueIdentifier>
     </Filter>
@@ -36,8 +39,14 @@
     <Filter Include="Source\Collections">
       <UniqueIdentifier>{3383d190-2e62-4a51-8b20-02524ed4b332}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Errors">
+      <UniqueIdentifier>{3f6da7d5-6d44-4081-8eda-bafe5849e090}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Events">
       <UniqueIdentifier>{e3f61b78-199d-4daf-9335-3bfce32621d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers">
+      <UniqueIdentifier>{41337d1c-187d-4d7b-8eea-9eb521d00b08}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Services">
       <UniqueIdentifier>{8776ca34-6ac1-43ca-9e2f-723d4bc5843b}</UniqueIdentifier>
@@ -72,17 +81,11 @@
     <Filter Include="Tests\Events">
       <UniqueIdentifier>{8d3a2c7c-0eac-4fd9-93e8-cf42d1a55f7b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Tests\Text">
-      <UniqueIdentifier>{e379eb40-5772-47b9-96be-58023afd7cd0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tests\Services">
       <UniqueIdentifier>{0284c8eb-686e-418f-a221-c574bc42ea8d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Include\Errors">
-      <UniqueIdentifier>{0efb8298-425d-438c-ac9c-e1aba6120891}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Errors">
-      <UniqueIdentifier>{3f6da7d5-6d44-4081-8eda-bafe5849e090}</UniqueIdentifier>
+    <Filter Include="Tests\Text">
+      <UniqueIdentifier>{e379eb40-5772-47b9-96be-58023afd7cd0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Tests\Threading">
       <UniqueIdentifier>{2781deb4-4664-4b67-a3ae-7d695e2ed2fa}</UniqueIdentifier>
@@ -251,12 +254,6 @@
     <ClInclude Include="Include\Nuclex\Support\Text\RollingLogger.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
-    <ClInclude Include="Tests\Collections\BufferTest.h">
-      <Filter>Tests\Collections</Filter>
-    </ClInclude>
-    <ClInclude Include="Tests\Collections\ConcurrentBufferTest.h">
-      <Filter>Tests\Collections</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Collection.cpp">
@@ -318,6 +315,18 @@
     </ClCompile>
     <ClCompile Include="Source\Events\Event.cpp">
       <Filter>Source\Events</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\WindowsApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\WindowsApi.cpp">
+      <Filter>Source\Helpers</Filter>
     </ClCompile>
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
       <Filter>Source\Services</Filter>
@@ -498,9 +507,15 @@
     <ClCompile Include="Tests\Collections\BufferTest.cpp">
       <Filter>Tests\Collections</Filter>
     </ClCompile>
+    <ClInclude Include="Tests\Collections\BufferTest.h">
+      <Filter>Tests\Collections</Filter>
+    </ClInclude>
     <ClCompile Include="Tests\Collections\ConcurrentBufferTest.cpp">
       <Filter>Tests\Collections</Filter>
     </ClCompile>
+    <ClInclude Include="Tests\Collections\ConcurrentBufferTest.h">
+      <Filter>Tests\Collections</Filter>
+    </ClInclude>
     <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_MPMC.cpp">
       <Filter>Tests\Collections</Filter>
     </ClCompile>
