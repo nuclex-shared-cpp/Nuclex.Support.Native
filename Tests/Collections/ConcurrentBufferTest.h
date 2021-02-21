@@ -79,26 +79,14 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <remarks>
     ///   Call this after all other test preparations are complete.
     /// </remarks>
-    public: void StartThreads() {
-      for(std::size_t index = 0; index < this->threadCount; ++index) {
-        this->threads.push_back(
-          std::make_unique<std::thread>(&HighContentionBufferTest::threadStarter, this, index)
-        );
-      }
-    }
+    public: void StartThreads();
 
     /// <summary>Waits for all threads to finish executing</summary>
     /// <remarks>
     ///   Call this if you want to retrieve test results. Note that this method does not
     ///   stop the threads, it merely waits for them to stop by themselves.
     /// </remarks>
-    public: void JoinThreads() {
-      for(std::size_t index = 0; index < this->threads.size(); ++index) {
-        this->threads[index]->join();
-      }
-
-      this->threads.clear();
-    }
+    public: void JoinThreads();
 
     /// <summary>Number of microseconds that have elapsed during the benchmark</summary>
     /// <returns>The elapsed number of microseconds</returns>
@@ -121,45 +109,13 @@ namespace Nuclex { namespace Support { namespace Collections {
     ///   Thread entry point, keeps each thread in a busy spin until all threads are ready
     /// </summary>
     /// <param name="threadIndex">Zero-based index of the thread in the test</param>
-    private: void threadStarter(std::size_t threadIndex) {
-      std::size_t runningThreadsMask = this->startSignals.fetch_or(
-        (std::size_t(1) << threadIndex), std::memory_order_acq_rel
-      );
-
-      // Do a busy spin until all threads are ready to launch (yep, this whacks CPU
-      // load to 100% on the core running this thread!)
-      while((runningThreadsMask & this->allThreadsMask) != this->allThreadsMask) {
-        runningThreadsMask = this->startSignals.load(std::memory_order_consume);
-      }
-
-      // All threads are confirmed to be in their busy spins and should very nearly
-      // simultaneously have detected this, so begin the actual work
-      markStartTime();
-      Thread(threadIndex);
-      markEndTime();
-    }
+    private: void threadStarter(std::size_t threadIndex);
 
     /// <summary>Marks the benchmark starting time if this is the first call</summary>
-    private: void markStartTime() {
-      std::size_t zero = 0;
-      this->startMicroseconds.compare_exchange_strong(
-        zero,
-        std::chrono::duration_cast<std::chrono::microseconds>(
-          std::chrono::high_resolution_clock::now() - this->constructionTime
-        ).count()
-      );
-    }
+    private: void markStartTime();
 
     /// <summary>Marks the benchmark ending time if this is the first call</summary>
-    private: void markEndTime() {
-      std::size_t zero = 0;
-      this->endMicroseconds.compare_exchange_strong(
-        zero,
-        std::chrono::duration_cast<std::chrono::microseconds>(
-          std::chrono::high_resolution_clock::now() - this->constructionTime
-        ).count()
-      );
-    }
+    private: void markEndTime();
 
     /// <summary>Forms a bit mask where one bit is set for each thread</summary>
     /// <param name="threadCount">Number of threads for which bits should be set</param>

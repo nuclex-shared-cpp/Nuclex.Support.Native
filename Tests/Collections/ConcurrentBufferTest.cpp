@@ -22,33 +22,9 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "ConcurrentBufferTest.h"
+#include "Nuclex/Support/Threading/Thread.h"
 
 namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Counts the number of bits in the specified data type</summary>
-  /// <typeparam name="TValue">Data type whose bits will be counted</typeparam>
-  /// <returns>The number of bits in the specified data type</returns>
-  template<typename TValue>
-  inline constexpr std::size_t CountBits() {
-    return sizeof(TValue) * 8U;
-  }
-
-  /// <summary>Counts the number of bits in a 16 bit integer</summary>
-  /// <returns>The value 16</returns>
-  template<>
-  inline constexpr std::size_t CountBits<std::uint16_t>() { return 16U; }
-
-  /// <summary>Counts the number of bits in a 32 bit integer</summary>
-  /// <returns>The value 32</returns>
-  template<>
-  inline constexpr std::size_t CountBits<std::uint32_t>() { return 32U; }
-
-  /// <summary>Counts the number of bits in a 64 bit integer</summary>
-  /// <returns>The value 64</returns>
-  template<>
-  inline constexpr std::size_t CountBits<std::uint64_t>() { return 64U; }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -68,6 +44,80 @@ namespace {
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Collections {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void HighContentionBufferTest::StartThreads() {
+    for(std::size_t index = 0; index < this->threadCount; ++index) {
+      this->threads.push_back(
+        std::make_unique<std::thread>(&HighContentionBufferTest::threadStarter, this, index)
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void HighContentionBufferTest::JoinThreads() {
+    for(std::size_t index = 0; index < this->threads.size(); ++index) {
+      this->threads[index]->join();
+    }
+
+    this->threads.clear();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void HighContentionBufferTest::threadStarter(std::size_t threadIndex) {
+
+#if 0 // This would require all tests cap themselves to the number of hardware threads...
+    // Change the CPU affinity so this thread runs on the specified CPU
+    {
+      std::uint64_t cpuAffinityMask = (std::uint64_t(1) << threadIndex);
+      Nuclex::Support::Threading::Thread::SetCpuAffinityMask(cpuAffinityMask);
+    }
+#endif
+
+    std::size_t runningThreadsMask = this->startSignals.fetch_or(
+      (std::size_t(1) << threadIndex), std::memory_order_acq_rel
+    );
+
+    // Do a busy spin until all threads are ready to launch (yep, this whacks CPU
+    // load to 100% on the core running this thread!)
+    while((runningThreadsMask & this->allThreadsMask) != this->allThreadsMask) {
+      runningThreadsMask = this->startSignals.load(std::memory_order_consume);
+    }
+
+    // All threads are confirmed to be in their busy spins and should very nearly
+    // simultaneously have detected this, so begin the actual work
+    markStartTime();
+    Thread(threadIndex);
+    markEndTime();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Marks the benchmark starting time if this is the first call</summary>
+  void HighContentionBufferTest::markStartTime() {
+    std::size_t zero = 0;
+    this->startMicroseconds.compare_exchange_strong(
+      zero,
+      std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::high_resolution_clock::now() - this->constructionTime
+      ).count()
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void HighContentionBufferTest::markEndTime() {
+    std::size_t zero = 0;
+    this->endMicroseconds.compare_exchange_strong(
+      zero,
+      std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::high_resolution_clock::now() - this->constructionTime
+      ).count()
+    );
+  }
 
   // ------------------------------------------------------------------------------------------- //
 

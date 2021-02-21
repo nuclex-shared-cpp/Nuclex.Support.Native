@@ -24,18 +24,16 @@ License along with this library
 #include "Nuclex/Support/Threading/Thread.h"
 
 #if defined(NUCLEX_SUPPORT_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#define NO_MINMAX
 #include "../Helpers/WindowsApi.h" // for ::Sleep(), ::GetCurrentThreadId() and more
 #elif defined(NUCLEX_SUPPORT_LINUX)
+#include "../Helpers/PosixApi.h" // to convert error numbers to messages
 #include <ctime> // for ::clock_gettime() and ::clock_nanosleep()
 #include <cstdlib> // for ldiv_t
 #include <algorithm> // for std::min()
-#include "../Helpers/PosixApi.h" // to convert error numbers to messages
 #endif
 
 #include <thread> // for std::thread
+#include <cstring> // for std::memcpy()
 #include <cassert> // for assert()
 
 // Design: currently this does not take NUMA and >64 CPUs into account
@@ -59,16 +57,6 @@ License along with this library
 
 namespace {
 
-  // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
-  /// <summary>Union of a std::uintptr_t and a Posix Thread identifier for casting</summary>
-  union PThreadUintPtrUnion {
-    /// <summary>Pointer-sized unsigned integer</summary>
-    public: std::uintptr_t UIntPtr;
-    /// <summary>Posix Thread identifier</summary>
-    public: ::pthread_t PThread;
-  };
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   /// <summary>Figures out the thread affinity mask for the specified thread</summary>
@@ -311,19 +299,18 @@ namespace Nuclex { namespace Support { namespace Threading {
     return result;
 
 #else // LINUX and POSIX
+    ::pthread_t threadIdentity = thread.native_handle();
     assert(
       (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
       u8"PThread thread identifier can be stored inside an std::uintptr_t"
     );
-    
-    // My SC++L defines native_handle as returning pthread_t. Is this guaranteed?
-    // If your compiler warns or errors here, we need to add additional precautions.
-    PThreadUintPtrUnion threadIdentity;
-    threadIdentity.PThread = thread.native_handle();
-    return threadIdentity.UIntPtr;
+
+    // This results in efficient code. A reinterpret_cast would break strict aliasing.
+    std::uintptr_t result = 0;
+    std::memcpy(&result, &threadIdentity, sizeof(threadIdentity));
+    return result;
 #endif
   }
-
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -341,9 +328,11 @@ namespace Nuclex { namespace Support { namespace Threading {
       (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
       u8"PThread thread identifier can be stored inside an std::uintptr_t"
     );
-    PThreadUintPtrUnion thread;
-    thread.UIntPtr = threadId;
-    return queryPThreadThreadAffinity(thread.PThread);
+
+    // This results in efficient code. A reinterpret_cast would break strict aliasing.
+    ::pthread_t thread;
+    std::memcpy(&thread, &threadId, sizeof(thread));
+    return queryPThreadThreadAffinity(thread);
 #endif
   }
 
@@ -386,9 +375,11 @@ namespace Nuclex { namespace Support { namespace Threading {
       (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
       u8"PThread thread identifier can be stored inside an std::uintptr_t"
     );
-    PThreadUintPtrUnion thread;
-    thread.UIntPtr = threadId;
-    changePThreadThreadAffinity(thread.PThread, affinityMask);
+
+    // This results in efficient code. A reinterpret_cast would break strict aliasing.
+    ::pthread_t thread;
+    std::memcpy(&thread, &threadId, sizeof(thread));
+    changePThreadThreadAffinity(thread, affinityMask);
 #endif
   }
 
