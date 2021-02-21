@@ -19,6 +19,9 @@ use_clang = False
 # Standard C/C++ build environment with Nuclex extension methods
 common_environment = nuclex.create_cplusplus_environment()
 
+if platform.system() != 'Windows':
+    common_environment.add_library('pthread')
+
 if use_gcc10:
     common_environment['CXX'] = 'g++-10.2.0'
     common_environment['CC'] = 'gcc-10.2.0'

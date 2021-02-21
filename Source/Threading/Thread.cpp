@@ -31,10 +31,31 @@ License along with this library
 #elif defined(NUCLEX_SUPPORT_LINUX)
 #include <ctime> // for ::clock_gettime() and ::clock_nanosleep()
 #include <cstdlib> // for ldiv_t
+#include <algorithm> // for std::min()
 #include "../Helpers/PosixApi.h"
 #endif
 
 #include <thread> // for std::thread
+#include <cassert> // for assert()
+
+// Design: currently this does not take NUMA and >64 CPUs into account
+//
+// Reasoning:
+//
+// While there's potential to use many more cores than the average application in 2020 uses,
+// use cases with more than 64 cores are usually found in AI and raytracing. I'm making the bet
+// here that consumer CPUs will not grow above 64 cores for a decade.
+//
+// When dealing with more than 64 cores, additional precautions are needed for optimal
+// performance, such as being aware of NUMA nodes (how many physical chips there are.).
+// On Linux, this requires libnuma. On Windows, this is done via "processor groups".
+// Microsoft's API also exposes up to 64 cores without processor group awareness.
+//
+// Counter arguments:
+//
+// If more than 64 cores become very common, applications built with Nuclex.Support.Native that
+// make use of CPU affinity will all be hogging the lower 64 cores.
+//
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -48,12 +69,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       milliseconds /= std::int64_t(1000);
       ::Sleep(static_cast<DWORD>(milliseconds));
     }
-#elif false && defined(NUCLEX_SUPPORT_LINUX)
+#elif false && defined(NUCLEX_SUPPORT_LINUX) // Testing shows this to often not wait at all :-(
     const static long int MicrosecondsPerSecond = 1000000L;
     const static long int NanosecondsPerMicrosecond = 1000L;
-
-    //std::int64_t microseconds = time.count();
-    //if(microseconds < MicrosecondsPerSecond) {
 
     // Is the delay under 1 second? Use a simple relative sleep
     ::timespec endTime;
@@ -102,16 +120,129 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WANT_USELESS_THREAD_ID_QUERY)
+
   std::uintptr_t Thread::GetCurrentThreadId() {
 #if defined(NUCLEX_SUPPORT_WIN32)
-    return static_cast<std::uintptr_t>(::GetCurrentThreadId());
-#else
-    return static_cast<std::uintptr_t>(std::thread::get_id());
-//#elif defined(NUCLEX_SUPPORT_LINUX)
+    DWORD currentThreadId = ::GetCurrentThreadId();
+    assert(
+      (sizeof(std::uintptr_t) >= sizeof(DWORD)) &&
+      u8"Windows thread id (DWORD) can be stored inside an std::uintptr_t"
+    );
+
+    std::uintptr_t result = 0;
+    *reinterpret_cast<DWORD *>(&result) = GetCurrentThreadId;
+    return result;
+
+#else // LINUX and POSIX
+    ::pthread_t currentThreadIdentity = ::pthread_self();
+    assert(
+      (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
+      u8"PThread thread identifier can be stored inside an std::uintptr_t"
+    );
+
+    std::uintptr_t result = 0;
+    *reinterpret_cast<::pthread_t *>(&result) = currentThreadIdentity;
+    return result;
 #endif
   }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::uintptr_t Thread::GetStdThreadId(std::thread &thread) {
+#if defined(NUCLEX_SUPPORT_WIN32)
+    DWORD threadId = thread.native_handle();
+    assert(
+      (sizeof(std::uintptr_t) >= sizeof(DWORD)) &&
+      u8"Windows thread id (DWORD) can be stored inside an std::uintptr_t"
+    );
+
+    std::uintptr_t result = 0;
+    *reinterpret_cast<DWORD *>(&result) = threadId;
+    return result;
+
+#else // LINUX and POSIX
+    ::pthread_t threadIdentity = thread.native_handle();
+    assert(
+      (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
+      u8"PThread thread identifier can be stored inside an std::uintptr_t"
+    );
+
+    std::uintptr_t result = 0;
+    *reinterpret_cast<::pthread_t *>(&result) = threadIdentity;
+    return result;
 #endif
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::uint64_t Thread::GetCpuAffinityMask(std::uintptr_t threadId) {
+#if defined(NUCLEX_SUPPORT_WIN32)
+#else // LINUX and POSIX
+    assert(
+      (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
+      u8"PThread thread identifier can be stored inside an std::uintptr_t"
+    );
+    ::pthread_t threadIdentifier = *reinterpret_cast<::pthread_t *>(&threadId);
+
+    // Query the affinity into pthreads' cpu_set_t
+    ::cpu_set_t cpuSet;
+    //CPU_ZERO(&cpuSet);
+    int errorNumber = ::pthread_getaffinity_np(threadIdentifier, sizeof(cpuSet), &cpuSet);
+    if(errorNumber != 0) {
+      Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Error querying CPU affinity via pthread_getaffinity_np()", errorNumber
+      );
+    }
+
+    // Now turn it into a bit mask
+    std::uint64_t result = 0;
+    {
+      std::size_t maxCpuIndex = std::min(64, CPU_SETSIZE);
+      for(std::size_t index = 0; index < maxCpuIndex; ++index) {
+        if(CPU_ISSET(index, &cpuSet)) {
+          result |= (1 << index);
+        }
+      }
+    }
+
+    return result;
+#endif
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void Thread::SetCpuAffinityMask(std::uintptr_t threadId, std::uint64_t affinityMask) {
+#if defined(NUCLEX_SUPPORT_WIN32)
+#else // LINUX and POSIX
+    assert(
+      (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
+      u8"PThread thread identifier can be stored inside an std::uintptr_t"
+    );
+    ::pthread_t threadIdentifier = *reinterpret_cast<::pthread_t *>(&threadId);
+
+    // Translate the affinity mask into cpu_set_t
+    ::cpu_set_t cpuSet;
+    {
+      CPU_ZERO(&cpuSet);
+
+      std::size_t maxCpuIndex = std::min(64, CPU_SETSIZE);
+      for(std::size_t index = 0; index < maxCpuIndex; ++index) {
+        if((affinityMask & (1 << index)) != 0) {
+          CPU_SET(index, &cpuSet);
+        }
+      }
+    }
+
+    // Apply the affinity setting
+    int errorNumber = ::pthread_setaffinity_np(threadIdentifier, sizeof(cpuSet), &cpuSet);
+    if(errorNumber != 0) {
+      Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Error changing CPU affinity via pthread_setaffinity_np()", errorNumber
+      );
+    }
+#endif
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading

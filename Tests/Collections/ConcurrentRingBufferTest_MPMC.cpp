@@ -184,26 +184,26 @@ namespace Nuclex { namespace Support { namespace Collections {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
+#if defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   TEST(ConcurrentRingBufferTest_MPMC, BenchmarkAddingItems) {
   //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
     benchmarkSingleItemAppends<TestedBuffer>();
   }
-
+#endif // defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   // ------------------------------------------------------------------------------------------- //
-
+#if defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   TEST(ConcurrentRingBufferTest_MPMC, BenchmarkTakingItems) {
   //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
     benchmarkSingleItemTakes<TestedBuffer>();
   }
-
+#endif // defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   // ------------------------------------------------------------------------------------------- //
-
+#if defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   TEST(ConcurrentRingBufferTest_MPMC, BenchmarkMixedItems) {
   //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
     benchmarkSingleItemMixed<TestedBuffer>();
   }
-
+#endif // defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections

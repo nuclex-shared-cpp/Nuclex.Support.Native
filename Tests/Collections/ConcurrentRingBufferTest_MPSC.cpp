@@ -184,28 +184,28 @@ namespace Nuclex { namespace Support { namespace Collections {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
+#if defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   TEST(ConcurrentRingBufferTest_MPSC, BenchmarkAddingItems) {
   //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
     benchmarkSingleItemAppends<TestedBuffer>();
   }
-
+#endif // defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   // ------------------------------------------------------------------------------------------- //
-
+#if defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   TEST(ConcurrentRingBufferTest_MPSC, BenchmarkTakingItems) {
   //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
     const std::size_t MaximumThreadCount = 1;
     benchmarkSingleItemTakes<TestedBuffer>(MaximumThreadCount);
   }
-
+#endif // defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   // ------------------------------------------------------------------------------------------- //
-
+#if defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   TEST(ConcurrentRingBufferTest_MPSC, BenchmarkMixedItems) {
   //TEST(ConcurrentRingBufferTest_SPSC, DISABLED_Benchmark) {
     const std::size_t MaximumThreadCount = 3; // two producers, one consumer
     benchmarkSingleItemMixed<TestedBuffer>(MaximumThreadCount);
   }
-
+#endif // defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Collections
