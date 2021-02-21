@@ -60,6 +60,16 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
+#if !defined(NUCLEX_SUPPORT_WIN32)
+  /// <summary>Union of a std::uintptr_t and a Posix Thread identifier for casting</summary>
+  union PThreadUintPtrUnion {
+    /// <summary>Pointer-sized unsigned integer</summary>
+    public: std::uintptr_t UIntPtr;
+    /// <summary>Posix Thread identifier</summary>
+    public: ::pthread_t PThread;
+  };
+#endif // !defined(NUCLEX_SUPPORT_WIN32)
+  // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   /// <summary>Figures out the thread affinity mask for the specified thread</summary>
   /// <param name="windowsThreadHandle">
@@ -301,17 +311,19 @@ namespace Nuclex { namespace Support { namespace Threading {
     return result;
 
 #else // LINUX and POSIX
-    ::pthread_t threadIdentity = thread.native_handle();
     assert(
       (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
       u8"PThread thread identifier can be stored inside an std::uintptr_t"
     );
-
-    std::uintptr_t result = 0;
-    *reinterpret_cast<::pthread_t *>(&result) = threadIdentity;
-    return result;
+    
+    // My SC++L defines native_handle as returning pthread_t. Is this guaranteed?
+    // If your compiler warns or errors here, we need to add additional precautions.
+    PThreadUintPtrUnion threadIdentity;
+    threadIdentity.PThread = thread.native_handle();
+    return threadIdentity.UIntPtr;
 #endif
   }
+
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -329,8 +341,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
       u8"PThread thread identifier can be stored inside an std::uintptr_t"
     );
-    ::pthread_t thread = *reinterpret_cast<::pthread_t *>(&threadId);
-    return queryPThreadThreadAffinity(thread);
+    PThreadUintPtrUnion thread;
+    thread.UIntPtr = threadId;
+    return queryPThreadThreadAffinity(thread.PThread);
 #endif
   }
 
@@ -373,8 +386,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       (sizeof(std::uintptr_t) >= sizeof(::pthread_t)) &&
       u8"PThread thread identifier can be stored inside an std::uintptr_t"
     );
-    ::pthread_t thread = *reinterpret_cast<::pthread_t *>(&threadId);
-    changePThreadThreadAffinity(thread, affinityMask);
+    PThreadUintPtrUnion thread;
+    thread.UIntPtr = threadId;
+    changePThreadThreadAffinity(thread.PThread, affinityMask);
 #endif
   }
 
