@@ -357,8 +357,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     HANDLE threadHandle = *reinterpret_cast<HANDLE *>(&threadId);
 
-    // Assign a temporary, unwanted thread affinity. That's the only way to query
-    // a thread's CPU affinity on Windows
+    // Update the thread's affinity. The parameter is a DWORD_PTR abused to hold a bit mask
+    // for either 32 CPU cores (x86) or 64 CPU cores (amd64).
     DWORD_PTR previousAffinityMask = ::SetThreadAffinityMask(
       threadHandle, *reinterpret_cast<DWORD_PTR *>(&affinityMask)
     );
