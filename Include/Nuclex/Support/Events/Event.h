@@ -114,6 +114,16 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Type of delegate used to call the event's subscribers</summary>
     public: typedef Delegate<TResult(TArguments...)> DelegateType;
 
+    /// <summary>List of results returned by subscribers</summary>
+    /// <remarks>
+    ///   Having an std::vector&lt;void&gt; anywhere, even in a SFINAE-disabled method,
+    ///   will trigger deprecation compiler warnings on Microsoft compilers.
+    ///   Consider this type to be an alias for std::vector&lt;TResult&gt; and nothing else.
+    /// </remarks>
+    private: typedef std::vector<
+      typename std::conditional<std::is_void<TResult>::value, char, TResult>::type
+    > ResultVectorType;
+
     /// <summary>Initializes a new event</summary>
     public: Event() :
       subscriberCount(0) {}
@@ -135,13 +145,14 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <param name="arguments">Arguments that will be passed to the event</param>
     /// <returns>An list of the values returned by the event subscribers</returns>
     /// <remarks>
-    ///   This overload is enabled if the event signature returns anything other than 'void' 
+    ///   This overload is enabled if the event signature returns anything other than 'void'.
+    ///   The returned value is an std::vector&lt;TResult&gt; in all cases.
     /// </remarks>
     public: template<typename T = TResult>
     typename std::enable_if<
-      !std::is_void<T>::value, std::vector<TResult>
+      !std::is_void<T>::value, ResultVectorType
     >::type operator()(TArguments&&... arguments) const {
-      std::vector<TResult> results;
+      ResultVectorType results; // ResultVectorType is an alias for std::vector<TResult>
       results.reserve(this->subscriberCount);
       EmitAndCollect(std::back_inserter(results), std::forward<TArguments>(arguments)...);
       return results;

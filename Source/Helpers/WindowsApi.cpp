@@ -29,6 +29,7 @@ License along with this library
 #include "../Text/Utf8/checked.h"
 
 #include <vector> // for std::vector
+#include <system_error> // for std::system_error
 
 // --------------------------------------------------------------------------------------------- //
 

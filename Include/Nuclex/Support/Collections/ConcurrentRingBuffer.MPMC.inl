@@ -22,11 +22,48 @@ License along with this library
 #error This file must be included through via ConcurrentRingBuffer.h
 #endif
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1920)
+// https://github.com/microsoft/STL/issues/1673
+// https://developercommunity2.visualstudio.com/t/compiler/1346618
+#define STRING2(x) #x
+#define STRING(x) STRING2(x)
+#pragma message ( \
+  __FILE__ "(" STRING(__LINE__) "): " \
+  "warning: compiling the Nuclex MPMC Queue on VS2019 will trigger a compiler bug " \
+  "at the point of usage (see https://github.com/microsoft/STL/issues/1673)" \
+)
+// Unfortunately, there seems to be no usable workaround for this compiler.
+// I don't know when or if it will be fixed, so I'm leaving this warning open-ended.
+// If I spot a version of Microsoft's C++ compiler that works, I'll limit the range.
+#endif
+
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Fixed-size circular buffer for multiple consumers and producers</summary>
+  /// <remarks>
+  ///   <para>
+  ///     This multi-producer, multi-consumer variant of the concurrent buffer can be
+  ///     freely used from any number of threads. Any thread can append items to the buffer
+  ///     and any thread can take items from the buffer without any restrictions.
+  ///   </para>
+  ///   <para>
+  ///     This implementation is lock-free and also wait-free (i.e. no compare-and-swap loops).
+  ///     Batch operations are supported and this variant gives a strong-ish exception
+  ///     guarantee: if an operation fails, the buffer's state remains as if it never happened,
+  ///     but the buffer's capacity will be temporarily reduced.
+  ///   </para>
+  ///   <para>
+  ///     <strong>Container type</strong>: bounded ring buffer
+  ///   </para>
+  ///   <para>
+  ///     <strong>Thread safety</strong>: any number of consumers, any numbers of producers
+  ///   </para>
+  ///   <para>
+  ///     <strong>Exception guarantee</strong>: strong-ish (exception = buffer unchanged)
+  ///   </para>
+  /// </remarks>
   template<typename TElement>
   class ConcurrentRingBuffer<
     TElement, ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
@@ -91,7 +128,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     }
 
     /// <summary>Estimates the number of items stored in the queue</summary>
-    /// <returns>The probably number of itemsthe queue held at the time of the call</returns>
+    /// <returns>The probable number of items the queue held at the time of the call</returns>
     /// <remarks>
     ///   This method can be called from any thread and will have just about the same
     ///   accuracy as when it is called from the consumer thread or one of the producers.

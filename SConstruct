@@ -40,6 +40,7 @@ library_binaries = library_environment.build_library('Nuclex.Support.Native')
 # Compile the unit test executable
 unit_test_environment = common_environment.Clone()
 unit_test_environment.add_preprocessor_constant('NUCLEX_SUPPORT_EXECUTABLE')
+#unit_test_environment.add_preprocessor_constant('NUCLEX_SUPPORT_ENABLE_BENCHMARKS')
 unit_test_binaries = unit_test_environment.build_unit_tests(
     'Nuclex.Support.Native.Tests'
 )
