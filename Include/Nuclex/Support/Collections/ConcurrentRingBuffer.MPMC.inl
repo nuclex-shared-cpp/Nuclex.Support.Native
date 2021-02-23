@@ -75,10 +75,10 @@ namespace Nuclex { namespace Support { namespace Collections {
       capacity(capacity),
       itemMemory(nullptr),
       itemStatus(nullptr),
-      occupiedCount(0),
-      availableCount(0),
       readIndex(0),
-      writeIndex(0) {
+      writeIndex(0),
+      occupiedCount(0),
+      availableCount(0) {
 
       std::uint8_t *buffer = new std::uint8_t[sizeof(TElement[2]) * capacity / 2U];
       {
@@ -252,7 +252,7 @@ namespace Nuclex { namespace Support { namespace Collections {
             readAddress->~TElement();
           }
           this->itemStatus[sourceSlotIndex].store(0, std::memory_order_release);
-          this->occupiedCount.fetch_sub(1, std::memory_order_release);
+          this->occupiedCount.fetch_sub(1, std::memory_order_relaxed);
         };
 
         element = std::move(*readAddress);
@@ -286,9 +286,38 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Number of items the ring buffer can hold</summary>
     private: const std::size_t capacity;
     /// <summary>Memory block that holds the items currently stored in the queue</summary>
+    /// <remarks>
+    ///   This is allocated as a buffer of unsigned characters, thus it points to
+    ///   uninitialized memory, except for the items which have been placed into it.
+    /// </remarks>
     private: TElement *itemMemory;
     /// <summary>Status of items in buffer, 0: empty, 1: filling, 2: present, 3: gap</summary>
     private: std::atomic<std::uint8_t> *itemStatus;
+
+    /// <summary>Index from which the next item will be read</summary>
+    /// <remarks>
+    ///   Once a thread knows that an item is available and has reserved it through
+    ///   <see cref="availableCount" />, it will blindly increment this value. If
+    ///   the incrementing thread sees that the read index is past the capacity, it will
+    ///   just as blindly decrement it by the capacity to force a wrap-around. In turn,
+    ///   readIndex can be both less than 0 and more than capacity, but when wrapped into
+    ///   the valid range, it will point to the correct item.
+    /// </remarks>
+    private: std::atomic<int> readIndex;
+    /// <summary>Index at which the most recently written item is stored</summary>
+    /// <remarks>
+    ///   <para>
+    ///     Notice that contrary to normal practice, this does not point one past the last
+    ///     item (i.e. to the position of the next write), but is the index of the last item
+    ///     that has been stored in the buffer. Lock-free synchronization is easier this way.
+    ///   </para>
+    ///   <para>
+    ///     The write index follows the same behavior documented for the read index, it may
+    ///     go beyond capacity or be less than 0 if multiple threads see it there and subtract
+    ///     the buffer's capacity. It, too, will point to the correct item with wrapp-around.
+    ///   </para>
+    /// </remarks>
+    private: std::atomic<int> writeIndex;
 
     /// <summary>Number of free slots the queue can store elements in</summary>
     /// <remarks>
@@ -306,31 +335,20 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// </remarks>
     private: std::atomic<std::size_t> occupiedCount;
 
-    private: std::atomic<int> availableCount;
-
-    // MPMC method:
-    // - two occupiedCounts?
-    //   - occupiedCount (number of items in the queue, decides if append possible)
-    //   - availableCount (number of unread items, decides if take possible)
-    //
-    // Write will attempt to increment occupiedCount, if beyond 'capacity', decrement again
-    //   - Once Append succeeded, also increments availableCount
-    //
-    // Read will attempt to take from availableCount. If less than zero, increment again
-    //   - Once Read() has copied the item, also decrements occupiedCount
-    //
-    // Problem: This somehow has to interact with 'readIndex' in order to ensure no two
-    // reads access the same item. Can availableCount be calculated from readIndex?
-
-    /// <summary>Index from which the next item will be read</summary>
-    private: std::atomic<int> readIndex;
-    /// <summary>Index at which the most recently written item is stored</summary>
+    /// <summary>Number of guaranteed available slots the queue can read elements from</summary>
     /// <remarks>
-    ///   Notice that contrary to normal practice, this does not point one past the last
-    ///   item (i.e. to the position of the next write), but is the index of the last item
-    ///   that has been stored in the buffer. The lock-free synchronization is easier this way.
+    ///   <para>
+    ///     As the counterpart to <see cref="occupiedCount" />, this will be blindly decremented
+    ///     when a thread is attempting to take an element from the queue. If it ends up less
+    ///     than 0 (meaning no elements were available), it is immediately incremented back up.
+    ///   </para>
+    ///   <para>
+    ///     Similarly to its counterpart, an available slot does not guarantee an available item.
+    ///     Slots may contain gap items (this happens when the copy or move constructur of
+    ///     an item throws an exception while it's being added).
+    ///   </para>
     /// </remarks>
-    private: std::atomic<int> writeIndex;
+    private: std::atomic<int> availableCount;
 
   };
 
