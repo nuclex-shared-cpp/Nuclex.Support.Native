@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2020 Nuclex Development Labs
+Copyright (C) 2002-2021 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -25,7 +25,6 @@ License along with this library
 
 #include <atomic> // for std::atomic
 #include <cstdint> // for std::uint8_t
-#include <exception> // for std::terminate()
 #include <algorithm> // for std::copy_n()
 
 #include "Nuclex/Support/ScopeGuard.h" // for ON_SCOPE_EXIT macros

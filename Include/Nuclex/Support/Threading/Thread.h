@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2020 Nuclex Development Labs
+Copyright (C) 2002-2021 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -77,7 +77,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: NUCLEX_SUPPORT_API static std::uintptr_t GetStdThreadId(std::thread &thread);
 
     /// <summary>Checks which CPU cores a thread is allowed to run on</summary>
-    /// <param name="threadID">Thread whose CPU affinity mask will be retrieved</param>
+    /// <param name="threadId">Thread whose CPU affinity mask will be retrieved</param>
     /// <returns>A bit mask where each bit corresponds to a CPU core</returns>
     /// <remarks>
     ///   <para>

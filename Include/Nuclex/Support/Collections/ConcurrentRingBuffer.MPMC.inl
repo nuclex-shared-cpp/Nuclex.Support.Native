@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2020 Nuclex Development Labs
+Copyright (C) 2002-2021 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -69,7 +69,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     TElement, ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
   > {
 
-    /// <summary>Initializes a new concurrent queue for a single producer and consumer</summary>
+    /// <summary>
+    ///   Initializes a new concurrent queue for multiple producers and consumers
+    /// </summary>
     /// <param name="capacity">Maximum amount of items the queue can hold</param>
     public: ConcurrentRingBuffer(std::size_t capacity) :
       capacity(capacity),
