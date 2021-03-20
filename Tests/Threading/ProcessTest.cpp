@@ -25,31 +25,104 @@ License along with this library
 
 #include <gtest/gtest.h>
 
+#include <stdexcept> // for std::logic_error
+
+// An executable that is in the default search path, has an exit code of 0,
+// does not need super user privileges and does nothing bad when run.
+#if defined(NUCLEX_SUPPORT_WIN32)
+  #define NUCLEX_SUPPORT_HARMLESS_EXECUTABLE u8"net.exe"
+#else
+  #define NUCLEX_SUPPORT_HARMLESS_EXECUTABLE u8"ls"
+#endif
+
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(ProcessTest, InstancesCanBeCreated) {
-#if defined(NUCLEX_SUPPORT_WIN32)
-    Process test("net.exe");
-#else
-    Process test("ls");
-#endif
+    EXPECT_NO_THROW(
+      Process test(NUCLEX_SUPPORT_HARMLESS_EXECUTABLE);
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ProcessTest, UnstartedProcessIsNotRunning) {
+    Process test(NUCLEX_SUPPORT_HARMLESS_EXECUTABLE);
+    EXPECT_FALSE(test.IsRunning());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ProcessTest, WaitingOnUnstartedProcessCausesException) {
+    Process test(NUCLEX_SUPPORT_HARMLESS_EXECUTABLE);
+    EXPECT_THROW(
+      test.Wait(),
+      std::logic_error
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ProcessTest, JoiningUnstartedProcessCausesException) {
+    Process test(NUCLEX_SUPPORT_HARMLESS_EXECUTABLE);
+    EXPECT_THROW(
+      test.Join(),
+      std::logic_error
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(ProcessTest, ProcessCanBeStarted) {
-#if defined(NUCLEX_SUPPORT_WIN32)
-    Process test("net.exe");
-#else
-    Process test("ls");
-#endif
+    Process test(NUCLEX_SUPPORT_HARMLESS_EXECUTABLE);
 
     test.Start();
 
     int exitCode = test.Join();
     EXPECT_EQ(exitCode, 0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ProcessTest, JoinAfterWaitIsLegal) {
+    Process test(NUCLEX_SUPPORT_HARMLESS_EXECUTABLE);
+
+    test.Start();
+    EXPECT_TRUE(test.Wait());
+
+    int exitCode = test.Join();
+    EXPECT_EQ(exitCode, 0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ProcessTest, WaitAfterJointCausesException) {
+    Process test(NUCLEX_SUPPORT_HARMLESS_EXECUTABLE);
+
+    test.Start();
+    int exitCode = test.Join();
+    EXPECT_EQ(exitCode, 0);
+
+    EXPECT_THROW(
+      test.Wait(),
+      std::logic_error
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ProcessTest, DoubleJoinThrowsException) {
+    Process test(NUCLEX_SUPPORT_HARMLESS_EXECUTABLE);
+
+    test.Start();
+    int exitCode = test.Join();
+    EXPECT_EQ(exitCode, 0);
+
+    EXPECT_THROW(
+      test.Join(),
+      std::logic_error
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -65,6 +138,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     EXPECT_TRUE(test.IsRunning());
     EXPECT_TRUE(test.IsRunning());
+
+    EXPECT_TRUE(test.Wait());
+
+    EXPECT_FALSE(test.IsRunning());
+    EXPECT_FALSE(test.IsRunning());
 
     int exitCode = test.Join();
     EXPECT_EQ(exitCode, 0);

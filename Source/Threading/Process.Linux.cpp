@@ -38,6 +38,8 @@ License along with this library
 #include <unistd.h> // for ::fork()
 #include <signal.h> // for ::sigemptyset(), sigaddset(), etc.
 
+// http://www.microhowto.info/howto/capture_the_output_of_a_child_process_in_c.html
+
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
@@ -419,7 +421,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // If we already saw the process finish, don't wall ::waitpaid() again (it wouldn't work)
     if(impl.Finished) {
-      return true;
+      return false;
     }
 
     // Check whether the process has returned an exit code yet.
