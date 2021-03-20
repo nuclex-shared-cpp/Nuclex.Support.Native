@@ -25,6 +25,8 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WIN32)
 
+#include "Nuclex/Support/Errors/TimeoutError.h"
+#include "Nuclex/Support/Text/StringConverter.h"
 #include "../Helpers/WindowsApi.h"
 
 #include <exception> // for std::terminate()
@@ -34,7 +36,62 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  class Pipe {};
+  /// <summary>Sets up a pipe that can be used for inter-process communication</summary>
+  class Pipe {
+  
+    /// <summary>Opens a new pipe</summary>
+    /// <param name="securityAttributes">
+    ///   Security attributes controlling whether the pipe is inherited to child processes
+    /// </param>
+    public: Pipe(const SECURITY_ATTRIBUTES &securityAttributes) :
+      ends { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE } {
+
+      // Create a new pipe. I am just drunkenly assuming that ::CreatePipe() does not
+      // modify the SECURITY_ATTRIBUTES in any way because there are many code samples
+      // where the same SECURITY_ATTRIBUTES instance is passed to several CreatePipe() calls.
+      BOOL result = ::CreatePipe(
+        &this->ends[0], &this->ends[1],
+        const_cast<SECURITY_ATTRIBUTES *>(&securityAttributes), 0
+      );
+      if(result == FALSE) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not create temporary pipe", lastErrorCode
+        );
+      }
+    }
+
+    public: void SetEndNonInheritable(std::size_t whichEnd) {
+      BOOL result = ::SetHandleInformation(this->ends[whichEnd], HANDLE_FLAG_INHERIT, 0);
+      if(result == FALSE) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not disable inheritability for pipe side", lastErrorCode
+        );
+      }
+    }
+
+    public: HANDLE GetOneEnd(std::size_t whichEnd) {
+      assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
+      return this->ends[whichEnd];
+    }
+
+    /// <summary>Closes whatever end(s) of the pipe have not been used yet</summary>
+    public: ~Pipe() {
+      if(this->ends[1] != INVALID_HANDLE_VALUE) {
+        BOOL result = ::CloseHandle(this->ends[1]);
+        assert((result != FALSE) && u8"Unused pipe side is successfully closed");
+      }
+      if(this->ends[0] != INVALID_HANDLE_VALUE) {
+        BOOL result = ::CloseHandle(this->ends[0]);
+        assert((result != FALSE) && u8"Unused pipe side is successfully closed");
+      }
+    }
+
+    /// <summary>Handle for the readable and the writable end of the pipe</summary>
+    private: HANDLE ends[2];
+  
+  };
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -66,6 +123,232 @@ namespace Nuclex { namespace Support { namespace Threading {
   };
 
   // ------------------------------------------------------------------------------------------- //
+
+  Process::Process(const std::string &executablePath) :
+    executablePath(executablePath),
+    implementationData(nullptr) {
+
+    // If this assert hits, the buffer size assumed by the header was too small.
+    // Things will still work, but we have to resort to an extra allocation.
+    assert(
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData)) &&
+      u8"Private implementation data for Nuclex::Support::Threading::Process fits in buffer"
+    );
+
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+      );
+    if constexpr(implementationDataFitsInBuffer) {
+      new(this->implementationDataBuffer) PlatformDependentImplementationData();
+    } else {
+      this->implementationData = new PlatformDependentImplementationData();
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  Process::~Process() {
+    PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessHandle != INVALID_HANDLE_VALUE) {
+      // TODO: Kill the child process
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void Process::Start(
+    const std::vector<std::string> &arguments /* = std::vector<std::string>() */,
+    bool prependExecutableName /* = true */
+  ) {
+    PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessHandle != INVALID_HANDLE_VALUE) {
+      throw std::logic_error(u8"Child process is still running or not joined yet");
+    }
+
+    SECURITY_ATTRIBUTES pipeSecurityAttributes = {0};
+    pipeSecurityAttributes.nLength = sizeof(pipeSecurityAttributes);
+    pipeSecurityAttributes.bInheritHandle = TRUE; // non-default!
+    pipeSecurityAttributes.lpSecurityDescriptor = nullptr;
+
+    Pipe stdinPipe(pipeSecurityAttributes);
+    stdinPipe.SetEndNonInheritable(1);
+    Pipe stdoutPipe(pipeSecurityAttributes);
+    stdoutPipe.SetEndNonInheritable(0);
+    Pipe stderrPipe(pipeSecurityAttributes);
+    stderrPipe.SetEndNonInheritable(0);
+
+    ::PROCESS_INFORMATION childProcessInfo = {0};
+    // This one has no cbSize member...
+
+    STARTUPINFO childProcessStartupSettings = {0};
+    childProcessStartupSettings.cb = sizeof(childProcessStartupSettings);
+    childProcessStartupSettings.hStdInput = stdinPipe.GetOneEnd(0);
+    childProcessStartupSettings.hStdOutput = stdoutPipe.GetOneEnd(1);
+    childProcessStartupSettings.hStdError = stderrPipe.GetOneEnd(1);
+    childProcessStartupSettings.dwFlags = STARTF_USESTDHANDLES;
+
+    std::wstring utf16ExecutablePath = Nuclex::Support::Text::StringConverter::WideFromUtf8(
+      this->executablePath
+    );
+    BOOL result = ::CreateProcessW(
+      nullptr, // application name -> figure it out yourself!
+      utf16ExecutablePath.data(),
+      nullptr, // use default security attributes
+      nullptr, // use default thread security attributes
+      TRUE, // yes, we want to inherit (some) handles
+      0, // no extra creation flags
+      nullptr, // use the current environment
+      nullptr, // use our current directory,
+      &childProcessStartupSettings,
+      &childProcessInfo
+    );
+    if(result == FALSE) {
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not spawn new process", lastErrorCode
+      );
+    }
+
+    impl.ChildProcessHandle = childProcessInfo.hProcess;
+    impl.StdinHandle = stdinPipe.GetOneEnd(1);
+    impl.StdoutHandle = stdoutPipe.GetOneEnd(0);
+    impl.StderrHandle = stderrPipe.GetOneEnd(0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool Process::IsRunning() const {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
+      return false; // Not launched yet or joined already
+    }
+
+    DWORD exitCode;
+    {
+      BOOL result = ::GetExitCodeProcess(impl.ChildProcessHandle, &exitCode);
+      if(result == FALSE) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not check process exit code", lastErrorCode
+        );
+      }
+    }
+
+    // Well, the process may have exited with STILL_ACTIVE as its exit code :-(
+    // Also check WaitForSingleObject() here...
+    if(exitCode == STILL_ACTIVE) {
+      DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, 0U);
+      if(result == WAIT_OBJECT_0) {
+        return false;
+      } else if(result == WAIT_TIMEOUT) {
+        return true;
+      }
+
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Error waiting for external process to exit", lastErrorCode
+      );
+    }
+    
+    return false;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool Process::Wait(
+    std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */
+  ) const {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
+      throw std::logic_error(u8"Process was not started or is already joined");
+    }
+
+    DWORD timeoutMilliseconds = static_cast<DWORD>(patience.count());
+    DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, timeoutMilliseconds);
+    if(result == WAIT_OBJECT_0) {
+      return true;
+    } else if(result == WAIT_TIMEOUT) {
+      return false;
+    }
+
+    DWORD lastErrorCode = ::GetLastError();
+    Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+      u8"Error waiting for external process to exit", lastErrorCode
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  int Process::Join(std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */) {
+    PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
+      return false; // Not launched yet or joined already
+    }
+
+    DWORD exitCode;
+    {
+      BOOL result = ::GetExitCodeProcess(impl.ChildProcessHandle, &exitCode);
+      if(result == FALSE) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not check process exit code", lastErrorCode
+        );
+      }
+    }
+
+    // Well, the process may have exited with STILL_ACTIVE as its exit code :-(
+    // Also check WaitForSingleObject() here...
+    if(exitCode == STILL_ACTIVE) {
+      DWORD timeoutMilliseconds = static_cast<DWORD>(patience.count());
+      DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, timeoutMilliseconds);
+      if(result == WAIT_OBJECT_0) {
+        impl.ChildProcessHandle = INVALID_HANDLE_VALUE;
+        return exitCode; // Yep, someone returned STILL_ACTIVE as the process' exit code
+      } else if(result == WAIT_TIMEOUT) {
+        throw Nuclex::Support::Errors::TimeoutError(
+          u8"Timed out waiting for external process to exit"
+        );
+      }
+
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Error waiting for external process to exit", lastErrorCode
+      );
+    }
+
+    impl.ChildProcessHandle = INVALID_HANDLE_VALUE;
+    return exitCode;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  const Process::PlatformDependentImplementationData &Process::getImplementationData() const {
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+    );
+    if constexpr(implementationDataFitsInBuffer) {
+      return *reinterpret_cast<const PlatformDependentImplementationData *>(
+        this->implementationDataBuffer
+      );
+    } else {
+      return *this->implementationData;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  Process::PlatformDependentImplementationData &Process::getImplementationData() {
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+    );
+    if constexpr(implementationDataFitsInBuffer) {
+      return *reinterpret_cast<PlatformDependentImplementationData *>(
+        this->implementationDataBuffer
+      );
+    } else {
+      return *this->implementationData;
+    }
+  }
 
   // ------------------------------------------------------------------------------------------- //
 

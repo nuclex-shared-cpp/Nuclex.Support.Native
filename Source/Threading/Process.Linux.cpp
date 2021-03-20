@@ -37,8 +37,6 @@ License along with this library
 #include <sys/wait.h> // for ::waitpid()
 #include <unistd.h> // for ::fork()
 #include <signal.h> // for ::sigemptyset(), sigaddset(), etc.
-#include <limits.h> // for MAX_PATH
-#include <libgen.h> // for ::basename()
 
 namespace {
 
@@ -115,7 +113,7 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>A signal set that only contains for the SIGCHLD signal</summary>
+  /// <summary>A signal set that only contains the SIGCHLD signal</summary>
   class ChildSignalSet {
 
     /// <summary>Initializes a new signal set</summary>
@@ -232,7 +230,8 @@ namespace {
     std::vector<char *> argumentValues;
     if(prependExecutablePath) {
       argumentValues.reserve(arguments.size() + 2);
-      argumentValues.push_back(const_cast<char *>(::basename(executablePath.c_str())));
+      //argumentValues.push_back(const_cast<char *>(::basename(executablePath.c_str())));
+      argumentValues.push_back(const_cast<char *>(executablePath.c_str()));
     } else {
       argumentValues.reserve(arguments.size() + 1);
     }
@@ -323,7 +322,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   Process::~Process() {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId != 0) {
-      //::waitpid
+      // TODO: Kill the child process
     }
 
     if(impl.StderrFileNumber != -1) {
@@ -353,6 +352,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     const std::vector<std::string> &arguments /* = std::vector<std::string>() */,
     bool prependExecutableName /* = true */
   ) {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessId != 0) {
+      throw std::logic_error(u8"Child process is still running or not joined yet");
+    }
+
     Pipe stdinPipe, stdoutPipe, stderrPipe;
 
     // Calling fork() will clone the current process' main thread (no other threads).
@@ -407,12 +411,55 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
+  bool Process::IsRunning() const {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessId == 0) {
+      return false; // Not launched yet or joined already
+    }
+
+    // If we already saw the process finish, don't wall ::waitpaid() again (it wouldn't work)
+    if(impl.Finished) {
+      return true;
+    }
+
+    // Check whether the process has returned an exit code yet.
+    // The call may be interrupted by signals, so keep checking if it's interrupted.
+    for(;;) {
+      int result = ::waitpid(impl.ChildProcessId, &impl.ExitCode, WNOHANG);
+      if(unlikely(result == -1)) {
+        int errorNumber = errno;
+        if(errorNumber == EINTR) {
+          continue;
+        } else {
+          Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+            u8"Could not check if process is running", errorNumber
+          );
+        }
+      }
+
+      // If no status (exit code) is available, that means the process is still running
+      if(likely(result == 0)) {
+        return true;
+      } else {
+        impl.Finished = true;
+        return false;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   bool Process::Wait(
     std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */
   ) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
       throw std::logic_error(u8"Process was not started or is already joined");
+    }
+
+    // If we already saw the process finish, don't wall ::waitpaid() again (it wouldn't work)
+    if(impl.Finished) {
+      return true;
     }
 
     // Determine the point in time when the timeout will occur
@@ -544,44 +591,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     return WEXITSTATUS(impl.ExitCode);
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  bool Process::IsRunning() const {
-    const PlatformDependentImplementationData &impl = getImplementationData();
-    if(impl.ChildProcessId == 0) {
-      return false; // Not launched yet or joined already
-    }
-
-    // If we already saw the process finish, don't wall ::waitpaid() again (it wouldn't work)
-    if(impl.Finished) {
-      return true;
-    }
-
-    // Check whether the process has returned an exit code yet.
-    // The call may be interrupted by signals, so keep checking if it's interrupted.
-    for(;;) {
-      int result = ::waitpid(impl.ChildProcessId, &impl.ExitCode, WNOHANG);
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        if(errorNumber == EINTR) {
-          continue;
-        } else {
-          Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-            u8"Could not check if process is running", errorNumber
-          );
-        }
-      }
-
-      // If no status (exit code) is available, that means the process is still running
-      if(likely(result == 0)) {
-        return true;
-      } else {
-        impl.Finished = true;
-        return false;
-      }
-    }
   }
 
   // ------------------------------------------------------------------------------------------- //

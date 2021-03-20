@@ -24,9 +24,9 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Events/Event.h" // TODO: need concurrent event
 
-#include <chrono>
-#include <vector>
-#include <string>
+#include <chrono> // for std::chrono::milliseconds
+#include <vector> // for std::vector
+#include <string> // for std::string
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -46,7 +46,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: ~Process();
 
     /// <summary>
-    ///   Starts the external process, passing the specified command-line arguments
+    ///   Starts the external process, passing the specified command-line arguments along
     /// </summary>
     /// <param name="arguments">Arguments that will be passed to the external process</param>
     /// <param name="prependExecutableName">
@@ -57,6 +57,10 @@ namespace Nuclex { namespace Support { namespace Threading {
       const std::vector<std::string> &arguments = std::vector<std::string>(),
       bool prependExecutableName = true
     );
+
+    /// <summary>Checks whether the process is still running</summary>
+    /// <returns>True if the process was still running, false otherwise</returns>
+    public: bool IsRunning() const;
 
     /// <summary>Waits for the process to exit normally</summary>
     /// <param name="patience">
@@ -93,10 +97,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: void Kill(std::chrono::milliseconds patience = std::chrono::milliseconds(5000)) {}
 
-    /// <summary>Checks whether the process is still running</summary>
-    /// <returns>True if the process was still running, false otherwise</returns>
-    public: bool IsRunning() const;
-
     //public: std::any GetProcessId() const {}
 
     /// <summary>Path to the executable as which this process is running</summary>
@@ -104,7 +104,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Structure to hold platform dependent process and file handles</summary>
     private: struct PlatformDependentImplementationData;
+    /// <summary>Accesses the platform dependent implementation data container</summary>
+    /// <returns>A reference to the platform dependent implementation data</returns>
     private: const PlatformDependentImplementationData &getImplementationData() const;
+    /// <summary>Accesses the platform dependent implementation data container</summary>
+    /// <returns>A reference to the platform dependent implementation data</returns>
     private: PlatformDependentImplementationData &getImplementationData();
     private: union {
       /// <summary>Platform dependent process and file handles used for the process</summary>
@@ -115,7 +119,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       ///   This avoids a micro-allocation for the implenmentation data structure in most cases.
       /// </remarks>
 #if defined(NUCLEX_SUPPORT_WIN32)
-      unsigned char implementationDataBuffer[1];
+      unsigned char implementationDataBuffer[32];
 #else // Posix and Linux
       unsigned char implementationDataBuffer[24];
 #endif
