@@ -125,10 +125,10 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Errors\CyclicDependencyError.h">
+    <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h">
       <Filter>Include\Errors</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h">
+    <ClInclude Include="Include\Nuclex\Support\Errors\TimeoutError.h">
       <Filter>Include\Errors</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Errors\UnresolvedDependencyError.h">
@@ -195,6 +195,9 @@
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\Mutex.h">
+      <Filter>Include\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Threading\Process.h">
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\ReaderWriterLock.h">
@@ -277,10 +280,10 @@
     <ClCompile Include="Source\Collections\Variegator.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Errors\CyclicDependencyError.cpp">
+    <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp">
       <Filter>Source\Errors</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp">
+    <ClCompile Include="Source\Errors\TimeoutError.cpp">
       <Filter>Source\Errors</Filter>
     </ClCompile>
     <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp">
@@ -440,6 +443,12 @@
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Source\Threading\Mutex.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\Process.Linux.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\Process.Windows.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Source\Threading\ReaderWriterLock.cpp">

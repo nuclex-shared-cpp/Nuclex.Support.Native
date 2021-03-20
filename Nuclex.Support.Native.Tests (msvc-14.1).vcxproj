@@ -216,8 +216,8 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ShiftQueue.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\StackArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h" />
-    <ClInclude Include="Include\Nuclex\Support\Errors\CyclicDependencyError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h" />
+    <ClInclude Include="Include\Nuclex\Support\Errors\TimeoutError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\UnresolvedDependencyError.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\ConcurrentEvent.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h" />
@@ -241,6 +241,7 @@
     <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\LinuxThreadPool.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Mutex.h" />
+    <ClInclude Include="Include\Nuclex\Support\Threading\Process.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\ReaderWriterLock.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Thread.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\ThreadPool.h" />
@@ -271,8 +272,8 @@
     <ClCompile Include="Source\Collections\ShiftQueue.cpp" />
     <ClCompile Include="Source\Collections\StackArray.cpp" />
     <ClCompile Include="Source\Collections\Variegator.cpp" />
-    <ClCompile Include="Source\Errors\CyclicDependencyError.cpp" />
     <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp" />
+    <ClCompile Include="Source\Errors\TimeoutError.cpp" />
     <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp" />
     <ClCompile Include="Source\Events\ConcurrentEvent.cpp" />
     <ClCompile Include="Source\Events\Delegate.cpp" />
@@ -327,6 +328,8 @@
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />
     <ClCompile Include="Source\Threading\Mutex.cpp" />
+    <ClCompile Include="Source\Threading\Process.Linux.cpp" />
+    <ClCompile Include="Source\Threading\Process.Windows.cpp" />
     <ClCompile Include="Source\Threading\ReaderWriterLock.cpp" />
     <ClCompile Include="Source\Threading\Thread.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.cpp" />
@@ -371,6 +374,7 @@
     <ClCompile Include="Tests\Text\RollingLoggerTest.cpp" />
     <ClCompile Include="Tests\Text\StringConverterTest.cpp" />
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp" />
+    <ClCompile Include="Tests\Threading\ProcessTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadTest.cpp" />
     <ClCompile Include="Tests\AnyTests.cpp" />
     <ClCompile Include="Tests\BitTricksTest.cpp" />

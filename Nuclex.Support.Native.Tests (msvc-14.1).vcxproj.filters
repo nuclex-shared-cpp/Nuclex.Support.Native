@@ -143,10 +143,10 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Errors\CyclicDependencyError.h">
+    <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h">
       <Filter>Include\Errors</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h">
+    <ClInclude Include="Include\Nuclex\Support\Errors\TimeoutError.h">
       <Filter>Include\Errors</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Errors\UnresolvedDependencyError.h">
@@ -213,6 +213,9 @@
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\Mutex.h">
+      <Filter>Include\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Threading\Process.h">
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\ReaderWriterLock.h">
@@ -301,10 +304,10 @@
     <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp">
       <Filter>Source\Errors</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp">
+    <ClCompile Include="Source\Errors\TimeoutError.cpp">
       <Filter>Source\Errors</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Errors\CyclicDependencyError.cpp">
+    <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp">
       <Filter>Source\Errors</Filter>
     </ClCompile>
     <ClCompile Include="Source\Events\ConcurrentEvent.cpp">
@@ -466,6 +469,12 @@
     <ClCompile Include="Source\Threading\Mutex.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Threading\Process.Linux.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\Process.Windows.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Threading\ReaderWriterLock.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
@@ -569,6 +578,9 @@
     </ClCompile>
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp">
       <Filter>Tests\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Threading\ProcessTest.cpp">
+      <Filter>Tests\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Threading\ThreadTest.cpp">
       <Filter>Tests\Threading</Filter>
