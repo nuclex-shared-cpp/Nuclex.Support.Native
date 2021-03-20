@@ -32,13 +32,13 @@ License along with this library
 #include <exception> // for std::terminate()
 #include <cassert> // for assert()
 #include <cstring> // for ::strsignal()
-#include <cstdlib> // for ::realpath()
 
 #include <sys/types.h> // for ::pid_t
 #include <sys/wait.h> // for ::waitpid()
 #include <unistd.h> // for ::fork()
 #include <signal.h> // for ::sigemptyset(), sigaddset(), etc.
 #include <limits.h> // for MAX_PATH
+#include <libgen.h> // for ::basename()
 
 namespace {
 
@@ -63,7 +63,7 @@ namespace {
     public: ~Pipe() {
       if(this->ends[1] != -1) {
         int result = ::close(this->ends[1]);
-        assert((result == 0) && u8"Right end of temporary closed successfully");
+        assert((result == 0) && u8"Right end of temporary pipe closed successfully");
       }
       if(this->ends[0] != -1) {
         int result = ::close(this->ends[0]);
