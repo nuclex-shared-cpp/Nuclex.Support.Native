@@ -31,6 +31,7 @@ License along with this library
 
 #include <exception> // for std::terminate()
 #include <cassert> // for assert()
+#include <algorithm> // for std::min()
 
 // https://docs.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
 
@@ -124,9 +125,73 @@ namespace {
     }
 
     /// <summary>Handle for the readable and the writable end of the pipe</summary>
+    /// <remarks>
+    ///   Index 0 is the readable end of the pipe, 1 is the writable end
+    /// </remarks>
     private: HANDLE ends[2];
   
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Retrieves the exit code a process has exited with</summary>
+  /// <param name="processHandle">Handle of the process whose exit code will be checked</param>
+  /// <returns>
+  ///   The exit code of the process or STILL_ACTIVE if the process has not exited yet
+  /// </returns>
+  DWORD getProcessExitCode(HANDLE processHandle) {
+    DWORD exitCode;
+
+    BOOL result = ::GetExitCodeProcess(processHandle, &exitCode);
+    if(result == FALSE) {
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not check process exit code", lastErrorCode
+      );
+    }
+
+    return exitCode;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>
+  ///   Determines the absolute path of an executable by checking the system's search paths
+  /// </summary>
+  std::wstring getAbsoluteExecutablePath(const std::string &executablePath) {
+    wchar_t absoluteUtf16ExecutablePath[MAX_PATH];
+    DWORD characterCount;
+    {
+      std::wstring utf16ExecutablePath = Nuclex::Support::Text::StringConverter::WideFromUtf8(
+        executablePath
+      );
+
+      LPWSTR unusedFilePart;
+      characterCount = ::SearchPathW(
+        nullptr, utf16ExecutablePath.c_str(), L".exe", // .exe is only appended if no extension
+        MAX_PATH, absoluteUtf16ExecutablePath, &unusedFilePart
+      );
+      if(characterCount == 0) {
+        DWORD lastErrorCode = ::GetLastError();
+        {
+          static const std::string errorMessageBegin(u8"Could not locate executable '", 29);
+          static const std::string errorMessageEnd(u8"' in standard search paths", 26);
+
+          std::string message;
+          message.reserve(29 + executablePath.c_str() + 26 + 1);
+          message.append(errorMessageBegin);
+          message.append(executablePath);
+          message.append(errorMessageEnd);
+
+          Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+            message, lastErrorCode
+          );
+        }
+      }
+    }
+
+    return std::wstring(absoluteUtf16ExecutablePath, characterCount);
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -186,6 +251,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle != INVALID_HANDLE_VALUE) {
       // TODO: Kill the child process
+      BOOL result = ::CloseHandle(impl.ChildProcessHandle);
+      assert((result != FALSE) && u8"Child process handle is successfully closed");
     }
   }
 
@@ -207,7 +274,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     pipeSecurityAttributes.bInheritHandle = TRUE; // non-default!
     pipeSecurityAttributes.lpSecurityDescriptor = nullptr;
 
-    // Create the pipes and set the ends that belong to our side as non-inheritable
+    // Create 3 pipes and set the ends that belong to our side as non-inheritable
     Pipe stdinPipe(pipeSecurityAttributes);
     stdinPipe.SetEndNonInheritable(1);
     Pipe stdoutPipe(pipeSecurityAttributes);
@@ -216,46 +283,84 @@ namespace Nuclex { namespace Support { namespace Threading {
     stderrPipe.SetEndNonInheritable(0);
 
     ::PROCESS_INFORMATION childProcessInfo = {0};
-    // This one has no cbSize member...
-
-    STARTUPINFO childProcessStartupSettings = {0};
-    childProcessStartupSettings.cb = sizeof(childProcessStartupSettings);
-    childProcessStartupSettings.hStdInput = stdinPipe.GetOneEnd(0);
-    childProcessStartupSettings.hStdOutput = stdoutPipe.GetOneEnd(1);
-    childProcessStartupSettings.hStdError = stderrPipe.GetOneEnd(1);
-    childProcessStartupSettings.dwFlags = STARTF_USESTDHANDLES;
-
-    // Launch the new process. We're using the UTF-16 version (and convert everything
-    // from UTF-8 to UTF-16) to ensure we can deal with unicode paths and executable names.
     {
-      std::wstring utf16ExecutablePath = Nuclex::Support::Text::StringConverter::WideFromUtf8(
-        this->executablePath
-      );
-      BOOL result = ::CreateProcessW(
-        nullptr, // application name -> figure it out yourself!
-        utf16ExecutablePath.data(),
-        nullptr, // use default security attributes
-        nullptr, // use default thread security attributes
-        TRUE, // yes, we want to inherit (some) handles
-        0, // no extra creation flags
-        nullptr, // use the current environment
-        nullptr, // use our current directory,
-        &childProcessStartupSettings,
-        &childProcessInfo
-      );
-      if(result == FALSE) {
-        DWORD lastErrorCode = ::GetLastError();
-        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not spawn new process", lastErrorCode
+      STARTUPINFO childProcessStartupSettings = {0};
+      childProcessStartupSettings.cb = sizeof(childProcessStartupSettings);
+      childProcessStartupSettings.dwFlags = STARTF_USESTDHANDLES;
+      childProcessStartupSettings.hStdInput = stdinPipe.GetOneEnd(0);
+      childProcessStartupSettings.hStdOutput = stdoutPipe.GetOneEnd(1);
+      childProcessStartupSettings.hStdError = stderrPipe.GetOneEnd(1);
+
+      // Launch the new process. We're using the UTF-16 version (and convert everything
+      // from UTF-8 to UTF-16) to ensure we can deal with unicode paths and executable names.
+      {
+        std::wstring utf16ExecutablePath = Nuclex::Support::Text::StringConverter::WideFromUtf8(
+          this->executablePath
         );
+        wchar_t absoluteUtf16ExecutablePath[MAX_PATH];
+        {
+          LPWSTR unusedFilePart;
+          DWORD result = ::SearchPathW(
+            nullptr, utf16ExecutablePath.c_str(), L".exe",
+            MAX_PATH, absoluteUtf16ExecutablePath, &unusedFilePart
+          );
+          if(result == 0) {
+            DWORD lastErrorCode = ::GetLastError();
+
+            static const std::string errorMessage(u8"Could not locate executable '", 29);
+            static const std::string errorMessage2(u8"' in standard search paths", 26);
+            std::string message;
+            message.reserve(29 + executablePath.c_str() + 26 + 1);
+            message.append(errorMessage);
+            message.append(executablePath);
+            message.append(errorMessage2);
+            Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+              message, lastErrorCode
+            );
+          }
+        }
+
+        std::wstring commandLineArguments;
+        if(prependExecutableName) {
+          commandLineArguments.append(utf16ExecutablePath);
+          commandLineArguments.append(L" ", 1);
+        }
+        for(std::size_t index = 0; index < arguments.size(); ++index) {
+          if(index > 0) {
+            commandLineArguments.append(L" ", 1);
+          }
+          commandLineArguments.append(
+            Nuclex::Support::Text::StringConverter::WideFromUtf8(arguments[index])
+          );
+        }
+        BOOL result = ::CreateProcessW(
+          prependExecutableName ? nullptr : utf16ExecutablePath.data(),
+          commandLineArguments.data(),
+          //nullptr, // application name -> figure it out yourself!
+          //utf16ExecutablePath.data(),
+          nullptr, // use default security attributes
+          nullptr, // use default thread security attributes
+          TRUE, // yes, we want to inherit (some) handles
+          0, // no extra creation flags
+          nullptr, // use the current environment
+          nullptr, // use our current directory,
+          &childProcessStartupSettings,
+          &childProcessInfo
+        );
+        if(result == FALSE) {
+          DWORD lastErrorCode = ::GetLastError();
+          Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not spawn new process", lastErrorCode
+          );
+        }
       }
     }
 
-    // Call was successful, the pipes now belong to the child process
-    // CHECK: Does the child process have duplicates? Do I still have to close these?
-    stdinPipe.CloseOneEnd(0); // stdinPipe.ReleaseOneEnd(0);
-    stdoutPipe.CloseOneEnd(1); // stdoutPipe.ReleaseOneEnd(1);
-    stderrPipe.CloseOneEnd(1); // stderrPipe.ReleaseOneEnd(1);
+    // One end from each of the 3 pipes was inherited to the child process.
+    // Here we close our copy of those ends as we're not going to be needing those.
+    stdinPipe.CloseOneEnd(0);
+    stdoutPipe.CloseOneEnd(1);
+    stderrPipe.CloseOneEnd(1);
 
     // We don't need the handle to the main thread, but have ownership,
     // so be a good citizen and close it.
@@ -263,6 +368,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       BOOL result = ::CloseHandle(childProcessInfo.hThread);
       if(result == FALSE) {
         DWORD lastErrorCode = ::GetLastError();
+
+        // CHECK: Is it enough to close the process handle?
+        // Might be sensible to kill the process since we're exiting with an exception.
 
         result = ::CloseHandle(childProcessInfo.hProcess);
         assert((result != FALSE) && u8"Child process handle closed successfully");
@@ -273,6 +381,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       }
     }
 
+    // If this point is reached, our setup work is done and we can take ownership
+    // of the pipe ends (up until this point, the Pipe class would have destroyed them)
     impl.ChildProcessHandle = childProcessInfo.hProcess;
     impl.StdinHandle = stdinPipe.ReleaseOneEnd(1);
     impl.StdoutHandle = stdoutPipe.ReleaseOneEnd(0);
@@ -287,34 +397,27 @@ namespace Nuclex { namespace Support { namespace Threading {
       return false; // Not launched yet or joined already
     }
 
-    DWORD exitCode;
-    {
-      BOOL result = ::GetExitCodeProcess(impl.ChildProcessHandle, &exitCode);
-      if(result == FALSE) {
-        DWORD lastErrorCode = ::GetLastError();
-        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not check process exit code", lastErrorCode
-        );
-      }
-    }
+    // Try to get the process' exit code. If the process hasn't exited yet,
+    // this method will return the special exit code STILL_ACTIVE.
+    DWORD exitCode = getProcessExitCode(impl.ChildProcessHandle);
 
-    // Well, the process may have exited with STILL_ACTIVE as its exit code :-(
-    // Also check WaitForSingleObject() here...
+    // We got STILL_ACTIVE, but the process may have exited with this as its actual
+    // exit code. So make sure the process exited via WaitForSingleObject()...
     if(exitCode == STILL_ACTIVE) {
       DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, 0U);
       if(result == WAIT_OBJECT_0) {
-        return false;
+        return true; // Process did indeed exit with STILL_ACTIVE as its exit code.
       } else if(result == WAIT_TIMEOUT) {
-        return true;
+        return false; // Process was really still running
       }
 
       DWORD lastErrorCode = ::GetLastError();
       Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
         u8"Error waiting for external process to exit", lastErrorCode
       );
+    } else { // Process exited with an unambiguous exit code
+      return false;
     }
-    
-    return false;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -327,18 +430,31 @@ namespace Nuclex { namespace Support { namespace Threading {
       throw std::logic_error(u8"Process was not started or is already joined");
     }
 
+    // Wait for the process to exit, but keep servicing the output streams so
+    // it won't deadlock in case it's producing (lots of) output.
     DWORD timeoutMilliseconds = static_cast<DWORD>(patience.count());
-    DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, timeoutMilliseconds);
-    if(result == WAIT_OBJECT_0) {
-      return true;
-    } else if(result == WAIT_TIMEOUT) {
-      return false;
+    DWORD startTickCount = ::GetTickCount();
+    for(;;) {
+      DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, 4);
+      if(result == WAIT_OBJECT_0) {
+        return true;
+      } else if(result != WAIT_TIMEOUT) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Error waiting for external process to exit", lastErrorCode
+        );
+      }
+
+      // Check if the timeout has been exceeded. We have to do the math this way
+      // to ensure it correctly handles wraparound after 49.7 days.
+      DWORD waitedTilliseconds = ::GetTickCount() - startTickCount;
+      if(waitedTilliseconds >= timeoutMilliseconds) {
+        return false;
+      }
+
+      PumpOutputStreams();
     }
 
-    DWORD lastErrorCode = ::GetLastError();
-    Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-      u8"Error waiting for external process to exit", lastErrorCode
-    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -346,38 +462,39 @@ namespace Nuclex { namespace Support { namespace Threading {
   int Process::Join(std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */) {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
-      return false; // Not launched yet or joined already
+      throw std::logic_error(u8"Process was not started or is already joined");
     }
 
-    DWORD exitCode;
-    {
-      BOOL result = ::GetExitCodeProcess(impl.ChildProcessHandle, &exitCode);
-      if(result == FALSE) {
-        DWORD lastErrorCode = ::GetLastError();
-        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not check process exit code", lastErrorCode
-        );
-      }
-    }
+    DWORD exitCode = getProcessExitCode(impl.ChildProcessHandle);
 
     // Well, the process may have exited with STILL_ACTIVE as its exit code :-(
     // Also check WaitForSingleObject() here...
     if(exitCode == STILL_ACTIVE) {
       DWORD timeoutMilliseconds = static_cast<DWORD>(patience.count());
-      DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, timeoutMilliseconds);
-      if(result == WAIT_OBJECT_0) {
-        impl.ChildProcessHandle = INVALID_HANDLE_VALUE;
-        return exitCode; // Yep, someone returned STILL_ACTIVE as the process' exit code
-      } else if(result == WAIT_TIMEOUT) {
-        throw Nuclex::Support::Errors::TimeoutError(
-          u8"Timed out waiting for external process to exit"
-        );
-      }
+      DWORD startTickCount = ::GetTickCount();
+      for(;;) {
+        DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, 4);
+        if(result == WAIT_OBJECT_0) {
+          exitCode = getProcessExitCode(impl.ChildProcessHandle);
+          break; // Yep, someone returned STILL_ACTIVE as the process' exit code
+        } else if(result != WAIT_TIMEOUT) {
+          DWORD lastErrorCode = ::GetLastError();
+          Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+            u8"Error waiting for external process to exit", lastErrorCode
+          );
+        }
 
-      DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-        u8"Error waiting for external process to exit", lastErrorCode
-      );
+        // Check if the timeout has been exceeded. We have to do the math this way
+        // to ensure it correctly handles wraparound after 49.7 days.
+        DWORD waitedTilliseconds = ::GetTickCount() - startTickCount;
+        if(waitedTilliseconds >= timeoutMilliseconds) {
+          throw Nuclex::Support::Errors::TimeoutError(
+            u8"Timed out waiting for external process to exit"
+          );
+        }
+
+        PumpOutputStreams();
+      }
     }
 
     // Process is well and truly done, close its process handle and clear our handle
@@ -394,6 +511,85 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     return exitCode;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void Process::PumpOutputStreams() const {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
+      return; // Should be throw an exception here? 
+    }
+
+    HANDLE handles[] = { impl.StdoutHandle, impl.StderrHandle };
+    for(std::size_t pipeIndex = 0; pipeIndex < 2; ++pipeIndex) {
+
+      // Check how many bytes are available from the pipe. We need to do this before calling
+      // ReadFile() because ReadFile() would block if there are no bytes available.
+      DWORD availableByteCount;
+      {
+        BOOL result = ::PeekNamedPipe(
+          handles[pipeIndex], nullptr, 0, nullptr, &availableByteCount, nullptr
+        );
+        if(result == FALSE) {
+          DWORD lastErrorCode = ::GetLastError();
+          if(lastErrorCode == ERROR_BROKEN_PIPE) {
+            continue; // Process has terminated its end of the pipe, this is okay.
+          } else if(pipeIndex == 0) {            
+            Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+              u8"Failed to check pipe buffer for stdout", lastErrorCode
+            );
+          } else {
+            Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+              u8"Failed to check pipe buffer for stderr", lastErrorCode
+            );
+          }
+        }
+      }
+
+      // If there are bytes available, read them into our reusable buffer and emit
+      // the appropriate events to let this instance's owner process the output.
+      if(availableByteCount > 0) {
+        const DWORD BatchSize = 16384;
+
+        this->buffer.resize(std::min(availableByteCount, BatchSize));
+        for(;;) {
+          DWORD readByteCount;
+          BOOL result = ::ReadFile(
+            handles[pipeIndex],
+            this->buffer.data(), static_cast<DWORD>(this->buffer.size()),
+            &readByteCount,
+            nullptr
+          );
+          if(result == FALSE) {
+            DWORD lastErrorCode = ::GetLastError();
+            if(lastErrorCode == ERROR_BROKEN_PIPE) {
+              continue; // Process has terminated its end of the pipe, this is okay.
+            } else if(pipeIndex == 0) {
+              Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+                u8"Failed to read pipe buffer for stdout", lastErrorCode
+              );
+            } else {
+              Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+                u8"Failed to read pipe buffer for stderr", lastErrorCode
+              );
+            }
+          }
+
+          if(pipeIndex == 0) {
+            this->StdOut.Emit(this->buffer.data(), readByteCount);
+          } else {
+            this->StdErr.Emit(this->buffer.data(), readByteCount);
+          }
+          if(readByteCount >= availableByteCount) {
+            break;
+          } else {
+            availableByteCount -= readByteCount;
+          }
+        }
+      }
+
+    } // for(pipeIndex)
   }
 
   // ------------------------------------------------------------------------------------------- //
