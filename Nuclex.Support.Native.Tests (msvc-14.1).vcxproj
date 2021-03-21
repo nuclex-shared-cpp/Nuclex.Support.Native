@@ -326,6 +326,10 @@
     <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
+    <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp" />
+    <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h" />
+    <ClCompile Include="Source\Threading\Windows\WindowsProcessApi.cpp" />
+    <ClInclude Include="Source\Threading\Windows\WindowsProcessApi.h" />
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />
     <ClCompile Include="Source\Threading\Mutex.cpp" />
     <ClCompile Include="Source\Threading\Process.Linux.cpp" />

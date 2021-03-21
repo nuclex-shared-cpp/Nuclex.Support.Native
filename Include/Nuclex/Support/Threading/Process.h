@@ -36,9 +36,9 @@ namespace Nuclex { namespace Support { namespace Threading {
   class Process {
 
     /// <summary>Event that is fired whenever the process writes to stdout</summary>
-    public: Nuclex::Support::Events::Event<void(const std::string &)> StdOutWritten;
+    public: Nuclex::Support::Events::Event<void(const char *, std::size_t)> StdOut;
     /// <summary>Event that is fired whenever the process writes to stderr</summary>
-    public: Nuclex::Support::Events::Event<void(const std::string &)> StdErrWritten;
+    public: Nuclex::Support::Events::Event<void(const char *, std::size_t)> StdErr;
 
     /// <summary>Initializes a new process without starting it</summary>
     public: Process(const std::string &executablePath);
@@ -97,10 +97,37 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: void Kill(std::chrono::milliseconds patience = std::chrono::milliseconds(5000)) {}
 
+    /// <summary>Sends input to the running process' stdin</summary>
+    /// <param name="characters">Characters that will be sent to the process' stdin</param>
+    /// <param name="characterCount">Number of characters 
+    public: void Write(const char *characters, std::size_t characerCount) {}
+
+    /// <summary>Fetches data from the stdout and stderr streams</summary>
+    /// <remarks>
+    ///   <para>
+    ///     All console output of the external process is redirected into pipes. These pipes
+    ///     have a limited buffer. Once the buffer is full, the external process will block
+    ///     until the pipe's buffer has been emptied.
+    ///   </para>
+    ///   <para>
+    ///     Because if that, it's very important to call this method regularly, especially if
+    ///     the child process is generating a lot of output. Not doing so can cause the child
+    ///     process to wait forever in a printf() or std::cout call.
+    ///   </para>
+    ///   <para>
+    ///     The provided Wait() and Join() methods will automatically flush the pipe's output
+    ///     buffers adequately, but if you just let the instance linger in the background,
+    ///     be sure to have some mechanism that calls PumpOutputStreams() regularly.
+    ///   </para>
+    /// </remarks>
+    public: void PumpOutputStreams() const;
+
     //public: std::any GetProcessId() const {}
 
     /// <summary>Path to the executable as which this process is running</summary>
     private: std::string executablePath;
+    /// <summary>Pipe buffer (user round-robin to flush stdout and stderr)</summary>
+    private: mutable std::vector<char> buffer;
 
     /// <summary>Structure to hold platform dependent process and file handles</summary>
     private: struct PlatformDependentImplementationData;

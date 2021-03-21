@@ -28,6 +28,7 @@ License along with this library
 #include "Nuclex/Support/Errors/TimeoutError.h"
 #include "Nuclex/Support/Text/StringConverter.h"
 #include "../Helpers/WindowsApi.h"
+#include "Windows/WindowsProcessApi.h"
 
 #include <exception> // for std::terminate()
 #include <cassert> // for assert()
@@ -36,122 +37,6 @@ License along with this library
 // https://docs.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
 
 namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Sets up a pipe that can be used for inter-process communication</summary>
-  class Pipe {
-  
-    /// <summary>Opens a new pipe</summary>
-    /// <param name="securityAttributes">
-    ///   Security attributes controlling whether the pipe is inherited to child processes
-    /// </param>
-    public: Pipe(const SECURITY_ATTRIBUTES &securityAttributes) :
-      ends { INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE } {
-
-      // Create a new pipe. I am just drunkenly assuming that ::CreatePipe() does not
-      // modify the SECURITY_ATTRIBUTES in any way because there are many code samples
-      // where the same SECURITY_ATTRIBUTES instance is passed to several CreatePipe() calls.
-      BOOL result = ::CreatePipe(
-        &this->ends[0], &this->ends[1],
-        const_cast<SECURITY_ATTRIBUTES *>(&securityAttributes), 0
-      );
-      if(result == FALSE) {
-        DWORD lastErrorCode = ::GetLastError();
-        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not create temporary pipe", lastErrorCode
-        );
-      }
-    }
-
-    /// <summary>Sets one end of the pipe to be a non-inheritable handle</summary>
-    /// <param name="whichEnd">Which end of the pipe will become non-inheritable</param>
-    public: void SetEndNonInheritable(std::size_t whichEnd) {
-      BOOL result = ::SetHandleInformation(this->ends[whichEnd], HANDLE_FLAG_INHERIT, 0);
-      if(result == FALSE) {
-        DWORD lastErrorCode = ::GetLastError();
-        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not disable inheritability for pipe side", lastErrorCode
-        );
-      }
-    }
-
-    /// <summary>Closes one end of the pipe</summary>
-    /// <param name="whichEnd">Which end of the pipe to close</param>
-    public: void CloseOneEnd(std::size_t whichEnd) {
-      assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
-
-      BOOL result = ::CloseHandle(this->ends[whichEnd]);
-      if(result == FALSE) {
-        DWORD lastErrorCode = ::GetLastError();
-        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not close one end of a pipe", lastErrorCode
-        );
-      }
-
-      this->ends[whichEnd] = INVALID_HANDLE_VALUE;
-    }
-
-    /// <summary>Relinquishes ownership of the handle for one end of the pipe</summary>
-    /// <param name="whichEnd">For which end of the pipe ownership will be released</param>
-    /// <returns>The handle of the relinquished end of the pipe</returns>
-    public: HANDLE ReleaseOneEnd(std::size_t whichEnd) {
-      assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
-      HANDLE end = this->ends[whichEnd];
-      this->ends[whichEnd] = INVALID_HANDLE_VALUE;
-      return end;
-    }
-
-    /// <summary>Fetches the handle of one end of the pipe</summary>
-    /// <param name="whichEnd">
-    ///   Index of the pipe end (0 or 1) whose handle will be returned
-    /// </param>
-    /// <returns>The handle of requested end of the pipe</returns>
-    public: HANDLE GetOneEnd(std::size_t whichEnd) {
-      assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
-      return this->ends[whichEnd];
-    }
-
-    /// <summary>Closes whatever end(s) of the pipe have not been used yet</summary>
-    public: ~Pipe() {
-      if(this->ends[1] != INVALID_HANDLE_VALUE) {
-        BOOL result = ::CloseHandle(this->ends[1]);
-        assert((result != FALSE) && u8"Unused pipe side is successfully closed");
-      }
-      if(this->ends[0] != INVALID_HANDLE_VALUE) {
-        BOOL result = ::CloseHandle(this->ends[0]);
-        assert((result != FALSE) && u8"Unused pipe side is successfully closed");
-      }
-    }
-
-    /// <summary>Handle for the readable and the writable end of the pipe</summary>
-    /// <remarks>
-    ///   Index 0 is the readable end of the pipe, 1 is the writable end
-    /// </remarks>
-    private: HANDLE ends[2];
-  
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Retrieves the exit code a process has exited with</summary>
-  /// <param name="processHandle">Handle of the process whose exit code will be checked</param>
-  /// <returns>
-  ///   The exit code of the process or STILL_ACTIVE if the process has not exited yet
-  /// </returns>
-  DWORD getProcessExitCode(HANDLE processHandle) {
-    DWORD exitCode;
-
-    BOOL result = ::GetExitCodeProcess(processHandle, &exitCode);
-    if(result == FALSE) {
-      DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-        u8"Could not check process exit code", lastErrorCode
-      );
-    }
-
-    return exitCode;
-  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -178,7 +63,7 @@ namespace {
           static const std::string errorMessageEnd(u8"' in standard search paths", 26);
 
           std::string message;
-          message.reserve(29 + executablePath.c_str() + 26 + 1);
+          message.reserve(29 + executablePath.length() + 26 + 1);
           message.append(errorMessageBegin);
           message.append(executablePath);
           message.append(errorMessageEnd);
@@ -275,11 +160,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     pipeSecurityAttributes.lpSecurityDescriptor = nullptr;
 
     // Create 3 pipes and set the ends that belong to our side as non-inheritable
-    Pipe stdinPipe(pipeSecurityAttributes);
+    Nuclex::Support::Threading::Windows::Pipe stdinPipe(pipeSecurityAttributes);
     stdinPipe.SetEndNonInheritable(1);
-    Pipe stdoutPipe(pipeSecurityAttributes);
+    Nuclex::Support::Threading::Windows::Pipe stdoutPipe(pipeSecurityAttributes);
     stdoutPipe.SetEndNonInheritable(0);
-    Pipe stderrPipe(pipeSecurityAttributes);
+    Nuclex::Support::Threading::Windows::Pipe stderrPipe(pipeSecurityAttributes);
     stderrPipe.SetEndNonInheritable(0);
 
     ::PROCESS_INFORMATION childProcessInfo = {0};
@@ -310,7 +195,7 @@ namespace Nuclex { namespace Support { namespace Threading {
             static const std::string errorMessage(u8"Could not locate executable '", 29);
             static const std::string errorMessage2(u8"' in standard search paths", 26);
             std::string message;
-            message.reserve(29 + executablePath.c_str() + 26 + 1);
+            message.reserve(29 + executablePath.length() + 26 + 1);
             message.append(errorMessage);
             message.append(executablePath);
             message.append(errorMessage2);
@@ -399,7 +284,9 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Try to get the process' exit code. If the process hasn't exited yet,
     // this method will return the special exit code STILL_ACTIVE.
-    DWORD exitCode = getProcessExitCode(impl.ChildProcessHandle);
+    DWORD exitCode = Nuclex::Support::Threading::Windows::WindowsProcessApi::GetProcessExitCode(
+      impl.ChildProcessHandle
+    );
 
     // We got STILL_ACTIVE, but the process may have exited with this as its actual
     // exit code. So make sure the process exited via WaitForSingleObject()...
@@ -460,12 +347,14 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   int Process::Join(std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */) {
+    using Nuclex::Support::Threading::Windows::WindowsProcessApi;
+
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
       throw std::logic_error(u8"Process was not started or is already joined");
     }
 
-    DWORD exitCode = getProcessExitCode(impl.ChildProcessHandle);
+    DWORD exitCode = WindowsProcessApi::GetProcessExitCode(impl.ChildProcessHandle);
 
     // Well, the process may have exited with STILL_ACTIVE as its exit code :-(
     // Also check WaitForSingleObject() here...
@@ -475,7 +364,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       for(;;) {
         DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, 4);
         if(result == WAIT_OBJECT_0) {
-          exitCode = getProcessExitCode(impl.ChildProcessHandle);
+          exitCode = WindowsProcessApi::GetProcessExitCode(impl.ChildProcessHandle);
           break; // Yep, someone returned STILL_ACTIVE as the process' exit code
         } else if(result != WAIT_TIMEOUT) {
           DWORD lastErrorCode = ::GetLastError();

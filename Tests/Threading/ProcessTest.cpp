@@ -30,7 +30,7 @@ License along with this library
 // An executable that is in the default search path, has an exit code of 0,
 // does not need super user privileges and does nothing bad when run.
 #if defined(NUCLEX_SUPPORT_WIN32)
-  #define NUCLEX_SUPPORT_HARMLESS_EXECUTABLE u8"net.exe"
+  #define NUCLEX_SUPPORT_HARMLESS_EXECUTABLE u8"hostname.exe"
 #else
   #define NUCLEX_SUPPORT_HARMLESS_EXECUTABLE u8"ls"
 #endif
@@ -97,7 +97,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(ProcessTest, WaitAfterJointCausesException) {
+  TEST(ProcessTest, WaitAfterJoinCausesException) {
     Process test(NUCLEX_SUPPORT_HARMLESS_EXECUTABLE);
 
     test.Start();
@@ -151,6 +151,52 @@ namespace Nuclex { namespace Support { namespace Threading {
     EXPECT_FALSE(test.IsRunning());
   }
 
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_HAVE_TEST_EXECUTABLES)
+  TEST(ProcessTest, ChildSegmentationFaultCausesExceptionInJoin) {
+    Process test("./segfault");
+
+    test.Start();
+    EXPECT_THROW(
+      test.Join(),
+      std::runtime_error
+    );
+  }
+#endif // defined(NUCLEX_SUPPORT_HAVE_TEST_EXECUTABLES)
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_HAVE_TEST_EXECUTABLES)
+  TEST(ProcessTest, ExitCodeIsCapturedByJoin) {
+    Process test("./badexit");
+
+    test.Start();
+    int exitCode = test.Join();
+    EXPECT_EQ(exitCode, 1);
+  }
+#endif // defined(NUCLEX_SUPPORT_HAVE_TEST_EXECUTABLES)
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_HAVE_TEST_EXECUTABLES)
+  TEST(ProcessTest, ExitCodeIsCapturedByWait) {
+    Process test("./badexit");
+
+    test.Start();
+    test.Wait(); // Wait reaps the zombie process here on Linux systems
+    int exitCode = test.Join();
+    EXPECT_EQ(exitCode, 1);
+  }
+#endif // defined(NUCLEX_SUPPORT_HAVE_TEST_EXECUTABLES)
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_HAVE_TEST_EXECUTABLES)
+  TEST(ProcessTest, ExitCodeIsCapturedByisRunning) {
+    Process test("./badexit");
+
+    test.Start();
+    while(test.IsRunning()) {
+      ;
+    }
+    int exitCode = test.Join();
+    EXPECT_EQ(exitCode, 1);
+  }
+#endif // defined(NUCLEX_SUPPORT_HAVE_TEST_EXECUTABLES)
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading
