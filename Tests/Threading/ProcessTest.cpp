@@ -152,6 +152,37 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 
   // ------------------------------------------------------------------------------------------- //
+
+  class Observer {
+    public: void AcceptStdOut(const char *characters, std::size_t count) {
+      this->output.append(characters, count);
+    }
+
+    public: std::string output;
+  };
+
+  TEST(ProcessTest, CanCaptureStdout) {
+    Observer observer;
+
+#if defined(NUCLEX_SUPPORT_WIN32)
+    Process test(u8"cmd.exe");
+    test.StdOut.Subscribe<Observer, &Observer::AcceptStdOut>(&observer);
+    test.Start({ u8"/c", "dir", "/b" });
+#else
+    Process test(u8"ls");
+    test.StdOut.Subscribe<Observer, &Observer::AcceptStdOut>(&observer);
+    test.Start({ u8"-l" });
+#endif
+
+    int exitCode = test.Join();
+    EXPECT_EQ(exitCode, 0);
+
+    // Check for some directories that should have been listed by ls / dir
+    EXPECT_GE(observer.output.length(), 21);
+    //EXPECT_NE(observer.output.find(u8".."), std::string::npos);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_HAVE_TEST_EXECUTABLES)
   TEST(ProcessTest, ChildSegmentationFaultCausesExceptionInJoin) {
     Process test("./segfault");

@@ -27,7 +27,7 @@ License along with this library
 
 #include "../../Helpers/WindowsApi.h"
 
-#include <cassert>
+#include <cassert> // for assert()
 
 namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
@@ -63,7 +63,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
     ///   Index of the pipe end (0 or 1) whose handle will be returned
     /// </param>
     /// <returns>The handle of requested end of the pipe</returns>
-    public: HANDLE GetOneEnd(std::size_t whichEnd) {
+    public: HANDLE GetOneEnd(std::size_t whichEnd) const {
       assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
       return this->ends[whichEnd];
     }

@@ -169,7 +169,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     ::PROCESS_INFORMATION childProcessInfo = {0};
     {
-      STARTUPINFO childProcessStartupSettings = {0};
+      STARTUPINFOW childProcessStartupSettings = {0};
       childProcessStartupSettings.cb = sizeof(childProcessStartupSettings);
       childProcessStartupSettings.dwFlags = STARTF_USESTDHANDLES;
       childProcessStartupSettings.hStdInput = stdinPipe.GetOneEnd(0);
@@ -293,9 +293,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     if(exitCode == STILL_ACTIVE) {
       DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, 0U);
       if(result == WAIT_OBJECT_0) {
-        return true; // Process did indeed exit with STILL_ACTIVE as its exit code.
+        return false; // Process did indeed exit with STILL_ACTIVE as its exit code.
       } else if(result == WAIT_TIMEOUT) {
-        return false; // Process was really still running
+        return true; // Process was really still running
       }
 
       DWORD lastErrorCode = ::GetLastError();
@@ -365,8 +365,6 @@ namespace Nuclex { namespace Support { namespace Threading {
       DWORD startTickCount = ::GetTickCount();
       for(;;) {
 
-        PumpOutputStreams();
-
         DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, 4);
         if(result == WAIT_OBJECT_0) {
           exitCode = WindowsProcessApi::GetProcessExitCode(impl.ChildProcessHandle);
@@ -389,6 +387,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       }
     }
+
+    // Pump the stdout and stderr pipes first. If the process ended before Join() was
+    // called, this may be the only chance to obtain its output. As far as I can tell,
+    // it's like a Linux zombie process and the pipe buffers stay up until ::CloseHandle()
+    PumpOutputStreams();
 
     // Process is well and truly done, close its process handle and clear our handle
     {

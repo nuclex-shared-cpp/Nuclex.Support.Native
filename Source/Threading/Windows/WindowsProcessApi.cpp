@@ -64,11 +64,19 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
   Pipe::~Pipe() {
     if(this->ends[1] != INVALID_HANDLE_VALUE) {
       BOOL result = ::CloseHandle(this->ends[1]);
+#if defined(NDEBUG)
+      (void)result; // Without this VS2019 prints a compiler warning
+#else
       assert((result != FALSE) && u8"Unused pipe side is successfully closed");
+#endif
     }
     if(this->ends[0] != INVALID_HANDLE_VALUE) {
       BOOL result = ::CloseHandle(this->ends[0]);
+#if defined(NDEBUG)
+      (void)result; // Without this VS2019 prints a compiler warning
+#else
       assert((result != FALSE) && u8"Unused pipe side is successfully closed");
+#endif
     }
   }
 
@@ -111,13 +119,6 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
     return end;
   }
 
-  // ------------------------------------------------------------------------------------------- //
-/*
-  HANDLE Pipe::GetOneEnd(std::size_t whichEnd) {
-    assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
-    return this->ends[whichEnd];
-  }
-*/
   // ------------------------------------------------------------------------------------------- //
 
   DWORD WindowsProcessApi::GetProcessExitCode(HANDLE processHandle) {
