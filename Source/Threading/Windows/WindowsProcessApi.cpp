@@ -28,7 +28,10 @@ License along with this library
 #include "Nuclex/Support/Text/StringConverter.h"
 #include "../../Text/Utf8/checked.h"
 
-#include <cassert>
+#include <algorithm> // for std::max()
+#include <cassert> // for assert()
+
+#include <Shlwapi.h> // for ::PathIsRelativeW()
 
 namespace {
 
@@ -137,21 +140,126 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::wstring WindowsProcessApi::getModuleFileName(HMODULE moduleHandle /* = nullptr */) {
-    std::wstring executablePath;
-    executablePath.resize(MAX_PATH);
+  void WindowsProcessApi::GetAbsoluteExecutablePath(
+    std::wstring &target, const std::wstring &executable
+  ) {
+    if(isPathRelative(executable)) {
+
+      // Try the executable's own path
+      {
+        getModuleFileName(target);
+        removeFileFromPath(target);
+        appendPath(target, executable);
+        if(doesFileExist(target)) {
+          return;
+        }
+      }
+
+      // Try the Windows system directory
+      {
+        getSystemDirectory(target);
+        appendPath(target, executable);
+        if(doesFileExist(target)) {
+          return;
+        }
+      }
+
+      // Try the Windows directory
+      {
+        getWindowsDirectory(target);
+        appendPath(target, executable);
+        if(doesFileExist(target)) {
+          return;
+        }
+      }
+
+      // Could test ::GetDllDirectoryW() here. Should we?
+
+      // Finally, search the standard paths (PATH environment variable)
+      {
+        searchExecutablePath(target, executable);
+        if(doesFileExist(target)) {
+          return;
+        }
+      }
+
+    }
+
+    // Path was absolute or we failed to find the requested executable
+    target.assign(executable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool WindowsProcessApi::doesFileExist(const std::wstring &path) {
+    DWORD attributes = ::GetFileAttributesW(path.c_str());
+    if(attributes == INVALID_FILE_ATTRIBUTES) {
+      DWORD lastErrorCode = ::GetLastError();
+      if(lastErrorCode == ERROR_FILE_NOT_FOUND) {
+        return false;
+      }
+
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not check process exit code", lastErrorCode
+      );
+    }
+
+    return (
+      ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0) &&
+      ((attributes & FILE_ATTRIBUTE_DEVICE) == 0)
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool WindowsProcessApi::isPathRelative(const std::wstring &path) {
+    BOOL result = ::PathIsRelativeW(path.c_str());
+    return (result == TRUE); // For once, there is no error return
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+  
+  void WindowsProcessApi::appendPath(std::wstring &path, const std::wstring &extra) {
+    path.resize(MAX_PATH);
+    BOOL result = ::PathAppendW(path.data(), extra.c_str());
+    if(result == FALSE) {
+      DWORD errorCode = ::GetLastError();
+      Helpers::WindowsApi::ThrowExceptionForSystemError(u8"Could not append path", errorCode);
+    }
+
+    int pathLength = ::lstrlenW(path.c_str());
+    path.resize(static_cast<std::size_t>(pathLength));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsProcessApi::removeFileFromPath(std::wstring &path) {
+    BOOL result = ::PathRemoveFileSpecW(path.data());
+    if(result == TRUE) {
+      int pathLength = ::lstrlenW(path.c_str());
+      path.resize(static_cast<std::size_t>(pathLength));
+    }
+    // FALSE is no error return, it only states nothing was removed
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsProcessApi::getModuleFileName(
+    std::wstring &target, HMODULE moduleHandle /* = nullptr */
+  ) {
+    target.resize(MAX_PATH);
 
     // Try to get the executable path with a buffer of MAX_PATH characters.
     DWORD result = ::GetModuleFileNameW(
-      moduleHandle, executablePath.data(), static_cast<DWORD>(executablePath.size())
+      moduleHandle, target.data(), static_cast<DWORD>(target.size())
     );
 
     // As long the function returns the buffer size, it is indicating that the buffer
     // was too small. Keep enlarging the buffer by a factor of 2 until it fits.
-    while(result == executablePath.size()) {
-      executablePath.resize(executablePath.size() * 2);
+    while(result == target.size()) {
+      target.resize(target.size() * 2);
       result = ::GetModuleFileNameW(
-        moduleHandle, &executablePath[0], static_cast<DWORD>(executablePath.size())
+        moduleHandle, target.data(), static_cast<DWORD>(target.size())
       );
     }
 
@@ -162,8 +270,39 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
       Helpers::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
-    executablePath.resize(result);
-    return executablePath;
+    target.resize(result);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsProcessApi::getSystemDirectory(std::wstring &target) {
+    target.resize(MAX_PATH);
+
+    UINT result = ::GetSystemDirectoryW(target.data(), MAX_PATH);
+    if(result == 0) {
+      DWORD errorCode = ::GetLastError();
+      Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not get Windows system directory", errorCode
+      );
+    }
+
+    target.resize(result);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsProcessApi::getWindowsDirectory(std::wstring &target) {
+    target.resize(MAX_PATH);
+
+    UINT result = ::GetWindowsDirectoryW(target.data(), MAX_PATH);
+    if(result == 0) {
+      DWORD errorCode = ::GetLastError();
+      Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not get Windows directory", errorCode
+      );
+    }
+
+    target.resize(result);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -222,3 +361,23 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 }}}} // namespace Nuclex::Support::Threading::Windows
 
 #endif // defined(NUCLEX_SUPPORT_WIN32)
+
+
+
+#if 0
+std::wstring WindowsProcessApi::combinePaths(std::wstring &path, const std::wstring &extra) {
+  std::wstring result;
+  result.resize(std::max(std::size_t(MAX_PATH), path.length() + extra.length() + 1));
+
+  LPWSTR combined = ::PathCombineW(result.data(), path.c_str(), extra.c_str());
+  if(combined == nullptr) {
+    DWORD errorCode = ::GetLastError();
+    Helpers::WindowsApi::ThrowExceptionForSystemError(u8"Could not combine paths", errorCode);
+  }
+
+  int pathLength = ::lstrlenW(result.c_str());
+  result.resize(static_cast<std::size_t>(pathLength));
+
+  return result;
+}
+#endif

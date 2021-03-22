@@ -147,6 +147,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     const std::vector<std::string> &arguments /* = std::vector<std::string>() */,
     bool prependExecutableName /* = true */
   ) {
+    using Nuclex::Support::Threading::Windows::WindowsProcessApi;
+    using Nuclex::Support::Text::StringConverter;
+
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle != INVALID_HANDLE_VALUE) {
       throw std::logic_error(u8"Child process is still running or not joined yet");
@@ -179,31 +182,11 @@ namespace Nuclex { namespace Support { namespace Threading {
       // Launch the new process. We're using the UTF-16 version (and convert everything
       // from UTF-8 to UTF-16) to ensure we can deal with unicode paths and executable names.
       {
-        std::wstring utf16ExecutablePath = Nuclex::Support::Text::StringConverter::WideFromUtf8(
-          this->executablePath
+        std::wstring utf16ExecutablePath = StringConverter::WideFromUtf8(this->executablePath);
+        std::wstring absoluteUtf16ExecutablePath;
+        WindowsProcessApi::GetAbsoluteExecutablePath(
+          absoluteUtf16ExecutablePath, utf16ExecutablePath
         );
-        wchar_t absoluteUtf16ExecutablePath[MAX_PATH];
-        {
-          LPWSTR unusedFilePart;
-          DWORD result = ::SearchPathW(
-            nullptr, utf16ExecutablePath.c_str(), L".exe",
-            MAX_PATH, absoluteUtf16ExecutablePath, &unusedFilePart
-          );
-          if(result == 0) {
-            DWORD lastErrorCode = ::GetLastError();
-
-            static const std::string errorMessage(u8"Could not locate executable '", 29);
-            static const std::string errorMessage2(u8"' in standard search paths", 26);
-            std::string message;
-            message.reserve(29 + executablePath.length() + 26 + 1);
-            message.append(errorMessage);
-            message.append(executablePath);
-            message.append(errorMessage2);
-            Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-              message, lastErrorCode
-            );
-          }
-        }
 
         std::wstring commandLineArguments;
         if(prependExecutableName) {
@@ -218,11 +201,11 @@ namespace Nuclex { namespace Support { namespace Threading {
             Nuclex::Support::Text::StringConverter::WideFromUtf8(arguments[index])
           );
         }
+
         BOOL result = ::CreateProcessW(
-          prependExecutableName ? nullptr : utf16ExecutablePath.data(),
+          //prependExecutableName ? nullptr : utf16ExecutablePath.data(),
+          absoluteUtf16ExecutablePath.c_str(),
           commandLineArguments.data(),
-          //nullptr, // application name -> figure it out yourself!
-          //utf16ExecutablePath.data(),
           nullptr, // use default security attributes
           nullptr, // use default thread security attributes
           TRUE, // yes, we want to inherit (some) handles

@@ -88,12 +88,68 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
     /// </returns>
     public: static DWORD GetProcessExitCode(HANDLE processHandle);
 
+    /// <summary>Locates an executable by emulating the search of ::LoadLibrary()</summary>
+    /// <param name="target">Target string to store the executable path in</param>
+    /// <param name="executable">Executable, with or without path</param>
+    /// <remarks>
+    ///   <para>
+    ///     This looks in the &quot;executable image path&quot; first, just like
+    ///     ::LoadLibrary() would do and how ::CreateProcess() would, if we weren't forced
+    ///     to use its &quot;module name&quot; parameter.
+    ///   </para>
+    ///   <para>
+    ///     We're not looking to perfectly emulate ::LoadLibrary(), just guarantee a behavior
+    ///     that allows executables from the application's own directory to be reliably
+    ///     called first.
+    ///   </para>
+    ///   <para>
+    ///     If this method can't find the executable in any of the locations it checks,
+    ///     or if the executable is an absolute path, the executable will be returned as-is.
+    ///   </para>
+    /// </remarks>
+    public: static void GetAbsoluteExecutablePath(
+      std::wstring &target, const std::wstring &executable
+    );
+
+    /// <summary>Checks if the specified path exists and if it is a file</summary>
+    /// <param name="path">Path that will be checked</param>
+    /// <returns>True if the path exists and is a file, false otherwise</returns>
+    private: static bool doesFileExist(const std::wstring &path);
+
+    /// <summary>Checks if the specified path is a relative path</summary>
+    /// <param name="path">Path that will be checked</param>
+    /// <returns>True if the path is a relative path</returns>
+    private: static bool isPathRelative(const std::wstring &path);
+
+    /// <summary>Appends one path to another</summary>
+    /// <param name="path">Path to which another path will be appended</param>
+    /// <param name="extra">Other path that will be appended</param>
+    private: static void appendPath(std::wstring &path, const std::wstring &extra);
+
+    /// <summary>Removes the file name from a path containing a file name</summary>
+    /// <param name="path">Path from which the file name will be removed</param>
+    private: static void removeFileFromPath(std::wstring &path);
+
     /// <summary>Obtains the full path of the specified module</summary>
     /// <param name="moduleHandle">
     ///   Handle of the module whose path will be determined, nullptr for executable
     /// </param>
     /// <returns>The full path to the specified module</returns>
-    private: static std::wstring getModuleFileName(HMODULE moduleHandle = nullptr);
+    private: static void getModuleFileName(
+      std::wstring &target, HMODULE moduleHandle = nullptr
+    );
+
+    /// <summary>Discovers the Windows system directory</summary>
+    /// <param name="target">
+    ///   String in which the full path to the Windows system directory will be placed
+    /// </param>
+    private: static void getSystemDirectory(std::wstring &target);
+
+    /// <summary>Discovers the Windows directory</summary>
+    /// <param name="target">
+    ///   String in which the full path to the Windows directory will be placed
+    /// </param>
+    private: static void getWindowsDirectory(std::wstring &target);
 
     /// <summary>
     ///   Determines the absolute path of an executable by checking the system's search paths
