@@ -322,6 +322,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     DWORD timeoutMilliseconds = static_cast<DWORD>(patience.count());
     DWORD startTickCount = ::GetTickCount();
     for(;;) {
+
+      PumpOutputStreams();
+
       DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, 4);
       if(result == WAIT_OBJECT_0) {
         return true;
@@ -339,8 +342,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         return false;
       }
 
-      PumpOutputStreams();
-    }
+    } // for(;;)
 
   }
 
@@ -362,6 +364,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       DWORD timeoutMilliseconds = static_cast<DWORD>(patience.count());
       DWORD startTickCount = ::GetTickCount();
       for(;;) {
+
+        PumpOutputStreams();
+
         DWORD result = ::WaitForSingleObject(impl.ChildProcessHandle, 4);
         if(result == WAIT_OBJECT_0) {
           exitCode = WindowsProcessApi::GetProcessExitCode(impl.ChildProcessHandle);
@@ -382,7 +387,6 @@ namespace Nuclex { namespace Support { namespace Threading {
           );
         }
 
-        PumpOutputStreams();
       }
     }
 
@@ -407,7 +411,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Process::PumpOutputStreams() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
-      return; // Should be throw an exception here? 
+      return; // Should we throw an exception here?
     }
 
     HANDLE handles[] = { impl.StdoutHandle, impl.StderrHandle };
@@ -443,6 +447,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
         this->buffer.resize(std::min(availableByteCount, BatchSize));
         for(;;) {
+
           DWORD readByteCount;
           BOOL result = ::ReadFile(
             handles[pipeIndex],
@@ -453,7 +458,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           if(result == FALSE) {
             DWORD lastErrorCode = ::GetLastError();
             if(lastErrorCode == ERROR_BROKEN_PIPE) {
-              continue; // Process has terminated its end of the pipe, this is okay.
+              break; // Process has terminated its end of the pipe, this is okay.
             } else if(pipeIndex == 0) {
               Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
                 u8"Failed to read pipe buffer for stdout", lastErrorCode
@@ -475,7 +480,8 @@ namespace Nuclex { namespace Support { namespace Threading {
           } else {
             availableByteCount -= readByteCount;
           }
-        }
+
+        } // for(;;)
       }
 
     } // for(pipeIndex)

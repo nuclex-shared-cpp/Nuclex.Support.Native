@@ -18,21 +18,62 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_THREADING_WINDOWS_POSIXPROCESSAPI_H
-#define NUCLEX_SUPPORT_THREADING_WINDOWS_POSIXPROCESSAPI_H
+#ifndef NUCLEX_SUPPORT_THREADING_POSIX_POSIXPROCESSAPI_H
+#define NUCLEX_SUPPORT_THREADING_POSIX_POSIXPROCESSAPI_H
 
 #include "Nuclex/Support/Config.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_WIN32)
 
 #include "../../Helpers/PosixApi.h"
+
+#include <cassert> // for assert()
 
 namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Wraps the Windows process and inter-process communication API</summary>
-  class WindowsProcessApi {
+  /// <summary>Sets up a pipe that can be used for inter-process communication</summary>
+  class Pipe {
+
+    /// <summary>Opens a new pipe</summary>
+    public: Pipe();
+
+    /// <summary>Closes whatever end(s) of the pipe have not been used yet</summary>
+    public: ~Pipe();
+
+    /// <summary>Closes one end of the pipe</summary>
+    /// <param name="whichEnd">Which end of the pipe to close</param>
+    public: void CloseOneEnd(int whichEnd);
+
+    /// <summary>Relinquishes ownership of the file number for one end of the pipe</summary>
+    /// <param name="whichEnd">For which end of the pipe ownership will be released</param>
+    /// <returns>The file number of the relinquished end of the pipe</returns>
+    public: int ReleaseOneEnd(int whichEnd);
+
+    /// <summary>Enabled non-blocking IO for one end of the pipe</summary>
+    /// <param name="whichEnd">For which end non-blocking IO will be enabled</param>
+    public: void SetEndNonBlocking(int whichEnd);
+
+    /// <summary>Fetches the file number of one end of the pipe</summary>
+    /// <param name="whichEnd">
+    ///   Index of the pipe end (0 or 1) whose file number will be returned
+    /// </param>
+    /// <returns>The file number for the requested end of the pipe</returns>
+    public: int GetOneEnd(int whichEnd) const {
+      assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
+      return this->ends[whichEnd];
+    }
+
+    /// <summary>File numbers for each end of the pipe</summary>
+    private: int ends[2];
+   
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Wraps the Posix process and inter-process communication API</summary>
+  class PosixProcessApi {
 
 
   };
@@ -41,6 +82,6 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
 }}}} // namespace Nuclex::Support::Threading::Posix
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // !defined(NUCLEX_SUPPORT_WIN32)
 
-#endif // NUCLEX_SUPPORT_THREADING_WINDOWS_POSIXPROCESSAPI_H
+#endif // NUCLEX_SUPPORT_THREADING_POSIX_POSIXPROCESSAPI_H

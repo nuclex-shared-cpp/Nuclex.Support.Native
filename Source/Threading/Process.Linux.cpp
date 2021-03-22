@@ -27,7 +27,7 @@ License along with this library
 
 #include "Nuclex/Support/Errors/TimeoutError.h"
 #include "Nuclex/Support/ScopeGuard.h"
-#include "../Helpers/PosixApi.h" // to convert error numbers to messages
+#include "Posix/PosixProcessApi.h" // for Pipe, PosixProcessApi
 
 #include <exception> // for std::terminate()
 #include <cassert> // for assert()
@@ -41,77 +41,6 @@ License along with this library
 // http://www.microhowto.info/howto/capture_the_output_of_a_child_process_in_c.html
 
 namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Sets up a pipe that can be used for inter-process communication</summary>
-  class Pipe {
-
-    /// <summary>Opens a new pipe</summary>
-    public: Pipe() :
-      ends {-1, -1} {
-      int result = ::pipe(this->ends);
-      if(unlikely(result != 0)) {
-        int errorNumber = errno;
-        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-          u8"Could not set up a pipe", errorNumber
-        );
-      }
-    }
-
-    /// <summary>Closes whatever end(s) of the pipe have not been used yet</summary>
-    public: ~Pipe() {
-      if(this->ends[1] != -1) {
-        int result = ::close(this->ends[1]);
-        assert((result == 0) && u8"Right end of temporary pipe closed successfully");
-      }
-      if(this->ends[0] != -1) {
-        int result = ::close(this->ends[0]);
-        assert((result == 0) && u8"Left end of temporary pipe closed successfully");
-      }
-    }
-
-    /// <summary>Closes one end of the pipe</summary>
-    /// <param name="whichEnd">Which end of the pipe to close</param>
-    public: void CloseOneEnd(int whichEnd) {
-      assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
-
-      int result = ::close(this->ends[whichEnd]);
-      if(unlikely(result != 0)) {
-        int errorNumber = errno;
-        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-          u8"Could not close one end of a pipe", errorNumber
-        );
-      }
-
-      this->ends[whichEnd] = -1;
-    }
-
-    /// <summary>Relinquishes ownership of the file number for one end of the pipe</summary>
-    /// <param name="whichEnd">For which end of the pipe ownership will be released</param>
-    /// <returns>The file number of the relinquished end of the pipe</returns>
-    public: int ReleaseOneEnd(int whichEnd) {
-      assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
-
-      int end = this->ends[whichEnd];
-      this->ends[whichEnd] = -1;
-      return end;
-    }
-
-    /// <summary>Fetches the file number of one end of the pipe</summary>
-    /// <param name="whichEnd">
-    ///   Index of the pipe end (0 or 1) whose file number will be returned
-    /// </param>
-    /// <returns>The file number for the requested end of the pipe</returns>
-    public: int GetOneEnd(int whichEnd) const {
-      assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
-      return this->ends[whichEnd];
-    }
-
-    /// <summary>File numbers for each end of the pipe</summary>
-    private: int ends[2];
-   
-  };
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -219,34 +148,35 @@ namespace {
   ///   Command line arguments that will be passed to the new executable
   /// </param>
   [[noreturn]] void executeChildProcess(
+    //const std::string &workingDirectory,
     const std::string &executablePath,
     const std::vector<std::string> &arguments,
     bool prependExecutablePath
   ) {
     static const std::string errorMessage(u8"Could not execute ", 18);
 
-    // Build an array with the (non-const) values of all argument. Using const_cast here
-    // is safe so long as the OS is POSIX-compatible, which promises not to modify
-    // the arguments strings passed to any of the exec*() methods:
+    // Build an array with the (non-const) values of all arguments. Using const_cast
+    // here is safe so long as the OS is POSIX-compatible, which promises not to
+    // modify the argument strings passed to any of the exec*() methods:
     // https://www.man7.org/linux/man-pages/man3/exec.3p.html
     std::vector<char *> argumentValues;
-    if(prependExecutablePath) {
-      argumentValues.reserve(arguments.size() + 2);
-      //argumentValues.push_back(const_cast<char *>(::basename(executablePath.c_str())));
-      argumentValues.push_back(const_cast<char *>(executablePath.c_str()));
-    } else {
-      argumentValues.reserve(arguments.size() + 1);
+    {
+      if(prependExecutablePath) {
+        argumentValues.reserve(arguments.size() + 2);
+        argumentValues.push_back(const_cast<char *>(executablePath.c_str()));
+      } else {
+        argumentValues.reserve(arguments.size() + 1);
+      }
+      for(std::size_t index = 0; index < arguments.size(); ++index) {
+        argumentValues.push_back(const_cast<char *>(arguments[index].c_str()));
+      }
+      argumentValues.push_back(nullptr); // Terminator
     }
-    for(std::size_t index = 0; index < arguments.size(); ++index) {
-      argumentValues.push_back(const_cast<char *>(arguments[index].c_str()));
-    }
-    argumentValues.push_back(nullptr); // Terminator
 
     // Calling any of the ::exec*() methods will replace the process with the specified
     // executable, so if it succeeds, this code is no longer running or even present.
     // Some system resources, such as stdin, stdout and stderr do propagate to the
     // switched-out process, however.
-    //std::cout << arguments << std::endl;
     int result = ::execvp(executablePath.c_str(), &argumentValues[0]);
     if(likely(result == -1)) {
       int errorNumber = errno;
@@ -255,8 +185,8 @@ namespace {
       message.append(errorMessage);
       message.append(executablePath);
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(message, errorNumber);
-    } else { // execlp() should only return if an error occurs
-      assert((result == -1) && u8"execlp() returned and reported a result that was not -1");
+    } else { // execvp() should only return if an error occurs
+      assert((result == -1) && u8"execvp() returned and reported a result that was not -1");
       std::terminate();
     }
   }
@@ -354,6 +284,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     const std::vector<std::string> &arguments /* = std::vector<std::string>() */,
     bool prependExecutableName /* = true */
   ) {
+    using Nuclex::Support::Threading::Posix::Pipe;
+
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId != 0) {
       throw std::logic_error(u8"Child process is still running or not joined yet");
@@ -379,6 +311,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       stdinPipe.CloseOneEnd(0);
       stdoutPipe.CloseOneEnd(1);
       stderrPipe.CloseOneEnd(1);
+
+      stdoutPipe.SetEndNonBlocking(0);
+      stderrPipe.SetEndNonBlocking(0);
 
       // And take hold of the wanted ends of each pipe
       PlatformDependentImplementationData &impl = getImplementationData();
@@ -498,44 +433,30 @@ namespace Nuclex { namespace Support { namespace Threading {
       sigChild.Block();
       for(;;) {
 
+        // Pump the stdout and stderr pipes first. If the process ended before Wait() was
+        // called, this may be the only chance to obtain its output before ::waitpid() reaps
+        // the zombie process (sending the pipe buffers to the afterlife).
+        PumpOutputStreams();
+
         // Check if the child process our caller is interested in has already exited
-        int result = ::waitpid(impl.ChildProcessId, &impl.ExitCode, WNOHANG);
-        if(unlikely(result == -1)) {
-          int errorNumber = errno;
-          Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-            u8"Could not check status of child process", errorNumber
-          );
-        } else if(result != 0) {
-          assert((result == impl.ChildProcessId) && u8"Correct child process has exited");
-          impl.Finished = true;
-          return true; // The child process terminated, our wait was successful
-        }
-
-        // This should not be a race condition. If SIGCHLD is signalled before ::sigtimedwait()
-        // is called, the method should clear the signal and immediately return.
-        //
-        // Whilst debugging, I once had it wait for the full wait time despite this,
-        // so to be on the safe side, we check once every few milliseconds and in
-        // the worst case, we're only a few milliseconds late.
-
-        // Wait until SIGCHLD is signaled. This indices that some child process has
-        // terminated and it may be the one we're waiting for.
-        result = ::sigtimedwait(&sigChild.GetSignalSet(), nullptr, &waitTime);
-        if(unlikely(result == -1)) {
-          int errorNumber = errno;
-          if(unlikely(errorNumber == EINTR)) {
-            continue; // Another signal interrupted the wait, just keep trying...
-          } else if(unlikely(errorNumber != EAGAIN)) {
+        {
+          int result = ::waitpid(impl.ChildProcessId, &impl.ExitCode, WNOHANG);
+          if(unlikely(result == -1)) {
+            int errorNumber = errno;
             Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-              u8"Could not wait for signal from child process", errorNumber
+              u8"Could not check status of child process", errorNumber
             );
+          } else if(result != 0) {
+            assert((result == impl.ChildProcessId) && u8"Correct child process has exited");
+            impl.Finished = true;
+            return true; // The child process terminated, our wait was successful
           }
         }
 
-        // Unless the wait was stopped because of SIGCHLD, check if
-        // the caller-specified patience time has been exceeded.
-        if(result != SIGCHLD) {
-          result = ::clock_gettime(CLOCK_MONOTONIC, &currentTime);
+        // Check if the caller-specified patience time has been exceeded.
+        // If the provided timeout was 0, this will bail out after the first ::waitpid().
+        {
+          int result = ::clock_gettime(CLOCK_MONOTONIC, &currentTime);
           if(unlikely(result == -1)) {
             int errorNumber = errno;
             Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
@@ -546,7 +467,7 @@ namespace Nuclex { namespace Support { namespace Threading {
             (currentTime.tv_sec > timeoutTime.tv_sec) ||
             (
               (currentTime.tv_sec == timeoutTime.tv_sec) &&
-              (currentTime.tv_nsec > timeoutTime.tv_nsec)
+              (currentTime.tv_nsec >= timeoutTime.tv_nsec)
             )
           );
           if(hasTimedOut) {
@@ -554,7 +475,32 @@ namespace Nuclex { namespace Support { namespace Threading {
           }
         }
 
-      } // for
+        // There should not be a race condition between ::waitpid() at the top and
+        // ::sigtimedwait() here. If SIGCHLD is signalled inbetween, a flag should
+        // be set, ::sigtimedwait() should clear it again and return immediately.
+        //
+        // Whilst debugging, I once watched it wait for the full wait time despite
+        // this. We need to keep pumping stdout and stderr anyway, so we'll re-check
+        // once every few milliseconds, meaning that in the worst case, we report
+        // process termination a few milliseconds to late.
+
+        // Wait until SIGCHLD is signaled. This indicates that /some/ child process
+        // has terminated and it may be the one we're waiting for.
+        {
+          int result = ::sigtimedwait(&sigChild.GetSignalSet(), nullptr, &waitTime);
+          if(unlikely(result == -1)) {
+            int errorNumber = errno;
+            if(unlikely(errorNumber == EINTR)) {
+              continue; // Another signal interrupted the wait, just keep trying...
+            } else if(unlikely(errorNumber != EAGAIN)) { // EAGAIN means timeout
+              Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+                u8"Could not wait for signal from child process", errorNumber
+              );
+            }
+          }
+        }
+
+      } // for(;;)
     } // ChildSignalSet scope
   }
 
@@ -593,6 +539,63 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     return WEXITSTATUS(impl.ExitCode);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void Process::PumpOutputStreams() const {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessId == 0) {
+      return; // Should we throw an exception here?
+    }
+
+    const ::size_t BatchSize = 16384;
+    this->buffer.resize(BatchSize);
+
+    int fileNumbers[] = { impl.StdoutFileNumber, impl.StderrFileNumber };
+    for(std::size_t pipeIndex = 0; pipeIndex < 2; ++pipeIndex) {
+
+      for(;;) {
+
+        // Try to read data up to our buffer size from the pipe
+        ::ssize_t readByteCount = ::read(fileNumbers[pipeIndex], this->buffer.data(), BatchSize);
+        if(readByteCount == -1) {
+          int errorNumber = errno;
+          if(errorNumber == EINTR) {
+            continue; // A signal interrupted us, just try again
+          } else if(errorNumber == EAGAIN) {
+            break; // There was no data waiting in the pipe
+          } else if(pipeIndex == 0) {
+            Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+              u8"Failed to read pipe buffer for stdout", errorNumber
+            );
+          } else {
+            Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+              u8"Failed to read pipe buffer for stderr", errorNumber
+            );
+          }
+        }
+
+        // If we got any data, deliver it to any possible subscribers.
+        if(readByteCount > 0) {
+          if(pipeIndex == 0) {
+            this->StdOut.Emit(this->buffer.data(), readByteCount);
+          } else {
+            this->StdErr.Emit(this->buffer.data(), readByteCount);
+          }
+
+          // We don't know how much data is waiting in the pipe, so we simply do it
+          // like this: if is filled the whole buffer, there's likely more, if it
+          // wasn't enough to fill the buffer, we know the pipe has been emptied.
+          if(readByteCount < BatchSize) {
+            break;
+          }
+        } else {
+          break;
+        }
+      } // for(;;)
+
+    } // for(pipeIndex)
   }
 
   // ------------------------------------------------------------------------------------------- //
