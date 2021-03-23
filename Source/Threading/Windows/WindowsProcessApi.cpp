@@ -184,7 +184,8 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
       ON_SCOPE_EXIT { ::CloseHandle(snapshotHandle); };
 
       // Obtain the first thread from the snapshot.
-      THREADENTRY32 threadEntry;
+      THREADENTRY32 threadEntry = {0};
+      threadEntry.dwSize = sizeof(THREADENTRY32);
 
       // Begin the enumeration by asking for the first thread in the snapshot.
       // This probably resets an iterator somewhere within the snapshot.
@@ -204,9 +205,13 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
           result = ::PostThreadMessageW(threadEntry.th32ThreadID, WM_QUIT, 0, 0);
           if(result == FALSE) {
             DWORD lastErrorCode = ::GetLastError();
-            Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-              u8"Could not post quit message to child process thread", lastErrorCode
-            );
+            // ERROR_INVALID_THREAD_ID happens if the thread never called PeekMessage()
+            // That's not an error, it simply means threads is not the message pump thread.
+            if(lastErrorCode != ERROR_INVALID_THREAD_ID) {
+              Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+                u8"Could not post quit message to child process thread", lastErrorCode
+              );
+            }
           }
         }
 
@@ -248,6 +253,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
       DWORD windowThreadId = ::GetWindowThreadProcessId(
         topLevelWindowHandles[index], &windowProcessId
       );
+      (void)windowThreadId;
       // Apparently, this method has no failure return.
 
       if(windowProcessId == processId) {
