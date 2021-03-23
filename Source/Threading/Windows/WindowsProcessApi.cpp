@@ -33,7 +33,7 @@ License along with this library
 #include <cassert> // for assert()
 #include <vector> // for std::vector
 
-#include <Shlwapi.h> // for ::PathIsRelativeW()
+//#include <Shlwapi.h> // for ::PathIsRelativeW()
 #include <TlHelp32.h> // for ::CreateToolhelp32Snapshot()
 
 namespace {
@@ -51,6 +51,189 @@ namespace {
     windowHandles->push_back(windowHandle);
 
     return TRUE;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Removes the filename from a full path</summary>
+  /// <param name="pszPath">Path from which the filename will be removed</param>
+  /// <returns>TRUE if the filename was removed, FALSE if nothing was removed</returns>
+  /// <remarks>
+  ///   This is a reimplementation of the same-named method from Microsoft's shlwapi,
+  ///   done so we don't have to link shlwapi for three measly methods.
+  /// </remarks>
+  BOOL PathRemoveFileSpecW(LPWSTR pszPath) {
+    if(pszPath == nullptr) {
+      //::SetLastError(ERROR_INVALID_PARAMETER);
+      return FALSE;
+    }
+
+    // Go through the string, keeping track of the most recent backslash we found
+    LPWSTR lastSlashAddress = nullptr;
+    {
+      LPWSTR pszCurrentCharacter = pszPath;
+      while(*pszCurrentCharacter != 0) {
+        if(*pszCurrentCharacter == L'\\') {
+          lastSlashAddress = pszCurrentCharacter;
+        }
+        pszCurrentCharacter = ::CharNextW(pszCurrentCharacter);
+      }
+    }
+    if(lastSlashAddress == nullptr) {
+      return FALSE; // Path without backslashes...
+    }
+
+    std::wstring::size_type lastSlashIndex = lastSlashAddress - pszPath;
+    if(lastSlashIndex < 3) {
+      return FALSE; // Weirdo path ('a\') or a UNC path ('\\svr') without a filename
+    }
+    if(lastSlashIndex == 2) {
+      bool isDriveLetter = (
+        (pszPath[1] == L':') &&
+        (pszPath[2] == L'\\')
+      );
+      if(isDriveLetter) {
+        return FALSE; // It's a drive letter without a filename
+      }
+    }
+    if(lastSlashIndex == 3) {
+      bool isExtendedPath = (
+        (pszPath[0] == L'\\') &&
+        (pszPath[1] == L'\\') &&
+        (pszPath[2] == L'?') &&
+        (pszPath[3] == L'\\')
+      );
+      if(isExtendedPath) {
+        return FALSE; // It's an extended path without a filename
+      }
+    }
+
+    // We found a backslash that was not part of a UNC path, extended path or drive letter,
+    // so write a 0 byte to end the string here. If the backslash was the final character,
+    // it's removed, too. This is consistent and desired (ending a path with a backslash
+    // indicates it is a directory, the next call will to up one directory, just as it would
+    // happen if a filename was in the path).
+    *lastSlashAddress = L'\0';
+    return TRUE;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Checks whether a path is relative</summary>
+  /// <param name="pszPath">Path that will be checked for being relative</param>
+  /// <returns>TRUE if the path is relative, FALSE if it is absolute</returns>
+  /// <remarks>
+  ///   This is a reimplementation of the same-named method from Microsoft's shlwapi,
+  ///   done so we don't have to link shlwapi for three measly methods.
+  /// </remarks>
+  BOOL PathIsRelativeW(LPCWSTR pszPath) {
+    if(pszPath == nullptr) {
+      //::SetLastError(ERROR_INVALID_PARAMETER);
+      return TRUE;
+    }
+
+    // Empty path -> relative.
+    if(pszPath[0] == 0) {
+      return TRUE;
+    }
+
+    // Path begins with backslash -> absolute (but bullshit since drive depends on CWD)
+    if(pszPath[0] == L'\\') {
+      return FALSE;
+    }
+
+    // Path begins with <letter>:\ -> absolute.
+    if(pszPath[1] == L':') {
+      return (pszPath[2] != L'\\');
+    }
+
+    // Path begins with no UNC prefix, extended prefix or drive letter -> relative.
+    return TRUE;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Appends a directory or filename to an existing path</summary>
+  /// <param name="pszPath">Path to which the other path will be appended</param>
+  /// <param name="pszMore">Other path that will be appended to the first path</param>
+  /// <returns>TRUE if the path is relative, FALSE if it is absolute</returns>
+  /// <remarks>
+  ///   This is a reimplementation of the same-named method from Microsoft's shlwapi,
+  ///   done so we don't have to link shlwapi for three measly methods.
+  ///   Unlike the original, this can destroy pszPath if it starts with dots ('.')
+  ///   and the combined path does not fit in the buffer. This library does not
+  ///   encounter that case, but if you want to rip this code, you should be aware :)
+  /// </remarks>
+  BOOL PathAppendW(LPWSTR pszPath, LPCWSTR pszMore) {
+    if((pszPath == nullptr) || (pszMore == nullptr)) {
+      ::SetLastError(ERROR_INVALID_PARAMETER);
+      return FALSE;
+    }
+
+    // Skip initial dots (we don't need to deal with UTF-16 in this instance because a
+    // '.' fits into one UTF-16 codepoint and the '.' are all at the beginning).
+    //
+    // We are we doing this? Dunno. It's the behavior of Microsoft's method. Clueless.
+    LPWSTR pszEnd;
+    {
+      std::wstring::size_type skipCount = 0;
+      while(pszPath[skipCount] == L'.') {
+        ++skipCount;
+      }
+
+      pszEnd = pszPath;
+      if(skipCount > 0) {
+        while(pszEnd[skipCount] != 0) {
+          pszEnd[0] = pszEnd[skipCount];
+          ++pszEnd;
+        }
+      } else {
+        while(*pszEnd != 0) {
+          ++pszEnd;
+        }
+      }
+    }
+
+    // Calculate the length of the buffer so far
+    // - pszPath is still points to the first character
+    // - pszEnd points to the end of the path (either \0 or, if shifted, garbage)
+    // If we need to bail, setting pszPath to \0 leaves the string sort of unmodified.
+    // (except the removal of the ..)
+    std::wstring::size_type pathLength = pszEnd - pszPath;
+    pszPath = pszEnd;
+
+    // If there is a previous character, go back by one character and check if
+    // it is a backslash. We only append a backslash if there is a previous character and
+    // it is not a backslash (if there's no previous character, the original path is empty)
+    if(pathLength >= 1) {
+      LPWSTR pszLast = ::CharPrevW(pszPath, pszEnd);
+      if(*pszLast != L'\\') {
+        if(pathLength >= 259) {
+          *pszPath = 0; // This may write above 260 chars, but we know the string was longer
+          ::SetLastError(ERROR_BUFFER_OVERFLOW);
+          return FALSE;
+        }
+        *pszEnd = L'\\';
+        ++pszEnd;
+        ++pathLength;
+      }
+    }
+
+    // Finally, append pszMore to pszPath
+    while(pathLength < 260) {
+      if(*pszMore == 0) {
+        *pszEnd = 0;
+        return TRUE; // We reached the end of pszMore before running out of buffer, success!
+      }
+
+      *pszEnd++ = *pszMore++;
+      ++pathLength;
+    }
+
+    // Failure, buffer end reached and pszMore still had more characters to append.
+    *pszPath = 0; 
+    ::SetLastError(ERROR_BUFFER_OVERFLOW);
+    return FALSE;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -393,7 +576,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
   // ------------------------------------------------------------------------------------------- //
 
   void WindowsProcessApi::removeFileFromPath(std::wstring &path) {
-    BOOL result = ::PathRemoveFileSpecW(path.data());
+    BOOL result = PathRemoveFileSpecW(path.data());
     if(result == TRUE) {
       int pathLength = ::lstrlenW(path.c_str());
       path.resize(static_cast<std::size_t>(pathLength));

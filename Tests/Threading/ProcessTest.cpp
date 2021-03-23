@@ -35,6 +35,29 @@ License along with this library
   #define NUCLEX_SUPPORT_HARMLESS_EXECUTABLE u8"ls"
 #endif
 
+namespace {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Simple observe that captures and collects a process' output stream</summary>
+  class Observer {
+
+    /// <summary>Collects output sent to stdout</summary>
+    /// <param name="characters">Buffer containing the characters sent to stdout</param>
+    /// <param name="count">Number of characters that have been sent to stdout</param>
+    public: void AcceptStdOut(const char *characters, std::size_t count) {
+      this->output.append(characters, count);
+    }
+
+    /// <summary>String in which all output sent to stdout accumulates</summary>
+    public: std::string output;
+
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // anonymous namespace
+
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
@@ -139,6 +162,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     EXPECT_TRUE(test.IsRunning());
     EXPECT_TRUE(test.IsRunning());
 
+    //test.Kill(std::chrono::milliseconds(10)); // test it! :)
     EXPECT_TRUE(test.Wait());
 
     EXPECT_FALSE(test.IsRunning());
@@ -152,14 +176,6 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
-  class Observer {
-    public: void AcceptStdOut(const char *characters, std::size_t count) {
-      this->output.append(characters, count);
-    }
-
-    public: std::string output;
-  };
 
   TEST(ProcessTest, CanCaptureStdout) {
     Observer observer;
@@ -231,3 +247,4 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading
+  // ------------------------------------------------------------------------------------------- //

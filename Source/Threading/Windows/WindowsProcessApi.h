@@ -85,8 +85,47 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
   /// <summary>Wraps the Windows process and inter-process communication API</summary>
   class WindowsProcessApi {
 
+    /// <summary>Asks the process to gracefully exit</summary>
+    /// <param name="processHandle">
+    ///   Handle of the process that will be asked to terminate
+    /// </param>
+    /// <remarks>
+    ///   <para>
+    ///     The concept of gracefully terminating processes seems to be a weakness of
+    ///     Windows. There's no SIGTERM or truly standardized way to do it.
+    ///   </para>
+    ///   <para>
+    ///     You can post a WM_QUIT message to the message pumping thread, but there's
+    ///     no indication which thread is pumping messages. And you can only enumerate
+    ///     all threads in the system rather than those of a single process.
+    ///   </para>
+    ///   <para>
+    ///     This method tries to post a WM_QUIT message to all threads of the target
+    ///     process in the hope that there's a message pump that listens.
+    ///   </para>
+    ///   <para>
+    ///     You can also post a WM_CLOSE message to the application's main window to
+    ///     nicely ask it to close (just like clicking on the X in the corner).
+    ///     However, windows belong to threads and there a invisible IPC windows, too,
+    ///     so the only good way of finding the window is to... enumerate all existing
+    ///     top-level windows in the system.
+    ///   </para>
+    ///   <para>
+    ///     This method tries to post a WM_CLOSE message to all top-level windows
+    ///     belonging to the target process. This may just lead to a &quot;do you want
+    ///     to save your work before quitting&quot; message, though.
+    ///   </para>
+    ///   <para>
+    ///     A command-line application (like ffmpeg, for example) may have neither
+    ///     message pump nor a window, so this method would have no effect on it.
+    ///     Nor does Microsoft seem to know a way to deal with it, shutting down
+    ///     Windows while running ffmpeg simply kills it with no questions asked...
+    ///   </para>
+    /// </remarks>
     public: static void RequestProcessToTerminate(HANDLE processHandle);
 
+    /// <summary>Forcefully terminated the specified process</summary>
+    /// <param name="processHandle">Handle of the process that will be terminated</param>
     public: static void KillProcess(HANDLE processHandle);
 
     /// <summary>Retrieves the exit code a process has exited with</summary>
