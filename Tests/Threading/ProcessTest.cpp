@@ -194,7 +194,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     EXPECT_EQ(exitCode, 0);
 
     // Check for some directories that should have been listed by ls / dir
-    EXPECT_GE(observer.output.length(), 21);
+    EXPECT_GE(observer.output.length(), 21U);
     //EXPECT_NE(observer.output.find(u8".."), std::string::npos);
   }
 

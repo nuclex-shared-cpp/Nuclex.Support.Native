@@ -58,11 +58,19 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
   Pipe::~Pipe() {
     if(this->ends[1] != -1) {
       int result = ::close(this->ends[1]);
+#if defined(NDEBUG)
+      (void)result;
+#else
       assert((result == 0) && u8"Right end of temporary pipe closed successfully");
+#endif
     }
     if(this->ends[0] != -1) {
       int result = ::close(this->ends[0]);
+#if defined(NDEBUG)
+      (void)result;
+#else
       assert((result == 0) && u8"Left end of temporary pipe closed successfully");
+#endif
     }
   }
 

@@ -70,7 +70,11 @@ namespace {
     public: ~ChildSignalSet() {
       if(this->blocked) {
         int result = ::sigprocmask(SIG_SETMASK, &this->previousSignalSet, nullptr);
+#if defined(NDEBUG)
+        (void)result;
+#else
         assert((result != -1) && u8"Previous signal mask could be restored");
+#endif
       }
     }
 
@@ -257,15 +261,27 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     if(impl.StderrFileNumber != -1) {
       int result = ::close(impl.StderrFileNumber);
+#if defined(NDEBUG)
+      (void)result;
+#else
       assert((result == 0) && u8"Pipe forwarding stderr could be closed");
+#endif
     }
     if(impl.StdoutFileNumber != -1) {
       int result = ::close(impl.StdoutFileNumber);
+#if defined(NDEBUG)
+      (void)result;
+#else
       assert((result == 0) && u8"Pipe forwarding stdout could be closed");
+#endif
     }
     if(impl.StdinFileNumber != -1) {
       int result = ::close(impl.StdinFileNumber);
+#if defined(NDEBUG)
+      (void)result;
+#else
       assert((result == 0) && u8"Pipe feeding stdin could be closed");
+#endif
     }
 
     constexpr bool implementationDataFitsInBuffer = (
@@ -598,7 +614,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           // We don't know how much data is waiting in the pipe, so we simply do it
           // like this: if is filled the whole buffer, there's likely more, if it
           // wasn't enough to fill the buffer, we know the pipe has been emptied.
-          if(readByteCount < BatchSize) {
+          if(static_cast<std::size_t>(readByteCount) < BatchSize) {
             break;
           }
         } else {
