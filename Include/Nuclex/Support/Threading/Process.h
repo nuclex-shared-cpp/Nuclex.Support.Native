@@ -95,12 +95,17 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   terminating within the a grace period, this method will attempt to terminate
     ///   the process forcefully via either SIGKILL or by aborting its process.
     /// </remarks>
-    public: void Kill(std::chrono::milliseconds patience = std::chrono::milliseconds(5000)) {}
+    public: void Kill(std::chrono::milliseconds patience = std::chrono::milliseconds(5000));
 
     /// <summary>Sends input to the running process' stdin</summary>
     /// <param name="characters">Characters that will be sent to the process' stdin</param>
     /// <param name="characterCount">Number of characters 
-    public: void Write(const char *characters, std::size_t characerCount) {}
+    /// <returns>The number of bytes that have been written to the process' stdin</returns>
+    /// <remarks>
+    ///   If you fill the buffer of the process' stdin pipe, it may not be possible to
+    ///   write more data to stdin until the process has read from stdin.
+    /// </remarks>
+    public: std::size_t Write(const char *characters, std::size_t characterCount);
 
     /// <summary>Fetches data from the stdout and stderr streams</summary>
     /// <remarks>

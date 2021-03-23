@@ -49,6 +49,10 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
     /// <param name="whichEnd">Which end of the pipe will become non-inheritable</param>
     public: void SetEndNonInheritable(std::size_t whichEnd);
 
+    /// <summary>Configures one end of the pipe to not block on read/write calls</summary>
+    /// <param name="whichEnd">Which end of the pipe will become non-blocking</param>
+    public: void SetEndNonBlocking(std::size_t whichEnd);
+
     /// <summary>Closes one end of the pipe</summary>
     /// <param name="whichEnd">Which end of the pipe to close</param>
     public: void CloseOneEnd(std::size_t whichEnd);
@@ -80,6 +84,10 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
   /// <summary>Wraps the Windows process and inter-process communication API</summary>
   class WindowsProcessApi {
+
+    public: static void RequestProcessToTerminate(HANDLE processHandle);
+
+    public: static void KillProcess(HANDLE processHandle);
 
     /// <summary>Retrieves the exit code a process has exited with</summary>
     /// <param name="processHandle">Handle of the process whose exit code will be checked</param>

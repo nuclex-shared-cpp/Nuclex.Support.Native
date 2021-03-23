@@ -27,15 +27,32 @@ License along with this library
 
 #include "Nuclex/Support/Text/StringConverter.h"
 #include "../../Text/Utf8/checked.h"
+#include "Nuclex/Support/ScopeGuard.h"
 
 #include <algorithm> // for std::max()
 #include <cassert> // for assert()
+#include <vector> // for std::vector
 
 #include <Shlwapi.h> // for ::PathIsRelativeW()
+#include <TlHelp32.h> // for ::CreateToolhelp32Snapshot()
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Enumeration callback that adds a window handle to a vector</summary>
+  /// <param name="windowHandle">Window handle that is the enumerations current result</param>
+  /// <param name="parameter1">A vector of window handles cast to a LONG_PTR</param>
+  /// <returns>Always TRUE to indicate that enumeration should continue</returns>
+  BOOL CALLBACK AddWindowHandleToVector(HWND windowHandle, LPARAM parameter1) {
+    std::vector<HWND> *windowHandles = reinterpret_cast<std::vector<HWND> *>(parameter1);
+    assert((windowHandles != nullptr) && u8"Vector has been passed through EnumWindows()");
+
+    windowHandles->push_back(windowHandle);
+
+    return TRUE;
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -99,6 +116,21 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
   // ------------------------------------------------------------------------------------------- //
 
+  void Pipe::SetEndNonBlocking(std::size_t whichEnd) {
+    assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
+
+    DWORD newMode = PIPE_READMODE_BYTE | PIPE_NOWAIT;
+    BOOL result = ::SetNamedPipeHandleState(this->ends[whichEnd], &newMode, nullptr, nullptr);
+    if(result == FALSE) {
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not configure pipe for non-blocking IO", lastErrorCode
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   void Pipe::CloseOneEnd(std::size_t whichEnd) {
     assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
 
@@ -120,6 +152,127 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
     HANDLE end = this->ends[whichEnd];
     this->ends[whichEnd] = INVALID_HANDLE_VALUE;
     return end;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsProcessApi::RequestProcessToTerminate(HANDLE processHandle) {
+
+    // Obtain the process ID, we need it to filter the thread list obtained below 
+    DWORD processId = ::GetProcessId(processHandle);
+    if(processId == 0) {
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not obtain process id from process handle", lastErrorCode
+      );
+    }
+
+    // Make a snapshot of *all threads in the system* (WTF?) because obtaining the whole list
+    // and then filtering it for our process is the only way to get a list of threads :-/
+    // My Windows 10 system has 2700 running threads at the time I'm writing this...
+    HANDLE snapshotHandle = ::CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, processId);
+    if(snapshotHandle == INVALID_HANDLE_VALUE) {
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not create toolhelp snapshot of running threads", lastErrorCode
+      );
+    }
+
+    // Now step through the list of threads, one by one, and look which ones belong to
+    // the process we wish to post the WM_QUIT message to...
+    {
+      ON_SCOPE_EXIT { ::CloseHandle(snapshotHandle); };
+
+      // Obtain the first thread from the snapshot.
+      THREADENTRY32 threadEntry;
+
+      // Begin the enumeration by asking for the first thread in the snapshot.
+      // This probably resets an iterator somewhere within the snapshot.
+      BOOL result = ::Thread32First(snapshotHandle, &threadEntry);
+      if(result == FALSE) {
+        DWORD lastErrorCode = ::GetLastError();
+        if(lastErrorCode != ERROR_NO_MORE_FILES) {
+          Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not query first thread from toolhelp snapshot", lastErrorCode
+          );
+        }
+      }
+      while(result != FALSE) { // Thread32First() could have reported ERROR_NO_MORE_FILES
+
+        // See if this thread belongs to the target process. If so, blast it with WM_QUIT.
+        if(threadEntry.th32OwnerProcessID == processId) {
+          result = ::PostThreadMessageW(threadEntry.th32ThreadID, WM_QUIT, 0, 0);
+          if(result == FALSE) {
+            DWORD lastErrorCode = ::GetLastError();
+            Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+              u8"Could not post quit message to child process thread", lastErrorCode
+            );
+          }
+        }
+
+        // Advance to the next thread in the snapshot
+        result = ::Thread32Next(snapshotHandle, &threadEntry);
+        if(result == FALSE) {
+          DWORD lastErrorCode = ::GetLastError();
+          if(lastErrorCode != ERROR_NO_MORE_FILES) {
+            Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+              u8"Could not advance enumerated thread in toolhelp snapshot", lastErrorCode
+            );
+          }
+        }
+
+        // If result was FALSE with error code ERROR_NO_MORE_FILES, we will have
+        // thrown NO exception above and the while loop will terminate.
+        // Note to self: don't reuse 'result' here or you'll get an enless loop :)
+
+      } // while(result != FALSE);
+    }
+
+    // Obtain a list of the window handles for all top-level windows currently open
+    std::vector<HWND> topLevelWindowHandles;
+    {
+      BOOL result = ::EnumWindows(
+        AddWindowHandleToVector, reinterpret_cast<LPARAM>(&topLevelWindowHandles)
+      );
+      if(result == FALSE) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not enumerate top-level windows", lastErrorCode
+        );
+      }
+    }
+
+    // Now send WM_CLOSE to all top-level windows that belong to the target process
+    for(std::size_t index = 0; index < topLevelWindowHandles.size(); ++index) {
+      DWORD windowProcessId;
+      DWORD windowThreadId = ::GetWindowThreadProcessId(
+        topLevelWindowHandles[index], &windowProcessId
+      );
+      // Apparently, this method has no failure return.
+
+      if(windowProcessId == processId) {
+        BOOL result = ::PostMessageW(topLevelWindowHandles[index], WM_CLOSE, 0, 0);
+        if(result == FALSE) {
+          DWORD lastErrorCode = ::GetLastError();
+          Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not post WM_CLOSE to a window", lastErrorCode
+          );
+        }
+      }
+    }
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsProcessApi::KillProcess(HANDLE processHandle) {
+    BOOL result = ::TerminateProcess(processHandle, 255);
+    if(result == FALSE) {
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not terminate child process", lastErrorCode
+      );
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -30,10 +30,8 @@ License along with this library
 #include "Posix/PosixProcessApi.h" // for Pipe, PosixProcessApi
 
 #include <exception> // for std::terminate()
-#include <cassert> // for assert()
 #include <cstring> // for ::strsignal()
 
-#include <sys/types.h> // for ::pid_t
 #include <sys/wait.h> // for ::waitpid()
 #include <unistd.h> // for ::fork()
 #include <signal.h> // for ::sigemptyset(), sigaddset(), etc.
@@ -312,6 +310,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       stdoutPipe.CloseOneEnd(1);
       stderrPipe.CloseOneEnd(1);
 
+      stdinPipe.SetEndNonBlocking(1); // Don't block when writing to stdin either
       stdoutPipe.SetEndNonBlocking(0);
       stderrPipe.SetEndNonBlocking(0);
 
@@ -389,6 +388,8 @@ namespace Nuclex { namespace Support { namespace Threading {
   bool Process::Wait(
     std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */
   ) const {
+    using Nuclex::Support::Threading::Posix::PosixProcessApi;
+
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
       throw std::logic_error(u8"Process was not started or is already joined");
@@ -399,30 +400,13 @@ namespace Nuclex { namespace Support { namespace Threading {
       return true;
     }
 
-    // Determine the point in time when the timeout will occur
-    struct ::timespec currentTime, timeoutTime, waitTime;
+    // Calculate the absolute time at which the timeout occurs (the clock is
+    // monotonic, so even if the system clock is adjusted, this won't be affected)
+    struct ::timespec timeoutTime = PosixProcessApi::GetTimePlusMilliseconds(
+      CLOCK_MONOTONIC, patience
+    );
+    struct ::timespec waitTime;
     {
-      int result = ::clock_gettime(CLOCK_MONOTONIC, &currentTime);
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-          u8"Could not get time from monotonic clock", errorNumber
-        );
-      }
-
-      // Calculate the absolute time at which the timeout occurs (the clock is
-      // monotonic, so even if the system clock is adjusted, this won't be affected)
-      ::ldiv_t divisionResults = ::ldiv(patience.count(), 1000);
-      std::size_t nanoseconds = divisionResults.rem * 1000000 + currentTime.tv_nsec;
-      if(nanoseconds < 1000000000) {
-        timeoutTime.tv_sec = currentTime.tv_sec + divisionResults.quot;
-        timeoutTime.tv_nsec = nanoseconds;
-      } else {
-        timeoutTime.tv_sec = currentTime.tv_sec + divisionResults.quot + 1;
-        timeoutTime.tv_nsec = nanoseconds - 1000000000;
-      }
-
-      // Set up the wait time for the intervals at which we check the process
       waitTime.tv_sec = 0;
       waitTime.tv_nsec = 4000000; // 4 ms
     }
@@ -455,24 +439,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
         // Check if the caller-specified patience time has been exceeded.
         // If the provided timeout was 0, this will bail out after the first ::waitpid().
-        {
-          int result = ::clock_gettime(CLOCK_MONOTONIC, &currentTime);
-          if(unlikely(result == -1)) {
-            int errorNumber = errno;
-            Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-              u8"Could not get time from monotonic clock", errorNumber
-            );
-          }
-          bool hasTimedOut = (
-            (currentTime.tv_sec > timeoutTime.tv_sec) ||
-            (
-              (currentTime.tv_sec == timeoutTime.tv_sec) &&
-              (currentTime.tv_nsec >= timeoutTime.tv_nsec)
-            )
-          );
-          if(hasTimedOut) {
-            return false;
-          }
+        if(PosixProcessApi::HasTimedOut(CLOCK_MONOTONIC, timeoutTime)) {
+          return false;
         }
 
         // There should not be a race condition between ::waitpid() at the top and
@@ -539,6 +507,49 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     return WEXITSTATUS(impl.ExitCode);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void Process::Kill(std::chrono::milliseconds patience /* = std::chrono::milliseconds(5000) */) {
+    using Nuclex::Support::Threading::Posix::PosixProcessApi;
+
+    PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessId == 0) {
+      throw std::logic_error(u8"Process was not started or is already joined");
+    }
+
+    if(patience > std::chrono::milliseconds::zero()) {
+      PosixProcessApi::RequestProcessTermination(impl.ChildProcessId);
+    }
+
+    if(Wait(patience) == false) {
+      PosixProcessApi::KillProcess(impl.ChildProcessId);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::size_t Process::Write(const char *characters, std::size_t characterCount) {
+    PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessId == 0) {
+      throw std::logic_error(u8"Process was not started or is already joined");
+    }
+
+    ssize_t writtenByteCount = ::write(impl.StdinFileNumber, characters, characterCount);
+    if(writtenByteCount == -1) {
+      int errorNumber = errno;
+      if(errorNumber == EAGAIN) {
+        return 0; // write() would block because the stdin pipe buffer is full
+      } else {
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Failed writing character to child process stdin pipe", errorNumber
+        );
+      }
+    }
+
+    assert((writtenByteCount >= 0) && u8"Written byte count is not negative");
+    return static_cast<std::size_t>(writtenByteCount);
   }
 
   // ------------------------------------------------------------------------------------------- //

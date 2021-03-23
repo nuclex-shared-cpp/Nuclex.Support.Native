@@ -39,45 +39,6 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>
-  ///   Determines the absolute path of an executable by checking the system's search paths
-  /// </summary>
-  std::wstring getAbsoluteExecutablePath(const std::string &executablePath) {
-    wchar_t absoluteUtf16ExecutablePath[MAX_PATH];
-    DWORD characterCount;
-    {
-      std::wstring utf16ExecutablePath = Nuclex::Support::Text::StringConverter::WideFromUtf8(
-        executablePath
-      );
-
-      LPWSTR unusedFilePart;
-      characterCount = ::SearchPathW(
-        nullptr, utf16ExecutablePath.c_str(), L".exe", // .exe is only appended if no extension
-        MAX_PATH, absoluteUtf16ExecutablePath, &unusedFilePart
-      );
-      if(characterCount == 0) {
-        DWORD lastErrorCode = ::GetLastError();
-        {
-          static const std::string errorMessageBegin(u8"Could not locate executable '", 29);
-          static const std::string errorMessageEnd(u8"' in standard search paths", 26);
-
-          std::string message;
-          message.reserve(29 + executablePath.length() + 26 + 1);
-          message.append(errorMessageBegin);
-          message.append(executablePath);
-          message.append(errorMessageEnd);
-
-          Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-            message, lastErrorCode
-          );
-        }
-      }
-    }
-
-    return std::wstring(absoluteUtf16ExecutablePath, characterCount);
-  }
-
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -137,7 +98,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     if(impl.ChildProcessHandle != INVALID_HANDLE_VALUE) {
       // TODO: Kill the child process
       BOOL result = ::CloseHandle(impl.ChildProcessHandle);
+#if defined(NDEBUG)
+      (void)result;
+#else
       assert((result != FALSE) && u8"Child process handle is successfully closed");
+#endif
     }
   }
 
@@ -165,6 +130,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // Create 3 pipes and set the ends that belong to our side as non-inheritable
     Nuclex::Support::Threading::Windows::Pipe stdinPipe(pipeSecurityAttributes);
     stdinPipe.SetEndNonInheritable(1);
+    stdinPipe.SetEndNonBlocking(1);
     Nuclex::Support::Threading::Windows::Pipe stdoutPipe(pipeSecurityAttributes);
     stdoutPipe.SetEndNonInheritable(0);
     Nuclex::Support::Threading::Windows::Pipe stderrPipe(pipeSecurityAttributes);
@@ -183,6 +149,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // from UTF-8 to UTF-16) to ensure we can deal with unicode paths and executable names.
       {
         std::wstring utf16ExecutablePath = StringConverter::WideFromUtf8(this->executablePath);
+
         std::wstring absoluteUtf16ExecutablePath;
         WindowsProcessApi::GetAbsoluteExecutablePath(
           absoluteUtf16ExecutablePath, utf16ExecutablePath
@@ -472,6 +439,49 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     } // for(pipeIndex)
   }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void Process::Kill(std::chrono::milliseconds patience /* = std::chrono::milliseconds(5000) */) {
+    using Nuclex::Support::Threading::Windows::WindowsProcessApi;
+
+    PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
+      throw std::logic_error(u8"Process was not started or is already joined");
+    }
+
+    WindowsProcessApi::RequestProcessToTerminate(impl.ChildProcessHandle);
+
+    if(Wait(patience) == false) {
+      WindowsProcessApi::KillProcess(impl.ChildProcessHandle);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::size_t Process::Write(const char *characters, std::size_t characterCount) {
+    PlatformDependentImplementationData &impl = getImplementationData();
+    if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
+      throw std::logic_error(u8"Process was not started or is already joined");
+    }
+
+    DWORD writtenByteCount;
+    BOOL result = ::WriteFile(
+      impl.StdinHandle,
+      characters, static_cast<DWORD>(characterCount),
+      &writtenByteCount,
+      nullptr
+    );
+    if(result == FALSE) {
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Error writing data to stdin pipe of child process", lastErrorCode
+      );
+    }
+
+    return static_cast<std::size_t>(writtenByteCount);
+  }
+
 
   // ------------------------------------------------------------------------------------------- //
 
