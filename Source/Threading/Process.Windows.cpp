@@ -169,6 +169,11 @@ namespace Nuclex { namespace Support { namespace Threading {
           );
         }
 
+        std::wstring utf16WorkingDirectory;
+        if(!this->workingDirectory.empty()) {
+          utf16WorkingDirectory = StringConverter::WideFromUtf8(this->workingDirectory);
+        }
+
         BOOL result = ::CreateProcessW(
           //prependExecutableName ? nullptr : utf16ExecutablePath.data(),
           absoluteUtf16ExecutablePath.c_str(),
@@ -178,7 +183,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           TRUE, // yes, we want to inherit (some) handles
           0, // no extra creation flags
           nullptr, // use the current environment
-          nullptr, // use our current directory,
+          this->workingDirectory.empty() ? nullptr : utf16WorkingDirectory.c_str(),
           &childProcessStartupSettings,
           &childProcessInfo
         );

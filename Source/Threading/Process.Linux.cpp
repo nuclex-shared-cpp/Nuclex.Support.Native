@@ -150,7 +150,7 @@ namespace {
   ///   Command line arguments that will be passed to the new executable
   /// </param>
   [[noreturn]] void executeChildProcess(
-    //const std::string &workingDirectory,
+    const std::string &workingDirectory,
     const std::string &executablePath,
     const std::vector<std::string> &arguments,
     bool prependExecutablePath
@@ -173,6 +173,17 @@ namespace {
         argumentValues.push_back(const_cast<char *>(arguments[index].c_str()));
       }
       argumentValues.push_back(nullptr); // Terminator
+    }
+
+    // Change into the desired working directory before handing off to the new executable
+    if(!workingDirectory.empty()) {
+      int result = ::chdir(workingDirectory.c_str());
+      if(result == -1) {
+        int errorNumber = errno;
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could change working directory", errorNumber
+        );
+      }
     }
 
     // Calling any of the ::exec*() methods will replace the process with the specified
@@ -355,7 +366,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       stderrPipe.CloseOneEnd(1);
 
       // Load a new executable image, completely replacing this (child) process.
-      executeChildProcess(this->executablePath, arguments, prependExecutableName);
+      executeChildProcess(
+        this->workingDirectory, this->executablePath, arguments, prependExecutableName
+      );
       std::terminate(); // Should never be reached, executeChildProcess() doesn't return
 
     }

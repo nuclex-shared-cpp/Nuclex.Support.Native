@@ -45,6 +45,20 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Kills the external process and waits until it is gone</summary>
     public: ~Process();
 
+    /// <summary>Sets the working directory the child process will start in</summary>
+    /// <param name="workingDirectory">
+    ///   Initial working directory the child process will use. Set to an empty string
+    ///   to use the current working directory of the parent process
+    /// </param>
+    /// <remarks>
+    ///   The working directory starts out as empty, meaning it will be left to the platform
+    ///   what working directory to use. Usually that means the child process inherits it
+    ///   from the parent process.
+    /// </remarks>
+    public: void SetWorkingDirectory(const std::string &newWorkingDirectory) {
+      this->workingDirectory = newWorkingDirectory;
+    }
+
     /// <summary>
     ///   Starts the external process, passing the specified command-line arguments along
     /// </summary>
@@ -131,6 +145,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Path to the executable as which this process is running</summary>
     private: std::string executablePath;
+    /// <summary>Working directory the child process will 
+    private: std::string workingDirectory;
     /// <summary>Pipe buffer (user round-robin to flush stdout and stderr)</summary>
     private: mutable std::vector<char> buffer;
 
