@@ -451,6 +451,12 @@
     <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h">
       <Filter>Source\Threading\Posix</Filter>
     </ClInclude>
+    <ClCompile Include="Source\Threading\Windows\WindowsFileApi.cpp">
+      <Filter>Source\Threading\Windows</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Threading\Windows\WindowsFileApi.h">
+      <Filter>Source\Threading\Windows</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Threading\Windows\WindowsProcessApi.cpp">
       <Filter>Source\Threading\Windows</Filter>
     </ClCompile>

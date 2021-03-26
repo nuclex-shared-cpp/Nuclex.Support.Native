@@ -318,6 +318,8 @@
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp" />
     <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h" />
+    <ClCompile Include="Source\Threading\Windows\WindowsFileApi.cpp" />
+    <ClInclude Include="Source\Threading\Windows\WindowsFileApi.h" />
     <ClCompile Include="Source\Threading\Windows\WindowsProcessApi.cpp" />
     <ClInclude Include="Source\Threading\Windows\WindowsProcessApi.h" />
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />

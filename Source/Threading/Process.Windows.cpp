@@ -39,6 +39,34 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Adds quotes around a path if it contains spaces is unquoted</summary>
+  /// <param name="path">Path that may be unquoted and/or contain spaces</param>
+  /// <returns>The path, quoted if it was missing quotes but needing them</returns>
+  std::wstring quoteIfNeeded(const std::wstring &path) {
+    std::wstring::size_type firstNonSpaceIndex = path.find_first_not_of(L' ');
+    if(firstNonSpaceIndex == std::wstring::npos) {
+      return path; // Path has no spaces (also catches case when path has length zero)
+    }
+
+    if(path[firstNonSpaceIndex] == L'"') {
+      std::wstring::size_type lastQuoteIndex = path.find_first_of(L'"', firstNonSpaceIndex + 1);
+      if(lastQuoteIndex == std::wstring::npos) {
+        return path + L'"';
+      } else {
+        return path;
+      }
+    }
+
+    std::wstring result;
+    result.reserve(path.length() + 3);
+    result.push_back(L'"');
+    result.append(path);
+    result.push_back(L'"');
+
+    return result;
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -149,35 +177,39 @@ namespace Nuclex { namespace Support { namespace Threading {
       // from UTF-8 to UTF-16) to ensure we can deal with unicode paths and executable names.
       {
         std::wstring utf16ExecutablePath = StringConverter::WideFromUtf8(this->executablePath);
-
         std::wstring absoluteUtf16ExecutablePath;
         WindowsProcessApi::GetAbsoluteExecutablePath(
           absoluteUtf16ExecutablePath, utf16ExecutablePath
         );
 
+        // Bundle all the command line arguments together. In Windows, they're just
+        // one long string passed to the application.
         std::wstring commandLineArguments;
-        if(prependExecutableName) {
-          commandLineArguments.append(utf16ExecutablePath);
-          commandLineArguments.append(L" ", 1);
-        }
-        for(std::size_t index = 0; index < arguments.size(); ++index) {
-          if(index > 0) {
-            commandLineArguments.append(L" ", 1);
+          {
+          if(prependExecutableName) {
+            commandLineArguments.append(quoteIfNeeded(utf16ExecutablePath));
+            commandLineArguments.push_back(L' ');
           }
-          commandLineArguments.append(
-            Nuclex::Support::Text::StringConverter::WideFromUtf8(arguments[index])
-          );
+          for(std::size_t index = 0; index < arguments.size(); ++index) {
+            if(index > 0) {
+              commandLineArguments.push_back(L' ');
+            }
+            commandLineArguments.append(
+              Nuclex::Support::Text::StringConverter::WideFromUtf8(arguments[index])
+            );
+          }
         }
 
         std::wstring utf16WorkingDirectory;
         if(!this->workingDirectory.empty()) {
-          utf16WorkingDirectory = StringConverter::WideFromUtf8(this->workingDirectory);
+          WindowsProcessApi::GetAbsoluteWorkingDirectory(
+            utf16WorkingDirectory, StringConverter::WideFromUtf8(this->workingDirectory)
+          );
         }
 
         BOOL result = ::CreateProcessW(
-          //prependExecutableName ? nullptr : utf16ExecutablePath.data(),
-          absoluteUtf16ExecutablePath.c_str(),
-          commandLineArguments.data(),
+          absoluteUtf16ExecutablePath.c_str(), // module name (= exact absolute path)
+          commandLineArguments.data(), // command line argument (with prepended exe path)
           nullptr, // use default security attributes
           nullptr, // use default thread security attributes
           TRUE, // yes, we want to inherit (some) handles

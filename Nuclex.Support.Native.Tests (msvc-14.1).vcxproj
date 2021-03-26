@@ -254,8 +254,6 @@
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h" />
     <ClInclude Include="Include\Nuclex\Support\Variant.h" />
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
-    <ClInclude Include="Tests\Collections\BufferTest.h" />
-    <ClInclude Include="Tests\Collections\ConcurrentBufferTest.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Collection.cpp" />
@@ -328,6 +326,8 @@
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp" />
     <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h" />
+    <ClCompile Include="Source\Threading\Windows\WindowsFileApi.cpp" />
+    <ClInclude Include="Source\Threading\Windows\WindowsFileApi.h" />
     <ClCompile Include="Source\Threading\Windows\WindowsProcessApi.cpp" />
     <ClInclude Include="Source\Threading\Windows\WindowsProcessApi.h" />
     <ClCompile Include="Source\Threading\LinuxThreadPool.cpp" />
@@ -348,18 +348,10 @@
     <ClCompile Include="Source\VariantType.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Documents\Copyright.md" />
-    <None Include="Documents\Adam Morrison - Fast Concurrent queues for x86 Processors.pdf" />
-    <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf" />
-    <Text Include="Documents\EventBenchmark.md" />
-    <None Include="Documents\Florian Loitsch - Printing Floating-Point Numbers Quickly and Accurately with Integers.pdf" />
-    <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf" />
-    <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf" />
-    <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="Tests\Collections\BufferTest.cpp" />
+    <ClInclude Include="Tests\Collections\BufferTest.h" />
     <ClCompile Include="Tests\Collections\ConcurrentBufferTest.cpp" />
+    <ClInclude Include="Tests\Collections\ConcurrentBufferTest.h" />
     <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_MPMC.cpp" />
     <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_MPSC.cpp" />
     <ClCompile Include="Tests\Collections\ConcurrentRingBufferTest_SPSC.cpp" />
@@ -378,6 +370,8 @@
     <ClCompile Include="Tests\Text\RollingLoggerTest.cpp" />
     <ClCompile Include="Tests\Text\StringConverterTest.cpp" />
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp" />
+    <ClCompile Include="Tests\Threading\Windows\WindowsFileApiTest.cpp" />
+    <ClCompile Include="Tests\Threading\Windows\WindowsProcessApiTest.cpp" />
     <ClCompile Include="Tests\Threading\ProcessTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadTest.cpp" />
     <ClCompile Include="Tests\AnyTests.cpp" />
@@ -385,6 +379,16 @@
     <ClCompile Include="Tests\OptionalTests.cpp" />
     <ClCompile Include="Tests\ScopeGuardTest.cpp" />
     <ClCompile Include="Tests\VariantTests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Documents\Copyright.md" />
+    <None Include="Documents\Adam Morrison - Fast Concurrent queues for x86 Processors.pdf" />
+    <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf" />
+    <Text Include="Documents\EventBenchmark.md" />
+    <None Include="Documents\Florian Loitsch - Printing Floating-Point Numbers Quickly and Accurately with Integers.pdf" />
+    <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf" />
+    <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf" />
+    <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Nuclex.Support.Native.def" />

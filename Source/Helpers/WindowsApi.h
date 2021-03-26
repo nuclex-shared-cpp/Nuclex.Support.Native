@@ -48,6 +48,8 @@ License along with this library
 #undef GetTempPath
 #undef GetModuleFileName
 #undef GetFullPathName
+#undef GetWindowsDirectory
+#undef GetSystemDirectory
 
 #include <string> // for std::string
 

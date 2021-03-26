@@ -158,24 +158,16 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
       std::wstring &target, const std::wstring &executable
     );
 
-    /// <summary>Checks if the specified path exists and if it is a file</summary>
-    /// <param name="path">Path that will be checked</param>
-    /// <returns>True if the path exists and is a file, false otherwise</returns>
-    private: static bool doesFileExist(const std::wstring &path);
-
-    /// <summary>Checks if the specified path is a relative path</summary>
-    /// <param name="path">Path that will be checked</param>
-    /// <returns>True if the path is a relative path</returns>
-    private: static bool isPathRelative(const std::wstring &path);
-
-    /// <summary>Appends one path to another</summary>
-    /// <param name="path">Path to which another path will be appended</param>
-    /// <param name="extra">Other path that will be appended</param>
-    private: static void appendPath(std::wstring &path, const std::wstring &extra);
-
-    /// <summary>Removes the file name from a path containing a file name</summary>
-    /// <param name="path">Path from which the file name will be removed</param>
-    private: static void removeFileFromPath(std::wstring &path);
+    /// <summary>Determines the absolute path of the working directory</summary>
+    /// <param name="target">String into which the working directory will be written</param>
+    /// <param name="workingDirectory">Working directory as specified by the user</param>
+    /// <remarks>
+    ///   This either keeps the working directory as-is (if it's an absolute path) or
+    ///   interprets it relative to the executable's path for consistent behavior.
+    /// </remarks>
+    public: static void GetAbsoluteWorkingDirectory(
+      std::wstring &target, const std::wstring &workingDirectory
+    );
 
     /// <summary>Obtains the full path of the specified module</summary>
     /// <param name="moduleHandle">
@@ -185,18 +177,6 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
     private: static void getModuleFileName(
       std::wstring &target, HMODULE moduleHandle = nullptr
     );
-
-    /// <summary>Discovers the Windows system directory</summary>
-    /// <param name="target">
-    ///   String in which the full path to the Windows system directory will be placed
-    /// </param>
-    private: static void getSystemDirectory(std::wstring &target);
-
-    /// <summary>Discovers the Windows directory</summary>
-    /// <param name="target">
-    ///   String in which the full path to the Windows directory will be placed
-    /// </param>
-    private: static void getWindowsDirectory(std::wstring &target);
 
     /// <summary>
     ///   Determines the absolute path of an executable by checking the system's search paths
