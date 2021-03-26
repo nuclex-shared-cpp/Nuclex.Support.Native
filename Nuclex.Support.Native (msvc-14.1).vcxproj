@@ -316,6 +316,8 @@
     <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
+    <ClCompile Include="Source\Threading\Posix\PosixFileApi.cpp" />
+    <ClInclude Include="Source\Threading\Posix\PosixFileApi.h" />
     <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp" />
     <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h" />
     <ClCompile Include="Source\Threading\Windows\WindowsFileApi.cpp" />

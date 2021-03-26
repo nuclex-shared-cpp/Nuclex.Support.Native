@@ -25,9 +25,11 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
+#include "Posix/PosixProcessApi.h" // for Pipe, PosixProcessApi
+#include "Posix/PosixFileApi.h" // for PosixFileApi
+
 #include "Nuclex/Support/Errors/TimeoutError.h"
 #include "Nuclex/Support/ScopeGuard.h"
-#include "Posix/PosixProcessApi.h" // for Pipe, PosixProcessApi
 
 #include <exception> // for std::terminate()
 #include <cstring> // for ::strsignal()
@@ -152,8 +154,8 @@ namespace {
   [[noreturn]] void executeChildProcess(
     const std::string &workingDirectory,
     const std::string &executablePath,
-    const std::vector<std::string> &arguments,
-    bool prependExecutablePath
+    const std::string &prependedExecutablePath,
+    const std::vector<std::string> &arguments
   ) {
     static const std::string errorMessage(u8"Could not execute ", 18);
 
@@ -163,11 +165,11 @@ namespace {
     // https://www.man7.org/linux/man-pages/man3/exec.3p.html
     std::vector<char *> argumentValues;
     {
-      if(prependExecutablePath) {
-        argumentValues.reserve(arguments.size() + 2);
-        argumentValues.push_back(const_cast<char *>(executablePath.c_str()));
-      } else {
+      if(prependedExecutablePath.empty()) {
         argumentValues.reserve(arguments.size() + 1);
+      } else {
+        argumentValues.reserve(arguments.size() + 2);
+        argumentValues.push_back(const_cast<char *>(prependedExecutablePath.c_str()));
       }
       for(std::size_t index = 0; index < arguments.size(); ++index) {
         argumentValues.push_back(const_cast<char *>(arguments[index].c_str()));
@@ -267,32 +269,23 @@ namespace Nuclex { namespace Support { namespace Threading {
   Process::~Process() {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId != 0) {
-      // TODO: Kill the child process
+      Kill();
     }
 
     if(impl.StderrFileNumber != -1) {
       int result = ::close(impl.StderrFileNumber);
-#if defined(NDEBUG)
-      (void)result;
-#else
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result == 0) && u8"Pipe forwarding stderr could be closed");
-#endif
     }
     if(impl.StdoutFileNumber != -1) {
       int result = ::close(impl.StdoutFileNumber);
-#if defined(NDEBUG)
-      (void)result;
-#else
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result == 0) && u8"Pipe forwarding stdout could be closed");
-#endif
     }
     if(impl.StdinFileNumber != -1) {
       int result = ::close(impl.StdinFileNumber);
-#if defined(NDEBUG)
-      (void)result;
-#else
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result == 0) && u8"Pipe feeding stdin could be closed");
-#endif
     }
 
     constexpr bool implementationDataFitsInBuffer = (
@@ -314,6 +307,21 @@ namespace Nuclex { namespace Support { namespace Threading {
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId != 0) {
       throw std::logic_error(u8"Child process is still running or not joined yet");
+    }
+
+    // These directories need to be resolved in the parent process because relative
+    // paths are interpreted as relative to the running process and if we do it after
+    // the call to fork(), the running process for the code interested in these
+    // variables happens to be the child process.
+    std::string absoluteWorkingDirectory, absoluteExecutablePath;
+
+    Nuclex::Support::Threading::Posix::PosixProcessApi::GetAbsoluteExecutablePath(
+      absoluteExecutablePath, this->executablePath
+    );
+    if(!this->workingDirectory.empty()) {
+      Nuclex::Support::Threading::Posix::PosixProcessApi::GetAbsoluteWorkingDirectory(
+        absoluteWorkingDirectory, this->workingDirectory
+      );
     }
 
     Pipe stdinPipe, stdoutPipe, stderrPipe;
@@ -367,7 +375,10 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // Load a new executable image, completely replacing this (child) process.
       executeChildProcess(
-        this->workingDirectory, this->executablePath, arguments, prependExecutableName
+        absoluteWorkingDirectory,
+        absoluteExecutablePath,
+        prependExecutableName ? executablePath : std::string(),
+        arguments
       );
       std::terminate(); // Should never be reached, executeChildProcess() doesn't return
 

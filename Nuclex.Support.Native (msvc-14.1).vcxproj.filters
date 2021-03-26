@@ -445,6 +445,12 @@
     <ClCompile Include="Source\Text\StringMatcher.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Threading\Posix\PosixFileApi.cpp">
+      <Filter>Source\Threading\Posix</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Threading\Posix\PosixFileApi.h">
+      <Filter>Source\Threading\Posix</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp">
       <Filter>Source\Threading\Posix</Filter>
     </ClCompile>

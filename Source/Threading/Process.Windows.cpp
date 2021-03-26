@@ -200,6 +200,8 @@ namespace Nuclex { namespace Support { namespace Threading {
           }
         }
 
+        // Figure out the working directory. Like the executable path, if a relative
+        // path is used, it will be relative to the running application executable.
         std::wstring utf16WorkingDirectory;
         if(!this->workingDirectory.empty()) {
           WindowsProcessApi::GetAbsoluteWorkingDirectory(

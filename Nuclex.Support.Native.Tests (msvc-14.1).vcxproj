@@ -324,6 +324,8 @@
     <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
+    <ClCompile Include="Source\Threading\Posix\PosixFileApi.cpp" />
+    <ClInclude Include="Source\Threading\Posix\PosixFileApi.h" />
     <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp" />
     <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h" />
     <ClCompile Include="Source\Threading\Windows\WindowsFileApi.cpp" />
@@ -370,6 +372,8 @@
     <ClCompile Include="Tests\Text\RollingLoggerTest.cpp" />
     <ClCompile Include="Tests\Text\StringConverterTest.cpp" />
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp" />
+    <ClCompile Include="Tests\Threading\Posix\PosixFileApiTest.cpp" />
+    <ClCompile Include="Tests\Threading\Posix\PosixProcessApiTest.cpp" />
     <ClCompile Include="Tests\Threading\Windows\WindowsFileApiTest.cpp" />
     <ClCompile Include="Tests\Threading\Windows\WindowsProcessApiTest.cpp" />
     <ClCompile Include="Tests\Threading\ProcessTest.cpp" />

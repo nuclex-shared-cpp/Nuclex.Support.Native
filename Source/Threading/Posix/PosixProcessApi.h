@@ -117,6 +117,38 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
     /// </remarks>
     public: static void KillProcess(::pid_t processId);
 
+    /// <summary>Locates an executable by emulating the search of ::LoadLibrary()</summary>
+    /// <param name="target">Target string to store the executable path in</param>
+    /// <param name="executable">Executable, with or without path</param>
+    /// <remarks>
+    ///   <para>
+    ///     Posix' exec*() methods already have a well-defined search order (use the PATH
+    ///     environment variable unless the string contains a slash, in which case it's
+    ///     relative to the current working directory), but we want to alter it slightly
+    ///     to offer consistent behavior on both Linux and Windows
+    ///   </para>
+    ///   <para>
+    ///     Namely, the running application's own install directory should be search first
+    ///     for any executables that do not contain a path (or a relative path).
+    ///     This method guarantees that behavior by looking in the directory holding
+    ///     the running application's executable and only then fall back to Posix behavior.
+    ///   </para>
+    /// </remarks>
+    public: static void GetAbsoluteExecutablePath(
+      std::string &target, const std::string &executable
+    );
+
+    /// <summary>Determines the absolute path of the working directory</summary>
+    /// <param name="target">String into which the working directory will be written</param>
+    /// <param name="workingDirectory">Working directory as specified by the user</param>
+    /// <remarks>
+    ///   This either keeps the working directory as-is (if it's an absolute path) or
+    ///   interprets it relative to the executable's path for consistent behavior.
+    /// </remarks>
+    public: static void GetAbsoluteWorkingDirectory(
+      std::string &target, const std::string &workingDirectory
+    );
+
   };
 
   // ------------------------------------------------------------------------------------------- //

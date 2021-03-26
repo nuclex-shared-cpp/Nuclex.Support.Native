@@ -25,14 +25,75 @@ License along with this library
 
 #if !defined(NUCLEX_SUPPORT_WIN32)
 
-#include <unistd.h> // for ::pipe()
+#include "PosixFileApi.h"
+
+#include "Nuclex/Support/Text/LexicalAppend.h"
+
+#include <unistd.h> // for ::pipe(), ::readlink()
 #include <fcntl.h> // for ::fcntl()
 #include <signal.h> // for ::kill()
 #include <stdlib.h> // for ::ldiv(), ::ldiv_t
+#include <limits.h> // for PATH_MAX
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>
+  ///   Determines the path of the process image file for the runnign application
+  /// </summary>
+  /// <param name="target">String that will receive the path of the executable</param>
+  void getExecutablePath(std::string &target) {
+    target.resize(PATH_MAX);
+
+    std::string ownProcessLink;
+    ownProcessLink.reserve(16);
+    ownProcessLink.assign(u8"/proc/self/exe", 14);
+
+    // Try to read the symlink to obtain the path to the running executable
+    ::ssize_t characterCount = ::readlink(ownProcessLink.c_str(), target.data(), PATH_MAX);
+    if(characterCount == -1) {
+      int errorNumber = errno;
+      if((errorNumber != EACCES) && (errorNumber != ENOTDIR) && (errorNumber != ENOENT)) {
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not follow '/proc/self/exe' to own path", errorNumber
+        );
+      }
+
+      // Make another attempt with the PID file accessed directly (no recursive symlink).
+      {
+        ownProcessLink.resize(6);
+
+        ::pid_t ownPid = ::getpid();
+        Nuclex::Support::Text::lexical_append(target, ownPid);
+
+        ownProcessLink.append(u8"/exe", 4);
+      }
+      characterCount = ::readlink(ownProcessLink.c_str(), target.data(), PATH_MAX);
+      if(characterCount == -1) {
+        errorNumber = errno;
+
+        //std::string message;
+        //message.reserve(18 + ownProcessLink.size() + 13 + 1);
+        //message.append(u8"Could not follow '", 18);
+        //message.append(ownProcessLink);
+        //message.append(u8"' to own path", 13);
+        //Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(message, errorNumber);
+
+        // Let's stay with the original error message, /proc/self/exe gives
+        // the user a much better idea at what the application wanted to do than
+        // a random PID that doesn't exist anymore after the error is printed.
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not follow '/proc/self/exe' to own path", errorNumber
+        );
+      }
+    }
+
+    target.resize(characterCount);
+
+    Nuclex::Support::Threading::Posix::PosixFileApi::RemoveFileFromPath(target);
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -58,19 +119,13 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
   Pipe::~Pipe() {
     if(this->ends[1] != -1) {
       int result = ::close(this->ends[1]);
-#if defined(NDEBUG)
-      (void)result;
-#else
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result == 0) && u8"Right end of temporary pipe closed successfully");
-#endif
     }
     if(this->ends[0] != -1) {
       int result = ::close(this->ends[0]);
-#if defined(NDEBUG)
-      (void)result;
-#else
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result == 0) && u8"Left end of temporary pipe closed successfully");
-#endif
     }
   }
 
@@ -209,6 +264,36 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
         u8"Could not send SIGTERM to a process", errorNumber
       );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void PosixProcessApi::GetAbsoluteExecutablePath(
+    std::string &target, const std::string &executable
+  ) {
+    if(PosixFileApi::IsPathRelative(executable)) {
+      getExecutablePath(target);
+      PosixFileApi::AppendPath(target, executable);
+      if(PosixFileApi::DoesFileExist(target)) {
+        return;
+      }
+    }
+
+    target.assign(executable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void PosixProcessApi::GetAbsoluteWorkingDirectory(
+    std::string &target, const std::string &workingDirectory
+  ) {
+
+    if(PosixFileApi::IsPathRelative(workingDirectory)) {
+      getExecutablePath(target);
+      PosixFileApi::AppendPath(target, workingDirectory);
+    } else {
+      target.assign(workingDirectory);
     }
   }
 

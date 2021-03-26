@@ -96,6 +96,9 @@
     <Filter Include="Tests\Threading">
       <UniqueIdentifier>{2781deb4-4664-4b67-a3ae-7d695e2ed2fa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\Threading\Posix">
+      <UniqueIdentifier>{3fb52f4d-b40a-42d2-987e-587fef746165}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Tests\Threading\Windows">
       <UniqueIdentifier>{6892e1f6-d6ad-4ee8-b79f-22b0fe04f30d}</UniqueIdentifier>
     </Filter>
@@ -472,6 +475,12 @@
     <ClCompile Include="Source\Text\StringMatcher.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Threading\Posix\PosixFileApi.cpp">
+      <Filter>Source\Threading\Posix</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Threading\Posix\PosixFileApi.h">
+      <Filter>Source\Threading\Posix</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp">
       <Filter>Source\Threading\Posix</Filter>
     </ClCompile>
@@ -605,6 +614,12 @@
     </ClCompile>
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp">
       <Filter>Tests\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Threading\Posix\PosixFileApiTest.cpp">
+      <Filter>Tests\Threading\Posix</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Threading\Posix\PosixProcessApiTest.cpp">
+      <Filter>Tests\Threading\Posix</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Threading\Windows\WindowsFileApiTest.cpp">
       <Filter>Tests\Threading\Windows</Filter>
