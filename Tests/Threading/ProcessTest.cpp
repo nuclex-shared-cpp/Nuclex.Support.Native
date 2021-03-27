@@ -152,8 +152,10 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   TEST(ProcessTest, CanTellIfProcessIsStillRunning) {
 #if defined(NUCLEX_SUPPORT_WIN32)
-    Process test(u8"cmd.exe");
-    test.Start({u8"/c sleep 1"});
+    // Sleep does not ship with all Windows 10 releases
+    // Timeout immediately error-exits if stdin is redirected
+    Process test(u8"ping");
+    test.Start({u8"-n 1", u8"-w 250", u8"-4 127.0.0.1"});
 #else
     Process test(u8"sleep");
     test.Start({u8"0.25"});
