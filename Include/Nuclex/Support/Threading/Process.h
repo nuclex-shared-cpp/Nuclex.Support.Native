@@ -33,6 +33,27 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Wraps an external executable running as an independent process</summary>
+  /// <remarks>
+  ///   <para>
+  ///     This is a convenient helper you can use to run external programs. It will
+  ///     deal with the differences between platforms in finding the target executable,
+  ///     creating the new process, redirecting its stdin, stdout and stderr streams
+  ///     and checking in on the process' status.
+  ///   </para>
+  ///   <para>
+  ///     When specifying an executable name without an absolute path, the directory
+  ///     containing the running application will be searched first. This allows you to
+  ///     easily call supporting executables that ship with your application, such as
+  ///     shader compilers, updaters and launchers.
+  ///   </para>
+  ///   <para>
+  ///     For external processes that generate output (such as a compiler), it is very
+  ///     important to keep pumping the output streams by calling
+  ///     <see cref="PumpOutputStreams" /> regularly. Otherwise, child process' will
+  ///     eventually fill the buffers of its stdout and stderr redirection pipes and
+  ///     hang on an std::cout or printf() call waiting for buffer space to free up.
+  ///   </para>
+  /// </remarks>
   class Process {
 
     /// <summary>Event that is fired whenever the process writes to stdout</summary>
@@ -41,6 +62,23 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: Nuclex::Support::Events::Event<void(const char *, std::size_t)> StdErr;
 
     /// <summary>Initializes a new process without starting it</summary>
+    /// <param name="executablePath">
+    ///   Executable that should be run, optionally including its path
+    /// </param>
+    /// <remarks>
+    ///   <para>
+    ///     If the executable name doesn't contain a path (or is specified with a relative
+    ///     path), the path is interpreted as relative to the directory in which the calling
+    ///     application executables resides.
+    ///   </para>
+    ///   <para>
+    ///     SHould the executable not be found that way, the normal search rules of
+    ///     the underlying operating system apply, i.e. the PATH environment variable.
+    ///   </para>
+    ///   <para>
+    ///     The executable search will not take place if you specify an absolute path.
+    ///   </para>
+    /// </remarks>
     public: Process(const std::string &executablePath);
     /// <summary>Kills the external process and waits until it is gone</summary>
     public: ~Process();
@@ -141,7 +179,13 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: void PumpOutputStreams() const;
 
-    //public: std::any GetProcessId() const {}
+    // Useful? I'd like to keep this class tight and focus rather then turning into
+    // a general-purpose grabbag for all you child process needs.
+    //public: std::any GetNativeProcessId() const;
+
+    // Useful? This would be easy to provide, but I'd rather expose such things
+    // purely through the Nuclex.Storage.Native library.
+    //public: static std::string GetExecutablePath();
 
     /// <summary>Path to the executable as which this process is running</summary>
     private: std::string executablePath;

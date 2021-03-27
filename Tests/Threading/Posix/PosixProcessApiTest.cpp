@@ -37,6 +37,8 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
       CLOCK_MONOTONIC, std::chrono::milliseconds(100)
     );
 
+    // Obtain the current time *after* fetching the 'future' time.
+    // This way we can check if the tested method really returns a time in the future.
     struct ::timespec currentTime;
     int result = ::clock_gettime(CLOCK_MONOTONIC, &currentTime);
     ASSERT_NE(result, -1);
@@ -58,12 +60,8 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
     int result = ::clock_gettime(CLOCK_MONOTONIC, &pastTime);
     ASSERT_NE(result, -1);
 
-    struct ::timespec futureTime;
-    futureTime = PosixProcessApi::GetTimePlusMilliseconds(
-      CLOCK_MONOTONIC, std::chrono::milliseconds(100)
-    );
-
-    // Wait until the clock's reported time has changed
+    // Wait until the clock's reported time has changed. Once that happens,
+    // the previously queried time is guaranteed to lie in the past.
     for(std::size_t spin = 0; spin < 1000000; ++spin) {
       struct ::timespec currentTime;
       int result = ::clock_gettime(CLOCK_MONOTONIC, &currentTime);
@@ -72,6 +70,13 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
         break;
       }
     }
+
+    // Also get a sample of a future point in time for a time point that
+    // is guaranteed to not have timed out yet
+    struct ::timespec futureTime;
+    futureTime = PosixProcessApi::GetTimePlusMilliseconds(
+      CLOCK_MONOTONIC, std::chrono::milliseconds(100)
+    );
 
     ASSERT_TRUE(PosixProcessApi::HasTimedOut(CLOCK_MONOTONIC, pastTime));
     ASSERT_FALSE(PosixProcessApi::HasTimedOut(CLOCK_MONOTONIC, futureTime));

@@ -124,13 +124,27 @@ namespace Nuclex { namespace Support { namespace Threading {
   Process::~Process() {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle != INVALID_HANDLE_VALUE) {
-      // TODO: Kill the child process
-      BOOL result = ::CloseHandle(impl.ChildProcessHandle);
-#if defined(NDEBUG)
-      (void)result;
-#else
-      assert((result != FALSE) && u8"Child process handle is successfully closed");
-#endif
+      if(IsRunning()) {
+        try {
+          Kill();
+        }
+        catch(const std::exception &) {
+          assert(false && u8"Child process exited before destructor runs");
+        }
+      }
+      try {
+        Join(std::chrono::milliseconds(1));
+      }
+      catch(const std::exception &) {
+        assert(false && u8"Child process is Join()ed before destructor runs");
+      }
+    }
+
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+    );
+    if constexpr(!implementationDataFitsInBuffer) {
+      delete this->implementationData;
     }
   }
 
@@ -393,6 +407,35 @@ namespace Nuclex { namespace Support { namespace Threading {
       }
 
       impl.ChildProcessHandle = INVALID_HANDLE_VALUE;
+    }
+
+    // Close the parent process ends of the stdin, stdout and stderr pipes
+    {
+      BOOL result = ::CloseHandle(impl.StderrHandle);
+      if(result == FALSE) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not close stderr pipe to child process", lastErrorCode
+        );
+      }
+    }
+    {
+      BOOL result = ::CloseHandle(impl.StdoutHandle);
+      if(result == FALSE) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not close stdout pipe to child process", lastErrorCode
+        );
+      }
+    }
+    {
+      BOOL result = ::CloseHandle(impl.StdinHandle);
+      if(result == FALSE) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not close stdin pipe to child process", lastErrorCode
+        );
+      }
     }
 
     return exitCode;

@@ -72,11 +72,8 @@ namespace {
     public: ~ChildSignalSet() {
       if(this->blocked) {
         int result = ::sigprocmask(SIG_SETMASK, &this->previousSignalSet, nullptr);
-#if defined(NDEBUG)
-        (void)result;
-#else
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
         assert((result != -1) && u8"Previous signal mask could be restored");
-#endif
       }
     }
 
@@ -269,23 +266,20 @@ namespace Nuclex { namespace Support { namespace Threading {
   Process::~Process() {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId != 0) {
-      Kill();
-    }
-
-    if(impl.StderrFileNumber != -1) {
-      int result = ::close(impl.StderrFileNumber);
-      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-      assert((result == 0) && u8"Pipe forwarding stderr could be closed");
-    }
-    if(impl.StdoutFileNumber != -1) {
-      int result = ::close(impl.StdoutFileNumber);
-      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-      assert((result == 0) && u8"Pipe forwarding stdout could be closed");
-    }
-    if(impl.StdinFileNumber != -1) {
-      int result = ::close(impl.StdinFileNumber);
-      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-      assert((result == 0) && u8"Pipe feeding stdin could be closed");
+      if(!impl.Finished) {
+        try {
+          Kill();
+        }
+        catch(const std::exception &) {
+          assert(false && u8"Child process exited before destructor runs");
+        }
+      }
+      try {
+        Join(std::chrono::milliseconds(1));
+      }
+      catch(const std::exception &) {
+        assert(false && u8"Child process is Join()ed before destructor runs");
+      }
     }
 
     constexpr bool implementationDataFitsInBuffer = (
@@ -534,6 +528,26 @@ namespace Nuclex { namespace Support { namespace Threading {
     // Reset the child process id and finished flag so the process can be launched again
     impl.ChildProcessId = 0;
     impl.Finished = false;
+
+    // Close the parent process ends of the stdin, stdout and stderr pipes
+    if(impl.StderrFileNumber != -1) {
+      int result = ::close(impl.StderrFileNumber);
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result == 0) && u8"Pipe forwarding stderr could be closed");
+      impl.StderrFileNumber = -1;
+    }
+    if(impl.StdoutFileNumber != -1) {
+      int result = ::close(impl.StdoutFileNumber);
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result == 0) && u8"Pipe forwarding stdout could be closed");
+      impl.StdoutFileNumber = -1;
+    }
+    if(impl.StdinFileNumber != -1) {
+      int result = ::close(impl.StdinFileNumber);
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result == 0) && u8"Pipe feeding stdin could be closed");
+      impl.StdinFileNumber = -1;
+    }
 
     // If the process was terminated due to a signal (i.e. crashed or killed), there is
     // no exit code. So in the case of abnormal termination, we instead throw an exception.
