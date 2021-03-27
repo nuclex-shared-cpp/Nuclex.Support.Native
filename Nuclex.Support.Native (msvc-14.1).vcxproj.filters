@@ -188,6 +188,9 @@
     <ClInclude Include="Include\Nuclex\Support\Text\Logger.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\RollingLogger.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Text\StatusObserver.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
@@ -434,6 +437,9 @@
       <Filter>Source\Text</Filter>
     </ClCompile>
     <ClCompile Include="Source\Text\Logger.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\RollingLogger.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
     <ClCompile Include="Source\Text\StatusObserver.cpp">
