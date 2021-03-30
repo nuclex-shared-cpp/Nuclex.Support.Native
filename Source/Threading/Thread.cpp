@@ -76,7 +76,7 @@ namespace {
       // assumes that the thread is running on group 0.
       DWORD cpuCount = ::GetActiveProcessorCount(0);
       for(std::size_t index = 0; index < cpuCount; ++index) {
-        allCpusAffinity |= (std::size_t(1) << index);
+        allCpusAffinity |= (std::uint64_t(1) << index);
       }
     }
 

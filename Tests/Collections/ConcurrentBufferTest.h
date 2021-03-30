@@ -92,7 +92,11 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <returns>The elapsed number of microseconds</returns>
     public: std::size_t GetElapsedMicroseconds() const {
       // Better hope the high_resolution_clock was monotonic...
-      return this->endMicroseconds - this->startMicroseconds;
+      assert(
+        (this->endMicroseconds >= this->startMicroseconds) &&
+        u8"std::chrono::high_resolution_clock counts monotonically"
+      );
+      return static_cast<std::size_t>(this->endMicroseconds - this->startMicroseconds);
     }
 
     /// <summary>Method that will be executed by many threads at the same time</summary>
@@ -135,9 +139,9 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Time at which the instance was constructed</summary>
     private: std::chrono::high_resolution_clock::time_point constructionTime;
     /// <summary>Recorded start time, in microseconds, for the benchmark</summary>
-    private: std::atomic<std::size_t> startMicroseconds;
+    private: std::atomic<std::chrono::microseconds::rep> startMicroseconds;
     /// <summary>Recorded end time, in microseconds, for the benchmark</summary>
-    private: std::atomic<std::size_t> endMicroseconds;
+    private: std::atomic<std::chrono::microseconds::rep> endMicroseconds;
 
   };
 
