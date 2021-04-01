@@ -23,38 +23,9 @@ License along with this library
 
 #include "Nuclex/Support/Threading/ThreadPool.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
-#include "Nuclex/Support/Threading/WindowsThreadPool.h"
-#elif defined(NUCLEX_SUPPORT_WINRT)
-#include "Nuclex/Support/Threading/WinRTThreadPool.h"
-#else
-#include "Nuclex/Support/Threading/LinuxThreadPool.h"
-#endif
-
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
-
-#if defined(NUCLEX_SUPPORT_WIN32)
-
-  std::shared_ptr<ThreadPool> ThreadPool::CreateSystemDefault() {
-    return std::shared_ptr<ThreadPool>(new WindowsThreadPool());
-  }
-
-#elif defined(NUCLEX_SUPPORT_WINRT)
-
-  std::shared_ptr<ThreadPool> ThreadPool::CreateSystemDefault() {
-    return std::shared_ptr<ThreadPool>(new WinRTThreadPool());
-  }
-
-#else
-
-  std::shared_ptr<ThreadPool> ThreadPool::CreateSystemDefault() {
-    return std::shared_ptr<ThreadPool>(new LinuxThreadPool());
-  }
-
-#endif
-
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading

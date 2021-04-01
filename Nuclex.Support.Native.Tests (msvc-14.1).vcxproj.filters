@@ -224,28 +224,13 @@
     <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Threading\LinuxThreadPool.h">
-      <Filter>Include\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Threading\Mutex.h">
-      <Filter>Include\Threading</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\Process.h">
-      <Filter>Include\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Threading\ReaderWriterLock.h">
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\Thread.h">
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\ThreadPool.h">
-      <Filter>Include\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Threading\WindowsThreadPool.h">
-      <Filter>Include\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Threading\WinRTThreadPool.h">
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Any.h">
@@ -499,19 +484,10 @@
     <ClInclude Include="Source\Threading\Windows\WindowsProcessApi.h">
       <Filter>Source\Threading\Windows</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Threading\LinuxThreadPool.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\Mutex.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Threading\Process.Linux.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Source\Threading\Process.Windows.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\ReaderWriterLock.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Source\Threading\Thread.cpp">
@@ -520,10 +496,10 @@
     <ClCompile Include="Source\Threading\ThreadPool.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Threading\WindowsThreadPool.cpp">
+    <ClCompile Include="Source\Threading\ThreadPool.Linux.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Threading\WinRTThreadPool.cpp">
+    <ClCompile Include="Source\Threading\ThreadPool.Windows.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Source\Any.cpp">
@@ -546,6 +522,9 @@
     </ClCompile>
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadPoolTest.cpp">
+      <Filter>Tests\Threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

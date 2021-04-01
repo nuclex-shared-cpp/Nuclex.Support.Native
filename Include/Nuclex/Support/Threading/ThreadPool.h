@@ -32,14 +32,41 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Distributes tasks to several threads</summary>
+  /// <remarks>
+  ///   <para>
+  ///     One some platforms (the Microsoft ones), creating a new threads is a heavy operation
+  ///     that makes it unsuitable for micro tasks like parallelizing a mere loop.
+  ///   </para>
+  ///   <para>
+  ///     With the thread pool, at least moderately-sized tasks can be split into multiple
+  ///     threads without making the setup time exceed the gains. It uses the platform's
+  ///     most efficient method of keeping threads ready (which may even be to delegate to
+  ///     an OS-provided thread pool).
+  ///   </para>
+  ///   <para>
+  ///     Do not use the thread pool for general purpose tasks or waiting on mutexes. It would
+  ///     immediately prevent the thread pool from performing work for 1 or more CPU cores due
+  ///     to the threads being stuck on the wait.
+  ///   </para>
+  ///   <para>
+  ///     Only use the thread pool if you have real number crunching that can be parallelized
+  ///     to as many CPU cores as the system can provide. Performing a single task in
+  ///     the background or doing something time consuming (like disk accesses) should always
+  ///     be done with std::async or std::thread.
+  ///   </para>
+  /// </remarks>
   class ThreadPool {
 
     /// <summary>Initializes a new thread pool</summary>
-    protected: NUCLEX_SUPPORT_API ThreadPool() = default;
+    /// <param name="maximumThreadCount">
+    ///   Maximum number of threads the thread pool will spawn. Use 0 to 
+    /// </param>
+    public: NUCLEX_SUPPORT_API ThreadPool(std::size_t maximumThreadCount = 0);
 
     /// <summary>Stops all threads and frees all resources used</summary>
-    public: NUCLEX_SUPPORT_API virtual ~ThreadPool() = default;
+    public: NUCLEX_SUPPORT_API virtual ~ThreadPool();
 
+/*
     /// <summary>Create a default thread pool for the system</summary>
     /// <returns>The default thread pool on the current system</returns>
     public: NUCLEX_SUPPORT_API static std::shared_ptr<ThreadPool> CreateSystemDefault();
@@ -72,7 +99,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     private: ThreadPool(const ThreadPool &);
     private: ThreadPool &operator =(const ThreadPool &);
-
+*/
   };
 
 

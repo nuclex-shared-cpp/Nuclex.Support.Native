@@ -21,75 +21,48 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "Nuclex/Support/Threading/WinRTThreadPool.h"
+#include "Nuclex/Support/Threading/ThreadPool.h"
 
-#if defined(NUCLEX_SUPPORT_WINRT)
+#if defined(NUCLEX_SUPPORT_LINUX)
 
 #include <stdexcept>
+#include <algorithm>
 
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <Windows.h>
-
-using namespace Windows::Foundation;
-using namespace Windows::System::Threading;
-
-namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  void threadPoolWorkCallback(IAsyncAction ^) {
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-} // anonymous namespace
+#include <unistd.h>
 
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  WinRTThreadPool::WinRTThreadPool() {}
+  LinuxThreadPool::LinuxThreadPool() {}
 
   // ------------------------------------------------------------------------------------------- //
 
-  WinRTThreadPool::~WinRTThreadPool() {}
+  LinuxThreadPool::~LinuxThreadPool() {}
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::size_t WinRTThreadPool::CountMaximumParallelTasks() const {
-    static SYSTEM_INFO systemInfo = SYSTEM_INFO();
-
-    if(systemInfo.dwNumberOfProcessors == 0) {
-      ::GetNativeSystemInfo(&systemInfo);
+  std::size_t LinuxThreadPool::CountMaximumParallelTasks() const {
+    long result = ::sysconf(_SC_NPROCESSORS_ONLN);
+    if(result == -1) {
+      throw std::runtime_error("Could not determine number of processors online");
     }
 
-    return static_cast<std::size_t>(systemInfo.dwNumberOfProcessors);
+    return std::max(static_cast<std::size_t>(result), std::size_t(1));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void WinRTThreadPool::AddTask(
+  void LinuxThreadPool::AddTask(
     const std::function<void()> &task, std::size_t count /* = 1 */
   ) {
-    WorkItemHandler ^workItemHandler = ref new WorkItemHandler(
-      [task](IAsyncAction ^) throw() { // Capture 'task' by value, so it remains valid
-        try {
-          task();
-        }
-        catch(const std::exception &) {
-          std::unexpected();
-        }
-      }
-    );
-    while(count > 0) {
-      Windows::System::Threading::ThreadPool::RunAsync(workItemHandler);
-      --count;
-    }
+    (void)task;
+    (void)count;
+    // TODO: Implement thread pool on Linux
   }
 
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading
 
-#endif // defined(NUCLEX_SUPPORT_WINRT)
+#endif // defined(NUCLEX_SUPPORT_LINUX)

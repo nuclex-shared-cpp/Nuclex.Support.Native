@@ -21,7 +21,7 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "Nuclex/Support/Threading/WindowsThreadPool.h"
+#include "Nuclex/Support/Threading/ThreadPool.h"
 
 #if defined(NUCLEX_SUPPORT_WIN32)
 
@@ -29,11 +29,45 @@ License along with this library
 #include <stdexcept> // for std::runtime_error (should be in <exception> but MSVC is weird)
 #include <cassert> // for assert()
 
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <Windows.h>
+#include "../Helpers/WindowsApi.h"
 
 namespace {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Checks if the system is running at least the specified Windows version<summary>
+  /// <param name="major">Major version number for which to check</param>
+  /// <param name="minor">Minor version number for which to check</param>
+  /// <returns>True if the system's version numebr is at least the specified version</returns>
+  bool isAtLeastWindowsVersion(int major, int minor) {
+    ::OSVERSIONINFOW osVersionInfo = { 0 };
+    osVersionInfo.dwOSVersionInfoSize = sizeof(osVersionInfo);
+
+    // Microsoft declared GetVersionExW() as deprecated, yet relying on the supposed
+    // replacement would pin us to Windows 10 or later.
+#ifdef _MSC_VER
+  #pragma warning(push)
+  #pragma warning(disable: 4996) // method was declared deprecated
+#endif
+    BOOL result = ::GetVersionExW(&osVersionInfo);
+#ifdef _MSC_VER
+  #pragma warning(pop)
+#endif
+    if(result == FALSE) {
+      DWORD errorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not determine operating system version", errorCode
+      );
+    }
+
+    if(osVersionInfo.dwMajorVersion == static_cast<DWORD>(major)) {
+      return (osVersionInfo.dwMinorVersion >= static_cast<DWORD>(minor));
+    } else {
+      return (osVersionInfo.dwMajorVersion > static_cast<DWORD>(major));
+    }
+  }
+
+#if 0
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -92,22 +126,22 @@ namespace {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
+#endif
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  WindowsThreadPool::WindowsThreadPool() :
-    useNewThreadPoolApi(isAtLeastWindowsVersion(6, 0)) {}
+  ThreadPool::ThreadPool(std::size_t maximumThreadCount /* = 0 */) {}
+    //useNewThreadPoolApi(isAtLeastWindowsVersion(6, 0)) {}
 
   // ------------------------------------------------------------------------------------------- //
 
-  WindowsThreadPool::~WindowsThreadPool() {}
+  ThreadPool::~ThreadPool() {}
 
   // ------------------------------------------------------------------------------------------- //
-
+#if 0
   std::size_t WindowsThreadPool::CountMaximumParallelTasks() const {
     static SYSTEM_INFO systemInfo = SYSTEM_INFO();
 
@@ -175,32 +209,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     }
   }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  bool WindowsThreadPool::isAtLeastWindowsVersion(int major, int minor) {
-    OSVERSIONINFOW osVersionInfo = {0};
-    osVersionInfo.dwOSVersionInfoSize = sizeof(osVersionInfo);
-
-#ifdef _MSC_VER
-  #pragma warning(push)
-  #pragma warning(disable: 4996) // method was declared deprecated
 #endif
-    BOOL result = ::GetVersionExW(&osVersionInfo);
-#ifdef _MSC_VER
-  #pragma warning(pop)
-#endif
-    if(result == FALSE) {
-      throw std::runtime_error(u8"Could not determine operating system version");
-    }
-
-    if(osVersionInfo.dwMajorVersion == static_cast<DWORD>(major)) {
-      return (osVersionInfo.dwMinorVersion >= static_cast<DWORD>(minor));
-    } else {
-      return (osVersionInfo.dwMajorVersion > static_cast<DWORD>(major));
-    }
-  }
-
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading
