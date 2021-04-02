@@ -197,7 +197,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
     // Calculate the future point in time by adding the requested number of milliseconds
     {
-      const std::size_t NanoSecondsPerMilliSecond = 1000000; // 1,000,000 ns = 1 ms
+      const std::size_t NanoSecondsPerMillisecond = 1000000; // 1,000,000 ns = 1 ms
       const std::size_t NanoSecondsPerSecond = 1000000000; // 1,000,000,000 ns = 1 s
 
       // timespec has seconds and nanoseconds, so divide the milliseconds into full seconds
@@ -207,7 +207,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
       // If the summed nanoseconds add up to more than one second, increment the timespec's
       // seconds, otherwise just assign the summed nanoseconds.
       std::size_t nanoseconds = (
-        divisionResults.rem * NanoSecondsPerMilliSecond + futureTime.tv_nsec
+        divisionResults.rem * NanoSecondsPerMillisecond + futureTime.tv_nsec
       );
       if(nanoseconds >= NanoSecondsPerSecond) {
         futureTime.tv_sec += divisionResults.quot + 1;
