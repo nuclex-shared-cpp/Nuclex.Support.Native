@@ -523,9 +523,6 @@
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="ThreadPoolTest.cpp">
-      <Filter>Tests\Threading</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Collections\BufferTest.cpp">
@@ -610,6 +607,9 @@
       <Filter>Tests\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Threading\ThreadTest.cpp">
+      <Filter>Tests\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Threading\ThreadPoolTest.cpp">
       <Filter>Tests\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Tests\AnyTests.cpp">

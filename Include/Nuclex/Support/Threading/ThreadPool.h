@@ -108,29 +108,10 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Structure to hold platform dependent thread and sync objects</summary>
     private: struct PlatformDependentImplementationData;
-    /// <summary>Accesses the platform dependent implementation data container</summary>
-    /// <returns>A reference to the platform dependent implementation data</returns>
-    private: const PlatformDependentImplementationData &getImplementationData() const;
-    /// <summary>Accesses the platform dependent implementation data container</summary>
-    /// <returns>A reference to the platform dependent implementation data</returns>
-    private: PlatformDependentImplementationData &getImplementationData();
-    private: union {
-      /// <summary>Platform dependent process and file handles used for the process</summary>
-      PlatformDependentImplementationData *implementationData;
-      /// <summary>Used to hold the platform dependent implementation data if it fits</summary>
-      /// <remarks>
-      ///   Small performance / memory fragmentation improvement.
-      ///   This avoids a micro-allocation for the implenmentation data structure in most cases.
-      /// </remarks>
-#if defined(NUCLEX_SUPPORT_WIN32)
-      unsigned char implementationDataBuffer[32];
-#else // Posix and Linux
-      unsigned char implementationDataBuffer[24];
-#endif
-    };
+    /// <summary>Platform dependent process and file handles used for the process</summary>
+    private: PlatformDependentImplementationData *implementationData;
 
   };
-
 
   // ------------------------------------------------------------------------------------------- //
 

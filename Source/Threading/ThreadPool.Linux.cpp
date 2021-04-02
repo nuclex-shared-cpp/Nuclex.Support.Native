@@ -25,14 +25,21 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
+#include "../Helpers/PosixApi.h"
+
 #include <cassert> // for assert()
+#include <atomic> // for std::atomic
+#include <thread> // for std::thread
 
-//#include <stdexcept>
-//#include <algorithm>
-
-//#include <unistd.h> // for ::sysconf()
-//#include <limits.h> // 
 #include <sys/sysinfo.h> // for ::get_nprocs()
+#include <semaphore.h> // for ::sem_init(), ::sem_wait(), ::sem_post(), ::sem_destroy()
+
+// There is no OS-provided thread pool on Linux systems
+//
+// Thus, an entire stand-alone is implemented in the private implementation data
+// class, invisible to the header. Which makes this file quite a bit larger than
+// the Windows implementation which relies on an already existing implementation.
+//
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -41,56 +48,126 @@ namespace Nuclex { namespace Support { namespace Threading {
   // Implementation details only known on the library-internal side
   struct ThreadPool::PlatformDependentImplementationData {
 
+    // ----------------------------------------------------------------------------------------- //
+
+    /// <summary>Creates an instance of the platform dependent data container</summary>
+    /// <returns>The new data container instance</returns>
+    /// <remarks>
+    ///   This will result in a vanilla instance. The trickery you see in the code
+    ///   is just to do one big heap allocation for both the data container and
+    ///   the std::thread array (which gets put directly after in memory).
+    /// </remarks>
+    public: static PlatformDependentImplementationData *CreateInstance() {
+      std::size_t processorCount = static_cast<std::size_t>(::get_nprocs());
+      std::size_t requiredByteCount = (
+        sizeof(PlatformDependentImplementationData) +
+        (sizeof(std::thread[2]) * processorCount)
+      );
+
+      // Allocate memory, perform in-place construction and use the extra memory
+      // as the address for the std::thread array
+      std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[requiredByteCount]);
+
+      PlatformDependentImplementationData *instance = (
+        new(buffer.get()) PlatformDependentImplementationData(processorCount)
+      );
+
+      instance->Threads = reinterpret_cast<std::thread *>(
+        buffer.release() + sizeof(PlatformDependentImplementationData)
+      );
+
+      return instance;
+    }
+
+    // ----------------------------------------------------------------------------------------- //
+
+    /// <summary>Destroys an instance of the platform dependent data container</summary>
+    /// <param name="instance">Instance that will be destroyed</param>
+    public: static void DestroyInstance(PlatformDependentImplementationData *instance) {
+      instance->~PlatformDependentImplementationData();
+      delete[] reinterpret_cast<std::uint8_t *>(instance);
+    }
+
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Initializes a platform dependent data members of the process</summary>
-    public: PlatformDependentImplementationData() :
-      ProcessorCount(static_cast<std::size_t>(::get_nprocs())) {}
+    /// <param name="processorCount">Number of available processors in the system</param>
+    protected: PlatformDependentImplementationData(std::size_t processorCount) :
+      ProcessorCount(processorCount),
+      TaskSemaphore {0},
+      IsShuttingDown(false),
+      ThreadCount(0),
+      Threads(nullptr) {
+
+      // Create a semaphore we use to let the required number of worker threads through
+      int result = ::sem_init(&this->TaskSemaphore, 0, 0);
+      if(result == -1) {
+        int errorNumber = errno;
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not create a new semaphore", errorNumber
+        );
+      }
+    }
+
+    // ----------------------------------------------------------------------------------------- //
+
+    /// <summary>Destroys the resources owned by the platform dependent data container</summary>
+    protected: ~PlatformDependentImplementationData() {
+
+      // Safety check, if this assertion triggers you'll send all threads into segfaults.
+#if !defined(NDEBUG)
+      std::size_t remainingThreadCount = this->ThreadCount.load(
+        std::memory_order::memory_order_relaxed
+      );
+      assert(
+        (remainingThreadCount == 0) && u8"All threads have terminated before destruction"
+      );
+#endif
+
+      // Kill the semaphore
+      int result = ::sem_destroy(&this->TaskSemaphore);
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result != -1) && u8"Semaphore is successfully destroyed");
+
+    }
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Number of logical processors in the system</summary>
     public: std::size_t ProcessorCount; 
+    /// <summary>Semaphore that allows one thread for each task to pass</summary>
+    public: ::sem_t TaskSemaphore;
+    /// <summary>Whether the thread pool is in the process of shutting down</summary>
+    public: std::atomic<bool> IsShuttingDown;
+    /// <summary>Whether the thread pool is in the process of shutting down</summary>
+    public: std::atomic<std::size_t> ThreadCount;
+    /// <summary>Running threads, capacity is always ProcessorCount * 2</summary>
+    public: std::thread *Threads;
+
+    // ----------------------------------------------------------------------------------------- //
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
   ThreadPool::ThreadPool() :
-    implementationData(nullptr) {
-
-    // If this assert hits, the buffer size assumed by the header was too small.
-    // Things will still work, but we have to resort to an extra allocation.
-    assert(
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData)) &&
-      u8"Private implementation data for Nuclex::Support::Threading::ThreadPool fits in buffer"
-    );
-
-    constexpr bool implementationDataFitsInBuffer = (
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
-    );
-    if constexpr(implementationDataFitsInBuffer) {
-      new(this->implementationDataBuffer) PlatformDependentImplementationData();
-    } else {
-      this->implementationData = new PlatformDependentImplementationData();
-    }
-  }
+    implementationData(PlatformDependentImplementationData::CreateInstance()) {}
 
   // ------------------------------------------------------------------------------------------- //
 
   ThreadPool::~ThreadPool() {
-    PlatformDependentImplementationData &impl = getImplementationData();
+    this->implementationData->IsShuttingDown.store(
+      true, std::memory_order::memory_order_release
+    );
     // TODO: Place shutdown code here
 
-    constexpr bool implementationDataFitsInBuffer = (
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
-    );
-    if constexpr(!implementationDataFitsInBuffer) {
-      delete this->implementationData;
-    }
+    PlatformDependentImplementationData::DestroyInstance(this->implementationData);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t ThreadPool::CountMaximumParallelTasks() const {
-    const PlatformDependentImplementationData &impl = getImplementationData();
-    return impl.ProcessorCount;
+    return this->implementationData->ProcessorCount;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -103,37 +180,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     // TODO: Implement thread pool on Linux
   }
 #endif
-  // ------------------------------------------------------------------------------------------- //
-
-  const ThreadPool::PlatformDependentImplementationData &ThreadPool::getImplementationData(
-  ) const {
-    constexpr bool implementationDataFitsInBuffer = (
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
-      );
-    if constexpr(implementationDataFitsInBuffer) {
-      return *reinterpret_cast<const PlatformDependentImplementationData *>(
-        this->implementationDataBuffer
-        );
-    } else {
-      return *this->implementationData;
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  ThreadPool::PlatformDependentImplementationData &ThreadPool::getImplementationData() {
-    constexpr bool implementationDataFitsInBuffer = (
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
-      );
-    if constexpr(implementationDataFitsInBuffer) {
-      return *reinterpret_cast<PlatformDependentImplementationData *>(
-        this->implementationDataBuffer
-        );
-    } else {
-      return *this->implementationData;
-    }
-  }
-
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading

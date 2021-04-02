@@ -272,7 +272,6 @@
     <ClCompile Include="Source\Events\Delegate.cpp" />
     <ClCompile Include="Source\Events\Event.cpp" />
     <ClCompile Include="Source\Helpers\PosixApi.cpp" />
-    <ClCompile Include="ThreadPoolTest.cpp" />
     <ClInclude Include="Source\Helpers\PosixApi.h" />
     <ClCompile Include="Source\Helpers\WindowsApi.cpp" />
     <ClInclude Include="Source\Helpers\WindowsApi.h" />
@@ -371,6 +370,7 @@
     <ClCompile Include="Tests\Threading\Windows\WindowsProcessApiTest.cpp" />
     <ClCompile Include="Tests\Threading\ProcessTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadTest.cpp" />
+    <ClCompile Include="Tests\Threading\ThreadPoolTest.cpp" />
     <ClCompile Include="Tests\AnyTests.cpp" />
     <ClCompile Include="Tests\BitTricksTest.cpp" />
     <ClCompile Include="Tests\OptionalTests.cpp" />
