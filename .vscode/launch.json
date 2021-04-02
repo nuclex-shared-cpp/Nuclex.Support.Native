@@ -8,7 +8,7 @@
       "name": "(gdb) Launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/linux-gcc9.3-amd64-debug/NuclexSupportNativeTests",
+      "program": "${workspaceFolder}/bin/linux-gcc10.2-amd64-debug/NuclexSupportNativeTests",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

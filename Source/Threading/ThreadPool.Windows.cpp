@@ -67,6 +67,16 @@ namespace {
     }
   }
 
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Counts the number of logical processors in the system<summary>
+  /// <returns>The number of logical processors available to the system</returns>
+  std::size_t countLogicalProcessors() {
+    ::SYSTEM_INFO systemInfo = { 0 };
+    ::GetSystemInfo(&systemInfo); // There is no failure return...
+    return static_cast<std::size_t>(systemInfo.dwNumberOfProcessors);
+  }
+
 #if 0
 
   // ------------------------------------------------------------------------------------------- //
@@ -133,24 +143,63 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  ThreadPool::ThreadPool(std::size_t maximumThreadCount /* = 0 */) {}
-    //useNewThreadPoolApi(isAtLeastWindowsVersion(6, 0)) {}
+  // Implementation details only known on the library-internal side
+  struct ThreadPool::PlatformDependentImplementationData {
+
+    /// <summary>Initializes a platform dependent data members of the process</summary>
+    public: PlatformDependentImplementationData() :
+      ProcessorCount(countLogicalProcessors()) {}
+
+    /// <summary>Number of logical processors in the system</summary>
+    public: std::size_t ProcessorCount; 
+
+  };
 
   // ------------------------------------------------------------------------------------------- //
 
-  ThreadPool::~ThreadPool() {}
+  ThreadPool::ThreadPool() :
+    implementationData(nullptr) {
 
-  // ------------------------------------------------------------------------------------------- //
-#if 0
-  std::size_t WindowsThreadPool::CountMaximumParallelTasks() const {
-    static SYSTEM_INFO systemInfo = SYSTEM_INFO();
+    // If this assert hits, the buffer size assumed by the header was too small.
+    // Things will still work, but we have to resort to an extra allocation.
+    assert(
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData)) &&
+      u8"Private implementation data for Nuclex::Support::Threading::ThreadPool fits in buffer"
+    );
 
-    if(systemInfo.dwNumberOfProcessors == 0) {
-      ::GetSystemInfo(&systemInfo);
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+    );
+    if constexpr(implementationDataFitsInBuffer) {
+      new(this->implementationDataBuffer) PlatformDependentImplementationData();
+    } else {
+      this->implementationData = new PlatformDependentImplementationData();
     }
-
-    return static_cast<std::size_t>(systemInfo.dwNumberOfProcessors);
+    //useNewThreadPoolApi(isAtLeastWindowsVersion(6, 0)) {}
   }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  ThreadPool::~ThreadPool() {
+    PlatformDependentImplementationData &impl = getImplementationData();
+    // TODO: Place shutdown code here
+
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+    );
+    if constexpr(!implementationDataFitsInBuffer) {
+      delete this->implementationData;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::size_t ThreadPool::CountMaximumParallelTasks() const {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+    return impl.ProcessorCount;
+  }
+
+#if 0
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -210,6 +259,37 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
   }
 #endif
+  // ------------------------------------------------------------------------------------------- //
+
+  const ThreadPool::PlatformDependentImplementationData &ThreadPool::getImplementationData(
+  ) const {
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+      );
+    if constexpr(implementationDataFitsInBuffer) {
+      return *reinterpret_cast<const PlatformDependentImplementationData *>(
+        this->implementationDataBuffer
+        );
+    } else {
+      return *this->implementationData;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  ThreadPool::PlatformDependentImplementationData &ThreadPool::getImplementationData() {
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+      );
+    if constexpr(implementationDataFitsInBuffer) {
+      return *reinterpret_cast<PlatformDependentImplementationData *>(
+        this->implementationDataBuffer
+        );
+    } else {
+      return *this->implementationData;
+    }
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading

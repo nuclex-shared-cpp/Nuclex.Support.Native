@@ -58,22 +58,27 @@ namespace Nuclex { namespace Support { namespace Threading {
   class ThreadPool {
 
     /// <summary>Initializes a new thread pool</summary>
-    /// <param name="maximumThreadCount">
-    ///   Maximum number of threads the thread pool will spawn. Use 0 to 
-    /// </param>
-    public: NUCLEX_SUPPORT_API ThreadPool(std::size_t maximumThreadCount = 0);
+    public: NUCLEX_SUPPORT_API ThreadPool();
 
     /// <summary>Stops all threads and frees all resources used</summary>
-    public: NUCLEX_SUPPORT_API virtual ~ThreadPool();
+    public: NUCLEX_SUPPORT_API ~ThreadPool();
+
+    /// <summary>Returns the maximum number of tasks that can run in parallel</summary>
+    /// <returns>The maximum number of tasks that can be executed in parallel</returns>
+    /// <remarks>
+    ///   Depending on the implementation, this may be equal to the number of worker
+    ///   threads or it may be completely unrelated. It should be equal to
+    ///   std::thread::hardware_concurrency() in all recent C++ versions.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API std::size_t CountMaximumParallelTasks() const;
+
+    //public: NUCLEX_SUPPORT_API std::size_t GetMinimum
 
 /*
     /// <summary>Create a default thread pool for the system</summary>
     /// <returns>The default thread pool on the current system</returns>
     public: NUCLEX_SUPPORT_API static std::shared_ptr<ThreadPool> CreateSystemDefault();
 
-    /// <summary>Returns the maximum number of tasks that can run in parallel</summary>
-    /// <returns>The maximum number of tasks that can be executed in parallel</returns>
-    public: NUCLEX_SUPPORT_API virtual std::size_t CountMaximumParallelTasks() const = 0;
 
     /// <summary>Enqueues a task in the thread pool</summary>
     /// <param name="task">Task that will be enqueued</param>
@@ -100,6 +105,30 @@ namespace Nuclex { namespace Support { namespace Threading {
     private: ThreadPool(const ThreadPool &);
     private: ThreadPool &operator =(const ThreadPool &);
 */
+
+    /// <summary>Structure to hold platform dependent thread and sync objects</summary>
+    private: struct PlatformDependentImplementationData;
+    /// <summary>Accesses the platform dependent implementation data container</summary>
+    /// <returns>A reference to the platform dependent implementation data</returns>
+    private: const PlatformDependentImplementationData &getImplementationData() const;
+    /// <summary>Accesses the platform dependent implementation data container</summary>
+    /// <returns>A reference to the platform dependent implementation data</returns>
+    private: PlatformDependentImplementationData &getImplementationData();
+    private: union {
+      /// <summary>Platform dependent process and file handles used for the process</summary>
+      PlatformDependentImplementationData *implementationData;
+      /// <summary>Used to hold the platform dependent implementation data if it fits</summary>
+      /// <remarks>
+      ///   Small performance / memory fragmentation improvement.
+      ///   This avoids a micro-allocation for the implenmentation data structure in most cases.
+      /// </remarks>
+#if defined(NUCLEX_SUPPORT_WIN32)
+      unsigned char implementationDataBuffer[32];
+#else // Posix and Linux
+      unsigned char implementationDataBuffer[24];
+#endif
+    };
+
   };
 
 

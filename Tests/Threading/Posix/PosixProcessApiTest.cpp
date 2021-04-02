@@ -25,6 +25,8 @@ License along with this library
 
 #if !defined(NUCLEX_SUPPORT_WIN32)
 
+#include "../Source/Threading/Posix/PosixFileApi.h"
+
 #include <gtest/gtest.h>
 
 namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
@@ -80,6 +82,26 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
     ASSERT_TRUE(PosixProcessApi::HasTimedOut(CLOCK_MONOTONIC, pastTime));
     ASSERT_FALSE(PosixProcessApi::HasTimedOut(CLOCK_MONOTONIC, futureTime));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(PosixProcessApiTest, ExecutableIsResolvedInWindowsDirectory) {
+    std::string path;
+    PosixProcessApi::GetAbsoluteExecutablePath(path, "ls");
+
+    EXPECT_GT(path.length(), 5); // shortest possible valid path
+    EXPECT_TRUE(PosixFileApi::DoesFileExist(path));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(PosixProcessApiTest, ExecutableIsResolvedInOwn) {
+    std::string path;
+    PosixProcessApi::GetAbsoluteExecutablePath(path, "NuclexSupportNativeTests");
+
+    EXPECT_GT(path.length(), 26); // shortest possible valid path
+    EXPECT_TRUE(PosixFileApi::DoesFileExist(path));
   }
 
   // ------------------------------------------------------------------------------------------- //

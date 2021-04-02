@@ -25,40 +25,113 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
-#include <stdexcept>
-#include <algorithm>
+#include <cassert> // for assert()
 
-#include <unistd.h>
+//#include <stdexcept>
+//#include <algorithm>
+
+//#include <unistd.h> // for ::sysconf()
+//#include <limits.h> // 
+#include <sys/sysinfo.h> // for ::get_nprocs()
 
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  LinuxThreadPool::LinuxThreadPool() {}
+  // Implementation details only known on the library-internal side
+  struct ThreadPool::PlatformDependentImplementationData {
+
+    /// <summary>Initializes a platform dependent data members of the process</summary>
+    public: PlatformDependentImplementationData() :
+      ProcessorCount(static_cast<std::size_t>(::get_nprocs())) {}
+
+    /// <summary>Number of logical processors in the system</summary>
+    public: std::size_t ProcessorCount; 
+
+  };
 
   // ------------------------------------------------------------------------------------------- //
 
-  LinuxThreadPool::~LinuxThreadPool() {}
+  ThreadPool::ThreadPool() :
+    implementationData(nullptr) {
 
-  // ------------------------------------------------------------------------------------------- //
+    // If this assert hits, the buffer size assumed by the header was too small.
+    // Things will still work, but we have to resort to an extra allocation.
+    assert(
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData)) &&
+      u8"Private implementation data for Nuclex::Support::Threading::ThreadPool fits in buffer"
+    );
 
-  std::size_t LinuxThreadPool::CountMaximumParallelTasks() const {
-    long result = ::sysconf(_SC_NPROCESSORS_ONLN);
-    if(result == -1) {
-      throw std::runtime_error("Could not determine number of processors online");
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+    );
+    if constexpr(implementationDataFitsInBuffer) {
+      new(this->implementationDataBuffer) PlatformDependentImplementationData();
+    } else {
+      this->implementationData = new PlatformDependentImplementationData();
     }
-
-    return std::max(static_cast<std::size_t>(result), std::size_t(1));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void LinuxThreadPool::AddTask(
+  ThreadPool::~ThreadPool() {
+    PlatformDependentImplementationData &impl = getImplementationData();
+    // TODO: Place shutdown code here
+
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+    );
+    if constexpr(!implementationDataFitsInBuffer) {
+      delete this->implementationData;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::size_t ThreadPool::CountMaximumParallelTasks() const {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+    return impl.ProcessorCount;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+#if 0
+  void ThreadPool::AddTask(
     const std::function<void()> &task, std::size_t count /* = 1 */
   ) {
     (void)task;
     (void)count;
     // TODO: Implement thread pool on Linux
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
+
+  const ThreadPool::PlatformDependentImplementationData &ThreadPool::getImplementationData(
+  ) const {
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+      );
+    if constexpr(implementationDataFitsInBuffer) {
+      return *reinterpret_cast<const PlatformDependentImplementationData *>(
+        this->implementationDataBuffer
+        );
+    } else {
+      return *this->implementationData;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  ThreadPool::PlatformDependentImplementationData &ThreadPool::getImplementationData() {
+    constexpr bool implementationDataFitsInBuffer = (
+      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+      );
+    if constexpr(implementationDataFitsInBuffer) {
+      return *reinterpret_cast<PlatformDependentImplementationData *>(
+        this->implementationDataBuffer
+        );
+    } else {
+      return *this->implementationData;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
