@@ -88,7 +88,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   TEST(PosixProcessApiTest, ExecutableIsResolvedInWindowsDirectory) {
     std::string path;
-    PosixProcessApi::GetAbsoluteExecutablePath(path, "ls");
+    PosixProcessApi::GetAbsoluteExecutablePath(path, u8"ls");
 
     EXPECT_GT(path.length(), 5); // shortest possible valid path
     EXPECT_TRUE(PosixFileApi::DoesFileExist(path));
@@ -96,12 +96,38 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(PosixProcessApiTest, ExecutableIsResolvedInOwn) {
+  TEST(PosixProcessApiTest, ExecutableIsResolvedInOwnDirectory) {
     std::string path;
-    PosixProcessApi::GetAbsoluteExecutablePath(path, "NuclexSupportNativeTests");
+    PosixProcessApi::GetAbsoluteExecutablePath(path, u8"NuclexSupportNativeTests");
 
     EXPECT_GT(path.length(), 26); // shortest possible valid path
     EXPECT_TRUE(PosixFileApi::DoesFileExist(path));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(PosixProcessApiTest, RelativeWorkingDirectoryStartsInOwnDirectory) {
+    std::string path;
+    PosixProcessApi::GetAbsoluteExecutablePath(path, u8"NuclexSupportNativeTests");
+
+    std::string directory;
+    PosixProcessApi::GetAbsoluteWorkingDirectory(directory, u8".");
+
+    // The directory may end with a /. since we specified '.' as the target.
+    // This isn't required, so we accept both variants. In case the dot is returned,
+    // remove it so the path can be compared against the executable path.
+    if(directory.length() >= 2) {
+      if(directory[directory.length() - 1] == '.') {
+        if(directory[directory.length() - 2] == '/') {
+          directory.resize(directory.length() - 2);
+        } else {
+          directory.resize(directory.length() - 1);
+        }
+      }
+    }
+
+    EXPECT_GT(directory.length(), 2); // shortest possible valid path
+    EXPECT_NE(path.find(directory), std::string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //
