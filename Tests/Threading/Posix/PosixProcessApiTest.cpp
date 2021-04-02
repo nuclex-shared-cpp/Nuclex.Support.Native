@@ -90,7 +90,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
     std::string path;
     PosixProcessApi::GetAbsoluteExecutablePath(path, u8"ls");
 
-    EXPECT_GT(path.length(), 5); // shortest possible valid path
+    EXPECT_GT(path.length(), 5U); // shortest possible valid path
     EXPECT_TRUE(PosixFileApi::DoesFileExist(path));
   }
 
@@ -100,7 +100,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
     std::string path;
     PosixProcessApi::GetAbsoluteExecutablePath(path, u8"NuclexSupportNativeTests");
 
-    EXPECT_GT(path.length(), 26); // shortest possible valid path
+    EXPECT_GT(path.length(), 26U); // shortest possible valid path
     EXPECT_TRUE(PosixFileApi::DoesFileExist(path));
   }
 
@@ -126,7 +126,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
       }
     }
 
-    EXPECT_GT(directory.length(), 2); // shortest possible valid path
+    EXPECT_GT(directory.length(), 2U); // shortest possible valid path
     EXPECT_NE(path.find(directory), std::string::npos);
   }
 
