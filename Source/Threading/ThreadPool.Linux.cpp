@@ -90,8 +90,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Running threads, capacity is always ProcessorCount * 2</summary>
     public: std::thread *Threads;
 
-    // ----------------------------------------------------------------------------------------- //
-
   };
 
   // ------------------------------------------------------------------------------------------- //

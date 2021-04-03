@@ -25,47 +25,16 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WIN32)
 
+#include "Nuclex/Support/ScopeGuard.h"
+
 #include <exception> // for std::runtime_error
 #include <stdexcept> // for std::runtime_error (should be in <exception> but MSVC is weird)
 #include <cassert> // for assert()
 
 #include "../Helpers/WindowsApi.h"
+#include <VersionHelpers.h> // for ::IsWindowsVistaOrGreater()
 
 namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Checks if the system is running at least the specified Windows version<summary>
-  /// <param name="major">Major version number for which to check</param>
-  /// <param name="minor">Minor version number for which to check</param>
-  /// <returns>True if the system's version numebr is at least the specified version</returns>
-  bool isAtLeastWindowsVersion(int major, int minor) {
-    ::OSVERSIONINFOW osVersionInfo = { 0 };
-    osVersionInfo.dwOSVersionInfoSize = sizeof(osVersionInfo);
-
-    // Microsoft declared GetVersionExW() as deprecated, yet relying on the supposed
-    // replacement would pin us to Windows 10 or later.
-#ifdef _MSC_VER
-  #pragma warning(push)
-  #pragma warning(disable: 4996) // method was declared deprecated
-#endif
-    BOOL result = ::GetVersionExW(&osVersionInfo);
-#ifdef _MSC_VER
-  #pragma warning(pop)
-#endif
-    if(result == FALSE) {
-      DWORD errorCode = ::GetLastError();
-      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-        u8"Could not determine operating system version", errorCode
-      );
-    }
-
-    if(osVersionInfo.dwMajorVersion == static_cast<DWORD>(major)) {
-      return (osVersionInfo.dwMinorVersion >= static_cast<DWORD>(minor));
-    } else {
-      return (osVersionInfo.dwMajorVersion > static_cast<DWORD>(major));
-    }
-  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -147,13 +116,82 @@ namespace Nuclex { namespace Support { namespace Threading {
   struct ThreadPool::PlatformDependentImplementationData {
 
     /// <summary>Initializes a platform dependent data members of the process</summary>
-    public: PlatformDependentImplementationData() :
-      ProcessorCount(countLogicalProcessors()) {}
+    public: PlatformDependentImplementationData();
+    /// <summary>Shuts down the thread pool and frees all resources it owns</summary>
+    public: ~PlatformDependentImplementationData();
 
     /// <summary>Number of logical processors in the system</summary>
     public: std::size_t ProcessorCount; 
+    /// <summary>Whether the thread pool should use the Vista-and-later API</summary>
+    public: bool UseNewThreadPoolApi;
+    /// <summary>Describes this application (WinSDK version etc.) to the thread pool</summary>
+    public: ::TP_CALLBACK_ENVIRON NewCallbackEnvironment;
+    /// <summary>Thread pool on which tasks get scheduled if new TP api is used</summary>
+    public: ::TP_POOL *NewThreadPool;
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  ThreadPool::PlatformDependentImplementationData::PlatformDependentImplementationData() :
+    ProcessorCount(countLogicalProcessors()),
+    UseNewThreadPoolApi(::IsWindowsVistaOrGreater()),
+    NewThreadPool(nullptr),
+    NewCallbackEnvironment() {
+
+    if(this->UseNewThreadPoolApi) {
+      ::TpInitializeCallbackEnviron(&this->NewCallbackEnvironment);
+
+      // Create a new thread pool. There is no documentation on how many threads it
+      // will create or run by default.
+      this->NewThreadPool = ::CreateThreadpool(nullptr);
+      if(this->NewThreadPool == nullptr) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not create thread pool (using Vista and later API)", lastErrorCode
+        );
+      }
+      {
+        auto closeThreadPoolScope = ON_SCOPE_EXIT_TRANSACTION{
+          ::CloseThreadpool(this->NewThreadPool);
+        };
+
+        // Set the minimum and maximum number of threads the thread pool can use.
+        // Without doing this, we have no idea how many threads the thread pool would use.
+        DWORD maximumThreadCount = static_cast<DWORD>(this->ProcessorCount * 2);
+        ::SetThreadpoolThreadMaximum(this->NewThreadPool, maximumThreadCount);
+
+        DWORD minimumThreadCount = static_cast<DWORD>(std::sqrt(this->ProcessorCount));
+        if(minimumThreadCount < 4) {
+          minimumThreadCount = 4;
+        }
+        BOOL result = ::SetThreadpoolThreadMinimum(this->NewThreadPool, minimumThreadCount);
+        if(result == FALSE) {
+          DWORD lastErrorCode = ::GetLastError();
+          Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not set minimum number of thread pool threads", lastErrorCode
+          );
+        }
+
+        // Connect the environment structure describing this application with
+        // the thread pool. Needed to submit tasks to this pool instead of the default pool
+        // (which probably gets created when the first task is submitted to it).
+        ::SetThreadpoolCallbackPool(&this->NewCallbackEnvironment, this->NewThreadPool);
+        // Another method without an error return
+
+        closeThreadPoolScope.Commit();
+      }
+
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  ThreadPool::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
+    if(this->UseNewThreadPoolApi) {
+      ::CloseThreadpool(this->NewThreadPool);
+    }
+  }
 
   // ------------------------------------------------------------------------------------------- //
 

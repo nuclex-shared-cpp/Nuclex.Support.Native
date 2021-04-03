@@ -131,6 +131,9 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Errors\CanceledError.h">
+      <Filter>Include\Errors</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h">
       <Filter>Include\Errors</Filter>
     </ClInclude>
@@ -273,6 +276,9 @@
     </ClCompile>
     <ClCompile Include="Source\Collections\Variegator.cpp">
       <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Errors\CanceledError.cpp">
+      <Filter>Source\Errors</Filter>
     </ClCompile>
     <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp">
       <Filter>Source\Errors</Filter>
@@ -460,9 +466,6 @@
     <ClInclude Include="Source\Threading\Windows\WindowsProcessApi.h">
       <Filter>Source\Threading\Windows</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Threading\Mutex.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Threading\Process.Linux.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>

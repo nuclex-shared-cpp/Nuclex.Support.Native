@@ -216,6 +216,7 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\ShiftQueue.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\StackArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h" />
+    <ClInclude Include="Include\Nuclex\Support\Errors\CanceledError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\TimeoutError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\UnresolvedDependencyError.h" />
@@ -265,6 +266,7 @@
     <ClCompile Include="Source\Collections\ShiftQueue.cpp" />
     <ClCompile Include="Source\Collections\StackArray.cpp" />
     <ClCompile Include="Source\Collections\Variegator.cpp" />
+    <ClCompile Include="Source\Errors\CanceledError.cpp" />
     <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp" />
     <ClCompile Include="Source\Errors\TimeoutError.cpp" />
     <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp" />
