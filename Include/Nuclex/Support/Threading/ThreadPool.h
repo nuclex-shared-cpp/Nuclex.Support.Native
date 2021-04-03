@@ -23,9 +23,9 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#include <cstddef>
-#include <functional>
-#include <memory>
+#include <cstddef> // for std::size_t
+#include <future> // for std::packaged_task
+#include <functional> // for std::bind
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -34,14 +34,13 @@ namespace Nuclex { namespace Support { namespace Threading {
   /// <summary>Distributes tasks to several threads</summary>
   /// <remarks>
   ///   <para>
-  ///     One some platforms (the Microsoft ones), creating a new threads is a heavy operation
-  ///     that makes it unsuitable for micro tasks like parallelizing a mere loop.
+  ///     On some platforms (the Microsoft ones), creating a new threads is a heavy operation
+  ///     that makes it unsuitable for micro tasks, like parallelizing a mere loop.
   ///   </para>
   ///   <para>
-  ///     With the thread pool, at least moderately-sized tasks can be split into multiple
-  ///     threads without making the setup time exceed the gains. It uses the platform's
-  ///     most efficient method of keeping threads ready (which may even be to delegate to
-  ///     an OS-provided thread pool).
+  ///     With the thread pool, a bunch of threads are created up front and simply wait for
+  ///     a task. This allows tasks of fine granularity to be split into multiple threads
+  ///     without having the setup time exceed the gains.
   ///   </para>
   ///   <para>
   ///     Do not use the thread pool for general purpose tasks or waiting on mutexes. It would
@@ -53,6 +52,10 @@ namespace Nuclex { namespace Support { namespace Threading {
   ///     to as many CPU cores as the system can provide. Performing a single task in
   ///     the background or doing something time consuming (like disk accesses) should always
   ///     be done with std::async or std::thread.
+  ///   </para>
+  ///   <para>
+  ///     Ideally, your tasks would be split into packages that can be done in a millisecond
+  ///     or less, allowing even 
   ///   </para>
   /// </remarks>
   class ThreadPool {
@@ -72,7 +75,20 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: NUCLEX_SUPPORT_API std::size_t CountMaximumParallelTasks() const;
 
-    //public: NUCLEX_SUPPORT_API std::size_t GetMinimum
+    /// <summary>Schedules a task to be executed on a worker thread</summary>
+    /// <typeparam name="TMethod">Method that will be run on a worker thread</typeparam>
+    public: template<typename TMethod, typename... TArguments>
+    std::future<typename std::result_of<TMethod(TArguments...)>::type>
+    AddTask(TMethod &&method, TArguments &&... arguments) {
+      typedef typename std::result_of<TMethod(TArguments...)>::type ResultType;
+      typedef std::packaged_task<ResultType()> TaskType;
+
+      TaskType newTask(
+        std::bind(std::forward<TMethod>(method), std::forward<TArguments>(arguments)...)
+      );
+
+      return newTask.get_future();
+    }
 
 /*
     /// <summary>Create a default thread pool for the system</summary>

@@ -37,4 +37,18 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
+  int testMethod(int a, int b) {
+    return a * b - (a + b);
+  }
+
+  TEST(ThreadPoolTest, CanScheduleTasks) {
+    ThreadPool testPool;
+
+    std::future<int> future = testPool.AddTask(&testMethod, 12, 34);
+
+    bool isValid = future.valid();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Threading
