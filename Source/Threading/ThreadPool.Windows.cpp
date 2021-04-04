@@ -49,32 +49,6 @@ namespace {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if 0
-  /// <summary>Called by the thread pool to execute a work item</summary>
-  /// <param name="parameter">Task the user has queued for execution</param>
-  /// <returns>Always 0</returns>
-  DWORD WINAPI threadPoolWorkCallback(void *parameter) {
-    typedef std::function<void()> Task;
-    typedef std::pair<Task, std::size_t> ReferenceCountedTask;
-
-    ReferenceCountedTask *task = reinterpret_cast<ReferenceCountedTask *>(parameter);
-    try {
-      task->first.operator()();
-    }
-    catch(const std::exception &) {
-      if(::InterlockedDecrement(&task->second) == 0) {
-        delete task;
-      }
-      std::terminate();
-    }
-
-    if(::InterlockedDecrement(&task->second) == 0) {
-      delete task;
-    }
-    return 0;
-  }
-#endif
-  // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
@@ -116,7 +90,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   If the user submits gigantic tasks, this would otherwise result in filling
     ///   our pool with submitted task instance of gigantic sizes.
     /// </remarks>
-    public: static const constexpr std::size_t SubmittedTaskReuseLimit = 256;
+    public: static const constexpr std::size_t SubmittedTaskReuseLimit = 128;
 
     /// <summary>Initializes a platform dependent data members of the process</summary>
     /// <param name="minimumThreadCount">Minimum number of threads to keep running</param>
@@ -137,13 +111,22 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: void DestroySubmittedTask(SubmittedTask *submittedTask);
 
     /// <summary>Called by the thread pool to execute a work item</summary>
+    /// <param name="parameter">Task the user has queued for execution</param>
+    /// <returns>Always 0</returns>
+    public: static DWORD WINAPI oldthreadPoolWorkCallback(void *parameter);
+
+    /// <summary>Called by the thread pool to execute a work item</summary>
+    /// <param name="instance">
+    ///   Lets the callback request additional actions from the thread pool
+    /// </param>
     /// <param name="context">Task the user has queued for execution</param>
+    /// <param name="workItem">Work item for which this callback was invoked</param>
     private: static void NTAPI newThreadPoolWorkCallback(
       ::TP_CALLBACK_INSTANCE *instance, void *context, ::TP_WORK *workItem
     );
 
-    /// <summary>Number of logical processors in the system</summary>
-    public: std::size_t ProcessorCount; 
+    /// <summary>Whether the thread pool is shutting down</summary>
+    public: bool IsShuttingDown;
     /// <summary>Whether the thread pool should use the Vista-and-later API</summary>
     public: bool UseNewThreadPoolApi;
     /// <summary>Describes this application (WinSDK version etc.) to the thread pool</summary>
@@ -160,7 +143,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   ThreadPool::PlatformDependentImplementation::PlatformDependentImplementation(
     std::size_t minimumThreadCount, std::size_t maximumThreadCount
   ) :
-    ProcessorCount(countLogicalProcessors()),
+    IsShuttingDown(false),
     UseNewThreadPoolApi(::IsWindowsVistaOrGreater()),
     NewThreadPool(nullptr),
     NewCallbackEnvironment() {
@@ -242,14 +225,17 @@ namespace Nuclex { namespace Support { namespace Threading {
         SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(buffer);
         submittedTask->Implementation = this;
         submittedTask->PayloadSize = payloadSize;
-        submittedTask->Work = ::CreateThreadpoolWork(
-          &newThreadPoolWorkCallback, submittedTask, &this->NewCallbackEnvironment
-        );
-        if(submittedTask->Work == nullptr) {
-          DWORD lastErrorCode = ::GetLastError();
-          Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-            u8"Could not create thread pool work item", lastErrorCode
+
+        if(this->UseNewThreadPoolApi) {
+          submittedTask->Work = ::CreateThreadpoolWork(
+            &newThreadPoolWorkCallback, submittedTask, &this->NewCallbackEnvironment
           );
+          if(submittedTask->Work == nullptr) {
+            DWORD lastErrorCode = ::GetLastError();
+            Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+              u8"Could not create thread pool work item", lastErrorCode
+            );
+          }
         }
 
         deleteBufferScope.Commit();
@@ -263,12 +249,30 @@ namespace Nuclex { namespace Support { namespace Threading {
   void ThreadPool::PlatformDependentImplementation::DestroySubmittedTask(
     ThreadPool::PlatformDependentImplementation::SubmittedTask *submittedTask
   ) {
-    ::CloseThreadpoolWork(submittedTask->Work);
+    if(this->UseNewThreadPoolApi) {
+      ::CloseThreadpoolWork(submittedTask->Work);
+    }
 
-    // The task is not constructed by the counterpart method, thus neither
-    // will this method call its destructor.
+    // The task is not constructed by the counterpart method,
+    // thus neither will this method call its destructor.
     
     delete[] reinterpret_cast<std::uint8_t *>(submittedTask);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  DWORD WINAPI ThreadPool::PlatformDependentImplementation::oldthreadPoolWorkCallback(
+    void *parameter
+  ) {
+    SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(parameter);
+
+    if(!submittedTask->Implementation->IsShuttingDown) {
+      submittedTask->Task->operator()();
+    }
+    submittedTask->Task->~Task();
+
+    submittedTask->Implementation->SubmittedTaskPool.push(submittedTask);
+    return 0;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -276,9 +280,14 @@ namespace Nuclex { namespace Support { namespace Threading {
   void NTAPI ThreadPool::PlatformDependentImplementation::newThreadPoolWorkCallback(
     ::TP_CALLBACK_INSTANCE *instance, void *context, ::TP_WORK *workItem
   ) {
+    (void)instance;
+    (void)workItem;
+
     SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(context);
 
-    submittedTask->Task->operator()();
+    if(!submittedTask->Implementation->IsShuttingDown) {
+      submittedTask->Task->operator()();
+    }
     submittedTask->Task->~Task();
     
     submittedTask->Implementation->SubmittedTaskPool.push(submittedTask);
@@ -316,6 +325,16 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   ThreadPool::~ThreadPool() {
+    this->implementation->IsShuttingDown = true;
+
+    // TODO: Wait until all queued tasks have been canceled
+    ::Sleep(10); // lol!
+
+    PlatformDependentImplementation::SubmittedTask *submittedTask;
+    while(this->implementation->SubmittedTaskPool.try_pop(submittedTask)) {
+      this->implementation->DestroySubmittedTask(submittedTask);
+    }
+
     delete this->implementation;
   }
 
@@ -366,79 +385,17 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     submittedTask->Task = task;
 
-    ::SubmitThreadpoolWork(submittedTask->Work);
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  //void ThreadPool::returnTaskMemory(std::uint8_t *taskMemory) {
-  //}
-
-/*
-  std::size_t ThreadPool::CountMaximumParallelTasks() const {
-    return this->implementation->ProcessorCount;
-  }
-*/
-#if 0
-
-  // ------------------------------------------------------------------------------------------- //
-
-  void WindowsThreadPool::AddTask(
-    const std::function<void()> &task, std::size_t count /* = 1 */
-  ) {
-    typedef std::function<void()> Task;
-    typedef std::pair<Task, std::size_t> ReferenceCountedTask;
-
-    ReferenceCountedTask *countedTask = new ReferenceCountedTask(task, count);
-
-    if(this->useNewThreadPoolApi) { // Vista and later can use the new API
-
-      // Try to create a work item for the task we have been given
-      PTP_WORK work = ::CreateThreadpoolWork(&threadPoolWorkCallback, countedTask, nullptr);
-      if(work == nullptr) {
-        delete countedTask;
-        throw std::runtime_error("Could not create thread pool work item");
-      }
-
-      // Work item was created, submit it to the thread pool
-      while(count > 0) {
-        ::SubmitThreadpoolWork(work);
-        --count;
-      }
-
-    } else { // We're on XP, so we need to use the old thread pool API
-
-      // Queue all of the work items
-      while(count > 0) {
-        BOOL result = ::QueueUserWorkItem(
-          &threadPoolWorkCallback, new std::function<void()>(task), 0
-        );
-        if(result == FALSE) {
-          break;
-        }
-
-        --count;
-      }
-
-      // If we exited before all items were queued, an error has occurred
-      if(count > 0) {
-        while(count > 1) { // Some work items may already be running, can't assign
-          ::InterlockedDecrement(&countedTask->second);
-          --count;
-        }
-
-        // The final decrement may reveal that we're responsible for deleting the task
-        // if all threads have finished their execution already.
-        if(::InterlockedDecrement(&countedTask->second) == 0) {
-          delete countedTask;
-        }
-
-        throw std::runtime_error("Could not queue thread pool work item");
-      }
-
+    if(this->implementation->UseNewThreadPoolApi) {
+      ::SubmitThreadpoolWork(submittedTask->Work);
+    } else {
+      ::QueueUserWorkItem(
+        &PlatformDependentImplementation::oldthreadPoolWorkCallback,
+        submittedTask,
+        WT_EXECUTEDEFAULT
+      );
     }
   }
-#endif
+
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading
