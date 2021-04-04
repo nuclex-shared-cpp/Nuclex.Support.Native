@@ -25,14 +25,14 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WIN32)
 
-#include "Nuclex/Support/ScopeGuard.h"
+#include "Nuclex/Support/ScopeGuard.h" // for ScopeGuard
 
-#include <exception> // for std::runtime_error
-#include <stdexcept> // for std::runtime_error (should be in <exception> but MSVC is weird)
 #include <cassert> // for assert()
+#include <cmath> // for std::sqrt()
 
 #include "../Helpers/WindowsApi.h"
 #include <VersionHelpers.h> // for ::IsWindowsVistaOrGreater()
+#include <concurrent_queue.h> // I'd prefer my MPMC queue, but the VS2019 compiler bug...
 
 namespace {
 
@@ -41,15 +41,15 @@ namespace {
   /// <summary>Counts the number of logical processors in the system<summary>
   /// <returns>The number of logical processors available to the system</returns>
   std::size_t countLogicalProcessors() {
-    ::SYSTEM_INFO systemInfo = { 0 };
-    ::GetSystemInfo(&systemInfo); // There is no failure return...
+    static ::SYSTEM_INFO systemInfo = { 0 };
+    if(systemInfo.dwNumberOfProcessors == 0) {
+      ::GetSystemInfo(&systemInfo); // There is no failure return...
+    }
     return static_cast<std::size_t>(systemInfo.dwNumberOfProcessors);
   }
 
-#if 0
-
   // ------------------------------------------------------------------------------------------- //
-
+#if 0
   /// <summary>Called by the thread pool to execute a work item</summary>
   /// <param name="parameter">Task the user has queued for execution</param>
   /// <returns>Always 0</returns>
@@ -73,39 +73,9 @@ namespace {
     }
     return 0;
   }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Called by the thread pool to execute a work item</summary>
-  /// <param name="context">Task the user has queued for execution</param>
-  void NTAPI threadPoolWorkCallback(PTP_CALLBACK_INSTANCE, void *context, PTP_WORK) {
-    typedef std::function<void()> Task;
-    typedef std::pair<Task, std::size_t> ReferenceCountedTask;
-
-    ReferenceCountedTask *task = reinterpret_cast<ReferenceCountedTask *>(context);
-    try {
-      task->first.operator()();
-    }
-    catch(const std::exception &) {
-      if(::InterlockedDecrement(&task->second) == 0) {
-        delete task;
-      }
-
-      // Termination is neccessary. If the ThreadPool worker fails, another part of
-      // the application might wait forever on a mutex or never discover some data was
-      // not processed. Make as much noise here as possible, then terminate the program!
-      assert(!u8"Unhandled exception in ThreadPool worker thread. TERMINATING PROGRAM.");
-      std::terminate();
-      //std::unexpected();
-    }
-
-    if(::InterlockedDecrement(&task->second) == 0) {
-      delete task;
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
 #endif
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Threading {
@@ -113,12 +83,64 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   // Implementation details only known on the library-internal side
-  struct ThreadPool::PlatformDependentImplementationData {
+  struct ThreadPool::PlatformDependentImplementation {
+
+    #pragma region struct SubmittedTask
+
+    public: struct SubmittedTask {
+
+      /// <summary>
+      ///   The instance of the PlatformDependentimplementation class that owns this task
+      /// </summary>
+      public: PlatformDependentImplementation *Implementation;
+      /// <summary>The thread pool work item, if the new thread pool API is used</summary>
+      public: ::TP_WORK *Work;
+      /// <summary>Side of the payload allocated for this task instance</summary>
+      public: std::size_t PayloadSize;
+      // <summary>The task instance living in the payload</summary>
+      public: ThreadPool::Task *Task;
+      /// <summary>This contains a ThreadPool::Task (actually a derived type)</summary>
+      public: std::uint8_t Payload[sizeof(std::intptr_t)];
+
+    };
+
+    #pragma endregion // SubmittedTask
+
+    /// <summary>Size of a basic submitted task without its payload</summary>
+    public: static const constexpr std::size_t SubmittedTaskFootprint = (
+      sizeof(SubmittedTask) - sizeof(std::intptr_t)
+    );
+
+    /// <summary>Maximum size of a submitted task to be re-used via the pool</summary>
+    /// <remarks>
+    ///   If the user submits gigantic tasks, this would otherwise result in filling
+    ///   our pool with submitted task instance of gigantic sizes.
+    /// </remarks>
+    public: static const constexpr std::size_t SubmittedTaskReuseLimit = 256;
 
     /// <summary>Initializes a platform dependent data members of the process</summary>
-    public: PlatformDependentImplementationData();
+    /// <param name="minimumThreadCount">Minimum number of threads to keep running</param>
+    /// <param name="maximumThreadcount">Maximum number of threads to start up</param>
+    public: PlatformDependentImplementation(
+      std::size_t minimumThreadCount, std::size_t maximumThreadCount
+    );
     /// <summary>Shuts down the thread pool and frees all resources it owns</summary>
-    public: ~PlatformDependentImplementationData();
+    public: ~PlatformDependentImplementation();
+
+    /// <summary>Creates a new submitted task instance with the requested size</summary>
+    /// <param name="payloadSize">Size of the payload to carry in the task</param>
+    /// <returns>The submitted task instance with extra memory appended</returns>
+    public: SubmittedTask *CreateSubmittedTask(std::size_t payloadSize);
+
+    /// <summary>Destroys a submitted task instance and frees all its resources</summary>
+    /// <param name="submittedTask">Submitted task that will be destroyed</param>
+    public: void DestroySubmittedTask(SubmittedTask *submittedTask);
+
+    /// <summary>Called by the thread pool to execute a work item</summary>
+    /// <param name="context">Task the user has queued for execution</param>
+    private: static void NTAPI newThreadPoolWorkCallback(
+      ::TP_CALLBACK_INSTANCE *instance, void *context, ::TP_WORK *workItem
+    );
 
     /// <summary>Number of logical processors in the system</summary>
     public: std::size_t ProcessorCount; 
@@ -128,12 +150,16 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: ::TP_CALLBACK_ENVIRON NewCallbackEnvironment;
     /// <summary>Thread pool on which tasks get scheduled if new TP api is used</summary>
     public: ::TP_POOL *NewThreadPool;
+    /// <summary>Submitted tasks for re-use</summary>
+    public: concurrency::concurrent_queue<SubmittedTask *> SubmittedTaskPool;
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-  ThreadPool::PlatformDependentImplementationData::PlatformDependentImplementationData() :
+  ThreadPool::PlatformDependentImplementation::PlatformDependentImplementation(
+    std::size_t minimumThreadCount, std::size_t maximumThreadCount
+  ) :
     ProcessorCount(countLogicalProcessors()),
     UseNewThreadPoolApi(::IsWindowsVistaOrGreater()),
     NewThreadPool(nullptr),
@@ -158,14 +184,14 @@ namespace Nuclex { namespace Support { namespace Threading {
 
         // Set the minimum and maximum number of threads the thread pool can use.
         // Without doing this, we have no idea how many threads the thread pool would use.
-        DWORD maximumThreadCount = static_cast<DWORD>(this->ProcessorCount * 2);
-        ::SetThreadpoolThreadMaximum(this->NewThreadPool, maximumThreadCount);
+        ::SetThreadpoolThreadMaximum(
+          this->NewThreadPool, static_cast<DWORD>(maximumThreadCount)
+        );
+        // This method can't fail, apparently
 
-        DWORD minimumThreadCount = static_cast<DWORD>(std::sqrt(this->ProcessorCount));
-        if(minimumThreadCount < 4) {
-          minimumThreadCount = 4;
-        }
-        BOOL result = ::SetThreadpoolThreadMinimum(this->NewThreadPool, minimumThreadCount);
+        BOOL result = ::SetThreadpoolThreadMinimum(
+          this->NewThreadPool, static_cast<DWORD>(minimumThreadCount)
+        );
         if(result == FALSE) {
           DWORD lastErrorCode = ::GetLastError();
           Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
@@ -179,15 +205,14 @@ namespace Nuclex { namespace Support { namespace Threading {
         ::SetThreadpoolCallbackPool(&this->NewCallbackEnvironment, this->NewThreadPool);
         // Another method without an error return
 
-        closeThreadPoolScope.Commit();
+        closeThreadPoolScope.Commit(); // Everything worked out, don't close the thread pool
       }
-
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  ThreadPool::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
+  ThreadPool::PlatformDependentImplementation::~PlatformDependentImplementation() {
     if(this->UseNewThreadPoolApi) {
       ::CloseThreadpool(this->NewThreadPool);
     }
@@ -195,21 +220,165 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  ThreadPool::ThreadPool() :
-    implementationData(new PlatformDependentImplementationData()) {}
+  ThreadPool::PlatformDependentImplementation::SubmittedTask *
+  ThreadPool::PlatformDependentImplementation::CreateSubmittedTask(
+    std::size_t payloadSize
+  ) {
+    const std::size_t requiredMemory = (
+      PlatformDependentImplementation::SubmittedTaskFootprint + payloadSize
+    );
+
+    // Allocate enough memory for the submitted task structure and the payload
+    // that the caller requested, intended for the Task-derived class instance.
+    std::uint8_t *buffer = new std::uint8_t[requiredMemory];
+    {
+      auto deleteBufferScope = ON_SCOPE_EXIT_TRANSACTION{
+        delete[] buffer;
+      };
+
+      // Fill the fields we know of (this makes it easier on the bookkeeping side
+      // as well... if a submitted tasks exists, its TP_WORK pointer is valid, too).
+      {
+        SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(buffer);
+        submittedTask->Implementation = this;
+        submittedTask->PayloadSize = payloadSize;
+        submittedTask->Work = ::CreateThreadpoolWork(
+          &newThreadPoolWorkCallback, submittedTask, &this->NewCallbackEnvironment
+        );
+        if(submittedTask->Work == nullptr) {
+          DWORD lastErrorCode = ::GetLastError();
+          Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not create thread pool work item", lastErrorCode
+          );
+        }
+
+        deleteBufferScope.Commit();
+        return submittedTask;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void ThreadPool::PlatformDependentImplementation::DestroySubmittedTask(
+    ThreadPool::PlatformDependentImplementation::SubmittedTask *submittedTask
+  ) {
+    ::CloseThreadpoolWork(submittedTask->Work);
+
+    // The task is not constructed by the counterpart method, thus neither
+    // will this method call its destructor.
+    
+    delete[] reinterpret_cast<std::uint8_t *>(submittedTask);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void NTAPI ThreadPool::PlatformDependentImplementation::newThreadPoolWorkCallback(
+    ::TP_CALLBACK_INSTANCE *instance, void *context, ::TP_WORK *workItem
+  ) {
+    SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(context);
+
+    submittedTask->Task->operator()();
+    submittedTask->Task->~Task();
+    
+    submittedTask->Implementation->SubmittedTaskPool.push(submittedTask);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::size_t ThreadPool::GetDefaultMinimumThreadCount() {
+    std::size_t processorCountSquareRoot = static_cast<std::size_t>(
+      std::sqrt(countLogicalProcessors()) + 0.5
+    );
+    if(processorCountSquareRoot >= 4) {
+      return processorCountSquareRoot;
+    } else {
+      return 4;
+    }
+  }        
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::size_t ThreadPool::GetDefaultMaximumThreadCount() {
+    return countLogicalProcessors() * 2;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  ThreadPool::ThreadPool(
+    std::size_t minimumThreadCount /* = GetDefaultMinimumThreadCount() */,
+    std::size_t maximumThreadCount /* = GetDefaultMaximumThreadCount() */
+  ) :
+    implementation(
+      new PlatformDependentImplementation(minimumThreadCount, maximumThreadCount)
+    ) {}
 
   // ------------------------------------------------------------------------------------------- //
 
   ThreadPool::~ThreadPool() {
-    delete this->implementationData;
+    delete this->implementation;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::size_t ThreadPool::CountMaximumParallelTasks() const {
-    return this->implementationData->ProcessorCount;
+  std::uint8_t *ThreadPool::getOrCreateTaskMemory(std::size_t payload) {
+    std::size_t requiredMemory = (
+      PlatformDependentImplementation::SubmittedTaskFootprint + payload
+    );
+
+    // If the submitted task would fit into the pool, check the pool for a task
+    // that we can re-use instead of allocating extra memory. In the typical, optimal
+    // case this will be a single pop() without any fuzz.
+    if(likely(requiredMemory < PlatformDependentImplementation::SubmittedTaskReuseLimit)) {
+      PlatformDependentImplementation::SubmittedTask *submittedTask;
+      std::size_t attempts = 3;
+      while(this->implementation->SubmittedTaskPool.try_pop(submittedTask)) {
+        if(submittedTask->PayloadSize >= payload) {
+          return reinterpret_cast<std::uint8_t *>(submittedTask);
+        }
+
+        // We could return it to the pool, but we want task sizes to amortize on
+        // the typical payloads of our user, so get rid of this task.
+        this->implementation->DestroySubmittedTask(submittedTask);
+
+        --attempts;
+        if(attempts == 0) {
+          break;
+        }
+      }
+    }
+
+    return (
+      reinterpret_cast<std::uint8_t *>(this->implementation->CreateSubmittedTask(payload)) +
+      PlatformDependentImplementation::SubmittedTaskFootprint
+    );
   }
 
+  // ------------------------------------------------------------------------------------------- //
+
+  void ThreadPool::submitTask(Task *task) {
+    PlatformDependentImplementation::SubmittedTask *submittedTask = (
+      reinterpret_cast<PlatformDependentImplementation::SubmittedTask *>(
+        reinterpret_cast<std::uint8_t *>(task) - 
+        PlatformDependentImplementation::SubmittedTaskFootprint
+      )
+    );
+
+    submittedTask->Task = task;
+
+    ::SubmitThreadpoolWork(submittedTask->Work);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  //void ThreadPool::returnTaskMemory(std::uint8_t *taskMemory) {
+  //}
+
+/*
+  std::size_t ThreadPool::CountMaximumParallelTasks() const {
+    return this->implementation->ProcessorCount;
+  }
+*/
 #if 0
 
   // ------------------------------------------------------------------------------------------- //

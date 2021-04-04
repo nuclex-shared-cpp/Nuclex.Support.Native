@@ -60,20 +60,45 @@ namespace Nuclex { namespace Support { namespace Threading {
   /// </remarks>
   class ThreadPool {
 
+    #pragma region class Task
+
+    /// <summary>Base class for tasks that get executed by the thread pool</summary>
+    /// <remarks>
+    ///   Only used internally and does some creative memory acrobatics. Don't expose!
+    /// </remarks>
+    private: class Task {
+
+      /// <summary>Terminates the task. If the task was not executed, cancels it</summary>
+      public: virtual ~Task() = default;
+      /// <summary>Executes the task. Is called on the thread pool thread</summary>
+      public: virtual void operator()() = 0;
+
+    };
+
+    #pragma endregion // class Task
+
+    /// <summary>Determines a good base number of threads to keep active</summary>
+    /// <returns>The default minimum number of threads for new thread pools</returns>
+    public: NUCLEX_SUPPORT_API static std::size_t GetDefaultMinimumThreadCount();
+
+    /// <summary>Determines a good maximum number of threads for a thread pool</summary>
+    /// <returns>The default maximum number of threads for new thread pools</returns>
+    public: NUCLEX_SUPPORT_API static std::size_t GetDefaultMaximumThreadCount();
+
     /// <summary>Initializes a new thread pool</summary>
-    public: NUCLEX_SUPPORT_API ThreadPool();
+    /// <param name="minimumThreadCount">
+    ///   Number of threads that will be created up-front and always stay active
+    /// </param>
+    /// <param name="maximumThreadCount">
+    ///   Highest number of threads to which the thread pool can grow under load
+    /// </param>
+    public: NUCLEX_SUPPORT_API ThreadPool(
+      std::size_t minimumThreadCount = GetDefaultMinimumThreadCount(),
+      std::size_t maximumThreadCount = GetDefaultMaximumThreadCount()
+    );
 
     /// <summary>Stops all threads and frees all resources used</summary>
     public: NUCLEX_SUPPORT_API ~ThreadPool();
-
-    /// <summary>Returns the maximum number of tasks that can run in parallel</summary>
-    /// <returns>The maximum number of tasks that can be executed in parallel</returns>
-    /// <remarks>
-    ///   Depending on the implementation, this may be equal to the number of worker
-    ///   threads or it may be completely unrelated. It should be equal to
-    ///   std::thread::hardware_concurrency() in all recent C++ versions.
-    /// </remarks>
-    public: NUCLEX_SUPPORT_API std::size_t CountMaximumParallelTasks() const;
 
     /// <summary>Schedules a task to be executed on a worker thread</summary>
     /// <typeparam name="TMethod">Method that will be run on a worker thread</typeparam>
@@ -83,14 +108,71 @@ namespace Nuclex { namespace Support { namespace Threading {
       typedef typename std::result_of<TMethod(TArguments...)>::type ResultType;
       typedef std::packaged_task<ResultType()> TaskType;
 
+      struct ThisTask : public Task {
+
+        public: ThisTask() : Task() {}
+
+        /// <summary>Terminates the task. If the task was not executed, cancels it</summary>
+        public: ~ThisTask() override {
+
+        }
+
+        /// <summary>Executes the task. Is called on the thread pool thread</summary>
+        public: void operator()() override {
+
+        }
+
+        //public: TaskType PackagedTask;
+      };
+
+      std::uint8_t *shit = getOrCreateTaskMemory(sizeof(ThisTask));
+      ThisTask *derivedTask = new(shit) ThisTask();
+
+      submitTask(derivedTask);
+
+
+
       TaskType newTask(
         std::bind(std::forward<TMethod>(method), std::forward<TArguments>(arguments)...)
       );
-
+      newTask();
       return newTask.get_future();
     }
 
+    /// <summary>
+    ///   Creates (or fetches from the pool) a task with the specified payload size
+    /// </summary>
+    /// <param name="payload">Size of the task instance</param>
+    /// <returns>A new or reused task with at least the requested payload size</returns>
+    private: NUCLEX_SUPPORT_API std::uint8_t *getOrCreateTaskMemory(std::size_t payload);
+
+    /// <summary>
+    ///   Submits a task (created via getOrCreateTaskMemory()) to the thread pool
+    /// </summary>
+    /// <param name="task">Task that will be submitted</param>
+    private: NUCLEX_SUPPORT_API void submitTask(Task *task);
+
+
+
+
+/* Nope, that will happen automatically when the task finished
+    /// <summary>
+    ///   Gives a memory block back that was 
+    ///
+    private: NUCLEX_SUPPORT_API returnTaskMemory(std::uint8_t *taskMemory);
+*/
+    //private: NUCLEX_SUPPORT_API virtual void SubmitTask()
+
 /*
+    /// <summary>Returns the maximum number of tasks that can run in parallel</summary>
+    /// <returns>The maximum number of tasks that can be executed in parallel</returns>
+    /// <remarks>
+    ///   Depending on the implementation, this may be equal to the number of worker
+    ///   threads or it may be completely unrelated. It should be equal to
+    ///   std::thread::hardware_concurrency() in all recent C++ versions.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API std::size_t CountMaximumParallelTasks() const;
+
     /// <summary>Create a default thread pool for the system</summary>
     /// <returns>The default thread pool on the current system</returns>
     public: NUCLEX_SUPPORT_API static std::shared_ptr<ThreadPool> CreateSystemDefault();
@@ -123,9 +205,9 @@ namespace Nuclex { namespace Support { namespace Threading {
 */
 
     /// <summary>Structure to hold platform dependent thread and sync objects</summary>
-    private: struct PlatformDependentImplementationData;
+    private: struct PlatformDependentImplementation;
     /// <summary>Platform dependent process and file handles used for the process</summary>
-    private: PlatformDependentImplementationData *implementationData;
+    private: PlatformDependentImplementation *implementation;
 
   };
 

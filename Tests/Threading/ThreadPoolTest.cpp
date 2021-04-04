@@ -47,6 +47,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     std::future<int> future = testPool.AddTask(&testMethod, 12, 34);
 
     bool isValid = future.valid();
+    int result = future.get();
   }
 
   // ------------------------------------------------------------------------------------------- //

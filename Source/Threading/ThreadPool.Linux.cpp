@@ -25,13 +25,14 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
-#include "Nuclex/Support/ScopeGuard.h"
-#include "../Helpers/PosixApi.h"
+#include "Nuclex/Support/ScopeGuard.h" // for ScopeGuard
 
 #include <cassert> // for assert()
 #include <atomic> // for std::atomic
 #include <thread> // for std::thread
+#include <cmath> // for std::sqrt()
 
+#include "../Helpers/PosixApi.h"
 #include <sys/sysinfo.h> // for ::get_nprocs()
 #include <semaphore.h> // for ::sem_init(), ::sem_wait(), ::sem_post(), ::sem_destroy()
 
@@ -51,7 +52,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   // Implementation details only known on the library-internal side
-  struct ThreadPool::PlatformDependentImplementationData {
+  struct ThreadPool::PlatformDependentImplementation {
 
     /// <summary>Creates an instance of the platform dependent data container</summary>
     /// <returns>The new data container instance</returns>
@@ -60,18 +61,18 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   is just to do one big heap allocation for both the data container and
     ///   the std::thread array (which gets put directly after in memory).
     /// </remarks>
-    public: static PlatformDependentImplementationData *CreateInstance();
+    public: static PlatformDependentImplementation *CreateInstance();
 
     /// <summary>Destroys an instance of the platform dependent data container</summary>
     /// <param name="instance">Instance that will be destroyed</param>
-    public: static void DestroyInstance(PlatformDependentImplementationData *instance);
+    public: static void DestroyInstance(PlatformDependentImplementation *instance);
 
     /// <summary>Initializes a platform dependent data members of the process</summary>
     /// <param name="processorCount">Number of available processors in the system</param>
-    protected: PlatformDependentImplementationData(std::size_t processorCount);
+    protected: PlatformDependentImplementation(std::size_t processorCount);
 
     /// <summary>Destroys the resources owned by the platform dependent data container</summary>
-    protected: ~PlatformDependentImplementationData();
+    protected: ~PlatformDependentImplementation();
 
     /// <summary>Adds another thread to the pool</summary>
     /// <returns>True if the thread was added, false if the pool was full</returns>
@@ -94,41 +95,43 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  ThreadPool::PlatformDependentImplementationData *
-  ThreadPool::PlatformDependentImplementationData::CreateInstance() {
-    std::size_t processorCount = static_cast<std::size_t>(::get_nprocs());
+  ThreadPool::PlatformDependentImplementation *
+  ThreadPool::PlatformDependentImplementation::CreateInstance(
+    std::size_t minimumThreadCount, std::size_t maximumThreadCount
+  ) {
     std::size_t requiredByteCount = (
-      sizeof(PlatformDependentImplementationData) +
-      (sizeof(std::thread[2]) * processorCount)
+      sizeof(PlatformDependentImplementation) +
+      (sizeof(std::thread[2]) * maximumThreadCount / 2)
     );
 
     // Allocate memory, perform in-place construction and use the extra memory
     // as the address for the std::thread array
     std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[requiredByteCount]);
+    {
+      PlatformDependentImplementation *instance = (
+        new(buffer.get()) PlatformDependentImplementation(maximumThreadCount)
+      );
 
-    PlatformDependentImplementationData *instance = (
-      new(buffer.get()) PlatformDependentImplementationData(processorCount)
-    );
-
-    instance->Threads = reinterpret_cast<std::thread *>(
-      buffer.release() + sizeof(PlatformDependentImplementationData)
-    );
+      instance->Threads = reinterpret_cast<std::thread *>(
+        buffer.release() + sizeof(PlatformDependentImplementation)
+      );
+    }
 
     return instance;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void ThreadPool::PlatformDependentImplementationData::DestroyInstance(
-    PlatformDependentImplementationData *instance
+  void ThreadPool::PlatformDependentImplementation::DestroyInstance(
+    PlatformDependentImplementation *instance
   ) {
-    instance->~PlatformDependentImplementationData();
+    instance->~PlatformDependentImplementation();
     delete[] reinterpret_cast<std::uint8_t *>(instance);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  ThreadPool::PlatformDependentImplementationData::PlatformDependentImplementationData(
+  ThreadPool::PlatformDependentImplementation::PlatformDependentImplementation(
     std::size_t processorCount
   ) :
     ProcessorCount(processorCount),
@@ -150,7 +153,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  ThreadPool::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
+  ThreadPool::PlatformDependentImplementation::~PlatformDependentImplementation() {
 
     // Safety check, if this assertion triggers you'll send all threads into segfaults.
 #if !defined(NDEBUG)
@@ -171,7 +174,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool ThreadPool::PlatformDependentImplementationData::addThread() {
+  bool ThreadPool::PlatformDependentImplementation::addThread() {
 
     // Do not add new threads if the thread pool is shutting down. The thread pool
     // will wait for all threads to exit and then start destroying them, so at that
@@ -222,26 +225,48 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  ThreadPool::ThreadPool() :
-    implementationData(PlatformDependentImplementationData::CreateInstance()) {}
+  std::size_t ThreadPool::GetDefaultMinimumThreadCount() {
+    std::size_t processorCountSquareRoot = static_cast<std::size_t>(
+      std::sqrt(::get_nprocs()) + 0.5
+    );
+    if(processorCountSquareRoot >= 4) {
+      return processorCountSquareRoot;
+    } else {
+      return 4;
+    }
+  }        
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::size_t ThreadPool::GetDefaultMaximumThreadCount() {
+    return static_cast<std::size_t>(::get_nprocs()) * 2;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  ThreadPool::ThreadPool(
+    std::size_t minimumThreadCount /* = GetDefaultMinimumThreadCount() */,
+    std::size_t maximumThreadCount /* = GetDefaultMaximumThreadCount() */
+  ) :
+    implementation(PlatformDependentImplementation::CreateInstance()) {}
 
   // ------------------------------------------------------------------------------------------- //
 
   ThreadPool::~ThreadPool() {
-    this->implementationData->IsShuttingDown.store(
+    this->implementation->IsShuttingDown.store(
       true, std::memory_order::memory_order_release
     );
     // TODO: Place shutdown code here
 
-    PlatformDependentImplementationData::DestroyInstance(this->implementationData);
+    PlatformDependentImplementation::DestroyInstance(this->implementation);
   }
 
   // ------------------------------------------------------------------------------------------- //
-
+/*
   std::size_t ThreadPool::CountMaximumParallelTasks() const {
-    return this->implementationData->ProcessorCount;
+    return this->implementation->ProcessorCount;
   }
-
+*/
   // ------------------------------------------------------------------------------------------- //
 #if 0
   void ThreadPool::AddTask(
