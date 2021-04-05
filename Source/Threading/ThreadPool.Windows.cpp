@@ -126,7 +126,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     );
 
     /// <summary>Whether the thread pool is shutting down</summary>
-    public: bool IsShuttingDown;
+    public: std::atomic<bool> IsShuttingDown;
     /// <summary>Whether the thread pool should use the Vista-and-later API</summary>
     public: bool UseNewThreadPoolApi;
     /// <summary>Describes this application (WinSDK version etc.) to the thread pool</summary>
@@ -325,7 +325,9 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   ThreadPool::~ThreadPool() {
-    this->implementation->IsShuttingDown = true;
+    this->implementation->IsShuttingDown.store(
+      true, std::memory_order::memory_order_release
+    );
 
     // TODO: Wait until all queued tasks have been canceled
     ::Sleep(10); // lol!

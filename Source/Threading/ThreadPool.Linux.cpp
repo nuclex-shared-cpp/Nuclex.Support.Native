@@ -55,31 +55,42 @@ namespace Nuclex { namespace Support { namespace Threading {
   struct ThreadPool::PlatformDependentImplementation {
 
     /// <summary>Creates an instance of the platform dependent data container</summary>
+    /// <param name="minimumThreadCount">Minimum number of threads to keep running</param>
+    /// <param name="maximumThreadcount">Maximum number of threads to start up</param>
     /// <returns>The new data container instance</returns>
     /// <remarks>
     ///   This will result in a vanilla instance. The trickery you see in the code
     ///   is just to do one big heap allocation for both the data container and
     ///   the std::thread array (which gets put directly after in memory).
     /// </remarks>
-    public: static PlatformDependentImplementation *CreateInstance();
+    public: static PlatformDependentImplementation *CreateInstance(
+      std::size_t minimumThreadCount, std::size_t maximumThreadCount
+    );
 
     /// <summary>Destroys an instance of the platform dependent data container</summary>
     /// <param name="instance">Instance that will be destroyed</param>
     public: static void DestroyInstance(PlatformDependentImplementation *instance);
 
     /// <summary>Initializes a platform dependent data members of the process</summary>
-    /// <param name="processorCount">Number of available processors in the system</param>
-    protected: PlatformDependentImplementation(std::size_t processorCount);
+    /// <param name="minimumThreadCount">Minimum number of threads to keep running</param>
+    /// <param name="maximumThreadcount">Maximum number of threads to start up</param>
+    protected: PlatformDependentImplementation(
+      std::size_t minimumThreadCount, std::size_t maximumThreadCount
+    );
 
     /// <summary>Destroys the resources owned by the platform dependent data container</summary>
     protected: ~PlatformDependentImplementation();
 
     /// <summary>Adds another thread to the pool</summary>
     /// <returns>True if the thread was added, false if the pool was full</returns>
-    private: bool addThread();
+    public: bool AddThread();
 
-    /// <summary>Number of logical processors in the system</summary>
-    public: std::size_t ProcessorCount; 
+    private: void threadWorkerMethod();
+
+    /// <summary>Minimum number of threads to always keep running</summary>
+    public: std::size_t MinimumThreadCount; 
+    /// <summary>Maximum number of threads to create under high load</summary>
+    public: std::size_t MaximumThreadCount; 
     /// <summary>Semaphore that allows one thread for each task to pass</summary>
     public: ::sem_t TaskSemaphore;
     /// <summary>Whether the thread pool is in the process of shutting down</summary>
@@ -107,15 +118,14 @@ namespace Nuclex { namespace Support { namespace Threading {
     // Allocate memory, perform in-place construction and use the extra memory
     // as the address for the std::thread array
     std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[requiredByteCount]);
-    {
-      PlatformDependentImplementation *instance = (
-        new(buffer.get()) PlatformDependentImplementation(maximumThreadCount)
-      );
 
-      instance->Threads = reinterpret_cast<std::thread *>(
-        buffer.release() + sizeof(PlatformDependentImplementation)
-      );
-    }
+    PlatformDependentImplementation *instance = (
+      new(buffer.get()) PlatformDependentImplementation(minimumThreadCount, maximumThreadCount)
+    );
+
+    instance->Threads = reinterpret_cast<std::thread *>(
+      buffer.release() + sizeof(PlatformDependentImplementation)
+    );
 
     return instance;
   }
@@ -132,9 +142,10 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   ThreadPool::PlatformDependentImplementation::PlatformDependentImplementation(
-    std::size_t processorCount
+    std::size_t minimumThreadCount, std::size_t maximumThreadCount
   ) :
-    ProcessorCount(processorCount),
+    MinimumThreadCount(minimumThreadCount),
+    MaximumThreadCount(maximumThreadCount),
     TaskSemaphore {0},
     IsShuttingDown(false),
     ThreadCount(0),
@@ -174,7 +185,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool ThreadPool::PlatformDependentImplementation::addThread() {
+  bool ThreadPool::PlatformDependentImplementation::AddThread() {
 
     // Do not add new threads if the thread pool is shutting down. The thread pool
     // will wait for all threads to exit and then start destroying them, so at that
@@ -198,29 +209,25 @@ namespace Nuclex { namespace Support { namespace Threading {
       auto returnSlotScope = ON_SCOPE_EXIT_TRANSACTION {
         this->OccupiedCount.fetch_sub(1, std::memory_order::memory_order_release);
       };
-      if(freeSlotIndex >= (this->ProcessorCount * 2)) {
+      if(freeSlotIndex >= this->MaximumThreadCount) {
         return false;
       }
 
       // Looks like there was room for another thread, start it up
-      std::thread &newThread = *new(this->Threads + freeSlotIndex) std::thread(
-        // TOOD: Implement thread worker method
+      new(this->Threads + freeSlotIndex) std::thread(
+        &PlatformDependentImplementation::threadWorkerMethod, this
       );
-      /* This entire scope can probably be removed, thread always launches immediately
-      {
-        auto destroyThreadScope = ON_SCOPE_EXIT_TRANSACTION {
-          newThread.~thread();
-        };
 
-        //newThread.
-
-        destroyThreadScope.Commit();
-      }
-      */
       returnSlotScope.Commit();
     }
 
     return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void ThreadPool::PlatformDependentImplementation::threadWorkerMethod() {
+    
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -248,7 +255,19 @@ namespace Nuclex { namespace Support { namespace Threading {
     std::size_t minimumThreadCount /* = GetDefaultMinimumThreadCount() */,
     std::size_t maximumThreadCount /* = GetDefaultMaximumThreadCount() */
   ) :
-    implementation(PlatformDependentImplementation::CreateInstance()) {}
+    implementation(
+      PlatformDependentImplementation::CreateInstance(minimumThreadCount, maximumThreadCount)
+    ) {
+
+    auto destroyImplementationScope = ON_SCOPE_EXIT_TRANSACTION {
+      PlatformDependentImplementation::DestroyInstance(this->implementation);
+    };
+    for(std::size_t index = 0; index < minimumThreadCount; ++index) {
+      this->implementation->AddThread();
+    }
+    destroyImplementationScope.Commit();
+
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -262,21 +281,17 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 
   // ------------------------------------------------------------------------------------------- //
-/*
-  std::size_t ThreadPool::CountMaximumParallelTasks() const {
-    return this->implementation->ProcessorCount;
+
+  std::uint8_t *ThreadPool::getOrCreateTaskMemory(std::size_t payload) {
+    return new std::uint8_t[payload];
   }
-*/
+
   // ------------------------------------------------------------------------------------------- //
-#if 0
-  void ThreadPool::AddTask(
-    const std::function<void()> &task, std::size_t count /* = 1 */
-  ) {
-    (void)task;
-    (void)count;
-    // TODO: Implement thread pool on Linux
+
+  void ThreadPool::submitTask(Task *task) {
+
   }
-#endif
+
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading
