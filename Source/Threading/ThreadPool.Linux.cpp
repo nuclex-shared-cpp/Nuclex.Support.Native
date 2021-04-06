@@ -25,14 +25,20 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
+#include "ThreadPoolConfig.h" // thread pool settings
 #include "Nuclex/Support/ScopeGuard.h" // for ScopeGuard
+#include "ConcurrencyFreaks/CRTurnQueue.hpp" // for the Correia-Ramalhete lock-free queue
+
+//#include "Nuclex/Support/Collections/Xenium/ramalhete_queue.hpp"
+//#include "Nuclex/Support/Collections/Xenium/reclamation/stamp_it.hpp"
+#include "Nuclex/Support/Collections/MoodyCamel/concurrentqueue.h"
 
 #include <cassert> // for assert()
 #include <atomic> // for std::atomic
 #include <thread> // for std::thread
 #include <cmath> // for std::sqrt()
 
-#include "../Helpers/PosixApi.h"
+#include "../Helpers/PosixApi.h" // error handling helpers
 #include <sys/sysinfo.h> // for ::get_nprocs()
 #include <semaphore.h> // for ::sem_init(), ::sem_wait(), ::sem_post(), ::sem_destroy()
 
@@ -53,6 +59,26 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // Implementation details only known on the library-internal side
   struct ThreadPool::PlatformDependentImplementation {
+
+    #pragma region struct SubmittedTask
+
+    public: struct SubmittedTask {
+
+      /// <summary>Size of the payload allocated for this task instance</summary>
+      public: std::size_t PayloadSize;
+      // <summary>The task instance living in the payload</summary>
+      public: ThreadPool::Task *Task;
+      /// <summary>This contains a ThreadPool::Task (actually a derived type)</summary>
+      public: std::uint8_t Payload[sizeof(std::intptr_t)];
+
+    };
+
+    #pragma endregion // SubmittedTask
+
+    /// <summary>Size of a basic submitted task without its payload</summary>
+    public: static const constexpr std::size_t SubmittedTaskFootprint = (
+      sizeof(SubmittedTask) - sizeof(std::intptr_t)
+    );
 
     /// <summary>Creates an instance of the platform dependent data container</summary>
     /// <param name="minimumThreadCount">Minimum number of threads to keep running</param>
@@ -85,20 +111,42 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <returns>True if the thread was added, false if the pool was full</returns>
     public: bool AddThread();
 
-    private: void threadWorkerMethod();
+    /// <summary>Creates a new submitted task instance with the requested size</summary>
+    /// <param name="payloadSize">Size of the payload to carry in the task</param>
+    /// <returns>The submitted task instance with extra memory appended</returns>
+    public: SubmittedTask *CreateSubmittedTask(std::size_t payloadSize);
+
+    /// <summary>Destroys a submitted task instance and frees all its resources</summary>
+    /// <param name="submittedTask">Submitted task that will be destroyed</param>
+    public: void DestroySubmittedTask(SubmittedTask *submittedTask);
+
+    /// <summary>Method that is executed by the thread pool's worker threads</summary>
+    /// <param name="threadIndex">Unique index of the thread</param>
+    private: void runThreadWorkLoop(std::size_t threadIndex);
 
     /// <summary>Minimum number of threads to always keep running</summary>
     public: std::size_t MinimumThreadCount; 
     /// <summary>Maximum number of threads to create under high load</summary>
     public: std::size_t MaximumThreadCount; 
-    /// <summary>Semaphore that allows one thread for each task to pass</summary>
-    public: ::sem_t TaskSemaphore;
-    /// <summary>Whether the thread pool is in the process of shutting down</summary>
-    public: std::atomic<bool> IsShuttingDown;
     /// <summary>Number of threads currently running</summary>
     public: std::atomic<std::size_t> ThreadCount;
-    /// <summary>Number of thread slots currently occupied</summary>
-    public: std::atomic<std::size_t> OccupiedCount;
+    /// <summary>Whether the thread pool is in the process of shutting down</summary>
+    public: std::atomic<bool> IsShuttingDown;
+    /// <summary>Semaphore that allows one thread for each task to pass</summary>
+    public: ::sem_t TaskSemaphore;
+    /// <summary>Signaled by the last thread shutting down</summary>
+    public: std::timed_mutex ShutdownMutex;
+    /// <summary>Tasks that have been scheduled for execution in the thread pool</summary>
+    public: moodycamel::ConcurrentQueue<SubmittedTask *> ScheduledTasks;
+    //public: CRTurnQueue<SubmittedTask> ScheduledTasks;
+    /// <summary>Submitted tasks for re-use</summary>
+    public: moodycamel::ConcurrentQueue<SubmittedTask *> SubmittedTaskPool;
+    //public: CRTurnQueue<SubmittedTask> SubmittedTaskPool;
+    /// <summary>Status of all allocated thread slots</summary>
+    /// <remarks>
+    ///   -1: killed, 0: unused, 1: under construction, 2: running, 3: shutting down
+    /// </remarks>
+    public: std::atomic<std::int8_t> *ThreadStatus;
     /// <summary>Running threads, capacity is always ProcessorCount * 2</summary>
     public: std::thread *Threads;
 
@@ -112,6 +160,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   ) {
     std::size_t requiredByteCount = (
       sizeof(PlatformDependentImplementation) +
+      (sizeof(std::atomic<std::int8_t>[2]) * maximumThreadCount / 2) +
       (sizeof(std::thread[2]) * maximumThreadCount / 2)
     );
 
@@ -119,12 +168,31 @@ namespace Nuclex { namespace Support { namespace Threading {
     // as the address for the std::thread array
     std::unique_ptr<std::uint8_t[]> buffer(new std::uint8_t[requiredByteCount]);
 
+    // Construct the platform-dependent implementation in-place
     PlatformDependentImplementation *instance = (
       new(buffer.get()) PlatformDependentImplementation(minimumThreadCount, maximumThreadCount)
     );
 
+    // Thread status atomics directly follow the main structure
+    // CHECK: Should be do some alignment calculations? std::atomic might be sensitive.
+    instance->ThreadStatus = reinterpret_cast<std::atomic<std::int8_t> *>(
+      buffer.get() +
+      sizeof(PlatformDependentImplementation)
+    );
+    {
+      std::uint8_t *address;
+      for(std::size_t index = 0; index < maximumThreadCount; ++index) {
+        address = reinterpret_cast<std::uint8_t *>(instance->ThreadStatus + index);
+        new(address) std::atomic<std::int8_t>(0);
+      }
+    }
+
+    // Thread instances follow the main structure and thread status atomics
+    // CHECK: Alignment calculations needed here?
     instance->Threads = reinterpret_cast<std::thread *>(
-      buffer.release() + sizeof(PlatformDependentImplementation)
+      buffer.release() +
+      sizeof(PlatformDependentImplementation) +
+      (sizeof(std::atomic<std::int8_t>[2]) * maximumThreadCount / 2)
     );
 
     return instance;
@@ -135,8 +203,40 @@ namespace Nuclex { namespace Support { namespace Threading {
   void ThreadPool::PlatformDependentImplementation::DestroyInstance(
     PlatformDependentImplementation *instance
   ) {
+
+    // Destroy all threads. We expect them to be shut down before this method is called.
+    std::size_t threadIndex = instance->MaximumThreadCount;
+    while(threadIndex > 0) {
+      --threadIndex;
+
+      std::int8_t threadStatus = instance->ThreadStatus[threadIndex].load(
+        std::memory_order::memory_order_consume // if() below carries dependency
+      );
+      if(threadStatus > 0) {
+        assert((threadStatus < 1) && u8"Thread finished before its destruction");
+        // This is a pretty terrible thing to do, but the alternative is to destroy
+        // the threads and have them call std::terminate(). So we assert and let
+        // each thread crash in a multi-thread firework of segmentation faults.
+        instance->Threads[threadIndex].detach();
+        instance->Threads[threadIndex].~thread();
+      } else if(threadStatus < 0) {
+        instance->Threads[threadIndex].join(); // Thread is stopped, will finish instantly.
+        instance->Threads[threadIndex].~thread();
+      }
+    }
+
+    // With the threads gone, destroy all thread status atomics
+    threadIndex = instance->MaximumThreadCount;
+    while(threadIndex > 0) {
+      --threadIndex;
+
+      instance->ThreadStatus[threadIndex].~atomic();
+    }
+
+    // Leave the rest up to the normal destructor, them reclaim the memory
     instance->~PlatformDependentImplementation();
     delete[] reinterpret_cast<std::uint8_t *>(instance);
+
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -146,10 +246,12 @@ namespace Nuclex { namespace Support { namespace Threading {
   ) :
     MinimumThreadCount(minimumThreadCount),
     MaximumThreadCount(maximumThreadCount),
-    TaskSemaphore {0},
-    IsShuttingDown(false),
     ThreadCount(0),
-    OccupiedCount(0),
+    IsShuttingDown(false),
+    TaskSemaphore {0},
+    ScheduledTasks(),
+    SubmittedTaskPool(),
+    ThreadStatus(nullptr),
     Threads(nullptr) {
 
     // Create a semaphore we use to let the required number of worker threads through
@@ -160,6 +262,9 @@ namespace Nuclex { namespace Support { namespace Threading {
         u8"Could not create a new semaphore", errorNumber
       );
     }
+
+    // Keep this mutex locked (it is only opened after a successful shutdown)
+    this->ShutdownMutex.lock();
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -199,35 +304,110 @@ namespace Nuclex { namespace Support { namespace Threading {
       }
     }
 
-    // Blindly increment the number of occupied slots. If we find out that no space
-    // was left, decrement again. Otherwise, set up the new thread and increase
-    // the tracked thread count for real.
-    std::size_t freeSlotIndex = this->OccupiedCount.fetch_add(
-      1, std::memory_order::memory_order_acquire
-    );
-    {
-      auto returnSlotScope = ON_SCOPE_EXIT_TRANSACTION {
-        this->OccupiedCount.fetch_sub(1, std::memory_order::memory_order_release);
-      };
-      if(freeSlotIndex >= this->MaximumThreadCount) {
-        return false;
-      }
-
-      // Looks like there was room for another thread, start it up
-      new(this->Threads + freeSlotIndex) std::thread(
-        &PlatformDependentImplementation::threadWorkerMethod, this
+    // Look for a free spot in the thread array. Then attempt to reserve it using
+    // a C-A-S operation on the status list.
+    for(std::size_t index = 0; index < this->MaximumThreadCount; ++index) {
+      std::int8_t status = this->ThreadStatus[index].load(
+        std::memory_order::memory_order_consume // if() below carries dependency
       );
+      if(status < 1) { // Is this slot free?
+        for(;;) { // compare_exchange_weak() can fail, so prepare to try again
+          bool wasReplaced = this->ThreadStatus[index].compare_exchange_weak(
+            status, 1,
+            std::memory_order::memory_order_release,
+            std::memory_order::memory_order_relaxed
+          );
 
-      returnSlotScope.Commit();
-    }
+          // Success! We just reserved a spot for a new thread.
+          // Attempt to construct the new thread in an exception-safe manner.
+          if(wasReplaced) {
+            auto returnSlotScope = ON_SCOPE_EXIT_TRANSACTION {
+              this->ThreadCount.fetch_sub(1, std::memory_order_release);
+              this->ThreadStatus[index].store(0, std::memory_order::memory_order_relaxed);
+            };
 
-    return true;
+            if(status == -1) {
+              this->Threads[index].join();
+              this->Threads[index].~thread();
+            }
+            this->ThreadCount.fetch_add(1, std::memory_order_release);
+            new(this->Threads + index) std::thread(
+              &PlatformDependentImplementation::runThreadWorkLoop, this, index
+            );
+
+            returnSlotScope.Commit();
+            return true;
+          }
+          if(status != 0) {
+            break; // Another thread took the slot during our C-A-S attempt :-(
+          }
+        } // for(C-A-S attempt)
+      }
+    } // for(each index in thread array)
+
+    // We went through all slots and they were all occupied
+    return false;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void ThreadPool::PlatformDependentImplementation::threadWorkerMethod() {
-    
+  void ThreadPool::PlatformDependentImplementation::runThreadWorkLoop(std::size_t threadIndex) {
+    ::timespec heartBeatInterval;
+    heartBeatInterval.tv_sec = 0;
+    heartBeatInterval.tv_nsec = ThreadPoolConfig::WorkerHeartBeatMilliseconds * 1000000;
+
+    // Mark the thread as running
+    this->ThreadStatus[threadIndex].store(2, std::memory_order::memory_order_release);
+    ON_SCOPE_EXIT { 
+      this->ThreadStatus[threadIndex].store(-1, std::memory_order::memory_order_release);
+
+      std::size_t remainingThreadCount = this->ThreadCount.fetch_sub(
+        1, std::memory_order_relaxed
+      ) - 1;
+      if(remainingThreadCount == 0) {
+        this->ShutdownMutex.unlock();
+      }
+    };
+
+    // Number of heart beats we went through without anything to do
+    std::size_t idleHeartBeatCount = 0;
+
+    // Keep looking for work to do
+    for(;;) {
+      bool isShuttingDown = this->IsShuttingDown.load(std::memory_order::memory_order_consume);
+      if(isShuttingDown) {
+        break;
+      }
+
+      // Wait for work to become available. This semaphore is incremented each time
+      // a task is scheduled, meaning it will let one thread from the pool come through
+      // to process each task. The wait timeout is our heart beat interval.
+      int result = ::sem_timedwait(&this->TaskSemaphore, &heartBeatInterval);
+      if(result == -1) {
+        int errorNumber = errno;
+        if(errorNumber == EINTR) {
+          continue; // false interrupt
+        } else if(errorNumber == ETIMEDOUT) {
+          ++idleHeartBeatCount;
+          if(idleHeartBeatCount > ThreadPoolConfig::IdleShutDownHeartBeats) {
+            // Check if thread can shutdown
+          }
+        } else {
+          Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+            u8"Thread pool thread encountered error waiting for semaphore", errorNumber
+          );
+        }
+      }
+
+      // Yay, we've got work to do. Reset the idle heart beat counter!
+      idleHeartBeatCount = 0;
+    }
+
+    // Thread shutting down
+    // There is a low chance that multiple threads try to shut down at the same time
+    // and the thread counter goes below the MinimumThreadCount for a moment. This is
+    // immediately resolved by the 
+    // if(this->ThreadCount > this->MinimumThreadCount) {
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -237,9 +417,11 @@ namespace Nuclex { namespace Support { namespace Threading {
       std::sqrt(::get_nprocs()) + 0.5
     );
     if(processorCountSquareRoot >= 4) {
-      return processorCountSquareRoot;
+      return processorCountSquareRoot; // 5 for 22 cores, 6 for 32 cores, 7 for 44 cores, ...
+    } else if(processorCountSquareRoot >= 3) {
+      return 4; // for fourteen cores or less
     } else {
-      return 4;
+      return 2; // for six cores or less
     }
   }        
 
@@ -272,10 +454,27 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   ThreadPool::~ThreadPool() {
+    
+    // Set the shutdown flag (this causes the worker threads to shut down)
     this->implementation->IsShuttingDown.store(
       true, std::memory_order::memory_order_release
     );
-    // TODO: Place shutdown code here
+
+    // Wake up all the worker threads by incrementing the semaphore enough times
+    // (each thread will see the IsShuttingDown signal and not wait on the semaphore again)
+    for(std::size_t index = 0; index < this->implementation->MaximumThreadCount; ++index)  {
+      int result = ::sem_post(&this->implementation->TaskSemaphore);
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result == 0) && u8"Semaphore is incremented successfully for shutdown");
+    }
+
+    // The threads have been signalled to shut down, given the wake-up signal and
+    // now all that remains to do is hope our user didn't schedule some eternal task.
+    bool wasLocked = this->implementation->ShutdownMutex.try_lock_for(
+      std::chrono::seconds(5)
+    );
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(wasLocked);
+    assert((wasLocked) && u8"All thread pool threads were shut down");
 
     PlatformDependentImplementation::DestroyInstance(this->implementation);
   }
@@ -284,11 +483,52 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   std::uint8_t *ThreadPool::getOrCreateTaskMemory(std::size_t payload) {
     return new std::uint8_t[payload];
+/*    
+    std::size_t requiredMemory = (
+      PlatformDependentImplementation::SubmittedTaskFootprint + payload
+    );
+
+    // If the submitted task would fit into the pool, check the pool for a task
+    // that we can re-use instead of allocating extra memory. In the typical, optimal
+    // case this will be a single pop() without any fuzz.
+    if(likely(requiredMemory < PlatformDependentImplementation::SubmittedTaskReuseLimit)) {
+      PlatformDependentImplementation::SubmittedTask *submittedTask;
+      std::size_t attempts = 3;
+      while(this->implementation->SubmittedTaskPool.try_pop(submittedTask)) {
+        if(submittedTask->PayloadSize >= payload) {
+          return reinterpret_cast<std::uint8_t *>(submittedTask);
+        }
+
+        // We could return it to the pool, but we want task sizes to amortize on
+        // the typical payloads of our user, so get rid of this task.
+        this->implementation->DestroySubmittedTask(submittedTask);
+
+        --attempts;
+        if(attempts == 0) {
+          break;
+        }
+      }
+    }
+
+    return (
+      reinterpret_cast<std::uint8_t *>(this->implementation->CreateSubmittedTask(payload)) +
+      PlatformDependentImplementation::SubmittedTaskFootprint
+    );
+*/
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void ThreadPool::submitTask(Task *task) {
+    
+
+    int result = ::sem_post(&this->implementation->TaskSemaphore);
+    if(result == -1) {
+      int errorNumber = errno;
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not increment semaphore for waiting tasks", errorNumber
+      );
+    }
 
   }
 

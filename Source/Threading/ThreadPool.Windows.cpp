@@ -26,6 +26,7 @@ License along with this library
 #if defined(NUCLEX_SUPPORT_WIN32)
 
 #include "Nuclex/Support/ScopeGuard.h" // for ScopeGuard
+#include "ThreadPoolConfig.h"
 
 #include <cassert> // for assert()
 #include <cmath> // for std::sqrt()
@@ -69,7 +70,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       public: PlatformDependentImplementation *Implementation;
       /// <summary>The thread pool work item, if the new thread pool API is used</summary>
       public: ::TP_WORK *Work;
-      /// <summary>Side of the payload allocated for this task instance</summary>
+      /// <summary>Size of the payload allocated for this task instance</summary>
       public: std::size_t PayloadSize;
       // <summary>The task instance living in the payload</summary>
       public: ThreadPool::Task *Task;
@@ -84,13 +85,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: static const constexpr std::size_t SubmittedTaskFootprint = (
       sizeof(SubmittedTask) - sizeof(std::intptr_t)
     );
-
-    /// <summary>Maximum size of a submitted task to be re-used via the pool</summary>
-    /// <remarks>
-    ///   If the user submits gigantic tasks, this would otherwise result in filling
-    ///   our pool with submitted task instance of gigantic sizes.
-    /// </remarks>
-    public: static const constexpr std::size_t SubmittedTaskReuseLimit = 128;
 
     /// <summary>Initializes a platform dependent data members of the process</summary>
     /// <param name="minimumThreadCount">Minimum number of threads to keep running</param>
@@ -350,7 +344,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // If the submitted task would fit into the pool, check the pool for a task
     // that we can re-use instead of allocating extra memory. In the typical, optimal
     // case this will be a single pop() without any fuzz.
-    if(likely(requiredMemory < PlatformDependentImplementation::SubmittedTaskReuseLimit)) {
+    if(likely(requiredMemory < ThreadPoolConfig::SubmittedTaskReuseLimit)) {
       PlatformDependentImplementation::SubmittedTask *submittedTask;
       std::size_t attempts = 3;
       while(this->implementation->SubmittedTaskPool.try_pop(submittedTask)) {
