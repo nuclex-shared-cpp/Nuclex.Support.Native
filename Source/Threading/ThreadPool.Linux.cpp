@@ -41,13 +41,9 @@ License along with this library
 
 // There is no OS-provided thread pool on Linux systems
 //
-// Thus, an entire stand-alone is implemented in the private implementation data
-// class, invisible to the header. Which makes this file quite a bit larger than
-// the Windows implementation which relies on an already existing implementation.
-//
-// Ideally, I'd want to spin up additional threads only if all threads are busy
-// (up to 2x processors). This would provide some protection against misuse by
-// running longer operations in the thread pool.
+// Thus, an entire stand-alone thread pool is implemented as a private implementation
+// invisible to the header. Which makes this file quite a bit larger than the Windows
+// counterpart which relies on an already existing implementation shipped with the OS.
 //
 
 namespace Nuclex { namespace Support { namespace Threading {
@@ -115,11 +111,14 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Destroys a submitted task instance and frees all its resources</summary>
     /// <param name="submittedTask">Submitted task that will be destroyed</param>
-    public: void DestroySubmittedTask(SubmittedTask *submittedTask);
+    public: static void DestroySubmittedTask(SubmittedTask *submittedTask);
 
     /// <summary>Method that is executed by the thread pool's worker threads</summary>
     /// <param name="threadIndex">Unique index of the thread</param>
     private: void runThreadWorkLoop(std::size_t threadIndex);
+
+    /// <summary>Fast-forwards through all tasks, destroying them</summary>
+    private: void cancelAllTasks();
 
     /// <summary>Minimum number of threads to always keep running</summary>
     public: std::size_t MinimumThreadCount; 
@@ -211,13 +210,13 @@ namespace Nuclex { namespace Support { namespace Threading {
       );
       if(threadStatus > 0) {
         assert((threadStatus < 1) && u8"Thread finished before its destruction");
-        // This is a pretty terrible thing to do, but the alternative is to destroy
+        // Detaching is a pretty terrible thing to do, but the alternative is to destroy
         // the threads and have them call std::terminate(). So we assert and let
-        // each thread crash in a multi-thread firework of segmentation faults.
+        // each thread crash in a multi-threaded firework of segmentation faults.
         instance->Threads[threadIndex].detach();
         instance->Threads[threadIndex].~thread();
       } else if(threadStatus < 0) {
-        instance->Threads[threadIndex].join(); // Thread is stopped, will finish instantly.
+        instance->Threads[threadIndex].join(); // Thread is stopped, call returns instantly.
         instance->Threads[threadIndex].~thread();
       }
     }
@@ -226,8 +225,18 @@ namespace Nuclex { namespace Support { namespace Threading {
     threadIndex = instance->MaximumThreadCount;
     while(threadIndex > 0) {
       --threadIndex;
-
       instance->ThreadStatus[threadIndex].~atomic();
+    }
+
+    // Before shutting down, the worker threads should have called cancelAllTasks(),
+    // destroying all scheduled tasks without invoking their callbacks.
+    assert(instance->ScheduledTasks.size_approx() == 0);
+
+    {
+      SubmittedTask *submittedTask;
+      while(instance->SubmittedTaskPool.try_dequeue(submittedTask)) {
+        DestroySubmittedTask(submittedTask);
+      }
     }
 
     // Leave the rest up to the normal destructor, them reclaim the memory
@@ -403,6 +412,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     for(;;) {
       bool isShuttingDown = this->IsShuttingDown.load(std::memory_order::memory_order_consume);
       if(isShuttingDown) {
+        cancelAllTasks();
         break;
       }
 
@@ -419,7 +429,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           if(idleHeartBeatCount > ThreadPoolConfig::IdleShutDownHeartBeats) {
             int oldThreadCount = this->ThreadCount.fetch_sub(1, std::memory_order_release);
             bool canTerminate = (
-              (oldThreadCount >= 0) &&
+              (oldThreadCount > 0) &&
               (static_cast<std::size_t>(oldThreadCount) > this->MinimumThreadCount)
             );
             if(canTerminate) {
@@ -438,7 +448,43 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // Yay, we've got work to do. Reset the idle heart beat counter!
       idleHeartBeatCount = 0;
+
+      // Execute the task and return the submitted task container to the pool
+      {
+        SubmittedTask *submittedTask;
+        bool wasDequeued = this->ScheduledTasks.try_dequeue(submittedTask);
+        if(wasDequeued) {
+          ON_SCOPE_EXIT {
+            submittedTask->Task->~Task();
+            std::size_t requiredMemory = (
+              SubmittedTaskFootprint + submittedTask->PayloadSize
+            );
+            if(requiredMemory < ThreadPoolConfig::SubmittedTaskReuseLimit) {
+              this->SubmittedTaskPool.enqueue(submittedTask);
+            } else {
+              DestroySubmittedTask(submittedTask);
+            }
+          };
+
+          submittedTask->Task->operator()();
+        }
+      } // take and execute one submitted task
     } // for(;;)
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void ThreadPool::PlatformDependentImplementation::cancelAllTasks() {
+    for(;;) {
+      SubmittedTask *submittedTask;
+      bool wasDequeued = this->ScheduledTasks.try_dequeue(submittedTask);
+      if(wasDequeued) {
+        submittedTask->Task->~Task();
+        DestroySubmittedTask(submittedTask);
+      } else {
+        break;
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -526,7 +572,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
         // We could return it to the pool, but we want task sizes to amortize on
         // the typical payloads of our user, so get rid of this task.
-        this->implementation->DestroySubmittedTask(submittedTask);
+        PlatformDependentImplementation::DestroySubmittedTask(submittedTask);
 
         --attempts;
         if(attempts == 0) {

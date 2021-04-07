@@ -108,35 +108,38 @@ namespace Nuclex { namespace Support { namespace Threading {
       typedef typename std::result_of<TMethod(TArguments...)>::type ResultType;
       typedef std::packaged_task<ResultType()> TaskType;
 
-      struct ThisTask : public Task {
+      /// <summary>Custom packaged task that carries the method and parameters</summary>
+      struct PackagedTask : public Task {
 
-        public: ThisTask() : Task() {}
+        /// <summary>Initializes the packaged task</summary>
+        public: PackagedTask(TMethod &&method, TArguments &&... arguments) :
+          Task(),
+          Callback(
+            std::bind(std::forward<TMethod>(method), std::forward<TArguments>(arguments)...)
+          ) {}
 
         /// <summary>Terminates the task. If the task was not executed, cancels it</summary>
-        public: ~ThisTask() override {
-
-        }
+        public: ~PackagedTask() override = default;
 
         /// <summary>Executes the task. Is called on the thread pool thread</summary>
         public: void operator()() override {
-
+          this->Callback();
+          //std::atomic_thread_fence(std::memory_order::memory_order_release);
+          //this->wasExecuted.store(true, std::memory_order_relaxed);
         }
 
-        //public: TaskType PackagedTask;
+        /// <summary>Stored method pointer and arguments that will be called back</summary>
+        public: TaskType Callback;
+        //private: std::atomic<bool> wasExecuted;
       };
 
-      std::uint8_t *shit = getOrCreateTaskMemory(sizeof(ThisTask));
-      ThisTask *derivedTask = new(shit) ThisTask();
-
-      //submitTask(derivedTask);
-
-
-
-      TaskType newTask(
-        std::bind(std::forward<TMethod>(method), std::forward<TArguments>(arguments)...)
+      std::uint8_t *taskMemory = getOrCreateTaskMemory(sizeof(PackagedTask));
+      PackagedTask *packagedTask = new(taskMemory) PackagedTask(
+        std::forward<TMethod>(method), std::forward<TArguments>(arguments)...
       );
-      newTask();
-      return newTask.get_future();
+      submitTask(taskMemory, packagedTask);
+
+      return packagedTask->Callback.get_future();
     }
 
     /// <summary>
