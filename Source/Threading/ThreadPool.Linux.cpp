@@ -66,7 +66,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       /// <summary>Size of the payload allocated for this task instance</summary>
       public: std::size_t PayloadSize;
-      // <summary>The task instance living in the payload</summary>
+      /// <summary>The task instance living in the payload</summary>
       public: ThreadPool::Task *Task;
       /// <summary>This contains a ThreadPool::Task (actually a derived type)</summary>
       public: std::uint8_t Payload[sizeof(std::intptr_t)];
@@ -129,7 +129,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Maximum number of threads to create under high load</summary>
     public: std::size_t MaximumThreadCount; 
     /// <summary>Number of threads currently running</summary>
-    public: std::atomic<std::size_t> ThreadCount;
+    public: std::atomic<int> ThreadCount;
     /// <summary>Whether the thread pool is in the process of shutting down</summary>
     public: std::atomic<bool> IsShuttingDown;
     /// <summary>Semaphore that allows one thread for each task to pass</summary>
@@ -351,6 +351,36 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
+  ThreadPool::PlatformDependentImplementation::SubmittedTask *
+  ThreadPool::PlatformDependentImplementation::CreateSubmittedTask(
+    std::size_t payloadSize
+  ) {
+    const std::size_t requiredMemory = (
+      PlatformDependentImplementation::SubmittedTaskFootprint + payloadSize
+    );
+
+    // Allocate enough memory for the submitted task structure and the payload
+    // that the caller requested, intended for the Task-derived class instance.
+    std::uint8_t *buffer = new std::uint8_t[requiredMemory];
+    {
+      SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(buffer);
+      submittedTask->PayloadSize = payloadSize;
+      return submittedTask;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void ThreadPool::PlatformDependentImplementation::DestroySubmittedTask(
+    ThreadPool::PlatformDependentImplementation::SubmittedTask *submittedTask
+  ) {
+    // The task is not constructed by the counterpart method,
+    // thus neither will this method call its destructor.
+    delete[] reinterpret_cast<std::uint8_t *>(submittedTask);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   void ThreadPool::PlatformDependentImplementation::runThreadWorkLoop(std::size_t threadIndex) {
     ::timespec heartBeatInterval;
     heartBeatInterval.tv_sec = 0;
@@ -362,7 +392,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       this->ThreadStatus[threadIndex].store(-1, std::memory_order::memory_order_release);
 
       std::size_t remainingThreadCount = this->ThreadCount.fetch_sub(
-        1, std::memory_order_relaxed
+        1, std::memory_order_consume // if() below carries dependency
       ) - 1;
       if(remainingThreadCount == 0) {
         this->ShutdownMutex.unlock();
@@ -390,7 +420,17 @@ namespace Nuclex { namespace Support { namespace Threading {
         } else if(errorNumber == ETIMEDOUT) {
           ++idleHeartBeatCount;
           if(idleHeartBeatCount > ThreadPoolConfig::IdleShutDownHeartBeats) {
-            // Check if thread can shutdown
+            int oldThreadCount = this->ThreadCount.fetch_sub(1, std::memory_order_release);
+            bool canTerminate = (
+              (oldThreadCount >= 0) &&
+              (static_cast<std::size_t>(oldThreadCount) > this->MinimumThreadCount)
+            );
+            if(canTerminate) {
+              break; // Thread was idle for too long and can shut down
+            } else {
+              this->ThreadCount.fetch_add(1, std::memory_order_release);
+              idleHeartBeatCount = ThreadPoolConfig::IdleShutDownHeartBeats;
+            }
           }
         } else {
           Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
@@ -401,34 +441,23 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // Yay, we've got work to do. Reset the idle heart beat counter!
       idleHeartBeatCount = 0;
-    }
-
-    // Thread shutting down
-    // There is a low chance that multiple threads try to shut down at the same time
-    // and the thread counter goes below the MinimumThreadCount for a moment. This is
-    // immediately resolved by the 
-    // if(this->ThreadCount > this->MinimumThreadCount) {
+    } // for(;;)
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t ThreadPool::GetDefaultMinimumThreadCount() {
-    std::size_t processorCountSquareRoot = static_cast<std::size_t>(
-      std::sqrt(::get_nprocs()) + 0.5
+    return ThreadPoolConfig::GuessDefaultMinimumThreadCount(
+      static_cast<std::size_t>(::get_nprocs())
     );
-    if(processorCountSquareRoot >= 4) {
-      return processorCountSquareRoot; // 5 for 22 cores, 6 for 32 cores, 7 for 44 cores, ...
-    } else if(processorCountSquareRoot >= 3) {
-      return 4; // for fourteen cores or less
-    } else {
-      return 2; // for six cores or less
-    }
   }        
 
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t ThreadPool::GetDefaultMaximumThreadCount() {
-    return static_cast<std::size_t>(::get_nprocs()) * 2;
+    return ThreadPoolConfig::GuessDefaultMaximumThreadCount(
+      static_cast<std::size_t>(::get_nprocs())
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -477,13 +506,12 @@ namespace Nuclex { namespace Support { namespace Threading {
     assert((wasLocked) && u8"All thread pool threads were shut down");
 
     PlatformDependentImplementation::DestroyInstance(this->implementation);
+
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   std::uint8_t *ThreadPool::getOrCreateTaskMemory(std::size_t payload) {
-    return new std::uint8_t[payload];
-/*    
     std::size_t requiredMemory = (
       PlatformDependentImplementation::SubmittedTaskFootprint + payload
     );
@@ -491,10 +519,10 @@ namespace Nuclex { namespace Support { namespace Threading {
     // If the submitted task would fit into the pool, check the pool for a task
     // that we can re-use instead of allocating extra memory. In the typical, optimal
     // case this will be a single pop() without any fuzz.
-    if(likely(requiredMemory < PlatformDependentImplementation::SubmittedTaskReuseLimit)) {
+    if(likely(requiredMemory < ThreadPoolConfig::SubmittedTaskReuseLimit)) {
       PlatformDependentImplementation::SubmittedTask *submittedTask;
       std::size_t attempts = 3;
-      while(this->implementation->SubmittedTaskPool.try_pop(submittedTask)) {
+      while(this->implementation->SubmittedTaskPool.try_dequeue(submittedTask)) {
         if(submittedTask->PayloadSize >= payload) {
           return reinterpret_cast<std::uint8_t *>(submittedTask);
         }
@@ -514,14 +542,30 @@ namespace Nuclex { namespace Support { namespace Threading {
       reinterpret_cast<std::uint8_t *>(this->implementation->CreateSubmittedTask(payload)) +
       PlatformDependentImplementation::SubmittedTaskFootprint
     );
-*/
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void ThreadPool::submitTask(Task *task) {
-    
+  void ThreadPool::submitTask(std::uint8_t *taskMemory, Task *task) {
+    PlatformDependentImplementation::SubmittedTask *submittedTask = (
+      reinterpret_cast<PlatformDependentImplementation::SubmittedTask *>(
+        taskMemory - PlatformDependentImplementation::SubmittedTaskFootprint
+      )
+    );
 
+    submittedTask->Task = task;
+
+    // Task is ready, schedule it for execution by a worker thread
+    bool wasEnqueued = this->implementation->ScheduledTasks.enqueue(submittedTask);
+    if(!wasEnqueued) {
+      bool wasReturned = this->implementation->SubmittedTaskPool.enqueue(submittedTask);
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(wasReturned);
+      assert(wasReturned && u8"After task failed to schedule, it's returned to the pool");
+      throw std::runtime_error(u8"Could not schedule task for thread pool execution");
+    }
+    
+    // Wake up a worker thread (or prevent the next one to become available
+    // from going to sleep again)
     int result = ::sem_post(&this->implementation->TaskSemaphore);
     if(result == -1) {
       int errorNumber = errno;

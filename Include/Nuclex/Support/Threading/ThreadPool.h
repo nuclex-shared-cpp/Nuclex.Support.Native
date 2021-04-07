@@ -128,7 +128,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       std::uint8_t *shit = getOrCreateTaskMemory(sizeof(ThisTask));
       ThisTask *derivedTask = new(shit) ThisTask();
 
-      submitTask(derivedTask);
+      //submitTask(derivedTask);
 
 
 
@@ -149,10 +149,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>
     ///   Submits a task (created via getOrCreateTaskMemory()) to the thread pool
     /// </summary>
+    /// <param name="taskMemory">Memory block returned by getOrCreateTaskMemory</param>
     /// <param name="task">Task that will be submitted</param>
-    private: NUCLEX_SUPPORT_API void submitTask(Task *task);
-
-
+    private: NUCLEX_SUPPORT_API void submitTask(std::uint8_t *taskMemory, Task *task);
 
 
 /* Nope, that will happen automatically when the task finished

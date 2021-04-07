@@ -193,9 +193,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Nuclex\Support\Collections\MoodyCamel\blockingconcurrentqueue.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\MoodyCamel\concurrentqueue.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\MoodyCamel\lightweightsemaphore.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentQueue.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.MPMC.inl" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentRingBuffer.MPSC.inl" />
@@ -249,6 +253,7 @@
     <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentCollection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
+    <ClCompile Include="Source\Collections\ConcurrentQueue.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentRingBuffer.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentSet.cpp" />
     <ClCompile Include="Source\Collections\DynamicArray.cpp" />
@@ -329,6 +334,8 @@
     <ClCompile Include="Source\Threading\ThreadPool.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.Linux.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.Windows.cpp" />
+    <ClCompile Include="Source\Threading\ThreadPoolConfig.cpp" />
+    <ClInclude Include="Source\Threading\ThreadPoolConfig.h" />
     <ClCompile Include="Source\Any.cpp" />
     <ClCompile Include="Source\BitTricks.cpp" />
     <ClCompile Include="Source\Config.cpp" />

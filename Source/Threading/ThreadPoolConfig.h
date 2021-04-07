@@ -24,6 +24,7 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 
 #include <cstddef> // for std::size_t
+#include <cmath> // for std::sqrt()
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -90,6 +91,59 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: static const constexpr std::size_t IdleShutDownHeartBeats = 10;
 
+    /// <summary>Guesses a good default for the number of threads to keep alive</summary>
+    /// <param name="processorCount">Number of processors (CPU cores) in the system</param>
+    /// <returns>The default value for the thread pool's minimum thread count</returns>
+    /// <remarks>
+    ///   <para>
+    ///     We want to keep a few threads around in case the thread pool is used for
+    ///     one-off tasks. This method tries to guess a reasonable number of threads
+    ///     to keep ready for this purpose. To prevent the number from exploding on
+    ///     systems we take the square root.
+    ///   </para>
+    ///   <para>
+    ///     If the library's user intends to use the thread pool for massive number
+    ///     crunching, a higher minimum thread count can be specified manually.
+    ///   </para>
+    /// </remarks>
+    public: static constexpr std::size_t GuessDefaultMinimumThreadCount(
+      std::size_t processorCount
+    ) {
+      std::size_t processorCountSquareRoot = static_cast<std::size_t>(
+        std::sqrt(processorCount) + 0.5
+      );
+      if(processorCountSquareRoot >= 4) {
+        return processorCountSquareRoot; // 5 for 22 cores, 6 for 32 cores, 7 for 44 cores, ...
+      } else if(processorCountSquareRoot >= 3) {
+        return 4; // for fourteen cores or less
+      } else {
+        return 2; // for six cores or less
+      }
+    }
+
+    /// <summary>Guesses a good default for the maximum number of threads</summary>
+    /// <param name="processorCount">Number of processors (CPU cores) in the system</param>
+    /// <returns>The default value for the thread pool's maximum thread count</returns>
+    /// <remarks>
+    ///   <para>
+    ///     It seems to be a good idea to keep this number above the real number of
+    ///     CPU cores available. This way, when threads finish, there still enough work
+    ///     for all CPU cores that the operating system's thread scheduler can assign
+    ///     to cores even if the thread pool is not fully utilized while the user code
+    ///     responds to the finished task and generates more work.
+    ///   </para>
+    ///   <para>
+    ///     If a thread pool should always keep a certain number of CPU cores free
+    ///     (for example to prioritize communication or UI threads), the user can manually
+    ///     specify a different maximum thread count in the constructor.
+    ///   </para>
+    /// </remarks>
+    public: static constexpr std::size_t GuessDefaultMaximumThreadCount(
+      std::size_t processorCount
+    ) {
+      return processorCount + GuessDefaultMinimumThreadCount(processorCount);
+      //return processorCount * 2; // another option...
+    }
 
   };
 

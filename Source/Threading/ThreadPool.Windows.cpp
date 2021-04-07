@@ -290,20 +290,17 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t ThreadPool::GetDefaultMinimumThreadCount() {
-    std::size_t processorCountSquareRoot = static_cast<std::size_t>(
-      std::sqrt(countLogicalProcessors()) + 0.5
+    return ThreadPoolConfig::GuessDefaultMinimumThreadCount(
+      countLogicalProcessors()
     );
-    if(processorCountSquareRoot >= 4) {
-      return processorCountSquareRoot;
-    } else {
-      return 4;
-    }
   }        
 
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t ThreadPool::GetDefaultMaximumThreadCount() {
-    return countLogicalProcessors() * 2;
+    return ThreadPoolConfig::GuessDefaultMaximumThreadCount(
+      countLogicalProcessors()
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -371,11 +368,10 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void ThreadPool::submitTask(Task *task) {
+  void ThreadPool::submitTask(std::uint8_t *taskMemory, Task *task) {
     PlatformDependentImplementation::SubmittedTask *submittedTask = (
       reinterpret_cast<PlatformDependentImplementation::SubmittedTask *>(
-        reinterpret_cast<std::uint8_t *>(task) - 
-        PlatformDependentImplementation::SubmittedTaskFootprint
+        taskMemory - PlatformDependentImplementation::SubmittedTaskFootprint
       )
     );
 
