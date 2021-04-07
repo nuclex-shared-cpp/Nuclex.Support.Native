@@ -109,7 +109,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <returns>
     ///   True if an element was taken from the collection, false if the collection was empty
     /// </returns>
-    public: virtual bool TryPop(TElement &element) = 0;
+    public: virtual bool TryTake(TElement &element) = 0;
 
     /// <summary>Counts the numebr of elements current in the collection</summary>
     /// <returns>

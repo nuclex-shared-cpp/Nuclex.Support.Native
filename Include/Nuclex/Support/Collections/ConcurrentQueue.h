@@ -45,21 +45,14 @@ namespace Nuclex { namespace Support { namespace Collections {
       ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
     )
   >
-  class ConcurrentQueue;
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>
-  ///   Multi-producer, multi-consumer version of the lock-free, unbounded queue
-  /// </summary>
-  /// <typeparam name="TElement">Type of elements the queue will store</typeparam>
-  template<typename TElement>
-  class ConcurrentQueue<
-    TElement, ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
-  > : ConcurrentCollection<TElement> {
+  class ConcurrentQueue : public ConcurrentCollection<TElement> {
 
     /// <summary>Initializes a new lock-free queue</summary>
     public: ConcurrentQueue() : wrappedQueue() {}
+
+    /// <summary>Initializes a new lock-free queue</summary>
+    /// <param name="initialCapacity">Capacity in items to reserve up-front</param>
+    public: ConcurrentQueue(std::size_t initialCapacity) : wrappedQueue(initialCapacity) {}
 
     /// <summary>Destroys the lock-free queue and all items still in it</summary>
     public: ~ConcurrentQueue() override = default;
@@ -76,7 +69,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="element">Element that will be appended to the collection</param>
     /// <returns>True if the element was appended, false if there was no space left</returns>
     public: bool TryAppend(TElement &&newItem) {
-      this->wrappedQueue.enqueue(std::forward(newItem));
+      this->wrappedQueue.enqueue(std::move(newItem));
       return true;
     }
 
@@ -85,7 +78,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <returns>
     ///   True if an element was taken from the collection, false if the collection was empty
     /// </returns>
-    public: bool TryPop(TElement &result) override {
+    public: bool TryTake(TElement &result) override {
       return this->wrappedQueue.try_dequeue(result);
     }
 
@@ -108,6 +101,17 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   };
 
+  // ------------------------------------------------------------------------------------------- //
+/*
+  /// <summary>
+  ///   Multi-producer, multi-consumer version of the lock-free, unbounded queue
+  /// </summary>
+  /// <typeparam name="TElement">Type of elements the queue will store</typeparam>
+  template<typename TElement>
+  class ConcurrentQueue<
+    TElement, ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
+  > : ConcurrentCollection<TElement> {};
+*/
 }}} // namespace Nuclex::Support::Collections
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H

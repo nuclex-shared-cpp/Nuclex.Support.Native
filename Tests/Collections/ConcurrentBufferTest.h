@@ -166,11 +166,17 @@ namespace Nuclex { namespace Support { namespace Collections {
     protected: void Thread(std::size_t threadIndex) override {
       std::size_t randomNumber = BitTricks::XorShiftRandom(threadIndex);
       for(;;) {
-        bool wasAdded = this->buffer.TryAppend(static_cast<int>(randomNumber | 1));
-        if(!wasAdded) {
+        std::size_t newAddedItemCount = this->addedItemCount.fetch_add(
+          1, std::memory_order_consume // if() below carries dependency
+        ) + 1;
+        if(newAddedItemCount > BenchmarkedItemCount) {
+          this->addedItemCount.fetch_sub(1, std::memory_order_relaxed); // decrement back
           break;
         }
-        this->addedItemCount.fetch_add(1, std::memory_order_relaxed);
+
+        bool wasAdded = this->buffer.TryAppend(static_cast<int>(randomNumber | 1));
+        EXPECT_TRUE(wasAdded);
+
         randomNumber = BitTricks::XorShiftRandom(randomNumber);
       }
     }
@@ -196,7 +202,9 @@ namespace Nuclex { namespace Support { namespace Collections {
   /// </typeparam>
   /// <param name="maximumThreadCount">Number of threads up to which to test</param>
   template<template<typename TItem> class TConcurrentBuffer>
-  void benchmarkSingleItemAppends(std::size_t maximumThreadCount = 16) {
+  void benchmarkSingleItemAppends(
+    std::size_t maximumThreadCount = std::thread::hardware_concurrency()
+  ) {
     typedef BufferAppendBenchmark<TConcurrentBuffer> BenchmarkType;
 
     for(std::size_t threadCount = 1; threadCount <= maximumThreadCount; ++threadCount) {
@@ -250,11 +258,16 @@ namespace Nuclex { namespace Support { namespace Collections {
       int value = 0;
 
       for(;;) {
-        bool wasTaken = this->buffer.TryTake(value);
-        if(!wasTaken) {
+        std::size_t newTakenItemCount = this->takenItemCount.fetch_add(
+          1, std::memory_order_consume // if() below carries dependency
+        ) + 1;
+        if(newTakenItemCount > BenchmarkedItemCount) {
+          this->takenItemCount.fetch_sub(1, std::memory_order_relaxed); // decrement back
           break;
         }
-        this->takenItemCount.fetch_add(1, std::memory_order_relaxed);
+
+        bool wasTaken = this->buffer.TryTake(value);
+        EXPECT_TRUE(wasTaken);
       }
     }
 
@@ -279,7 +292,9 @@ namespace Nuclex { namespace Support { namespace Collections {
   /// </typeparam>
   /// <param name="maximumThreadCount">Number of threads up to which to test</param>
   template<template<typename TItem> class TConcurrentBuffer>
-  void benchmarkSingleItemTakes(std::size_t maximumThreadCount = 16) {
+  void benchmarkSingleItemTakes(
+    std::size_t maximumThreadCount = std::thread::hardware_concurrency()
+  ) {
     typedef BufferTakeBenchmark<TConcurrentBuffer> BenchmarkType;
 
     for(std::size_t threadCount = 1; threadCount <= maximumThreadCount; ++threadCount) {
@@ -335,25 +350,30 @@ namespace Nuclex { namespace Support { namespace Collections {
       if(threadIndex % 1 == 0) {
         std::size_t randomNumber = BitTricks::XorShiftRandom(threadIndex);
         for(;;) {
-          this->buffer.TryAppend(static_cast<int>(randomNumber | 1));
           std::size_t safeOperationCount = this->operationCount.fetch_add(
-            1, std::memory_order_relaxed
-          );
-          if(safeOperationCount >= BenchmarkedItemCount) {
+            1, std::memory_order_consume // if() below carries dependency
+          ) + 1;
+          if(safeOperationCount > BenchmarkedItemCount) {
+            this->operationCount.fetch_sub(1, std::memory_order_release);
             break;
           }
+
+          this->buffer.TryAppend(static_cast<int>(randomNumber | 1));
+
           randomNumber = BitTricks::XorShiftRandom(randomNumber);
         }
       } else {
         int value = 0;
         for(;;) {
-          this->buffer.TryTake(value);
           std::size_t safeOperationCount = this->operationCount.fetch_add(
-            1, std::memory_order_relaxed
-          );
-          if(safeOperationCount >= BenchmarkedItemCount) {
+            1, std::memory_order_consume // if() below carries dependency
+          ) + 1;
+          if(safeOperationCount > BenchmarkedItemCount) {
+            this->operationCount.fetch_sub(1, std::memory_order_release);
             break;
           }
+
+          this->buffer.TryTake(value);
         }
       }
     }
@@ -381,7 +401,9 @@ namespace Nuclex { namespace Support { namespace Collections {
   /// </typeparam>
   /// <param name="maximumThreadCount">Number of threads up to which to test</param>
   template<template<typename TItem> class TConcurrentBuffer>
-  void benchmarkSingleItemMixed(std::size_t maximumThreadCount = 16) {
+  void benchmarkSingleItemMixed(
+    std::size_t maximumThreadCount = std::thread::hardware_concurrency()
+  ) {
     typedef BufferMixedBenchmark<TConcurrentBuffer> BenchmarkType;
 
     for(std::size_t threadCount = 1; threadCount <= maximumThreadCount; ++threadCount) {

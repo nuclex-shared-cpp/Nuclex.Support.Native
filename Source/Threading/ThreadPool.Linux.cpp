@@ -12,7 +12,7 @@ This library is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 IBM Common Public License for more details.
-
+ThreadPo
 You should have received a copy of the IBM Common Public
 License along with this library
 */
@@ -25,20 +25,17 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
-#include "ThreadPoolConfig.h" // thread pool settings
 #include "Nuclex/Support/ScopeGuard.h" // for ScopeGuard
-#include "ConcurrencyFreaks/CRTurnQueue.hpp" // for the Correia-Ramalhete lock-free queue
-
-//#include "Nuclex/Support/Collections/Xenium/ramalhete_queue.hpp"
-//#include "Nuclex/Support/Collections/Xenium/reclamation/stamp_it.hpp"
 #include "Nuclex/Support/Collections/MoodyCamel/concurrentqueue.h"
+
+#include "ThreadPoolConfig.h" // thread pool settings
+#include "../Helpers/PosixApi.h" // error handling helpers
 
 #include <cassert> // for assert()
 #include <atomic> // for std::atomic
 #include <thread> // for std::thread
 #include <cmath> // for std::sqrt()
 
-#include "../Helpers/PosixApi.h" // error handling helpers
 #include <sys/sysinfo.h> // for ::get_nprocs()
 #include <semaphore.h> // for ::sem_init(), ::sem_wait(), ::sem_post(), ::sem_destroy()
 
