@@ -71,6 +71,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Destroys all remaining tasks</summary>
     public: ~ThreadPoolTaskPool() {
+      DeleteAllRecyclableTasks();
+    }
+
+    /// <summary>Destroys all tasks currently waiting to be recycled</summary>
+    public: void DeleteAllRecyclableTasks() {
       TSubmittedTask *submittedTask;
       while(this->returnedTasks.try_dequeue(submittedTask)) {
         DeleteTask(submittedTask);

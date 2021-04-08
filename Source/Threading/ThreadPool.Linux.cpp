@@ -34,7 +34,7 @@ License along with this library
 #include <cassert> // for assert()
 #include <atomic> // for std::atomic
 #include <thread> // for std::thread
-#include <cmath> // for std::sqrt()
+#include <mutex> // for std;:mutex
 
 #include <sys/sysinfo.h> // for ::get_nprocs()
 #include <semaphore.h> // for ::sem_init(), ::sem_wait(), ::sem_post(), ::sem_destroy()
@@ -55,6 +55,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     #pragma region struct SubmittedTask
 
+    /// <summary>Wraps a callback that can be schuled on a worker thread</summary>
     public: struct SubmittedTask {
 
       //public: SubmittedTask() = default;
@@ -119,6 +120,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: std::atomic<bool> IsShuttingDown;
     /// <summary>Semaphore that allows one thread for each task to pass</summary>
     public: ::sem_t TaskSemaphore;
+    // TODO: This is an illegal use of the mutex class. Maybe use a condition_variable here?
     /// <summary>Signaled by the last thread shutting down</summary>
     public: std::timed_mutex ShutdownMutex;
     /// <summary>Tasks that have been scheduled for execution in the thread pool</summary>
@@ -237,6 +239,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ThreadCount(0),
     IsShuttingDown(false),
     TaskSemaphore {0},
+    ShutdownMutex(),
     ScheduledTasks(),
     SubmittedTaskPool(),
     ThreadStatus(nullptr),
