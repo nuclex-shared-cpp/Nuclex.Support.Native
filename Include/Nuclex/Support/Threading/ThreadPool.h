@@ -139,6 +139,11 @@ namespace Nuclex { namespace Support { namespace Threading {
       );
       submitTask(taskMemory, packagedTask);
 
+      // Enabling this returns dummy tasks (they always fail),
+      // but the segmentation fault in the stress test disappears. Hrm...
+      //TaskType bullshit(std::bind(std::forward<TMethod>(method), std::forward<TArguments>(arguments)...));
+      //return bullshit.get_future();
+
       return packagedTask->Callback.get_future();
     }
 

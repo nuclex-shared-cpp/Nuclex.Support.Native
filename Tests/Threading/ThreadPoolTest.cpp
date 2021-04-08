@@ -136,12 +136,30 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   TEST(ThreadPoolTest, StressTestCompletes) {
     for(std::size_t repetition = 0; repetition < 10; ++repetition) {
-      std::unique_ptr<ThreadPool> testPool = std::make_unique<ThreadPool>(1, 1);
+      std::unique_ptr<ThreadPool> testPool = std::make_unique<ThreadPool>(
+        //2, 2
+        std::thread::hardware_concurrency() / 2, std::thread::hardware_concurrency() / 2
+      );
 
-      for(std::size_t task = 0; task < 1000; ++task) {
-        testPool->AddTask(&testMethod, 12, 34);
+      // Schedule 1000 tasks in two batches with a small break inbetween.
+      // This will let some of the (or all of them) complete,
+      // letting the thread pool recycle finished tasks for re-use.
+      {
+        for(std::size_t task = 0; task < 500; ++task) {
+          testPool->AddTask(&testMethod, 12, 34);
+        }
+        Nuclex::Support::Threading::Thread::Sleep(std::chrono::milliseconds(1));
+        for(std::size_t task = 0; task < 500; ++task) {
+          testPool->AddTask(&testMethod, 34, 12);
+        }
       }
 
+      // Schedule one final task, then let the thread pool execute for a bit
+      std::future<int> finalTaskFuture = testPool->AddTask(&testMethod, 10, 10);
+      std::future_status status = finalTaskFuture.wait_for(std::chrono::milliseconds(9));
+
+      // Destroy the thread pool while it is still working. This will cancel
+      // all still ongoing tasks (the returned futures will throw std::future_error)
       testPool.reset();
     }
   }
