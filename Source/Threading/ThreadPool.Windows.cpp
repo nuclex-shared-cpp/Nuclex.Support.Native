@@ -260,9 +260,13 @@ namespace Nuclex { namespace Support { namespace Threading {
   ) {
     SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(parameter);
 
-    if(!submittedTask->Implementation->IsShuttingDown) {
-      submittedTask->Task->operator()();
+    bool isShuttingDown = submittedTask->Implementation->IsShuttingDown.load(
+      std::memory_order::memory_order_consume // if() below carries dependency
+    );
+    if(!isShuttingDown) {
+      //submittedTask->Task->operator()();
     }
+
     submittedTask->Task->~Task();
 
     submittedTask->Implementation->SubmittedTaskPool.push(submittedTask);
@@ -279,11 +283,15 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(context);
 
-    if(!submittedTask->Implementation->IsShuttingDown) {
-      submittedTask->Task->operator()();
+    bool isShuttingDown = submittedTask->Implementation->IsShuttingDown.load(
+      std::memory_order::memory_order_consume // if() below carries dependency
+    );
+    if(!isShuttingDown) {
+      //submittedTask->Task->operator()();
     }
+
     submittedTask->Task->~Task();
-    
+
     submittedTask->Implementation->SubmittedTaskPool.push(submittedTask);
   }
 

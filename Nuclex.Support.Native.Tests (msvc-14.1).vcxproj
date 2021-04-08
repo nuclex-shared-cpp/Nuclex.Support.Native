@@ -380,8 +380,9 @@
     <ClCompile Include="Tests\Threading\Windows\WindowsFileApiTest.cpp" />
     <ClCompile Include="Tests\Threading\Windows\WindowsProcessApiTest.cpp" />
     <ClCompile Include="Tests\Threading\ProcessTest.cpp" />
-    <ClCompile Include="Tests\Threading\ThreadTest.cpp" />
+    <ClCompile Include="Tests\Threading\ThreadPoolTaskPoolTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadPoolTest.cpp" />
+    <ClCompile Include="Tests\Threading\ThreadTest.cpp" />
     <ClCompile Include="Tests\AnyTests.cpp" />
     <ClCompile Include="Tests\BitTricksTest.cpp" />
     <ClCompile Include="Tests\OptionalTests.cpp" />

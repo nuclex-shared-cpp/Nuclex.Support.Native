@@ -642,10 +642,13 @@
     <ClCompile Include="Tests\Threading\ProcessTest.cpp">
       <Filter>Tests\Threading</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\Threading\ThreadTest.cpp">
+    <ClCompile Include="Tests\Threading\ThreadPoolTaskPoolTest.cpp">
       <Filter>Tests\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Threading\ThreadPoolTest.cpp">
+      <Filter>Tests\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Threading\ThreadTest.cpp">
       <Filter>Tests\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Tests\AnyTests.cpp">

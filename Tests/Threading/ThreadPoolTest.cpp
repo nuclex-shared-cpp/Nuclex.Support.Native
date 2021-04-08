@@ -137,7 +137,6 @@ namespace Nuclex { namespace Support { namespace Threading {
   TEST(ThreadPoolTest, StressTestCompletes) {
     for(std::size_t repetition = 0; repetition < 10; ++repetition) {
       std::unique_ptr<ThreadPool> testPool = std::make_unique<ThreadPool>(
-        //2, 2
         std::thread::hardware_concurrency() / 2, std::thread::hardware_concurrency() / 2
       );
 
@@ -156,7 +155,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // Schedule one final task, then let the thread pool execute for a bit
       std::future<int> finalTaskFuture = testPool->AddTask(&testMethod, 10, 10);
-      std::future_status status = finalTaskFuture.wait_for(std::chrono::milliseconds(9));
+      std::future_status status = finalTaskFuture.wait_for(std::chrono::milliseconds(1));
+      (void)status; // This is up to the core count + performance, we don't check it
 
       // Destroy the thread pool while it is still working. This will cancel
       // all still ongoing tasks (the returned futures will throw std::future_error)

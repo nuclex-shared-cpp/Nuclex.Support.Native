@@ -108,10 +108,14 @@ namespace Nuclex { namespace Support { namespace Threading {
       typedef typename std::result_of<TMethod(TArguments...)>::type ResultType;
       typedef std::packaged_task<ResultType()> TaskType;
 
+      #pragma region struct PackagedTask
+
       /// <summary>Custom packaged task that carries the method and parameters</summary>
       struct PackagedTask : public Task {
 
         /// <summary>Initializes the packaged task</summary>
+        /// <param name="method">Method that should be called back by the thread pool</param>
+        /// <param name="arguments">Arguments to save until the invocation</param>
         public: PackagedTask(TMethod &&method, TArguments &&... arguments) :
           Task(),
           Callback(
@@ -124,19 +128,20 @@ namespace Nuclex { namespace Support { namespace Threading {
         /// <summary>Executes the task. Is called on the thread pool thread</summary>
         public: void operator()() override {
           this->Callback();
-          //std::atomic_thread_fence(std::memory_order::memory_order_release);
-          //this->wasExecuted.store(true, std::memory_order_relaxed);
         }
 
         /// <summary>Stored method pointer and arguments that will be called back</summary>
         public: TaskType Callback;
-        //private: std::atomic<bool> wasExecuted;
+
       };
+
+      #pragma endregion // struct PackagedTask
 
       std::uint8_t *taskMemory = getOrCreateTaskMemory(sizeof(PackagedTask));
       PackagedTask *packagedTask = new(taskMemory) PackagedTask(
         std::forward<TMethod>(method), std::forward<TArguments>(arguments)...
       );
+
       submitTask(taskMemory, packagedTask);
 
       // Enabling this returns dummy tasks (they always fail),
@@ -160,56 +165,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <param name="taskMemory">Memory block returned by getOrCreateTaskMemory</param>
     /// <param name="task">Task that will be submitted</param>
     private: NUCLEX_SUPPORT_API void submitTask(std::uint8_t *taskMemory, Task *task);
-
-
-/* Nope, that will happen automatically when the task finished
-    /// <summary>
-    ///   Gives a memory block back that was 
-    ///
-    private: NUCLEX_SUPPORT_API returnTaskMemory(std::uint8_t *taskMemory);
-*/
-    //private: NUCLEX_SUPPORT_API virtual void SubmitTask()
-
-/*
-    /// <summary>Returns the maximum number of tasks that can run in parallel</summary>
-    /// <returns>The maximum number of tasks that can be executed in parallel</returns>
-    /// <remarks>
-    ///   Depending on the implementation, this may be equal to the number of worker
-    ///   threads or it may be completely unrelated. It should be equal to
-    ///   std::thread::hardware_concurrency() in all recent C++ versions.
-    /// </remarks>
-    public: NUCLEX_SUPPORT_API std::size_t CountMaximumParallelTasks() const;
-
-    /// <summary>Create a default thread pool for the system</summary>
-    /// <returns>The default thread pool on the current system</returns>
-    public: NUCLEX_SUPPORT_API static std::shared_ptr<ThreadPool> CreateSystemDefault();
-
-
-    /// <summary>Enqueues a task in the thread pool</summary>
-    /// <param name="task">Task that will be enqueued</param>
-    /// <param name="count">Times the task will be executed</param>
-    /// <remarks>
-    ///   <para>
-    ///     Tasks will be executed by the next available thread. The more tasks you use
-    ///     the more work can potentially be performed in parallel. If you want to
-    ///     split a single piece of work so it can be done in parallel, you can partition
-    ///     the data into n pieces (where n >= CountMaximumParallelTasks() ideally) and
-    ///     use the <see cref="count" /> parameter to specify how often the task should
-    ///     be invoked.
-    ///   </para>
-    ///   <para>
-    ///     Tasks should never throw an exception. If any exception gets through,
-    ///     std::unexpected will be invoked, which usually means the immediate termination
-    ///     of the application. 
-    ///   </para>
-    /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void AddTask(
-      const std::function<void()> &task, std::size_t count = 1
-    ) = 0;
-
-    private: ThreadPool(const ThreadPool &);
-    private: ThreadPool &operator =(const ThreadPool &);
-*/
 
     /// <summary>Structure to hold platform dependent thread and sync objects</summary>
     private: struct PlatformDependentImplementation;
