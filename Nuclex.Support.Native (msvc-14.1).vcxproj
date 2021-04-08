@@ -331,11 +331,12 @@
     <ClCompile Include="Source\Threading\Process.Linux.cpp" />
     <ClCompile Include="Source\Threading\Process.Windows.cpp" />
     <ClCompile Include="Source\Threading\Thread.cpp" />
-    <ClCompile Include="Source\Threading\ThreadPool.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.Linux.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.Windows.cpp" />
     <ClCompile Include="Source\Threading\ThreadPoolConfig.cpp" />
     <ClInclude Include="Source\Threading\ThreadPoolConfig.h" />
+    <ClCompile Include="Source\Threading\ThreadPoolTaskPool.cpp" />
+    <ClInclude Include="Source\Threading\ThreadPoolTaskPool.h" />
     <ClCompile Include="Source\Any.cpp" />
     <ClCompile Include="Source\BitTricks.cpp" />
     <ClCompile Include="Source\Config.cpp" />

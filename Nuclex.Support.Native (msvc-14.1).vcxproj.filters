@@ -493,9 +493,6 @@
     <ClCompile Include="Source\Threading\Thread.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Threading\ThreadPool.cpp">
-      <Filter>Source\Threading</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Threading\ThreadPool.Linux.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
@@ -506,6 +503,12 @@
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClInclude Include="Source\Threading\ThreadPoolConfig.h">
+      <Filter>Source\Threading</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Threading\ThreadPoolTaskPool.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Threading\ThreadPoolTaskPool.h">
       <Filter>Source\Threading</Filter>
     </ClInclude>
     <ClCompile Include="Source\Any.cpp">

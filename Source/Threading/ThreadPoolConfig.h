@@ -106,7 +106,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///     crunching, a higher minimum thread count can be specified manually.
     ///   </para>
     /// </remarks>
-    public: static constexpr std::size_t GuessDefaultMinimumThreadCount(
+    public: static std::size_t GuessDefaultMinimumThreadCount(
       std::size_t processorCount
     ) {
       std::size_t processorCountSquareRoot = static_cast<std::size_t>(
@@ -138,7 +138,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///     specify a different maximum thread count in the constructor.
     ///   </para>
     /// </remarks>
-    public: static constexpr std::size_t GuessDefaultMaximumThreadCount(
+    public: static std::size_t GuessDefaultMaximumThreadCount(
       std::size_t processorCount
     ) {
       return processorCount + GuessDefaultMinimumThreadCount(processorCount);

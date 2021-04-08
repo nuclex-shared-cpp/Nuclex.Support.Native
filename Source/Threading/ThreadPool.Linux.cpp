@@ -567,7 +567,10 @@ namespace Nuclex { namespace Support { namespace Threading {
       std::size_t attempts = 3;
       while(this->implementation->SubmittedTaskPool.try_dequeue(submittedTask)) {
         if(submittedTask->PayloadSize >= payload) {
-          return reinterpret_cast<std::uint8_t *>(submittedTask);
+          return (
+            reinterpret_cast<std::uint8_t *>(submittedTask) +
+            PlatformDependentImplementation::SubmittedTaskFootprint
+          );
         }
 
         // We could return it to the pool, but we want task sizes to amortize on
