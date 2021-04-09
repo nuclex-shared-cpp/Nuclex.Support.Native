@@ -371,8 +371,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       this->ThreadStatus[threadIndex].store(-1, std::memory_order::memory_order_release);
       std::size_t remainingThreadCount = this->ThreadCount.fetch_sub(
         1, std::memory_order_consume // if() below carries dependency
-      ) - 1;
-      if(unlikely(remainingThreadCount == 0)) {
+      );
+      if(unlikely(remainingThreadCount == 1)) { // 1 because we're getting the previous value
         int result = ::sem_post(&this->LightsOut);
         NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
         assert((result != -1) && u8"Last thread is able to signal 'LightsOut' on exit");

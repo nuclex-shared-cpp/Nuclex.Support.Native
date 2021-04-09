@@ -103,6 +103,15 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Shuts down the thread pool and frees all resources it owns</summary>
     public: ~PlatformDependentImplementation();
 
+    /// <summary>Increments the counter for waiting tasks</summary>
+    public: void IncrementTaskCount();
+
+    /// <summary>Decrements the counter for waiting tasks</summary>
+    public: void DecrementTaskCount();
+
+    /// <summary>Decrements the counter for waiting tasks</summary>
+    public: void DecrementTaskCountNoThrow() throw();
+
     /// <summary>Called by the thread pool to execute a work item</summary>
     /// <param name="parameter">Task the user has queued for execution</param>
     /// <returns>Always 0</returns>
@@ -128,9 +137,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: ::TP_POOL *NewThreadPool;
     /// <summary>Number of tasks that should currently be waiting in the thread pool</summary>
     public: std::atomic<std::size_t> ScheduledTaskCount;
-    // TODO: This is an illegal use of the mutex class. Maybe use a condition_variable here?
     /// <summary>Signaled by the last thread shutting down</summary>
-    public: std::timed_mutex ShutdownMutex;
+    public: HANDLE LightsOutEventHandle;
     /// <summary>Submitted tasks for re-use</summary>
     public: ThreadPoolTaskPool<
       SubmittedTask, offsetof(SubmittedTask, Payload)
@@ -148,10 +156,28 @@ namespace Nuclex { namespace Support { namespace Threading {
     NewCallbackEnvironment(),
     NewThreadPool(nullptr),
     ScheduledTaskCount(0),
-    ShutdownMutex(),
+    LightsOutEventHandle(INVALID_HANDLE_VALUE),
     SubmittedTaskPool() {
 
+    this->LightsOutEventHandle = ::CreateEventW(nullptr, TRUE, TRUE, nullptr);
+    bool eventCreationFailed = (
+      (this->LightsOutEventHandle == 0) ||
+      (this->LightsOutEventHandle == INVALID_HANDLE_VALUE)
+    );
+    if(eventCreationFailed) {
+      DWORD lastErrorCode = ::GetLastError();
+      Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not create event for shutdown coordination", lastErrorCode
+      );
+    }
+
     if(this->UseNewThreadPoolApi) {
+      auto closeSemaphoreScope = ON_SCOPE_EXIT_TRANSACTION{
+        BOOL result = ::CloseHandle(this->LightsOutEventHandle);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+        assert((result != FALSE) && u8"Shutdown semaphore is closed on stack unwind");
+      };
+
       ::TpInitializeCallbackEnviron(&this->NewCallbackEnvironment);
 
       // Create a new thread pool. There is no documentation on how many threads it
@@ -195,10 +221,9 @@ namespace Nuclex { namespace Support { namespace Threading {
 
         closeThreadPoolScope.Commit(); // Everything worked out, don't close the thread pool
       }
-    } // if new thread pool API used
 
-    // Keep this mutex locked (it is only opened after a successful shutdown)
-    this->ShutdownMutex.lock();
+      closeSemaphoreScope.Commit(); // Success, don't close the shutdown semaphore
+    } // if new thread pool API used
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -215,6 +240,57 @@ namespace Nuclex { namespace Support { namespace Threading {
       ::CloseThreadpool(this->NewThreadPool);
     }
 
+    BOOL result = ::CloseHandle(this->LightsOutEventHandle);
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+    assert((result != FALSE) && u8"Shutdown semaphore is successfully destroyed");
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void ThreadPool::PlatformDependentImplementation::IncrementTaskCount() {
+    std::size_t previousTaskCount = this->ScheduledTaskCount.fetch_add(
+      1, std::memory_order::memory_order_consume // if() below carries dependency
+    );
+    if(previousTaskCount == 0) { // If there were no task scheduled before
+      BOOL result = ::ResetEvent(this->LightsOutEventHandle);
+      if(unlikely(result == FALSE)) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not reset 'LightsOut' event upon first scheduled task", lastErrorCode
+        );
+      }
+    }
+  }
+  
+  // ------------------------------------------------------------------------------------------- //
+  
+  void ThreadPool::PlatformDependentImplementation::DecrementTaskCount() {
+    std::size_t previousTaskCount = this->ScheduledTaskCount.fetch_sub(
+      1, std::memory_order::memory_order_consume // if() below carries dependency
+    );
+    if(previousTaskCount == 1) { // If the last task was just processed
+      BOOL result = ::SetEvent(this->LightsOutEventHandle);
+      if(unlikely(result == FALSE)) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not set 'LightsOut' event upon last scheduled task exiting", lastErrorCode
+        );
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void ThreadPool::PlatformDependentImplementation::DecrementTaskCountNoThrow() throw() {
+    std::size_t previousTaskCount = this->ScheduledTaskCount.fetch_sub(
+      1, std::memory_order::memory_order_consume // if() below carries dependency
+    );
+    if(previousTaskCount == 1) { // If the last task was just processed
+      BOOL result = ::SetEvent(this->LightsOutEventHandle);
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result != FALSE) && u8"'LightsOut' event is successfully signalled");
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -223,28 +299,27 @@ namespace Nuclex { namespace Support { namespace Threading {
     void *parameter
   ) {
     SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(parameter);
+    PlatformDependentImplementation &implementation = *submittedTask->Implementation;
 
+    // Make sure to always update the task counter and to signal the semaphore
+    // if the task counter reaches zero (
     ON_SCOPE_EXIT {
-      std::size_t scheduledTaskCount = (
-        submittedTask->Implementation->ScheduledTaskCount.fetch_sub(
-          1, std::memory_order::memory_order_release
-        )
-      );
-      if(scheduledTaskCount == 1) { // 1 because we're getting the previous value
-        submittedTask->Implementation->ShutdownMutex.unlock();
-      }
+      implementation.DecrementTaskCountNoThrow();
     };
 
+    // See if the thread pool is shutting down. If so, fast-forward through any
+    // scheduled task, destroying it without executing it (this will cancel
+    // the owner's std::futures). Also set the 'LightsOut' semaphore on the last task.
     bool isShuttingDown = submittedTask->Implementation->IsShuttingDown.load(
       std::memory_order::memory_order_consume // if() below carries dependency
     );
     if(unlikely(isShuttingDown)) {
       submittedTask->Task->~Task();
-      submittedTask->Implementation->SubmittedTaskPool.DeleteTask(submittedTask);
+      implementation.SubmittedTaskPool.DeleteTask(submittedTask);
     } else {
       ON_SCOPE_EXIT {
         submittedTask->Task->~Task();
-        submittedTask->Implementation->SubmittedTaskPool.ReturnTask(submittedTask);
+        implementation.SubmittedTaskPool.ReturnTask(submittedTask);
       };
       submittedTask->Task->operator()();
     }
@@ -295,23 +370,22 @@ namespace Nuclex { namespace Support { namespace Threading {
       true, std::memory_order::memory_order_release
     );
 
-    // The threads have been signalled to shut down, wait until the thread pool
-    // has touched all scheduled tasks (they immediately fail and destroy)
-    std::size_t remainingTaskCount = (
-      this->implementation->ScheduledTaskCount.load(
-        std::memory_order::memory_order_consume // if() below carries dependency
-      )
+    // Wait until all tasks have been flushed from the queue. With the shutdown flag
+    // set, the task pool callbacks will skip over all tasks, deleting them without
+    // calling and thereby putting their attached std::futures into an error state.
+    DWORD result = ::WaitForSingleObject(
+      this->implementation->LightsOutEventHandle, 5000
     );
-    if(remainingTaskCount > 0) {
-      bool wasLocked = this->implementation->ShutdownMutex.try_lock_for(
-        std::chrono::seconds(5)
+    if(result != WAIT_OBJECT_0) {
+      //DWORD lastErrorCode = ::GetLastError();
+      //NUCLEX_SUPPORT_NDEBUG_UNUSED(lastErrorCode);
+      assert(
+        (result == WAIT_OBJECT_0) && u8"All tasks flushed before the thread pool is destroyed"
       );
-      NUCLEX_SUPPORT_NDEBUG_UNUSED(wasLocked);
-      assert((wasLocked) && u8"All thread pool tasks were flushed during shutdown");
     }
 
 #if !defined(NDEBUG)
-    remainingTaskCount = this->implementation->ScheduledTaskCount.load(
+    std::size_t remainingTaskCount = this->implementation->ScheduledTaskCount.load(
       std::memory_order::memory_order_consume // if() below carries dependency
     );
     assert((remainingTaskCount == 0) && u8"No thread pool tasks remain during shutdown");
@@ -333,7 +407,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       if(this->implementation->UseNewThreadPoolApi) {
         submittedTask->Work = ::CreateThreadpoolWork(
           &PlatformDependentImplementation::newThreadPoolWorkCallback,
-          nullptr,
+          reinterpret_cast<void *>(submittedTask),
+          //nullptr,
           &this->implementation->NewCallbackEnvironment
         );
         if(unlikely(submittedTask->Work == nullptr)) {
@@ -363,16 +438,21 @@ namespace Nuclex { namespace Support { namespace Threading {
         submittedTaskMemory
       )
     );
-
     submittedTask->Task = task;
 
-    // Increment before executing so we don't risk the task finishing before the increment,
-    // dropping the counter lower than 0.
-    submittedTask->Implementation->ShutdownMutex.try_lock();
-    submittedTask->Implementation->ScheduledTaskCount.fetch_add(
-      1, std::memory_order::memory_order_seq_cst
-    );
+    // Increment task count before executing so we don't risk the task finishing
+    // before the increment, dropping the counter lower than 0. If this is
+    // the first task being scheduled after the thread pool was idle, increment
+    // our semaphore so the shutdown process knows to wait.
+    {
+      auto deleteTaskScope = ON_SCOPE_EXIT_TRANSACTION {
+        this->implementation->SubmittedTaskPool.DeleteTask(submittedTask);
+      };
+      this->implementation->IncrementTaskCount();
+      deleteTaskScope.Commit();
+    }
 
+    // Schedule the task for execution
     if(this->implementation->UseNewThreadPoolApi) {
       ::SubmitThreadpoolWork(submittedTask->Work);
     } else {
