@@ -12,7 +12,7 @@ This library is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 IBM Common Public License for more details.
-ThreadPo
+
 You should have received a copy of the IBM Common Public
 License along with this library
 */
@@ -29,12 +29,11 @@ License along with this library
 #include "Nuclex/Support/Collections/MoodyCamel/concurrentqueue.h"
 
 #include "ThreadPoolTaskPool.h" // thread pool settings + task pool
-#include "../Helpers/PosixApi.h" // error handling helpers
+#include "Posix/PosixProcessApi.h" // error handling helpers, time helpers
 
 #include <cassert> // for assert()
 #include <atomic> // for std::atomic
 #include <thread> // for std::thread
-#include <mutex> // for std;:mutex
 
 #include <sys/sysinfo.h> // for ::get_nprocs()
 #include <semaphore.h> // for ::sem_init(), ::sem_wait(), ::sem_post(), ::sem_destroy()
@@ -120,9 +119,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: std::atomic<bool> IsShuttingDown;
     /// <summary>Semaphore that allows one thread for each task to pass</summary>
     public: ::sem_t TaskSemaphore;
-    // TODO: This is an illegal use of the mutex class. Maybe use a condition_variable here?
-    /// <summary>Signaled by the last thread shutting down</summary>
-    public: std::timed_mutex ShutdownMutex;
+    /// <summary>Incremented by the last thread exiting when IsShuttingDown is true</summary>
+    public: ::sem_t LightsOut;
     /// <summary>Tasks that have been scheduled for execution in the thread pool</summary>
     public: moodycamel::ConcurrentQueue<SubmittedTask *> ScheduledTasks;
     /// <summary>Submitted tasks for re-use</summary>
@@ -239,7 +237,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ThreadCount(0),
     IsShuttingDown(false),
     TaskSemaphore {0},
-    ShutdownMutex(),
+    LightsOut(),
     ScheduledTasks(),
     SubmittedTaskPool(),
     ThreadStatus(nullptr),
@@ -250,12 +248,30 @@ namespace Nuclex { namespace Support { namespace Threading {
     if(unlikely(result == -1)) {
       int errorNumber = errno;
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not create a new semaphore", errorNumber
+        u8"Could not create the 'TaskSemaphore' semaphore", errorNumber
       );
     }
 
-    // Keep this mutex locked (it is only opened after a successful shutdown)
-    this->ShutdownMutex.lock();
+      // Create a semaphore we use to coordinate the shut down of the thread pool
+    {
+      auto destroySemaphoreScope = ON_SCOPE_EXIT_TRANSACTION {
+        int result = ::sem_close(&this->TaskSemaphore);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+        assert(
+          (result != -1) && u8"Task semaphore is successfully destroyed during stack unwind"
+        );
+      };
+
+      result = ::sem_init(&this->LightsOut, 0, 0);
+      if(unlikely(result == -1)) {
+        int errorNumber = errno;
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not create the 'LightsOut' semaphore", errorNumber
+        );
+      }
+
+      destroySemaphoreScope.Commit(); // Initialization succeeded, keep the semaphore
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -272,10 +288,15 @@ namespace Nuclex { namespace Support { namespace Threading {
     );
 #endif
 
-    // Kill the semaphore
+    // Kill the shutdown semaphore
     int result = ::sem_destroy(&this->TaskSemaphore);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-    assert((result != -1) && u8"Semaphore is successfully destroyed");
+    assert((result != -1) && u8"'LightsOut' semaphore is successfully destroyed");
+
+    // Kill the task signalling semaphore
+    result = ::sem_destroy(&this->TaskSemaphore);
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+    assert((result != -1) && u8"'TaskSemaphore' semaphore is successfully destroyed");
 
   }
 
@@ -343,20 +364,18 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   void ThreadPool::PlatformDependentImplementation::runThreadWorkLoop(std::size_t threadIndex) {
-    ::timespec heartBeatInterval;
-    heartBeatInterval.tv_sec = 0;
-    heartBeatInterval.tv_nsec = ThreadPoolConfig::WorkerHeartBeatMilliseconds * 1000000;
 
     // Mark the thread as running
     this->ThreadStatus[threadIndex].store(2, std::memory_order::memory_order_release);
     ON_SCOPE_EXIT { 
       this->ThreadStatus[threadIndex].store(-1, std::memory_order::memory_order_release);
-
       std::size_t remainingThreadCount = this->ThreadCount.fetch_sub(
         1, std::memory_order_consume // if() below carries dependency
       ) - 1;
       if(unlikely(remainingThreadCount == 0)) {
-        this->ShutdownMutex.unlock();
+        int result = ::sem_post(&this->LightsOut);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+        assert((result != -1) && u8"Last thread is able to signal 'LightsOut' on exit");
       }
     };
 
@@ -374,7 +393,10 @@ namespace Nuclex { namespace Support { namespace Threading {
       // Wait for work to become available. This semaphore is incremented each time
       // a task is scheduled, meaning it will let one thread from the pool come through
       // to process each task. The wait timeout is our heart beat interval.
-      int result = ::sem_timedwait(&this->TaskSemaphore, &heartBeatInterval);
+      struct ::timespec heartBeatTimeout = Posix::PosixProcessApi::GetTimePlusMilliseconds(
+        CLOCK_REALTIME, std::chrono::milliseconds(ThreadPoolConfig::WorkerHeartBeatMilliseconds)
+      );
+      int result = ::sem_timedwait(&this->TaskSemaphore, &heartBeatTimeout);
       if(unlikely(result == -1)) {
         int errorNumber = errno;
         if(errorNumber == EINTR) {
@@ -490,12 +512,30 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // The threads have been signalled to shut down, given the wake-up signal and
     // now all that remains to do is hope our user didn't schedule some eternal task.
-    bool wasLocked = this->implementation->ShutdownMutex.try_lock_for(
-      std::chrono::seconds(5)
-    );
-    NUCLEX_SUPPORT_NDEBUG_UNUSED(wasLocked);
-    assert((wasLocked) && u8"All thread pool threads were shut down");
+    for(;;) {
+      struct ::timespec waitEndTime = Posix::PosixProcessApi::GetTimePlusMilliseconds(
+        CLOCK_REALTIME, std::chrono::milliseconds(5000)
+      );
+      int result = ::sem_clockwait(
+        &this->implementation->LightsOut, CLOCK_MONOTONIC, &waitEndTime
+      );
+      if(unlikely(result == -1)) {
+        int errorNumber = errno;
+        if(errorNumber == EINTR) {
+          continue; // spurious wake-up
+        } else if(errorNumber == ETIMEDOUT) {
+          assert((errorNumber != ETIMEDOUT) && u8"Threads shut down within timeout");
+          break;
+        } else {
+          assert((result != -1) && u8"Semaphore can be waited upon for thread shutdown");
+        }
+      }
 
+      break; // Semaphore was signalled
+    }
+
+    // Eliminate the implementation class. This will also join() or detach() the threads
+    // in order to facilitate an orderly shutdown.
     PlatformDependentImplementation::DestroyInstance(this->implementation);
 
   }
