@@ -137,19 +137,26 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       #pragma endregion // struct PackagedTask
 
+      // Construct a new task with a callback to the caller-specified method and
+      // saved arguments that can subsequently be scheduled on the thread pool.
       std::uint8_t *taskMemory = getOrCreateTaskMemory(sizeof(PackagedTask));
       PackagedTask *packagedTask = new(taskMemory) PackagedTask(
         std::forward<TMethod>(method), std::forward<TArguments>(arguments)...
       );
 
+      // Grab the result before scheduling the task. If the stars are aligned and
+      // the thread pool is churning, it may otherwise happen that the task is
+      // completed and destroyed between submitTask() and the call to get_future()
+      std::future<typename std::result_of<TMethod(TArguments...)>::type> result = (
+        packagedTask->Callback.get_future()
+      );
+
+      // Schedule for execution. The task will either be executed (default) or
+      // destroyed if the thread pool shuts down, both outcomes will result in
+      // the future completing with either a result or in an error state.
       submitTask(taskMemory, packagedTask);
 
-      // Enabling this returns dummy tasks (they always fail),
-      // but the segmentation fault in the stress test disappears. Hrm...
-      //TaskType bullshit(std::bind(std::forward<TMethod>(method), std::forward<TArguments>(arguments)...));
-      //return bullshit.get_future();
-
-      return packagedTask->Callback.get_future();
+      return result;
     }
 
     /// <summary>
