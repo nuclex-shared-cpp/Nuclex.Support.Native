@@ -103,9 +103,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Schedules a task to be executed on a worker thread</summary>
     /// <typeparam name="TMethod">Method that will be run on a worker thread</typeparam>
     public: template<typename TMethod, typename... TArguments>
-    std::future<typename std::result_of<TMethod(TArguments...)>::type>
+    std::future<typename std::invoke_result<TMethod, TArguments...>::type>
     AddTask(TMethod &&method, TArguments &&... arguments) {
-      typedef typename std::result_of<TMethod(TArguments...)>::type ResultType;
+      typedef typename std::invoke_result<TMethod, TArguments...>::type ResultType;
       typedef std::packaged_task<ResultType()> TaskType;
 
       #pragma region struct PackagedTask
@@ -147,9 +147,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // Grab the result before scheduling the task. If the stars are aligned and
       // the thread pool is churning, it may otherwise happen that the task is
       // completed and destroyed between submitTask() and the call to get_future()
-      std::future<typename std::result_of<TMethod(TArguments...)>::type> result = (
-        packagedTask->Callback.get_future()
-      );
+      std::future<ResultType> result = packagedTask->Callback.get_future();
 
       // Schedule for execution. The task will either be executed (default) or
       // destroyed if the thread pool shuts down, both outcomes will result in

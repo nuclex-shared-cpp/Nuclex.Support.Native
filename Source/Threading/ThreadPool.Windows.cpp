@@ -172,10 +172,10 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     if(this->UseNewThreadPoolApi) {
-      auto closeSemaphoreScope = ON_SCOPE_EXIT_TRANSACTION{
+      auto closeEventScope = ON_SCOPE_EXIT_TRANSACTION{
         BOOL result = ::CloseHandle(this->LightsOutEventHandle);
         NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-        assert((result != FALSE) && u8"Shutdown semaphore is closed on stack unwind");
+        assert((result != FALSE) && u8"Shutdown event is closed on stack unwind");
       };
 
       ::TpInitializeCallbackEnviron(&this->NewCallbackEnvironment);
@@ -222,7 +222,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         closeThreadPoolScope.Commit(); // Everything worked out, don't close the thread pool
       }
 
-      closeSemaphoreScope.Commit(); // Success, don't close the shutdown semaphore
+      closeEventScope.Commit(); // Success, don't close the shutdown event
     } // if new thread pool API used
   }
 
@@ -242,7 +242,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     BOOL result = ::CloseHandle(this->LightsOutEventHandle);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-    assert((result != FALSE) && u8"Shutdown semaphore is successfully destroyed");
+    assert((result != FALSE) && u8"Shutdown event is successfully destroyed");
 
   }
 
@@ -301,7 +301,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(parameter);
     PlatformDependentImplementation &implementation = *submittedTask->Implementation;
 
-    // Make sure to always update the task counter and to signal the semaphore
+    // Make sure to always update the task counter and to signal the event
     // if the task counter reaches zero (
     ON_SCOPE_EXIT {
       implementation.DecrementTaskCountNoThrow();
@@ -309,7 +309,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // See if the thread pool is shutting down. If so, fast-forward through any
     // scheduled task, destroying it without executing it (this will cancel
-    // the owner's std::futures). Also set the 'LightsOut' semaphore on the last task.
+    // the owner's std::futures). Also set the 'LightsOut' event on the last task.
     bool isShuttingDown = submittedTask->Implementation->IsShuttingDown.load(
       std::memory_order::memory_order_consume // if() below carries dependency
     );
@@ -442,8 +442,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Increment task count before executing so we don't risk the task finishing
     // before the increment, dropping the counter lower than 0. If this is
-    // the first task being scheduled after the thread pool was idle, increment
-    // our semaphore so the shutdown process knows to wait.
+    // the first task being scheduled after the thread pool was idle, reset
+    // our 'LightsOut' event so the thread pool destructor knows to wait.
     {
       auto deleteTaskScope = ON_SCOPE_EXIT_TRANSACTION {
         this->implementation->SubmittedTaskPool.DeleteTask(submittedTask);
