@@ -57,9 +57,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Wraps a callback that can be schuled on a worker thread</summary>
     public: struct SubmittedTask {
 
-      //public: SubmittedTask() = default;
-      //public: ~SubmittedTask() = default;
-
       /// <summary>Size of the payload allocated for this task instance</summary>
       public: std::size_t PayloadSize;
       /// <summary>The task instance living in the payload</summary>

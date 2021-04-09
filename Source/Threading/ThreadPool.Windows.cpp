@@ -159,18 +159,22 @@ namespace Nuclex { namespace Support { namespace Threading {
     LightsOutEventHandle(INVALID_HANDLE_VALUE),
     SubmittedTaskPool() {
 
+    // Create the event we will use to wait for the task queue
+    // to flush when the thread pool shuts down again
     this->LightsOutEventHandle = ::CreateEventW(nullptr, TRUE, TRUE, nullptr);
     bool eventCreationFailed = (
       (this->LightsOutEventHandle == 0) ||
       (this->LightsOutEventHandle == INVALID_HANDLE_VALUE)
     );
-    if(eventCreationFailed) {
+    if(unlikely(eventCreationFailed)) {
       DWORD lastErrorCode = ::GetLastError();
       Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not create event for shutdown coordination", lastErrorCode
       );
     }
 
+    // The new thread pool API introduced with Windows Vista allows us to honor
+    // the minimum and maximum thread count parameters, so if possible set it up.
     if(this->UseNewThreadPoolApi) {
       auto closeEventScope = ON_SCOPE_EXIT_TRANSACTION{
         BOOL result = ::CloseHandle(this->LightsOutEventHandle);
@@ -190,7 +194,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         );
       }
 
-      // Configure the thread pool
+      // Apply configuration options
       {
         auto closeThreadPoolScope = ON_SCOPE_EXIT_TRANSACTION{
           ::CloseThreadpool(this->NewThreadPool);
@@ -240,6 +244,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       ::CloseThreadpool(this->NewThreadPool);
     }
 
+    // Everything is shut down and we can safely delete this event, too
     BOOL result = ::CloseHandle(this->LightsOutEventHandle);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
     assert((result != FALSE) && u8"Shutdown event is successfully destroyed");
@@ -252,7 +257,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     std::size_t previousTaskCount = this->ScheduledTaskCount.fetch_add(
       1, std::memory_order::memory_order_consume // if() below carries dependency
     );
-    if(previousTaskCount == 0) { // If there were no task scheduled before
+    if(previousTaskCount == 0) { // If there were no tasks scheduled before
       BOOL result = ::ResetEvent(this->LightsOutEventHandle);
       if(unlikely(result == FALSE)) {
         DWORD lastErrorCode = ::GetLastError();
@@ -301,15 +306,14 @@ namespace Nuclex { namespace Support { namespace Threading {
     SubmittedTask *submittedTask = reinterpret_cast<SubmittedTask *>(parameter);
     PlatformDependentImplementation &implementation = *submittedTask->Implementation;
 
-    // Make sure to always update the task counter and to signal the event
-    // if the task counter reaches zero (
+    // Make sure to always update the task counter and to signal the 'LightsOut' event
+    // if the task counter reaches zero (used on shutdown to wait for tasks to flush).
     ON_SCOPE_EXIT {
       implementation.DecrementTaskCountNoThrow();
     };
 
-    // See if the thread pool is shutting down. If so, fast-forward through any
-    // scheduled task, destroying it without executing it (this will cancel
-    // the owner's std::futures). Also set the 'LightsOut' event on the last task.
+    // See if the thread pool is shutting down. If so, fast-forward through any scheduled
+    // task, destroying it without executing it (this will cancel the owner's std::futures).
     bool isShuttingDown = submittedTask->Implementation->IsShuttingDown.load(
       std::memory_order::memory_order_consume // if() below carries dependency
     );
@@ -376,22 +380,18 @@ namespace Nuclex { namespace Support { namespace Threading {
     DWORD result = ::WaitForSingleObject(
       this->implementation->LightsOutEventHandle, 5000
     );
-    if(result != WAIT_OBJECT_0) {
-      //DWORD lastErrorCode = ::GetLastError();
-      //NUCLEX_SUPPORT_NDEBUG_UNUSED(lastErrorCode);
-      assert(
-        (result == WAIT_OBJECT_0) && u8"All tasks flushed before the thread pool is destroyed"
-      );
-    }
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+    assert(
+      (result == WAIT_OBJECT_0) && u8"All tasks flushed before the thread pool is destroyed"
+    );
 
 #if !defined(NDEBUG)
+    // Additional safety check, there should be no more tasks in the queue
     std::size_t remainingTaskCount = this->implementation->ScheduledTaskCount.load(
-      std::memory_order::memory_order_consume // if() below carries dependency
+      std::memory_order::memory_order_consume // assert() below carries dependency
     );
     assert((remainingTaskCount == 0) && u8"No thread pool tasks remain during shutdown");
 #endif
-
-    //this->implementation->SubmittedTaskPook.DeleteAllRecyclableTasks();
 
     delete this->implementation;
   }
