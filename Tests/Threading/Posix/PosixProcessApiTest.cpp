@@ -86,7 +86,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(PosixProcessApiTest, ExecutableIsResolvedInWindowsDirectory) {
+  TEST(PosixProcessApiTest, ExecutableIsResolvedInUsrBinDirectory) {
     std::string path;
     PosixProcessApi::GetAbsoluteExecutablePath(path, u8"ls");
 

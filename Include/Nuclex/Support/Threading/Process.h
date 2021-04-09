@@ -73,7 +73,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   <para>
     ///     If the executable name doesn't contain a path (or is specified with a relative
     ///     path), the path is interpreted as relative to the directory in which the calling
-    ///     application executables resides.
+    ///     application's executable resides.
     ///   </para>
     ///   <para>
     ///     SHould the executable not be found that way, the normal search rules of
@@ -113,7 +113,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   to the argument list.
     /// </param>
     /// <remarks>
-    ///   There's a major different to how arguments are passed to a process between Linux
+    ///   There's a major difference to how arguments are passed to a process between Linux
     ///   and Windows. On Linux, arguments are an array of strings, allowing spaces to be
     ///   passed along. On Windows, the arguments become a single string, meaning that there
     ///   is no way to distinguish between an argument containing a space and two arguments.
