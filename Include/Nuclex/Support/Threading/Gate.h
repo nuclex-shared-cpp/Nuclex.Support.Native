@@ -67,7 +67,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   How long to wait for the gate to open before giving up
     /// </param>
     /// <returns>True if the gate was opened, false if the patience time has elapsed</returns>
-    public: bool WaitFor(const std::chrono::microseconds &patience) const;
+    public: NUCLEX_SUPPORT_API bool WaitFor(const std::chrono::microseconds &patience) const;
 
     //public: void WaitUntil(const std::chrono::time_point< &patience);
 

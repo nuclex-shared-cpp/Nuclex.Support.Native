@@ -175,4 +175,18 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(GateTest, WaitCanTimeOut) {
+    Gate gate;
+
+    bool hasPassed = gate.WaitFor(std::chrono::microseconds(1000));
+    EXPECT_FALSE(hasPassed);
+
+    gate.Open();
+
+    hasPassed = gate.WaitFor(std::chrono::microseconds(1000));
+    EXPECT_TRUE(hasPassed);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Threading

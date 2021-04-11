@@ -143,4 +143,22 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(SemaphoreTest, WaitCanTimeOut) {
+    Semaphore semaphore;
+
+    bool hasPassed = semaphore.WaitForThenDecrement(
+      std::chrono::microseconds(1000)
+    );
+    EXPECT_FALSE(hasPassed);
+
+    semaphore.Post();
+
+    hasPassed = semaphore.WaitForThenDecrement(
+      std::chrono::microseconds(1000)
+    );
+    EXPECT_TRUE(hasPassed);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Threading
