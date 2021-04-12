@@ -116,6 +116,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     TestThread test(semaphore);
     test.LaunchThread();
+    test.JoinThread();
     EXPECT_TRUE(test.HasPassed());
   }
 

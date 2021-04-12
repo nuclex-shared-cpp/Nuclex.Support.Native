@@ -24,15 +24,39 @@ License along with this library
 #include "Nuclex/Support/Threading/Semaphore.h"
 
 #if defined(NUCLEX_SUPPORT_WIN32)
-#include "../Helpers/WindowsApi.h" // for ::Sleep(), ::GetCurrentThreadId() and more
-#include <limits>
+#include "../Helpers/WindowsApi.h" // for ::CreateSemaphoewR(), CloseHandle() and more
+#include <limits> // for std::numeric_limits
 #else
-#include "Posix/PosixProcessApi.h" // for PosixProcessApi
+#include "Posix/PosixTimeApi.h" // for PosixTimeApi
 #include <ctime> // for ::clock_gettime()
+#include <semaphore.h> // for ::sem_init(), ::sem_wait(), ::sem_post(), ::sem_destroy()
 #include <atomic> // for std::atomic
 #endif
 
 #include <cassert> // for assert()
+
+// The situation on Linux/Posix systems is a bit depressing here:
+//
+// With ::sem_t, a native semaphore exists, but it always uses CLOCK_REALTIME which is
+// prone to jumps (i.e. run ntp-client and it can easily jump seconds or minutes).
+//
+// There's a Bugzilla ticket for the kernel which hasn't changed status in 5 years:
+// https://bugzilla.kernel.org/show_bug.cgi?id=112521
+//
+// And there's ::stm_timedwait_monotonic() on QNX, but not Posix:
+// http://www.qnx.com/developers/docs/6.5.0SP1.update/com.qnx.doc.neutrino_lib_ref/s/sem_timedwait.html
+//
+// On the other hand, Linux 2.6.28 makes its futexes use CLOCK_MONOTONIC by default
+// https://man7.org/linux/man-pages/man2/futex.2.html
+//
+// Relying on ::sem_t is problematic. It works for a cron-style application where
+// the wait is actually aiming for a time on the wall clock, but it's useless for
+// normal thread synchronization where 50 ms may unexpectedly become 5 minutes or
+// report ETIMEOUT after less than 1 ms.
+//
+// Perhaps here, too, interfacing directly with the Linux kernel's futex syscalls
+// could save a lot of bloat and uncertainty.
+//
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -52,17 +76,15 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Handle of the semaphore used to pass or block threads</summary>
     public: HANDLE SemaphoreHandle;
 #else
-    /// <summary>Retrieves a pthreads attribute that selects the monotonic clock</summary>
-    /// <returns>A pthread conditional variable attribute selecting the monotonic clock</returns>
-    public: static ::pthread_condattr_t *getMonotonicClockAttribute() {
-      static MonotonicClockConditionAttribute attributeContainer;
-      return attributeContainer.GetAttribute();
-    }
-
-    /// <summary>Whether the Semaphore is currently open</summary>
-    public: std::atomic<bool> IsOpen; 
-    /// <summary>The pthread conditional variable used to pass or block threads</summary>
-    public: ::pthread_cond_t Condition;
+    public: ::sem_t Semaphore; // <--  not usable for anything but cron-type apps
+/*
+    /// <summary>How many threads the semaphore will admit</summary>
+    public: std::atomic<std::size_t> AdmitCounter; 
+    /// <summary>Conditional variable used to signal waiting threads</summary>
+    public: mutable ::pthread_cond_t Condition;
+    /// <summary>Mutex required to ensure threads never miss the signal</summary>
+    public: mutable ::pthread_mutex_t Mutex;
+*/
 #endif
 
   };
@@ -99,13 +121,16 @@ namespace Nuclex { namespace Support { namespace Threading {
   Semaphore::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
-    Condition() {
-    
-    // Create a new pthread conditional variable
-    int result = ::pthread_cond_init(&this->Condition, getMonotonicClockAttribute());
-    if(unlikely(result != 0)) {
+    Semaphore() /*,
+    AdmitCounter(initialCount),
+    Condition(),
+    Mutex() */{
+
+    int result = ::sem_init(&this->Semaphore, 0, static_cast<int>(initialCount));
+    if(result == -1) {
+      int errorNumber = errno;
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not initialize pthread conditional variable", result
+        u8"Could not create semaphore", errorNumber
       );
     }
   } 
@@ -121,6 +146,9 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WIN32)
   Semaphore::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
+    int result = ::sem_destroy(&this->Semaphore);
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+    assert((result == 0) && u8"Semaphore is successfully destroyed");
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -172,14 +200,18 @@ namespace Nuclex { namespace Support { namespace Threading {
 #if !defined(NUCLEX_SUPPORT_WIN32)
   void Semaphore::Post(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
-    
-    bool isOpen = impl.IsOpen.load(std::memory_order::memory_order_consume);
-    if(isOpen) {
-      return;
-    } else {
 
+    while(count > 0) {
+      int result = ::sem_post(&impl.Semaphore);
+      if(result == -1) {
+        int errorNumber = errno;
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not increment semaphore", errorNumber
+        );
+      }
+
+      --count;
     }
-    ::pthread_cond_signal()
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -201,7 +233,15 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WIN32)
   void Semaphore::WaitThenDecrement() {
-    const PlatformDependentImplementationData &impl = getImplementationData();
+    PlatformDependentImplementationData &impl = getImplementationData();
+
+    int result = ::sem_wait(&impl.Semaphore);
+    if(result == -1) {
+      int errorNumber = errno;
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not wait on and decrement semaphore", errorNumber
+      );
+    }
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -226,8 +266,23 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WIN32)
   bool Semaphore::WaitForThenDecrement(const std::chrono::microseconds &patience) {
-    const PlatformDependentImplementationData &impl = getImplementationData();
+    PlatformDependentImplementationData &impl = getImplementationData();
 
+    // Forced to use CLOCK_REALTIME, which means the semaphore is broken :-(
+    struct ::timespec endTime = Posix::PosixTimeApi::GetTimePlus(CLOCK_REALTIME, patience);
+
+    int result = ::sem_timedwait(&impl.Semaphore, &endTime);
+    if(result == -1) {
+      int errorNumber = errno;
+      if(errorNumber == ETIMEDOUT) {
+        return false;
+      }
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not wait on and decrement semaphore", errorNumber
+      );
+    }
+
+    return true;
   }
 #endif
   // ------------------------------------------------------------------------------------------- //

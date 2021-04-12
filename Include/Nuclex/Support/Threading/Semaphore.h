@@ -97,7 +97,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 #if defined(NUCLEX_SUPPORT_WIN32)
       unsigned char implementationDataBuffer[8];
 #else // Posix and Linux
-      unsigned char implementationDataBuffer[8];
+      unsigned char implementationDataBuffer[32];
 #endif
     };
 
