@@ -208,7 +208,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     int result = ::pthread_mutex_lock(&impl.Mutex);
     if(unlikely(result != 0)) {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not lock pthreads mutex", result
+        u8"Could not lock pthread mutex", result
       );
     }
 
@@ -219,14 +219,14 @@ namespace Nuclex { namespace Support { namespace Threading {
       NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
       assert((unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler");
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not signal pthreads conditional variable", result
+        u8"Could not signal pthread conditional variable", result
       );
     }
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
     if(unlikely(result != 0)) {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not unlock pthreads mutex", result
+        u8"Could not unlock pthread mutex", result
       );
     }
   }
@@ -288,7 +288,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     int result = ::pthread_mutex_lock(&impl.Mutex);
     if(unlikely(result != 0)) {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not lock pthreads mutex", result
+        u8"Could not lock pthread mutex", result
       );
     }
 
@@ -301,7 +301,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           (unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler"
         );
         Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-          u8"Could not wait on pthreads conditional variable", result
+          u8"Could not wait on pthread conditional variable", result
         );
       }
     }
@@ -309,7 +309,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     result = ::pthread_mutex_unlock(&impl.Mutex);
     if(unlikely(result != 0)) {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not unlock pthreads mutex", result
+        u8"Could not unlock pthread mutex", result
       );
     }
   }

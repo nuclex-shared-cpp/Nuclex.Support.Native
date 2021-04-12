@@ -28,7 +28,6 @@ License along with this library
 #include <limits> // for std::numeric_limits
 #else
 #include "Posix/PosixTimeApi.h" // for PosixTimeApi
-#include <ctime> // for ::clock_gettime()
 #include <semaphore.h> // for ::sem_init(), ::sem_wait(), ::sem_post(), ::sem_destroy()
 #include <atomic> // for std::atomic
 #endif
@@ -76,15 +75,15 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Handle of the semaphore used to pass or block threads</summary>
     public: HANDLE SemaphoreHandle;
 #else
-    public: ::sem_t Semaphore; // <--  not usable for anything but cron-type apps
-/*
+    //public: ::sem_t Semaphore; // <--  not usable for anything but cron-type apps
+
     /// <summary>How many threads the semaphore will admit</summary>
     public: std::atomic<std::size_t> AdmitCounter; 
     /// <summary>Conditional variable used to signal waiting threads</summary>
     public: mutable ::pthread_cond_t Condition;
     /// <summary>Mutex required to ensure threads never miss the signal</summary>
     public: mutable ::pthread_mutex_t Mutex;
-*/
+
 #endif
 
   };
@@ -121,16 +120,27 @@ namespace Nuclex { namespace Support { namespace Threading {
   Semaphore::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
-    Semaphore() /*,
     AdmitCounter(initialCount),
     Condition(),
-    Mutex() */{
+    Mutex() {
 
-    int result = ::sem_init(&this->Semaphore, 0, static_cast<int>(initialCount));
-    if(result == -1) {
-      int errorNumber = errno;
+    // Attribute necessary to use CLOCK_MONOTONIC for condition variable timeouts
+    ::pthread_condattr_t *monotonicClockAttribute = (
+      Posix::PosixTimeApi::GetMonotonicClockAttribute()
+    );
+    
+    // Create a new pthread conditional variable
+    int result = ::pthread_cond_init(&this->Condition, monotonicClockAttribute);
+    if(unlikely(result != 0)) {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not create semaphore", errorNumber
+        u8"Could not initialize pthread conditional variable", result
+      );
+    }
+
+    result = ::pthread_mutex_init(&this->Mutex, nullptr);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not initialize pthread mutex", result
       );
     }
   } 
@@ -146,9 +156,13 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WIN32)
   Semaphore::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
-    int result = ::sem_destroy(&this->Semaphore);
+    int result = ::pthread_mutex_destroy(&this->Mutex);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-    assert((result == 0) && u8"Semaphore is successfully destroyed");
+    assert((result == 0) && u8"pthread mutex is detroyed successfully");
+
+    result = ::pthread_cond_destroy(&this->Condition);
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+    assert((result == 0) && u8"pthread conditional variable is detroyed successfully");
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -201,17 +215,36 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Semaphore::Post(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
+    int result = ::pthread_mutex_lock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not lock pthread mutex", result
+      );
+    }
+
+    impl.AdmitCounter.fetch_add(count, std::memory_order::memory_order_release);
+
     while(count > 0) {
-      int result = ::sem_post(&impl.Semaphore);
-      if(result == -1) {
-        int errorNumber = errno;
+      result = ::pthread_cond_signal(&impl.Condition);
+      if(unlikely(result != 0)) {
+        int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
+        assert((unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler");
         Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-          u8"Could not increment semaphore", errorNumber
+          u8"Could not signal pthread conditional variable", result
         );
       }
 
       --count;
     }
+
+    result = ::pthread_mutex_unlock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not unlock pthread mutex", result
+      );
+    }
+
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -235,11 +268,33 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Semaphore::WaitThenDecrement() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
-    int result = ::sem_wait(&impl.Semaphore);
-    if(result == -1) {
-      int errorNumber = errno;
+    int result = ::pthread_mutex_lock(&impl.Mutex);
+    if(unlikely(result != 0)) {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not wait on and decrement semaphore", errorNumber
+        u8"Could not lock pthread mutex", result
+      );
+    }
+
+    while(impl.AdmitCounter.load(std::memory_order::memory_order_consume) == 0) {
+      result = ::pthread_cond_wait(&impl.Condition, &impl.Mutex);
+      if(unlikely(result != 0)) {
+        int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
+        assert(
+          (unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler"
+        );
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not wait on pthread conditional variable", result
+        );
+      }
+    }
+
+    impl.AdmitCounter.fetch_sub(1, std::memory_order::memory_order_release);
+
+    result = ::pthread_mutex_unlock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not unlock pthread mutex", result
       );
     }
   }
@@ -269,16 +324,46 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
 
     // Forced to use CLOCK_REALTIME, which means the semaphore is broken :-(
-    struct ::timespec endTime = Posix::PosixTimeApi::GetTimePlus(CLOCK_REALTIME, patience);
+    struct ::timespec endTime = Posix::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
 
-    int result = ::sem_timedwait(&impl.Semaphore, &endTime);
-    if(result == -1) {
-      int errorNumber = errno;
-      if(errorNumber == ETIMEDOUT) {
-        return false;
-      }
+    int result = ::pthread_mutex_lock(&impl.Mutex);
+    if(unlikely(result != 0)) {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not wait on and decrement semaphore", errorNumber
+        u8"Could not lock pthread mutex", result
+      );
+    }
+
+    while(impl.AdmitCounter.load(std::memory_order::memory_order_consume) == 0) {
+      result = ::pthread_cond_timedwait(&impl.Condition, &impl.Mutex, &endTime);
+      if(unlikely(result != 0)) {
+        if(result == ETIMEDOUT) {
+          result = ::pthread_mutex_unlock(&impl.Mutex);
+          if(unlikely(result != 0)) {
+            Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+              u8"Could not unlock pthread mutex", result
+            );
+          }
+
+          return false;
+        }
+
+        int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
+        assert(
+          (unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler"
+        );
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not wait on pthread conditional variable", result
+        );
+      }
+    }
+
+    impl.AdmitCounter.fetch_sub(1, std::memory_order::memory_order_release);
+
+    result = ::pthread_mutex_unlock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not unlock pthread mutex", result
       );
     }
 
