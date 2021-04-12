@@ -148,6 +148,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     TestThread test(gate);
     test.LaunchThread();
+    test.JoinThread();
     EXPECT_TRUE(test.HasPassed());
   }
 

@@ -24,9 +24,9 @@ License along with this library
 #include "Nuclex/Support/Threading/Gate.h"
 
 #if defined(NUCLEX_SUPPORT_WIN32)
-#include "../Helpers/WindowsApi.h" // for ::Sleep(), ::GetCurrentThreadId() and more
+#include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #else
-#include "Posix/PosixProcessApi.h" // for PosixProcessApi
+#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
 #include <atomic> // for std::atomic
 
@@ -39,7 +39,7 @@ License along with this library
 // in your build system or remove the Gate implementation from your library.
 #if defined(_POSIX_C_SOURCE)
   #if (_POSIX_C_SOURCE < 200112L)
-    #error Your C runtime library enedsto at least implement Posix 2001-12 
+    #error Your C runtime library needs to at least implement Posix 2001-12 
   #endif
   //#if !defined(__USE_XOPEN2K)
 #endif
@@ -50,70 +50,13 @@ License along with this library
 
 #include <cassert> // for assert()
 
-namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
-  /// <summary>A condition attribute that switches timeouts to the monotonic clock</summary>
-  /// <remarks>
-  ///   By default, timeouts run on the REALTIME clock (historic Posix, I guess), which
-  ///   would risk all wait functions either skipping their wait or waiting for over an hour
-  ///   when the system clock changes due to daylight savings time.
-  /// </remarks>
-  class MonotonicClockConditionAttribute {
-
-    /// <summary>Initializes the monotonic clock attribute</summary>
-    public: MonotonicClockConditionAttribute();
-
-    /// <summary>Destroys the attribute</summary>
-    public: ~MonotonicClockConditionAttribute();
-
-    /// <summary>Accesses the conditional variable attribute</summary>
-    /// <returns>The address of the attribute which can be passed to pthread functions</returns>
-    public: ::pthread_condattr_t *GetAttribute() const {
-      return &this->attribute;
-    }
-
-    /// <summary>Conditional variable attributes managed by this instance</summary>
-    private: ::pthread_condattr_t attribute;
-
-  };
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
-  // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
-  MonotonicClockConditionAttribute::~MonotonicClockConditionAttribute() {
-
-    int result = ::pthread_condattr_destroy(&this->attribute);
-    NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-    assert((result == 0) && u8"pthread conditional variable attribute is destroyed");
-
-  }
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
-  // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
-  MonotonicClockConditionAttribute::MonotonicClockConditionAttribute() {
-
-    // Initialize the conditional attribute structure
-    int result = ::pthread_condattr_init(&this->attribute);
-    if(unlikely(result != 0)) {
-      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not initialize pthread conditional variable attribute", result
-      );
-    }
-
-    // Change the attribute's clock settings so the monotonic clock is used
-    result = ::pthread_condattr_setclock(&this->attribute, CLOCK_MONOTONIC);
-    if(unlikely(result != 0)) {
-      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not set pthread conditional variable attribute's clock id", result
-      );
-    }
-
-  }
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
-  // ------------------------------------------------------------------------------------------- //
-
-} // anonymous namespace
+// The Linux kernel's futex syscalls have support for CLOCK_MONOTONIC built in.
+// https://man7.org/linux/man-pages/man2/futex.2.html
+//
+// It would be cool if, in addition to a Posix implementation, I could create
+// a Linux-only implementation that circumvents pthreads and talks directly
+// to the kernel to implement a gate.
+//
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -133,17 +76,16 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Handle of the event used to pass or block threads</summary>
     public: HANDLE EventHandle;
 #else
-    /// <summary>Retrieves a pthreads attribute that selects the monotonic clock</summary>
-    /// <returns>A pthread conditional variable attribute selecting the monotonic clock</returns>
-    public: static ::pthread_condattr_t *getMonotonicClockAttribute() {
-      static MonotonicClockConditionAttribute attributeContainer;
-      return attributeContainer.GetAttribute();
-    }
+
+    // Some implementations have a ::pthread_mutex_timedlock_monotonic
 
     /// <summary>Whether the gate is currently open</summary>
     public: std::atomic<bool> IsOpen; 
-    /// <summary>The pthread conditional variable used to pass or block threads</summary>
-    public: ::pthread_cond_t Condition;
+    /// <summary>Conditional variable used to signal waiting threads</summary>
+    public: mutable ::pthread_cond_t Condition;
+    /// <summary>Mutex required to ensure threads never miss the signal</summary>
+    public: mutable ::pthread_mutex_t Mutex;
+    
 #endif
 
   };
@@ -175,12 +117,24 @@ namespace Nuclex { namespace Support { namespace Threading {
   ) :
     IsOpen(initiallyOpen),
     Condition() {
+
+    // Attribute necessary to use CLOCK_MONOTONIC for condition variable timeouts
+    ::pthread_condattr_t *monotonicClockAttribute = (
+      Posix::PosixTimeApi::GetMonotonicClockAttribute()
+    );
     
     // Create a new pthread conditional variable
-    int result = ::pthread_cond_init(&this->Condition, getMonotonicClockAttribute());
+    int result = ::pthread_cond_init(&this->Condition, monotonicClockAttribute);
     if(unlikely(result != 0)) {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
         u8"Could not initialize pthread conditional variable", result
+      );
+    }
+
+    result = ::pthread_mutex_init(&this->Mutex, nullptr);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not initialize pthread mutex", result
       );
     }
   } 
@@ -196,6 +150,13 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WIN32)
   Gate::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
+    int result = ::pthread_mutex_destroy(&this->Mutex);
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+    assert((result == 0) && u8"pthread mutex is detroyed successfully");
+
+    result = ::pthread_cond_destroy(&this->Condition);
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+    assert((result == 0) && u8"pthread conditional variable is detroyed successfully");
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -208,10 +169,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     assert(
       (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData)) &&
       u8"Private implementation data for Nuclex::Support::Threading::Process fits in buffer"
-    );
-
-    constexpr bool implementationDataFitsInBuffer = (
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
     );
     new(this->implementationDataBuffer) PlatformDependentImplementationData(initiallyOpen);
   }
@@ -247,14 +204,31 @@ namespace Nuclex { namespace Support { namespace Threading {
 #if !defined(NUCLEX_SUPPORT_WIN32)
   void Gate::Open() {
     PlatformDependentImplementationData &impl = getImplementationData();
-    
-    bool isOpen = impl.IsOpen.load(std::memory_order::memory_order_consume);
-    if(isOpen) {
-      return;
-    } else {
 
+    int result = ::pthread_mutex_lock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not lock pthreads mutex", result
+      );
     }
-    ::pthread_cond_signal()
+
+    impl.IsOpen.store(true, std::memory_order::memory_order_relaxed);
+    result = ::pthread_cond_signal(&impl.Condition);
+    if(unlikely(result != 0)) {
+      int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
+      assert((unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler");
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not signal pthreads conditional variable", result
+      );
+    }
+
+    result = ::pthread_mutex_unlock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not unlock pthreads mutex", result
+      );
+    }
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -276,6 +250,8 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Gate::Close() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
+    // We don't need memory_order_release, but the caller is likely to expect a fence
+    impl.IsOpen.store(false, std::memory_order::memory_order_release);
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -308,6 +284,34 @@ namespace Nuclex { namespace Support { namespace Threading {
 #if !defined(NUCLEX_SUPPORT_WIN32)
   void Gate::Wait() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
+
+    int result = ::pthread_mutex_lock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not lock pthreads mutex", result
+      );
+    }
+
+    while(!impl.IsOpen.load(std::memory_order::memory_order_consume)) {
+      result = ::pthread_cond_wait(&impl.Condition, &impl.Mutex);
+      if(unlikely(result != 0)) {
+        int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
+        assert(
+          (unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler"
+        );
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not wait on pthreads conditional variable", result
+        );
+      }
+    }
+
+    result = ::pthread_mutex_unlock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not unlock pthreads mutex", result
+      );
+    }
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -334,6 +338,46 @@ namespace Nuclex { namespace Support { namespace Threading {
   bool Gate::WaitFor(const std::chrono::microseconds &patience) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
+    struct ::timespec waitEndTime = Posix::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
+
+    int result = ::pthread_mutex_lock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not lock pthreads mutex", result
+      );
+    }
+
+    while(!impl.IsOpen.load(std::memory_order::memory_order_consume)) {
+      result = ::pthread_cond_timedwait(&impl.Condition, &impl.Mutex, &waitEndTime);
+      if(unlikely(result != 0)) {
+        if(result == ETIMEDOUT) {
+          result = ::pthread_mutex_unlock(&impl.Mutex);
+          if(unlikely(result != 0)) {
+            Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+              u8"Could not unlock pthreads mutex", result
+            );
+          }
+          return false;
+        }
+
+        int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
+        assert(
+          (unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler"
+        );
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not wait on pthreads conditional variable", result
+        );
+      }
+    }
+
+    result = ::pthread_mutex_unlock(&impl.Mutex);
+    if(unlikely(result != 0)) {
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not unlock pthreads mutex", result
+      );
+    }
+    return true;
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
