@@ -254,6 +254,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
     }
 
     return currentTime;
+
   }
 
   // ------------------------------------------------------------------------------------------- //

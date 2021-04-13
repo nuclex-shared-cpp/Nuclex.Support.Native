@@ -31,6 +31,7 @@ License along with this library
 #include <unistd.h> // for ::syscall()
 #include <limits.h> // for INT_MAX
 #include <sys/syscall.h> // for ::SYS_futex
+#include <atomic> // for std::atomic
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
 #include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
@@ -89,8 +90,10 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: ~PlatformDependentImplementationData();
 
 #if defined(NUCLEX_SUPPORT_LINUX)
-    /// <summary>Number of times the semaphore has been incremented</summary>
-    public: std::uint32_t FutexWord;
+    /// <summary>Switches between 0 (no waiters) and 1 (has waiters)</summary>
+    public: volatile std::uint32_t FutexWord;
+    /// <summary>Available tickets, negative for each thread waiting for a ticket</summary>
+    public: std::atomic<int> AdmitCounter; 
 #elif defined(NUCLEX_SUPPORT_WIN32)
     /// <summary>Handle of the semaphore used to pass or block threads</summary>
     public: HANDLE SemaphoreHandle;
@@ -111,7 +114,8 @@ namespace Nuclex { namespace Support { namespace Threading {
   Semaphore::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
-    FutexWord(initialCount) {}
+    FutexWord(0),
+    AdmitCounter(static_cast<int>(initialCount)) {}
 #endif
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
@@ -223,28 +227,49 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
 
     // Increment the semaphore admit counter so threads will be able to pass when woken up
-    __atomic_add_fetch(&impl.FutexWord, count, __ATOMIC_RELEASE);
-
-    // Futex Wake (Linux 2.6.0+)
-    // https://man7.org/linux/man-pages/man2/futex.2.html
-    //
-    // This will signal other threads sitting in the Semaphore::WaitAndDecrement() method to
-    // re-check the semaphore's status and resume running
-    long result = ::syscall(
-      SYS_futex, // syscall id
-      static_cast<volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-      static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAKE), // process-private futex wakeup
-      static_cast<int>(count), // wake up one thread for each uptick of the semaphore
-      static_cast<struct ::timespec *>(nullptr), // timeout -> ignored
-      static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-      static_cast<int>(0) // second futex word value -> ignored
+    //__atomic_add_fetch(&impl.FutexWord, count, __ATOMIC_RELEASE);
+    int previousAdmitCounter = impl.AdmitCounter.fetch_add(
+      static_cast<int>(count), std::memory_order::memory_order_release
     );
-    if(unlikely(result == -1)) {
-      int errorNumber = errno;
-      __atomic_sub_fetch(&impl.FutexWord, count, __ATOMIC_RELEASE);
-      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not wake up threads waiting on futex", errorNumber
+    if(previousAdmitCounter < 0) { // If the semaphore has waiting threads
+      int wakeupCount = -previousAdmitCounter;
+      if(count < wakeupCount) {
+        wakeupCount = count;
+      }
+
+      // If the semaphore was, but is no longer, contested, switch the futex word.
+      //
+      // This prevents a race condition for threads going to sleep (someone might
+      // have posted work between their atomic fetch_sub() and the syscall).
+      //
+      // If that's the case, their syscall would return with EAGAIN because
+      // the futex word has changed. In the worst case, we're waking all waiting
+      // threads up for nothing, though...
+      if(previousAdmitCounter + count >= 0) {
+        __atomic_store_n(&impl.FutexWord, 0, __ATOMIC_RELEASE);
+      }
+
+      // Futex Wake (Linux 2.6.0+)
+      // https://man7.org/linux/man-pages/man2/futex.2.html
+      //
+      // This will signal other threads sitting in the Semaphore::WaitAndDecrement() method to
+      // re-check the semaphore's status and resume running
+      long result = ::syscall(
+        SYS_futex, // syscall id
+        static_cast<volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
+        static_cast<int>(FUTEX_WAKE_PRIVATE), // process-private futex wakeup
+        static_cast<int>(wakeupCount), // wake up one thread for each uptick of the semaphore
+        static_cast<struct ::timespec *>(nullptr), // timeout -> ignored
+        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
+        static_cast<int>(0) // second futex word value -> ignored
       );
+      if(unlikely(result == -1)) {
+        int errorNumber = errno;
+        //__atomic_sub_fetch(&impl.FutexWord, count, __ATOMIC_RELEASE);
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not wake up threads waiting on futex", errorNumber
+        );
+      }
     }
   }
 #endif
@@ -303,6 +328,21 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Semaphore::WaitThenDecrement() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
+    // Take one admit from the semaphore for this thread that was just let through
+    //__atomic_sub_fetch(&impl.FutexWord, 1, __ATOMIC_SEQ_CST);
+    int previousAdmitCounter = impl.AdmitCounter.fetch_sub(1, std::memory_order_seq_cst);
+    if(previousAdmitCounter > 0) {
+      return; // We were able to take a ticket lock-free
+    }
+
+    // If the semaphore just ran out of tickets, mark it as contested. This will
+    // pointlessly wake up any current waiters (hopefully few, since state just switched)
+    // but is necessary to avoid a race condition between the atomic fetch sub above
+    // and our now necessary syscall.
+    if(previousAdmitCounter == 0) {
+      __atomic_store_n(&impl.FutexWord, 1, __ATOMIC_RELEASE);
+    }
+
     // Be ready to check multiple times in case of EINTR
     for(;;) {
 
@@ -314,16 +354,16 @@ namespace Nuclex { namespace Support { namespace Threading {
       long result = ::syscall(
         SYS_futex, // syscall id
         static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-        static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
-        static_cast<int>(0), // wait while futex word is 0 (== no admits available)
+        static_cast<int>(FUTEX_WAIT_PRIVATE), // process-private futex wakeup
+        static_cast<int>(1), // wait while futex word is 0 (== no admits available)
         static_cast<struct ::timespec *>(nullptr), // timeout -> infinite
         static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
         static_cast<int>(0) // second futex word value -> ignored
       );
       if(unlikely(result == -1)) {
         int errorNumber = errno;
-        if(likely(errorNumber == EAGAIN)) { // Value was not 0, so semaphore is signalled
-          return;
+        if(likely(errorNumber == EAGAIN)) {
+          break; // Futex word changed -> semaphore is no longer contested!
         } else if(unlikely(errorNumber != EINTR)) {
           Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
             u8"Could not sleep on semaphore admit counter via futex wait", errorNumber
@@ -335,8 +375,9 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     } // for(;;)
 
-    // Take one admit from the semaphore for this thread that was just let through
-    __atomic_sub_fetch(&impl.FutexWord, 1, __ATOMIC_SEQ_CST);
+    // TODO: Do we need to check something here?
+    //   Should we atomic-load after EAGAIN and only exit if the semaphore is positive?
+
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -396,6 +437,21 @@ namespace Nuclex { namespace Support { namespace Threading {
   bool Semaphore::WaitForThenDecrement(const std::chrono::microseconds &patience)  {
     PlatformDependentImplementationData &impl = getImplementationData();
 
+    // Take one admit from the semaphore for this thread that was just let through
+    //__atomic_sub_fetch(&impl.FutexWord, 1, __ATOMIC_SEQ_CST);
+    int previousAdmitCounter = impl.AdmitCounter.fetch_sub(1, std::memory_order_seq_cst);
+    if(previousAdmitCounter > 0) {
+      return true; // We were able to take a ticket lock-free
+    }
+
+    // If the semaphore just ran out of tickets, mark it as contested. This will
+    // pointlessly wake up any current waiters (hopefully few, since state just switched)
+    // but is necessary to avoid a race condition between the atomic fetch sub above
+    // and our now necessary syscall.
+    if(previousAdmitCounter == 0) {
+      __atomic_store_n(&impl.FutexWord, 1, __ATOMIC_RELEASE);
+    }
+
     // Query the time, but don't do anything with it yet (the futex wait is
     // relative, so unless we get EINTR, the time isn't even needed)
     struct ::timespec startTime;
@@ -437,16 +493,22 @@ namespace Nuclex { namespace Support { namespace Threading {
         SYS_futex, // syscall id
         static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
         static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
-        static_cast<int>(0), // wait while futex word is 0 (== no admits available)
+        static_cast<int>(1), // wait while futex word is 0 (== no admits available)
         static_cast<struct ::timespec *>(&timeout), // timeout after which to fail
         static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
         static_cast<int>(0) // second futex word value -> ignored
       );
       if(unlikely(result == -1)) {
         int errorNumber = errno;
-        if(likely(errorNumber == EAGAIN)) { // Value was not 0, so semaphore is signalled
-          break;
+        if(likely(errorNumber == EAGAIN)) {
+          break; // Futex word changed -> semaphore is no longer contested!
         } else if(likely(errorNumber == ETIMEDOUT)) { // Timeout, wait failed
+          previousAdmitCounter = impl.AdmitCounter.fetch_add(
+            1, std::memory_order::memory_order_release
+          );       
+          if(previousAdmitCounter == -1) {
+            __atomic_store_n(&impl.FutexWord, 0, __ATOMIC_RELEASE);
+          }
           return false;
         } else if(unlikely(errorNumber != EINTR)) {
           Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
@@ -463,9 +525,6 @@ namespace Nuclex { namespace Support { namespace Threading {
       timeout = Posix::PosixTimeApi::GetRemainingTimeout(CLOCK_MONOTONIC, startTime, patience);
 
     }
-
-    // Take one admit from the semaphore for this thread that was just let through
-    __atomic_sub_fetch(&impl.FutexWord, 1, __ATOMIC_SEQ_CST);
 
     return true; // wait noticed a change to the futex word
   }

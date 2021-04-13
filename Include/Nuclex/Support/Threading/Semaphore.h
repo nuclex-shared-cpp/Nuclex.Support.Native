@@ -23,6 +23,9 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
+// https://softwareengineering.stackexchange.com/questions/340284/mutex-vs-semaphore-how-to-implement-them-not-in-terms-of-the-other
+//#undef NUCLEX_SUPPORT_LINUX
+
 #include <cstddef> // for std::size_t
 #include <chrono> // for std::chrono::microseconds
 
@@ -31,6 +34,10 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Lets only a specific number of threads enter at the same time</summary>
+  /// <remarks>
+  ///   <para>
+  ///   </para>
+  /// </remarks>
   class Semaphore {
 
     /// <summary>Initializes a new semaphore with the specified initial count</summary>
@@ -95,7 +102,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       ///   This avoids a micro-allocation for the implenmentation data structure in most cases.
       /// </remarks>
 #if defined(NUCLEX_SUPPORT_LINUX)
-      unsigned char implementationDataBuffer[4];
+      unsigned char implementationDataBuffer[16];
 #elif defined(NUCLEX_SUPPORT_WIN32)
       unsigned char implementationDataBuffer[sizeof(std::size_t)]; // matches HANDLE size
 #else // Posix
