@@ -63,6 +63,22 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
       ::clockid_t clock, std::chrono::milliseconds addedTime
     );
 
+    /// <summary>
+    ///   Calculates the remaining relative timeout from the current clock time
+    /// </summary>
+    /// <param name="clock">Clock on which the timeout is being counted down</param>
+    /// <param name="startTime">Time at which the timeout began</param>
+    /// <param name="timeout">Timeout that is being counted down</param>
+    /// <returns>
+    ///   The remaining (relative) time until the timeout. Will return zero if
+    ///   the timeout has already elapsed and never a negative time.
+    /// </returns>
+    public: static struct ::timespec GetRemainingTimeout(
+      ::clockid_t clock,
+      const struct ::timespec &startTime,
+      std::chrono::microseconds timeout
+    );
+
     /// <summary>Checks whether the specified end time has been reached yet</summary>
     /// <param name="clock">Clock against which the end time will be checked</param>
     /// <param name="endTime">Time after which this method will return true</param>

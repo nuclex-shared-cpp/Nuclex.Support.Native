@@ -23,30 +23,34 @@ License along with this library
 
 #include "Nuclex/Support/Threading/Gate.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WIN32) // Use standard win32 threading primitives
 #include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
-#else
+#elif defined(NUCLEX_SUPPORT_LINUX) // Directly use futex via kernel syscalls
+#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
+#include <linux/futex.h> // for futex constants
+#include <unistd.h> // for ::syscall()
+#include <limits.h> // for INT_MAX
+#include <sys/syscall.h> // for ::SYS_futex
+#else // Posix: use a pthreads conditional variable to emulate a gate
 #include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
 #include <atomic> // for std::atomic
-
-#if defined(NUCLEX_SUPPORT_LINUX)
-// Just some safety checks to make sure pthread_condattr_setclock() is available.
-// https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
-//
-// You shouldn't encounter any Linux system where the Posix implementation isn't set
-// to Posix 2008-09 or something newer by default. If you do, you can set _POSIX_C_SOURCE
-// in your build system or remove the Gate implementation from your library.
-#if defined(_POSIX_C_SOURCE)
-  #if (_POSIX_C_SOURCE < 200112L)
-    #error Your C runtime library needs to at least implement Posix 2001-12 
-  #endif
-  //#if !defined(__USE_XOPEN2K)
 #endif
 
-#endif // defined(NUCLEX_SUPPORT_LINUX)
-
-#endif // defined(NUCLEX_SUPPORT_WIN32)... else
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32)
+  // Just some safety checks to make sure pthread_condattr_setclock() is available.
+  // https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
+  //
+  // You shouldn't encounter any Linux system where the Posix implementation isn't set
+  // to Posix 2008-09 or something newer by default. If you do, you can set _POSIX_C_SOURCE
+  // in your build system or remove the Gate implementation from your library.
+  #if defined(_POSIX_C_SOURCE)
+    #if (_POSIX_C_SOURCE < 200112L)
+      #error Your C runtime library needs to at least implement Posix 2001-12 
+    #endif
+    //#if !defined(__USE_XOPEN2K)
+  #endif
+#endif
 
 #include <cassert> // for assert()
 
@@ -72,24 +76,30 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Frees all resources owned by the gate</summary>
     public: ~PlatformDependentImplementationData();
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_LINUX)
+    /// <summary>Stores the current state of the futex</summary>
+    public: volatile std::uint32_t FutexWord;
+#elif defined(NUCLEX_SUPPORT_WIN32)
     /// <summary>Handle of the event used to pass or block threads</summary>
     public: HANDLE EventHandle;
-#else
-
-    // Some implementations have a ::pthread_mutex_timedlock_monotonic
-
+#else // Posix
     /// <summary>Whether the gate is currently open</summary>
     public: std::atomic<bool> IsOpen; 
     /// <summary>Conditional variable used to signal waiting threads</summary>
     public: mutable ::pthread_cond_t Condition;
     /// <summary>Mutex required to ensure threads never miss the signal</summary>
     public: mutable ::pthread_mutex_t Mutex;
-    
 #endif
 
   };
 
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  Gate::PlatformDependentImplementationData::PlatformDependentImplementationData(
+    bool initiallyOpen
+  ) :
+    FutexWord(initiallyOpen ? 1 : 0) {}
+#endif
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   Gate::PlatformDependentImplementationData::PlatformDependentImplementationData(
@@ -111,7 +121,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   Gate::PlatformDependentImplementationData::PlatformDependentImplementationData(
     bool initiallyOpen
   ) :
@@ -140,6 +150,12 @@ namespace Nuclex { namespace Support { namespace Threading {
   } 
 #endif
   // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  Gate::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
+    // Nothing to do. If threads are waiting, they're now waiting on dead memory.
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   Gate::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     BOOL result = ::CloseHandle(this->EventHandle);
@@ -148,7 +164,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   Gate::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     int result = ::pthread_mutex_destroy(&this->Mutex);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -162,7 +178,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   Gate::Gate(bool initiallyOpen) :
-    implementationData(nullptr) {
+    implementationData() {
 
     // If this assert hits, the buffer size assumed by the header was too small.
     // Things will still work, but we have to resort to an extra allocation.
@@ -176,16 +192,39 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   Gate::~Gate() {
-    constexpr bool implementationDataFitsInBuffer = (
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
-    );
-    if constexpr(implementationDataFitsInBuffer) {
-      getImplementationData().~PlatformDependentImplementationData();
-    } else {
-      delete this->implementationData;
-    }
+    getImplementationData().~PlatformDependentImplementationData();
   }
 
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  void Gate::Open() {
+    PlatformDependentImplementationData &impl = getImplementationData();
+
+    // Simply set the atomic variable to 1 to indicate the gate is open
+    __atomic_store_n(&impl.FutexWord, 1, __ATOMIC_RELEASE);
+
+    // Futex Wake (Linux 2.6.0+)
+    // https://man7.org/linux/man-pages/man2/futex.2.html
+    //
+    // This will signal other threads sitting in the Gate::Wait() method to
+    // re-check the gate's status and resume running
+    long result = ::syscall(
+      SYS_futex, // syscall id
+      static_cast<volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
+      static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAKE), // process-private futex wakeup
+      static_cast<int>(INT_MAX), // wake up all waiters
+      static_cast<struct ::timespec *>(nullptr), // timeout -> ignored
+      static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
+      static_cast<int>(0) // second futex word value -> ignored
+    );
+    if(unlikely(result == -1)) {
+      int errorNumber = errno;
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not wake up threads waiting on futex", errorNumber
+      );
+    }
+  }
+#endif
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   void Gate::Open() {
@@ -201,7 +240,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   void Gate::Open() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -232,6 +271,16 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  void Gate::Close() {
+    PlatformDependentImplementationData &impl = getImplementationData();
+
+    // This is a GCC intrinsic, also supported by clang. If it doesn't work,
+    // you can also just assign since the variable is volatile.
+    __atomic_store_n(&impl.FutexWord, 0, __ATOMIC_RELEASE);
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   void Gate::Close() {
     PlatformDependentImplementationData &impl = getImplementationData();
@@ -246,7 +295,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   void Gate::Close() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -265,6 +314,41 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 
   // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  void Gate::Wait() const {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+
+    // Do a single check for whether the gate is currently open. This is not
+    // a race condition because the futex syscall will do the check again atomically,
+    // but checking once in userspace may allow us to avoid the syscall().
+    std::uint32_t safeFutexWord = __atomic_load_n(&impl.FutexWord, __ATOMIC_CONSUME);
+    if(safeFutexWord == 1) {
+      return; // Gate was open
+    }
+
+    // Futex Wait (Linux 2.6.0+)
+    // https://man7.org/linux/man-pages/man2/futex.2.html
+    //
+    // This sends the thread to sleep for as long as the futex word has the expected value.
+    // Checking and entering sleep is one atomic operation, avoiding a race condition.
+    long result = ::syscall(
+      SYS_futex, // syscall id
+      static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
+      static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
+      static_cast<int>(0), // wait while futex word is 0 (== gate closed)
+      static_cast<struct ::timespec *>(nullptr), // timeout -> infinite
+      static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
+      static_cast<int>(0) // second futex word value -> ignored
+    );
+    if(unlikely(result == -1)) {
+      int errorNumber = errno;
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not sleep on gate status via futex wait", errorNumber
+      );
+    }
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   void Gate::Wait() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
@@ -281,7 +365,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   void Gate::Wait() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -315,6 +399,88 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  bool Gate::WaitFor(const std::chrono::microseconds &patience) const {
+    const PlatformDependentImplementationData &impl = getImplementationData();
+
+    // Do a single check for whether the gate is currently open. This is not
+    // a race condition because the futex syscall will do the check again atomically,
+    // but checking once in userspace may allow us to avoid the syscall().
+    std::uint32_t safeFutexWord = __atomic_load_n(&impl.FutexWord, __ATOMIC_CONSUME);
+    if(safeFutexWord == 1) {
+      return true; // Gate was open
+    }
+
+    // Query the time, but don't do anything with it yet (the futex wait is
+    // relative, so unless we get EINTR, the time isn't even needed)
+    struct ::timespec startTime;
+    int result = ::clock_gettime(CLOCK_MONOTONIC, &startTime);
+    if(result == -1) {
+      int errorNumber = errno;
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not get monotonic time for gate", errorNumber
+      );
+    }
+
+    // Note that the timeout is a relative one
+    //
+    // From the docs:
+    //   | Note: for FUTEX_WAIT, timeout is interpreted as a relative
+    //   | value.  This differs from other futex operations, where
+    //   | timeout is interpreted as an absolute value.
+    struct ::timespec timeout;
+    {
+      const std::size_t NanoSecondsPerMicrosecond = 1000; // 1,000 ns = 1 μs
+
+      // timespec has seconds and nanoseconds, so divide the microseconds into full seconds
+      // and remainder milliseconds to deal with this
+      ::ldiv_t divisionResults = ::ldiv(patience.count(), 1000000);
+      timeout.tv_sec = divisionResults.quot;
+      timeout.tv_nsec = divisionResults.rem * NanoSecondsPerMicrosecond;
+    }
+
+    // Check the futex word and wait on it until it changes. Normally, this loops exactly
+    // once, but EINTR may still happen and require us to recalculate the relative timeout.
+    for(;;) {
+
+      // Futex Wait (Linux 2.6.0+)
+      // https://man7.org/linux/man-pages/man2/futex.2.html
+      //
+      // This sends the thread to sleep for as long as the futex word has the expected value.
+      // Checking and entering sleep is one atomic operation, avoiding a race condition.
+      long result = ::syscall(
+        SYS_futex, // syscall id
+        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
+        static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
+        static_cast<int>(0), // wait while futex word is 0 (== gate closed)
+        static_cast<struct ::timespec *>(&timeout), // timeout after which to fail
+        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
+        static_cast<int>(0) // second futex word value -> ignored
+      );
+      if(unlikely(result == -1)) {
+        int errorNumber = errno;
+        if(likely(errorNumber == ETIMEDOUT)) {
+          return false; // timed out!
+        } else if(unlikely(errorNumber != EINTR)) {
+          Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+            u8"Could not sleep on gate status via futex wait", errorNumber
+          );
+        }
+      } else { // result did not indicate an error, so the futex word has changed!
+        break;
+      }
+
+      // Calculate the new relative timeout. If this is some kind of spurious
+      // wake-up, but the value does indeed change while we're here, that's not
+      // a problem since the futex syscall will re-check the futex word.
+      timeout = Posix::PosixTimeApi::GetRemainingTimeout(CLOCK_MONOTONIC, startTime, patience);
+
+    }
+
+    return true; // wait noticed a change to the futex word
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   bool Gate::WaitFor(const std::chrono::microseconds &patience) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
@@ -334,7 +500,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   bool Gate::WaitFor(const std::chrono::microseconds &patience) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 

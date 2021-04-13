@@ -332,6 +332,8 @@
     <ClInclude Include="Source\Threading\Posix\PosixFileApi.h" />
     <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp" />
     <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h" />
+    <ClCompile Include="Source\Threading\Posix\PosixTimeApi.cpp" />
+    <ClInclude Include="Source\Threading\Posix\PosixTimeApi.h" />
     <ClCompile Include="Source\Threading\Windows\WindowsFileApi.cpp" />
     <ClInclude Include="Source\Threading\Windows\WindowsFileApi.h" />
     <ClCompile Include="Source\Threading\Windows\WindowsProcessApi.cpp" />
@@ -381,6 +383,7 @@
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp" />
     <ClCompile Include="Tests\Threading\Posix\PosixFileApiTest.cpp" />
     <ClCompile Include="Tests\Threading\Posix\PosixProcessApiTest.cpp" />
+    <ClCompile Include="Tests\Threading\Posix\PosixTimeApiTest.cpp" />
     <ClCompile Include="Tests\Threading\Windows\WindowsFileApiTest.cpp" />
     <ClCompile Include="Tests\Threading\Windows\WindowsProcessApiTest.cpp" />
     <ClCompile Include="Tests\Threading\GateTest.cpp" />

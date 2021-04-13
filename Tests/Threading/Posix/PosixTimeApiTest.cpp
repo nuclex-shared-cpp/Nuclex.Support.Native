@@ -121,6 +121,35 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(PosixTimeApiTest, CanCalculateRemainingTimeout) {
+    struct ::timespec startTime;
+    int result = ::clock_gettime(CLOCK_MONOTONIC, &startTime);
+    ASSERT_NE(result, -1);
+
+    const std::size_t timeoutMicroseconds = 123456; //45678;
+
+    std::size_t lastRemainingMicroseconds = timeoutMicroseconds;
+    for(;;) {
+      struct ::timespec remainingTimeout = PosixTimeApi::GetRemainingTimeout(
+        CLOCK_MONOTONIC, startTime, std::chrono::microseconds(timeoutMicroseconds)
+      );
+
+      std::size_t remainingMicroseconds = (
+        (remainingTimeout.tv_sec * 1000000) + ((remainingTimeout.tv_nsec + 500) / 1000)
+      );
+      //std::cout << remainingMicroseconds << std::endl;
+      EXPECT_LE(remainingMicroseconds, timeoutMicroseconds);
+      EXPECT_LE(remainingMicroseconds, lastRemainingMicroseconds);
+
+      lastRemainingMicroseconds = remainingMicroseconds;
+      if((remainingTimeout.tv_sec == 0) && (remainingTimeout.tv_nsec == 0)) {
+        break;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(PosixTimeApiTest, CanDetectTimeout) {
     struct ::timespec pastTime;
     int result = ::clock_gettime(CLOCK_MONOTONIC, &pastTime);
@@ -132,20 +161,19 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
       struct ::timespec currentTime;
       int result = ::clock_gettime(CLOCK_MONOTONIC, &currentTime);
       ASSERT_NE(result, -1);
-      if((currentTime.tv_sec != pastTime.tv_sec) ||(currentTime.tv_nsec != pastTime.tv_nsec)) {
+      if((currentTime.tv_sec != pastTime.tv_sec) || (currentTime.tv_nsec != pastTime.tv_nsec)) {
         break;
       }
     }
 
-    // Also get a sample of a future point in time for a time point that
-    // is guaranteed to not have timed out yet
+    // Also get a sample of a future point in time that is guaranteed to not have timed out
     struct ::timespec futureTime;
     futureTime = PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, std::chrono::milliseconds(100));
 
     ASSERT_TRUE(PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, pastTime));
     ASSERT_FALSE(PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, futureTime));
   }
-
+  
   // ------------------------------------------------------------------------------------------- //
 
 }}}} // namespace Nuclex::Support::Threading::Posix

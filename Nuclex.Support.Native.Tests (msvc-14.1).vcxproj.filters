@@ -502,6 +502,12 @@
     <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h">
       <Filter>Source\Threading\Posix</Filter>
     </ClInclude>
+    <ClCompile Include="Source\Threading\Posix\PosixTimeApi.cpp">
+      <Filter>Source\Threading\Posix</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Threading\Posix\PosixTimeApi.h">
+      <Filter>Source\Threading\Posix</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Threading\Windows\WindowsFileApi.cpp">
       <Filter>Source\Threading\Windows</Filter>
     </ClCompile>
@@ -643,6 +649,9 @@
       <Filter>Tests\Threading\Posix</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Threading\Posix\PosixProcessApiTest.cpp">
+      <Filter>Tests\Threading\Posix</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Threading\Posix\PosixTimeApiTest.cpp">
       <Filter>Tests\Threading\Posix</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Threading\Windows\WindowsFileApiTest.cpp">

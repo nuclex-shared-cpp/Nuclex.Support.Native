@@ -178,6 +178,86 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
+  struct ::timespec PosixTimeApi::GetRemainingTimeout(
+    ::clockid_t clock,
+    const struct ::timespec &startTime,
+    std::chrono::microseconds timeout
+  ) {
+
+    // Get the current time on the specified clock
+    struct ::timespec currentTime;
+    {
+      int result = ::clock_gettime(clock, &currentTime);
+      if(unlikely(result == -1)) {
+        int errorNumber = errno;
+        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+          u8"Could not get time from clock", errorNumber
+        );
+      }
+    }
+
+    // Calculate the time that has elapsed since the provided start time
+    struct ::timespec elapsedTime;
+    {
+      const std::size_t NanoSecondsPerSecond = 1000000000; // 1,000,000,000 ns = 1 s
+
+      assert(
+        (
+          (currentTime.tv_sec > startTime.tv_sec) ||
+          (
+            (currentTime.tv_sec == startTime.tv_sec) &&
+            (currentTime.tv_nsec >= startTime.tv_nsec)
+          )
+        ) && u8"Start time lies in past"
+      );
+
+      if(currentTime.tv_nsec >= startTime.tv_nsec) {
+        elapsedTime.tv_sec = currentTime.tv_sec - startTime.tv_sec;
+        elapsedTime.tv_nsec = currentTime.tv_nsec - startTime.tv_nsec;
+      } else {
+        elapsedTime.tv_sec = currentTime.tv_sec - startTime.tv_sec - 1;
+        elapsedTime.tv_nsec = NanoSecondsPerSecond - startTime.tv_nsec + currentTime.tv_nsec;
+      }
+    }
+
+    // Calculate the remaining time and write the result into currentTime
+    // (yes, we're misappropriating it!)
+    {
+      const std::size_t NanoSecondsPerMicrosecond = 1000; // 1,000 ns = 1 μs
+      const std::size_t NanoSecondsPerSecond = 1000000000; // 1,000,000,000 ns = 1 s
+
+      // timespec has seconds and nanoseconds, so divide the microseconds into full seconds
+      // and remainder microseconds to deal with this
+      ::ldiv_t divisionResults = ::ldiv(timeout.count(), 1000000);
+      divisionResults.rem *= NanoSecondsPerMicrosecond;
+
+      if(divisionResults.quot > elapsedTime.tv_sec) { // Difference at least one second
+        if(divisionResults.rem >= elapsedTime.tv_nsec) {
+          currentTime.tv_sec = divisionResults.quot - elapsedTime.tv_sec;
+          currentTime.tv_nsec = divisionResults.rem - elapsedTime.tv_nsec;
+        } else {
+          currentTime.tv_sec = divisionResults.quot - elapsedTime.tv_sec - 1;
+          currentTime.tv_nsec = NanoSecondsPerSecond - elapsedTime.tv_nsec + divisionResults.rem;
+        }
+      } else if(divisionResults.quot == elapsedTime.tv_sec) { // Difference less than one second
+        if(divisionResults.rem >= elapsedTime.tv_nsec) { // A fraction of a second remains
+          currentTime.tv_sec = 0;
+          currentTime.tv_nsec = divisionResults.rem - elapsedTime.tv_nsec;
+        } else { // Time has already elapsed (by a fraction of a second)
+          currentTime.tv_sec = 0;
+          currentTime.tv_nsec = 0;
+        }
+      } else { // Time has already elapsed (by more than a second)
+        currentTime.tv_sec = 0;
+        currentTime.tv_nsec = 0;
+      }
+    }
+
+    return currentTime;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   bool PosixTimeApi::HasTimedOut(::clockid_t clock, const struct ::timespec &endTime) {
     struct ::timespec currentTime;
     {

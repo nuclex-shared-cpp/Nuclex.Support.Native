@@ -186,14 +186,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   Semaphore::~Semaphore() {
-    constexpr bool implementationDataFitsInBuffer = (
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
-    );
-    if constexpr(implementationDataFitsInBuffer) {
-      getImplementationData().~PlatformDependentImplementationData();
-    } else {
-      delete this->implementationData;
-    }
+    getImplementationData().~PlatformDependentImplementationData();
   }
 
   // ------------------------------------------------------------------------------------------- //
