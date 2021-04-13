@@ -54,14 +54,6 @@ License along with this library
 
 #include <cassert> // for assert()
 
-// The Linux kernel's futex syscalls have support for CLOCK_MONOTONIC built in.
-// https://man7.org/linux/man-pages/man2/futex.2.html
-//
-// It would be cool if, in addition to a Posix implementation, I could create
-// a Linux-only implementation that circumvents pthreads and talks directly
-// to the kernel to implement a gate.
-//
-
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
@@ -326,25 +318,32 @@ namespace Nuclex { namespace Support { namespace Threading {
       return; // Gate was open
     }
 
-    // Futex Wait (Linux 2.6.0+)
-    // https://man7.org/linux/man-pages/man2/futex.2.html
-    //
-    // This sends the thread to sleep for as long as the futex word has the expected value.
-    // Checking and entering sleep is one atomic operation, avoiding a race condition.
-    long result = ::syscall(
-      SYS_futex, // syscall id
-      static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-      static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
-      static_cast<int>(0), // wait while futex word is 0 (== gate closed)
-      static_cast<struct ::timespec *>(nullptr), // timeout -> infinite
-      static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-      static_cast<int>(0) // second futex word value -> ignored
-    );
-    if(unlikely(result == -1)) {
-      int errorNumber = errno;
-      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not sleep on gate status via futex wait", errorNumber
+    // Be ready to check multiple times in case of EINTR
+    for(;;) {
+
+      // Futex Wait (Linux 2.6.0+)
+      // https://man7.org/linux/man-pages/man2/futex.2.html
+      //
+      // This sends the thread to sleep for as long as the futex word has the expected value.
+      // Checking and entering sleep is one atomic operation, avoiding a race condition.
+      long result = ::syscall(
+        SYS_futex, // syscall id
+        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
+        static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
+        static_cast<int>(0), // wait while futex word is 0 (== gate closed)
+        static_cast<struct ::timespec *>(nullptr), // timeout -> infinite
+        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
+        static_cast<int>(0) // second futex word value -> ignored
       );
+      if(unlikely(result == -1)) {
+        int errorNumber = errno;
+        if(errorNumber != EINTR) {
+          Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+            u8"Could not sleep on gate status via futex wait", errorNumber
+          );
+        }
+      }
+
     }
   }
 #endif
