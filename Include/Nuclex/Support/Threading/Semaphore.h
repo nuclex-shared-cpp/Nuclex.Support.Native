@@ -86,7 +86,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Accesses the platform dependent implementation data container</summary>
     /// <returns>A reference to the platform dependent implementation data</returns>
     private: PlatformDependentImplementationData &getImplementationData();
-    private: union {
+    private: union alignas(8) {
       /// <summary>Platform dependent process and file handles used for the process</summary>
       PlatformDependentImplementationData *implementationData;
       /// <summary>Used to hold the platform dependent implementation data if it fits</summary>
@@ -94,9 +94,11 @@ namespace Nuclex { namespace Support { namespace Threading {
       ///   Small performance / memory fragmentation improvement.
       ///   This avoids a micro-allocation for the implenmentation data structure in most cases.
       /// </remarks>
-#if defined(NUCLEX_SUPPORT_WIN32)
-      unsigned char implementationDataBuffer[8];
-#else // Posix and Linux
+#if defined(NUCLEX_SUPPORT_LINUX)
+      unsigned char implementationDataBuffer[4];
+#elif defined(NUCLEX_SUPPORT_WIN32)
+      unsigned char implementationDataBuffer[sizeof(std::size_t)]; // matches HANDLE size
+#else // Posix
       unsigned char implementationDataBuffer[96];
 #endif
     };

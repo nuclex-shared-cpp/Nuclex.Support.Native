@@ -94,7 +94,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Accesses the platform dependent implementation data container</summary>
     /// <returns>A reference to the platform dependent implementation data</returns>
     private: PlatformDependentImplementationData &getImplementationData();
-    private: union alignas(4) {
+    private: union alignas(8) {
       /// <summary>Platform dependent process and file handles used for the process</summary>
       PlatformDependentImplementationData *implementationData;
       /// <summary>Used to hold the platform dependent implementation data if it fits</summary>

@@ -173,7 +173,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     implementationData() {
 
     // If this assert hits, the buffer size assumed by the header was too small.
-    // Things will still work, but we have to resort to an extra allocation.
+    // There will be a buffer overflow in the line after and the application will
+    // likely crash or at least malfunction.
     assert(
       (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData)) &&
       u8"Private implementation data for Nuclex::Support::Threading::Process fits in buffer"
@@ -337,7 +338,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       );
       if(unlikely(result == -1)) {
         int errorNumber = errno;
-        if(errorNumber != EINTR) {
+        if(likely(errorNumber == EAGAIN)) { // Value was not 0, so gate is now open
+          return;
+        } else if(errorNumber != EINTR) {
           Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
             u8"Could not sleep on gate status via futex wait", errorNumber
           );
@@ -458,8 +461,10 @@ namespace Nuclex { namespace Support { namespace Threading {
       );
       if(unlikely(result == -1)) {
         int errorNumber = errno;
-        if(likely(errorNumber == ETIMEDOUT)) {
-          return false; // timed out!
+        if(likely(errorNumber == EAGAIN)) { // Value was not 0, so gate is now open
+          return true;
+        } else if(likely(errorNumber == ETIMEDOUT)) { // Timeout, wait failed
+          return false;
         } else if(unlikely(errorNumber != EINTR)) {
           Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
             u8"Could not sleep on gate status via futex wait", errorNumber

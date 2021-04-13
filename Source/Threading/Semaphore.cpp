@@ -23,13 +23,33 @@ License along with this library
 
 #include "Nuclex/Support/Threading/Semaphore.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
-#include "../Helpers/WindowsApi.h" // for ::CreateSemaphoewR(), CloseHandle() and more
-#include <limits> // for std::numeric_limits
-#else
-#include "Posix/PosixTimeApi.h" // for PosixTimeApi
-#include <semaphore.h> // for ::sem_init(), ::sem_wait(), ::sem_post(), ::sem_destroy()
+#if defined(NUCLEX_SUPPORT_WIN32) // Use standard win32 threading primitives
+#include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
+#elif defined(NUCLEX_SUPPORT_LINUX) // Directly use futex via kernel syscalls
+#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
+#include <linux/futex.h> // for futex constants
+#include <unistd.h> // for ::syscall()
+#include <limits.h> // for INT_MAX
+#include <sys/syscall.h> // for ::SYS_futex
+#else // Posix: use a pthreads conditional variable to emulate a semaphore
+#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
+#include <ctime> // for ::clock_gettime()
 #include <atomic> // for std::atomic
+#endif
+
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32)
+  // Just some safety checks to make sure pthread_condattr_setclock() is available.
+  // https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
+  //
+  // You shouldn't encounter any Linux system where the Posix implementation isn't set
+  // to Posix 2008-09 or something newer by default. If you do, you can set _POSIX_C_SOURCE
+  // in your build system or remove the Semaphore implementation from your library.
+  #if defined(_POSIX_C_SOURCE)
+    #if (_POSIX_C_SOURCE < 200112L)
+      #error Your C runtime library needs to at least implement Posix 2001-12 
+    #endif
+    //#if !defined(__USE_XOPEN2K)
+  #endif
 #endif
 
 #include <cassert> // for assert()
@@ -42,7 +62,7 @@ License along with this library
 // There's a Bugzilla ticket for the kernel which hasn't changed status in 5 years:
 // https://bugzilla.kernel.org/show_bug.cgi?id=112521
 //
-// And there's ::stm_timedwait_monotonic() on QNX, but not Posix:
+// And there's ::sem_timedwait_monotonic() on QNX, but not Posix:
 // http://www.qnx.com/developers/docs/6.5.0SP1.update/com.qnx.doc.neutrino_lib_ref/s/sem_timedwait.html
 //
 // On the other hand, Linux 2.6.28 makes its futexes use CLOCK_MONOTONIC by default
@@ -52,9 +72,6 @@ License along with this library
 // the wait is actually aiming for a time on the wall clock, but it's useless for
 // normal thread synchronization where 50 ms may unexpectedly become 5 minutes or
 // report ETIMEOUT after less than 1 ms.
-//
-// Perhaps here, too, interfacing directly with the Linux kernel's futex syscalls
-// could save a lot of bloat and uncertainty.
 //
 
 namespace Nuclex { namespace Support { namespace Threading {
@@ -71,12 +88,13 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Frees all resources owned by the Semaphore</summary>
     public: ~PlatformDependentImplementationData();
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_LINUX)
+    /// <summary>Number of times the semaphore has been incremented</summary>
+    public: std::uint32_t FutexWord;
+#elif defined(NUCLEX_SUPPORT_WIN32)
     /// <summary>Handle of the semaphore used to pass or block threads</summary>
     public: HANDLE SemaphoreHandle;
-#else
-    //public: ::sem_t Semaphore; // <--  not usable for anything but cron-type apps
-
+#else // Posix
     /// <summary>How many threads the semaphore will admit</summary>
     public: std::atomic<std::size_t> AdmitCounter; 
     /// <summary>Conditional variable used to signal waiting threads</summary>
@@ -88,6 +106,13 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   };
 
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  Semaphore::PlatformDependentImplementationData::PlatformDependentImplementationData(
+    std::size_t initialCount
+  ) :
+    FutexWord(initialCount) {}
+#endif
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   Semaphore::PlatformDependentImplementationData::PlatformDependentImplementationData(
@@ -116,7 +141,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   Semaphore::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
@@ -146,6 +171,12 @@ namespace Nuclex { namespace Support { namespace Threading {
   } 
 #endif
   // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  Semaphore::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
+    // Nothing to do. If threads are waiting, they're now waiting on dead memory.
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   Semaphore::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     BOOL result = ::CloseHandle(this->SemaphoreHandle);
@@ -154,7 +185,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   Semaphore::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     int result = ::pthread_mutex_destroy(&this->Mutex);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -171,14 +202,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     implementationData(nullptr) {
 
     // If this assert hits, the buffer size assumed by the header was too small.
-    // Things will still work, but we have to resort to an extra allocation.
+    // There will be a buffer overflow in the line after and the application will
+    // likely crash or at least malfunction.
     assert(
       (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData)) &&
       u8"Private implementation data for Nuclex::Support::Threading::Process fits in buffer"
-    );
-
-    constexpr bool implementationDataFitsInBuffer = (
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
     );
     new(this->implementationDataBuffer) PlatformDependentImplementationData(initialCount);
   }
@@ -189,6 +217,37 @@ namespace Nuclex { namespace Support { namespace Threading {
     getImplementationData().~PlatformDependentImplementationData();
   }
 
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  void Semaphore::Post(std::size_t count /* = 1 */) {
+    PlatformDependentImplementationData &impl = getImplementationData();
+
+    // Increment the semaphore admit counter so threads will be able to pass when woken up
+    __atomic_add_fetch(&impl.FutexWord, count, __ATOMIC_RELEASE);
+
+    // Futex Wake (Linux 2.6.0+)
+    // https://man7.org/linux/man-pages/man2/futex.2.html
+    //
+    // This will signal other threads sitting in the Semaphore::WaitAndDecrement() method to
+    // re-check the semaphore's status and resume running
+    long result = ::syscall(
+      SYS_futex, // syscall id
+      static_cast<volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
+      static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAKE), // process-private futex wakeup
+      static_cast<int>(count), // wake up one thread for each uptick of the semaphore
+      static_cast<struct ::timespec *>(nullptr), // timeout -> ignored
+      static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
+      static_cast<int>(0) // second futex word value -> ignored
+    );
+    if(unlikely(result == -1)) {
+      int errorNumber = errno;
+      __atomic_sub_fetch(&impl.FutexWord, count, __ATOMIC_RELEASE);
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not wake up threads waiting on futex", errorNumber
+      );
+    }
+  }
+#endif
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   void Semaphore::Post(std::size_t count /* = 1 */) {
@@ -204,7 +263,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   void Semaphore::Post(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -237,7 +296,47 @@ namespace Nuclex { namespace Support { namespace Threading {
         u8"Could not unlock pthread mutex", result
       );
     }
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  void Semaphore::WaitThenDecrement() {
+    PlatformDependentImplementationData &impl = getImplementationData();
 
+    // Be ready to check multiple times in case of EINTR
+    for(;;) {
+
+      // Futex Wait (Linux 2.6.0+)
+      // https://man7.org/linux/man-pages/man2/futex.2.html
+      //
+      // This sends the thread to sleep for as long as the futex word has the expected value.
+      // Checking and entering sleep is one atomic operation, avoiding a race condition.
+      long result = ::syscall(
+        SYS_futex, // syscall id
+        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
+        static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
+        static_cast<int>(0), // wait while futex word is 0 (== no admits available)
+        static_cast<struct ::timespec *>(nullptr), // timeout -> infinite
+        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
+        static_cast<int>(0) // second futex word value -> ignored
+      );
+      if(unlikely(result == -1)) {
+        int errorNumber = errno;
+        if(likely(errorNumber == EAGAIN)) { // Value was not 0, so semaphore is signalled
+          return;
+        } else if(unlikely(errorNumber != EINTR)) {
+          Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+            u8"Could not sleep on semaphore admit counter via futex wait", errorNumber
+          );
+        }
+      } else {
+        break;
+      }
+
+    } // for(;;)
+
+    // Take one admit from the semaphore for this thread that was just let through
+    __atomic_sub_fetch(&impl.FutexWord, 1, __ATOMIC_SEQ_CST);
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -257,7 +356,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   void Semaphore::WaitThenDecrement() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -293,6 +392,85 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  bool Semaphore::WaitForThenDecrement(const std::chrono::microseconds &patience)  {
+    PlatformDependentImplementationData &impl = getImplementationData();
+
+    // Query the time, but don't do anything with it yet (the futex wait is
+    // relative, so unless we get EINTR, the time isn't even needed)
+    struct ::timespec startTime;
+    int result = ::clock_gettime(CLOCK_MONOTONIC, &startTime);
+    if(result == -1) {
+      int errorNumber = errno;
+      Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+        u8"Could not get monotonic time for gate", errorNumber
+      );
+    }
+
+    // Note that the timeout is a relative one
+    //
+    // From the docs:
+    //   | Note: for FUTEX_WAIT, timeout is interpreted as a relative
+    //   | value.  This differs from other futex operations, where
+    //   | timeout is interpreted as an absolute value.
+    struct ::timespec timeout;
+    {
+      const std::size_t NanoSecondsPerMicrosecond = 1000; // 1,000 ns = 1 μs
+
+      // timespec has seconds and nanoseconds, so divide the microseconds into full seconds
+      // and remainder milliseconds to deal with this
+      ::ldiv_t divisionResults = ::ldiv(patience.count(), 1000000);
+      timeout.tv_sec = divisionResults.quot;
+      timeout.tv_nsec = divisionResults.rem * NanoSecondsPerMicrosecond;
+    }
+
+    // Check the futex word and wait on it until it changes. Normally, this loops exactly
+    // once, but EINTR may still happen and require us to recalculate the relative timeout.
+    for(;;) {
+
+      // Futex Wait (Linux 2.6.0+)
+      // https://man7.org/linux/man-pages/man2/futex.2.html
+      //
+      // This sends the thread to sleep for as long as the futex word has the expected value.
+      // Checking and entering sleep is one atomic operation, avoiding a race condition.
+      long result = ::syscall(
+        SYS_futex, // syscall id
+        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
+        static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
+        static_cast<int>(0), // wait while futex word is 0 (== no admits available)
+        static_cast<struct ::timespec *>(&timeout), // timeout after which to fail
+        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
+        static_cast<int>(0) // second futex word value -> ignored
+      );
+      if(unlikely(result == -1)) {
+        int errorNumber = errno;
+        if(likely(errorNumber == EAGAIN)) { // Value was not 0, so semaphore is signalled
+          break;
+        } else if(likely(errorNumber == ETIMEDOUT)) { // Timeout, wait failed
+          return false;
+        } else if(unlikely(errorNumber != EINTR)) {
+          Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
+            u8"Could not sleep on gate status via futex wait", errorNumber
+          );
+        }
+      } else { // result did not indicate an error, so the futex word has changed!
+        break;
+      }
+
+      // Calculate the new relative timeout. If this is some kind of spurious
+      // wake-up, but the value does indeed change while we're here, that's not
+      // a problem since the futex syscall will re-check the futex word.
+      timeout = Posix::PosixTimeApi::GetRemainingTimeout(CLOCK_MONOTONIC, startTime, patience);
+
+    }
+
+    // Take one admit from the semaphore for this thread that was just let through
+    __atomic_sub_fetch(&impl.FutexWord, 1, __ATOMIC_SEQ_CST);
+
+    return true; // wait noticed a change to the futex word
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
   bool Semaphore::WaitForThenDecrement(const std::chrono::microseconds &patience)  {
     PlatformDependentImplementationData &impl = getImplementationData();
@@ -312,7 +490,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
   bool Semaphore::WaitForThenDecrement(const std::chrono::microseconds &patience) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
