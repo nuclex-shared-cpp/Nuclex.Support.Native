@@ -228,17 +228,17 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
 
     // Increment the semaphore admit counter so for each posted ticket,
-    // a thread will be able to pass through the semaphore 
+    // a thread will be able to pass through the semaphore.
     int previousAdmitCounter = impl.AdmitCounter.fetch_add(
       static_cast<int>(count), std::memory_order::memory_order_release
     );
 
     // If there were no admits left at the time of this call, then there
-    // may have one or more waiting threads that need to be woken.
+    // may be waiting threads that need to be woken.
     if(previousAdmitCounter == 0) { // If there was no work available before
 
       // Now here's a little race condition:
-      // - Some thread may have checked the admit counter before out increment
+      // - Some thread may have checked the admit counter before our increment
       //   (and found it was 0, so plans to go to sleep)
       // - Now we increment the admit counter and try to wake threads
       //   (but none are waiting)
@@ -246,8 +246,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       //   (even though there's work available and the waking is already done)
       //
       // That's why our futex word is 1 if there's work available. Changing it
-      // will wake *all* threads, so that sucks, so we took care to only toggle
-      // if the situation actually changes
+      // will wake *all* threads, and that sucks, so we take care to only toggle
+      // it if the situation actually changes.
       //
       if(count > 0) { // check needed? nobody would post 0 tickets...
         __atomic_store_n(&impl.FutexWord, 1, __ATOMIC_RELEASE); // 1 -> tickets available
@@ -337,7 +337,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     for(;;) {
 
       // Load the ticket counter. If there are tickets available, try to snatch
-      // one ticket and let the callings thread run if it is obtained. Should no
+      // one ticket and, if obtained, return control to the caller. Should no
       // tickets be available (or they got used up while we were trying to snatch
       // one), we will attempt to sleep on the futex word.
       int safeAdmitCounter = initialAdmitCounter;
@@ -351,13 +351,14 @@ namespace Nuclex { namespace Support { namespace Threading {
       }
 
       // If we observed some other thread snatching the last ticket and need to go
-      // to sleep, switch the mutex into the contested state.
+      // to sleep, switch the futex word to the contested state.
       //
-      // At this point, we're in a race with the Post() method which may have seen
-      // the snatched ticket upon its increment and trying to pre-empt us in setting
-      // the futex word to 1 (meaning tickets are available).
+      // At this point, we're in a race with the Post() method which may just now
+      // have incremented the ticket counter and be trying to pre-empt us by
+      // setting the futex word to 1 (meaning tickets are available).
       //
       // Thus we need to do some double-checking here.
+      //
       if(initialAdmitCounter > 0) {
         __atomic_store_n(&impl.FutexWord, 0, __ATOMIC_RELEASE); // 0 -> threads waiting
         initialAdmitCounter = impl.AdmitCounter.load(std::memory_order_consume);
@@ -397,8 +398,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // At this point the thread has woken up because of either
       // - a signal (EINTR)
-      // - the futex word changing (EAGAIN)
-      // - an explicit wake by the Post() method (result == 0)
+      // - the futex word changed (EAGAIN)
+      // - an explicit wake from the Post() method (result == 0)
       //
       // In all cases, we recheck the ticket counter and try to either obtain
       // a ticket or go back to sleep using the same method as before.
