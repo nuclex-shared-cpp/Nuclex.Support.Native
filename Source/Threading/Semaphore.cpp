@@ -368,7 +368,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // Now we're safe. The futex word has been set of 0 (threads are waiting) while
       // the admit ticket counter was zero, so if any work is posted between here and
-      // our futex syscall, it's no proble since the syscall does atomically check
+      // our futex syscall, it's no problem since the syscall does atomically check
       // that the futex word is still 0 or otherwise return EAGAIN.
 
       // Futex Wait (Linux 2.6.0+)
@@ -474,17 +474,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       );
     }
 
-    struct ::timespec timeout;
-    {
-      const std::size_t NanoSecondsPerMicrosecond = 1000; // 1,000 ns = 1 μs
-
-      // timespec has seconds and nanoseconds, so divide the microseconds into full seconds
-      // and remainder milliseconds to deal with this
-      ::ldiv_t divisionResults = ::ldiv(patience.count(), 1000000);
-      timeout.tv_sec = divisionResults.quot;
-      timeout.tv_nsec = divisionResults.rem * NanoSecondsPerMicrosecond;
-    }
-
+    // Loop until we can either snatch an available ticket or until
+    // the caller-specified timeout is up
     int initialAdmitCounter = impl.AdmitCounter.load(std::memory_order_consume);
     for(;;) {
 
