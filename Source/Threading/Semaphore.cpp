@@ -26,17 +26,20 @@ License along with this library
 #if defined(NUCLEX_SUPPORT_WIN32) // Use standard win32 threading primitives
 #include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #elif defined(NUCLEX_SUPPORT_LINUX) // Directly use futex via kernel syscalls
-#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
+#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetRemainingTimeout()
 #include <linux/futex.h> // for futex constants
 #include <unistd.h> // for ::syscall()
 #include <limits.h> // for INT_MAX
 #include <sys/syscall.h> // for ::SYS_futex
+#include <ctime> // for ::clock_gettime()
 #include <atomic> // for std::atomic
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
 #include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
 #include <atomic> // for std::atomic
 #endif
+
+#include <cassert> // for assert()
 
 #if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32)
   // Just some safety checks to make sure pthread_condattr_setclock() is available.
@@ -52,8 +55,6 @@ License along with this library
     //#if !defined(__USE_XOPEN2K)
   #endif
 #endif
-
-#include <cassert> // for assert()
 
 // The situation on Linux/Posix systems is a bit depressing here:
 //

@@ -39,6 +39,26 @@ namespace Nuclex { namespace Support { namespace Collections {
   /// <typeparam name="accessBehavior">
   ///   How the queue will be accessed from different threads
   /// </typeparam>
+  /// <remarks>
+  ///   <para>
+  ///     Currently, this implementation is just an adapter around MoodyCamel's lock-free
+  ///     queue. Its performance is very good (if you build with NUCLEX_SUPPORT_BENCHMARKS,
+  ///     this adapter will be included in the benchmarks, too), but its memory footprint
+  ///     is probably an order of magnitude higher than you expect.
+  ///   </para>
+  ///   <para>
+  ///     <strong>Container type</strong>: unbounded segmented array queue
+  ///   </para>
+  ///   <para>
+  ///     <strong>Thread safety</strong>: any number of readers, any number of writers
+  ///   </para>
+  ///   <para>
+  ///     <strong>Exception guarantee</strong>: unknown, probably strong
+  ///   </para>
+  ///   <para>
+  ///     Footprint (stack): 348 bytes.
+  ///     Footprint (heap):  ?
+  ///   </para>
   template<
     typename TElement,
     ConcurrentAccessBehavior accessBehavior = (
