@@ -94,7 +94,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Switches between 0 (no waiters) and 1 (has waiters)</summary>
     public: volatile std::uint32_t FutexWord;
     /// <summary>Available tickets, negative for each thread waiting for a ticket</summary>
-    public: std::atomic<int> AdmitCounter; 
+    public: std::atomic<std::size_t> AdmitCounter; 
 #elif defined(NUCLEX_SUPPORT_WIN32)
     /// <summary>Handle of the semaphore used to pass or block threads</summary>
     public: HANDLE SemaphoreHandle;
@@ -105,7 +105,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: mutable ::pthread_cond_t Condition;
     /// <summary>Mutex required to ensure threads never miss the signal</summary>
     public: mutable ::pthread_mutex_t Mutex;
-
 #endif
 
   };
@@ -116,7 +115,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     std::size_t initialCount
   ) :
     FutexWord(0),
-    AdmitCounter(static_cast<int>(initialCount)) {}
+    AdmitCounter(initialCount) {}
 #endif
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WIN32)
@@ -204,7 +203,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   Semaphore::Semaphore(std::size_t initialCount) :
-    implementationData(nullptr) {
+    implementationDataBuffer() {
 
     // If this assert hits, the buffer size assumed by the header was too small.
     // There will be a buffer overflow in the line after and the application will
@@ -229,8 +228,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Increment the semaphore admit counter so for each posted ticket,
     // a thread will be able to pass through the semaphore.
-    int previousAdmitCounter = impl.AdmitCounter.fetch_add(
-      static_cast<int>(count), std::memory_order::memory_order_release
+    std::size_t previousAdmitCounter = impl.AdmitCounter.fetch_add(
+      count, std::memory_order::memory_order_release
     );
 
     // If there were no admits left at the time of this call, then there
@@ -333,14 +332,14 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Semaphore::WaitThenDecrement() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
-    int initialAdmitCounter = impl.AdmitCounter.load(std::memory_order_consume);
+    std::size_t initialAdmitCounter = impl.AdmitCounter.load(std::memory_order_consume);
     for(;;) {
 
       // Load the ticket counter. If there are tickets available, try to snatch
       // one ticket and, if obtained, return control to the caller. Should no
       // tickets be available (or they got used up while we were trying to snatch
       // one), we will attempt to sleep on the futex word.
-      int safeAdmitCounter = initialAdmitCounter;
+      std::size_t safeAdmitCounter = initialAdmitCounter;
       while(safeAdmitCounter > 0) {
         bool success = impl.AdmitCounter.compare_exchange_weak(
           safeAdmitCounter, safeAdmitCounter - 1, std::memory_order_release
@@ -478,14 +477,14 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Loop until we can either snatch an available ticket or until
     // the caller-specified timeout is up
-    int initialAdmitCounter = impl.AdmitCounter.load(std::memory_order_consume);
+    std::size_t initialAdmitCounter = impl.AdmitCounter.load(std::memory_order_consume);
     for(;;) {
 
       // Load the ticket counter. If there are tickets available, try to snatch
       // one ticket and let the callings thread run if it is obtained. Should no
       // tickets be available (or they got used up while we were trying to snatch
       // one), we will attempt to sleep on the futex word.
-      int safeAdmitCounter = initialAdmitCounter;
+      std::size_t safeAdmitCounter = initialAdmitCounter;
       while(safeAdmitCounter > 0) {
         bool success = impl.AdmitCounter.compare_exchange_weak(
           safeAdmitCounter, safeAdmitCounter - 1, std::memory_order_release
@@ -642,16 +641,9 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   Semaphore::PlatformDependentImplementationData &Semaphore::getImplementationData() {
-    constexpr bool implementationDataFitsInBuffer = (
-      (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData))
+    return *reinterpret_cast<PlatformDependentImplementationData *>(
+      this->implementationDataBuffer
     );
-    if constexpr(implementationDataFitsInBuffer) {
-      return *reinterpret_cast<PlatformDependentImplementationData *>(
-        this->implementationDataBuffer
-      );
-    } else {
-      return *this->implementationData;
-    }
   }
 
   // ------------------------------------------------------------------------------------------- //

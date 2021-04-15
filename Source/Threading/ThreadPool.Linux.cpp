@@ -26,7 +26,8 @@ License along with this library
 #if defined(NUCLEX_SUPPORT_LINUX)
 
 #include "Nuclex/Support/ScopeGuard.h" // for ScopeGuard
-#include "Nuclex/Support/Collections/MoodyCamel/concurrentqueue.h"
+#include "Nuclex/Support/Threading/Gate.h" // for Gate
+#include "Nuclex/Support/Collections/MoodyCamel/concurrentqueue.h" // for ConcurrentQueue
 
 #include "ThreadPoolTaskPool.h" // thread pool settings + task pool
 #include "Posix/PosixTimeApi.h" // error handling helpers, time helpers
@@ -117,7 +118,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Semaphore that allows one thread for each task to pass</summary>
     public: ::sem_t TaskSemaphore;
     /// <summary>Incremented by the last thread exiting when IsShuttingDown is true</summary>
-    public: ::sem_t LightsOut;
+    public: Gate LightsOut;
     /// <summary>Tasks that have been scheduled for execution in the thread pool</summary>
     public: moodycamel::ConcurrentQueue<SubmittedTask *> ScheduledTasks;
     /// <summary>Submitted tasks for re-use</summary>
@@ -234,7 +235,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ThreadCount(0),
     IsShuttingDown(false),
     TaskSemaphore {0},
-    LightsOut(),
+    LightsOut(false),
     ScheduledTasks(),
     SubmittedTaskPool(),
     ThreadStatus(nullptr),
@@ -247,27 +248,6 @@ namespace Nuclex { namespace Support { namespace Threading {
       Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
         u8"Could not create the 'TaskSemaphore' semaphore", errorNumber
       );
-    }
-
-      // Create a semaphore we use to coordinate the shut down of the thread pool
-    {
-      auto destroySemaphoreScope = ON_SCOPE_EXIT_TRANSACTION {
-        int result = ::sem_close(&this->TaskSemaphore);
-        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-        assert(
-          (result != -1) && u8"Task semaphore is successfully destroyed during stack unwind"
-        );
-      };
-
-      result = ::sem_init(&this->LightsOut, 0, 0);
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        Nuclex::Support::Helpers::PosixApi::ThrowExceptionForSystemError(
-          u8"Could not create the 'LightsOut' semaphore", errorNumber
-        );
-      }
-
-      destroySemaphoreScope.Commit(); // Initialization succeeded, keep the semaphore
     }
   }
 
@@ -285,13 +265,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     );
 #endif
 
-    // Kill the shutdown semaphore
-    int result = ::sem_destroy(&this->TaskSemaphore);
-    NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-    assert((result != -1) && u8"'LightsOut' semaphore is successfully destroyed");
-
     // Kill the task signalling semaphore
-    result = ::sem_destroy(&this->TaskSemaphore);
+    int result = ::sem_destroy(&this->TaskSemaphore);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
     assert((result != -1) && u8"'TaskSemaphore' semaphore is successfully destroyed");
 
@@ -370,9 +345,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         1, std::memory_order_consume // if() below carries dependency
       );
       if(unlikely(remainingThreadCount == 1)) { // 1 because we're getting the previous value
-        int result = ::sem_post(&this->LightsOut);
-        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-        assert((result != -1) && u8"Last thread is able to signal 'LightsOut' on exit");
+        this->LightsOut.Open();
       }
     };
 
@@ -508,27 +481,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // The threads have been signalled to shut down, given the wake-up signal and
     // now all that remains to do is hope our user didn't schedule some eternal task.
-    for(;;) {
-      struct ::timespec waitEndTime = Posix::PosixTimeApi::GetTimePlus(
-        CLOCK_REALTIME, std::chrono::milliseconds(5000)
-      );
-      int result = ::sem_clockwait(
-        &this->implementation->LightsOut, CLOCK_MONOTONIC, &waitEndTime
-      );
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        if(errorNumber == EINTR) {
-          continue; // spurious wake-up
-        } else if(errorNumber == ETIMEDOUT) {
-          assert((errorNumber != ETIMEDOUT) && u8"Threads shut down within timeout");
-          break;
-        } else {
-          assert((result != -1) && u8"Semaphore can be waited upon for thread shutdown");
-        }
-      }
-
-      break; // Semaphore was signalled
-    }
+    bool threadsStopped = this->implementation->LightsOut.WaitFor(
+      std::chrono::milliseconds(5000)
+    );
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(threadsStopped);
+    assert(threadsStopped && u8"Threads shut down within timeout");
 
     // Eliminate the implementation class. This will also join() or detach() the threads
     // in order to facilitate an orderly shutdown.
