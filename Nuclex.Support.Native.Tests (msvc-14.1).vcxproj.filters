@@ -666,6 +666,9 @@
     <ClCompile Include="Tests\Threading\ProcessTest.cpp">
       <Filter>Tests\Threading</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\Threading\SemaphoreBenchmark.cpp">
+      <Filter>Tests\Threading</Filter>
+    </ClCompile>
     <ClCompile Include="Tests\Threading\SemaphoreTest.cpp">
       <Filter>Tests\Threading</Filter>
     </ClCompile>

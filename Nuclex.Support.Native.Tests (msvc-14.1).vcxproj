@@ -388,6 +388,7 @@
     <ClCompile Include="Tests\Threading\Windows\WindowsProcessApiTest.cpp" />
     <ClCompile Include="Tests\Threading\GateTest.cpp" />
     <ClCompile Include="Tests\Threading\ProcessTest.cpp" />
+    <ClCompile Include="Tests\Threading\SemaphoreBenchmark.cpp" />
     <ClCompile Include="Tests\Threading\SemaphoreTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadPoolTaskPoolTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadPoolTest.cpp" />

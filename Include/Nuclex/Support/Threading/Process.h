@@ -88,7 +88,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: NUCLEX_SUPPORT_API ~Process();
 
     /// <summary>Sets the working directory the child process will start in</summary>
-    /// <param name="workingDirectory">
+    /// <param name="newWorkingDirectory">
     ///   Initial working directory the child process will use. Set to an empty string
     ///   to use the current working directory of the parent process
     /// </param>

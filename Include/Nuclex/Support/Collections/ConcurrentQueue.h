@@ -78,7 +78,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: ~ConcurrentQueue() override = default;
 
     /// <summary>Tries to append an element to the collection in a thread-safe manner</summary>
-    /// <param name="element">Element that will be appended to the collection</param>
+    /// <param name="newItem">Element that will be appended to the collection</param>
     /// <returns>True if the element was appended, false if there was no space left</returns>
     public: bool TryAppend(const TElement &newItem) {
       this->wrappedQueue.enqueue(newItem);
@@ -86,7 +86,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     }
 
     /// <summary>Tries to append an element to the collection in a thread-safe manner</summary>
-    /// <param name="element">Element that will be appended to the collection</param>
+    /// <param name="newItem">Element that will be appended to the collection</param>
     /// <returns>True if the element was appended, false if there was no space left</returns>
     public: bool TryAppend(TElement &&newItem) {
       this->wrappedQueue.enqueue(std::move(newItem));
@@ -94,7 +94,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     }
 
     /// <summary>Tries to take an element from the queue</summary>
-    /// <param name="element">Will receive the element taken from the queue</param>
+    /// <param name="result">Will receive the element taken from the queue</param>
     /// <returns>
     ///   True if an element was taken from the collection, false if the collection was empty
     /// </returns>

@@ -67,7 +67,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: NUCLEX_SUPPORT_API void Close();
 
     /// <summary>Sets the state of the gate to opened or closed</summary>
-    /// <param name-"opened">Whether the gate will be opened (true) or closed (false)</apram>
+    /// <param name-"opened">Whether the gate will be opened (true) or closed (false)</param>
     public: NUCLEX_SUPPORT_API void Set(bool opened);
 
     /// <summary>

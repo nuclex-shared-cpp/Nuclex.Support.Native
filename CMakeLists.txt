@@ -86,7 +86,7 @@ enable_target_compiler_warnings(NuclexSupportNativeTests)
 target_compile_definitions(
 	NuclexSupportNativeTests
 	PRIVATE NUCLEX_SUPPORT_EXECUTABLE
-	#PRIVATE NUCLEX_SUPPORT_ENABLE_BENCHMARKS
+	PRIVATE NUCLEX_SUPPORT_ENABLE_BENCHMARKS
 )
 
 target_include_directories(

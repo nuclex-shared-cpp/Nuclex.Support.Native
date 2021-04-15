@@ -35,12 +35,15 @@ License along with this library
 
 #include <atomic> // for std::atomic
 #include <thread> // for std::thread
+
+#if !defined(NUCLEX_SUPPORT_WIN32)
 #include <semaphore.h> // for ::sem_t, ::sem_init(), ::sem_post(), ::sem_wait()...
+#endif
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
-
+#if !defined(NUCLEX_SUPPORT_WIN32)
   /// <summary>Benchmark that repeatedly increments and waits on a ::sem_t</summary>
   class SemTBenchmark : public Nuclex::Support::Collections::HighContentionBufferTest {
 
@@ -132,7 +135,7 @@ namespace {
     private: std::atomic<std::size_t> cycleCount;
 
   };
-
+#endif // !defined(NUCLEX_SUPPORT_WIN32)
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Benchmark that repeatedly increments and waits on a Nuclex semaphore</summary>
@@ -175,7 +178,8 @@ namespace {
         }
 
         // Pass through or wait on the semaphore (first loop passes through, second waits)
-        this->semaphore.WaitThenDecrement();
+        //this->semaphore.WaitThenDecrement();
+        this->semaphore.WaitForThenDecrement(std::chrono::microseconds(1000));
 
         // Increment the cycle count to stop the benchmark after a certain number of loops
         {
@@ -208,7 +212,7 @@ namespace {
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
-
+#if !defined(NUCLEX_SUPPORT_WIN32)
   TEST(SemaphoreTest, SemTBenchmarkSucceeds) {
     SemTBenchmark bench;
 
@@ -222,7 +226,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       //" (" << std::fixed << kitemsPerSecond << "K ops/second)" <<
       std::endl;
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
 
   TEST(SemaphoreTest, SemaphoreBenchmarkSucceeds) {
