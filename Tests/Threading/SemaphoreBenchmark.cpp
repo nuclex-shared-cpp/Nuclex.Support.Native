@@ -178,8 +178,7 @@ namespace {
         }
 
         // Pass through or wait on the semaphore (first loop passes through, second waits)
-        //this->semaphore.WaitThenDecrement();
-        this->semaphore.WaitForThenDecrement(std::chrono::microseconds(1000));
+        this->semaphore.WaitThenDecrement();
 
         // Increment the cycle count to stop the benchmark after a certain number of loops
         {

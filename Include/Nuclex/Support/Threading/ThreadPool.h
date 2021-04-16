@@ -24,7 +24,7 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 
 #include <cstddef> // for std::size_t
-#include <future> // for std::packaged_task
+#include <future> // for std::packaged_task, std::future
 #include <functional> // for std::bind
 
 namespace Nuclex { namespace Support { namespace Threading {
