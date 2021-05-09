@@ -162,4 +162,46 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(LatchTest, LatchHonorsInitialCount) {
+    Latch latch(2);
+
+    latch.CountDown();
+
+    bool hasPassed = latch.WaitFor(
+      std::chrono::microseconds(1000)
+    );
+    EXPECT_FALSE(hasPassed);
+
+    latch.CountDown();
+
+    hasPassed = latch.WaitFor(
+      std::chrono::microseconds(1000)
+    );
+    EXPECT_TRUE(hasPassed);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(LatchTest, CountdownAndPostHonorCount) {
+    Latch latch;
+
+    latch.Post(2);
+    latch.CountDown();
+
+    bool hasPassed = latch.WaitFor(
+      std::chrono::microseconds(1000)
+    );
+    EXPECT_FALSE(hasPassed);
+
+    latch.Post();
+    latch.CountDown(2);
+
+    hasPassed = latch.WaitFor(
+      std::chrono::microseconds(1000)
+    );
+    EXPECT_TRUE(hasPassed);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Threading

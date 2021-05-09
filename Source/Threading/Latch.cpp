@@ -33,7 +33,6 @@ License along with this library
 #elif defined(NUCLEX_SUPPORT_WIN32) // Use standard win32 threading primitives
 #include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #include <mutex> // for std::mutex
-//#include <condition_variable> // for std::condition_variable
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
 #include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
