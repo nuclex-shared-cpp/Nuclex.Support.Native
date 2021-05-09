@@ -205,8 +205,6 @@ namespace Nuclex { namespace Support { namespace Threading {
         ::SetThreadpoolThreadMaximum(
           this->NewThreadPool, static_cast<DWORD>(maximumThreadCount)
         );
-        // This method can't fail, apparently
-
         BOOL result = ::SetThreadpoolThreadMinimum(
           this->NewThreadPool, static_cast<DWORD>(minimumThreadCount)
         );
@@ -221,7 +219,6 @@ namespace Nuclex { namespace Support { namespace Threading {
         // the thread pool. Needed to submit tasks to this pool instead of the default pool
         // (which probably gets created when the first task is submitted to it).
         ::SetThreadpoolCallbackPool(&this->NewCallbackEnvironment, this->NewThreadPool);
-        // Another method without an error return
 
         closeThreadPoolScope.Commit(); // Everything worked out, don't close the thread pool
       }
@@ -247,7 +244,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // Everything is shut down and we can safely delete this event, too
     BOOL result = ::CloseHandle(this->LightsOutEventHandle);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-    assert((result != FALSE) && u8"Shutdown event is successfully destroyed");
+    assert((result != FALSE) && u8"'LightsOut' event is successfully destroyed");
 
   }
 
@@ -257,7 +254,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     std::size_t previousTaskCount = this->ScheduledTaskCount.fetch_add(
       1, std::memory_order::memory_order_consume // if() below carries dependency
     );
-    if(previousTaskCount == 0) { // If there were no tasks scheduled before
+    if(unlikely(previousTaskCount == 0)) { // If there were no tasks scheduled before
       BOOL result = ::ResetEvent(this->LightsOutEventHandle);
       if(unlikely(result == FALSE)) {
         DWORD lastErrorCode = ::GetLastError();
@@ -274,12 +271,12 @@ namespace Nuclex { namespace Support { namespace Threading {
     std::size_t previousTaskCount = this->ScheduledTaskCount.fetch_sub(
       1, std::memory_order::memory_order_consume // if() below carries dependency
     );
-    if(previousTaskCount == 1) { // If the last task was just processed
+    if(unlikely(previousTaskCount == 1)) { // If the last task was just processed
       BOOL result = ::SetEvent(this->LightsOutEventHandle);
       if(unlikely(result == FALSE)) {
         DWORD lastErrorCode = ::GetLastError();
         Nuclex::Support::Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not set 'LightsOut' event upon last scheduled task exiting", lastErrorCode
+          u8"Could not set 'LightsOut' event after last scheduled task complete", lastErrorCode
         );
       }
     }
@@ -291,7 +288,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     std::size_t previousTaskCount = this->ScheduledTaskCount.fetch_sub(
       1, std::memory_order::memory_order_consume // if() below carries dependency
     );
-    if(previousTaskCount == 1) { // If the last task was just processed
+    if(unlikely(previousTaskCount == 1)) { // If the last task was just processed
       BOOL result = ::SetEvent(this->LightsOutEventHandle);
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result != FALSE) && u8"'LightsOut' event is successfully signalled");
@@ -390,7 +387,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     std::size_t remainingTaskCount = this->implementation->ScheduledTaskCount.load(
       std::memory_order::memory_order_consume // assert() below carries dependency
     );
-    assert((remainingTaskCount == 0) && u8"No thread pool tasks remain during shutdown");
+    if(remainingTaskCount != 0) {
+      assert((remainingTaskCount == 0) && u8"No thread pool tasks remain during shutdown");
+    }
 #endif
 
     delete this->implementation;

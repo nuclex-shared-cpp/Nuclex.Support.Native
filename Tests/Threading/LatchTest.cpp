@@ -21,7 +21,7 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "Nuclex/Support/Threading/Semaphore.h"
+#include "Nuclex/Support/Threading/Latch.h"
 #include "Nuclex/Support/Threading/Thread.h"
 
 #include <gtest/gtest.h>
@@ -37,16 +37,15 @@ namespace {
   /// <summary>Manages a thread to test the behavior of the semaphore</summary>
   class TestThread {
 
-    /// <summary>Initializes a new test thread checking the specified semaphore</summary>
-    /// <param name="semaphore">Semaphore that the thread will be checking</param>
-    public: TestThread(Nuclex::Support::Threading::Semaphore &semaphore) :
-      semaphore(semaphore),
+    /// <summary>Initializes a new test thread checking the specified latch</summary>
+    /// <param name="latch">Latch that the thread will be checking</param>
+    public: TestThread(Nuclex::Support::Threading::Latch &latch) :
+      latch(latch),
       thread(),
-      semaphorePassed(false) {}
+      latchPassed(false) {}
 
-    /// <summary>Waits for the thread to end and destroys it</summary>
+    /// <summary>Waits for the thread to end an destroys it</summary>
     public: ~TestThread() {
-      this->semaphore.Post(64);
       if(this->thread.joinable()) {
         this->thread.join();
       }
@@ -67,23 +66,23 @@ namespace {
       this->thread.join();
     }
 
-    /// <summary>Checks whether the test thread has passed through the semaphore</summary>
+    /// <summary>Checks whether the test thread has passed through the latch</summary>
     public: bool HasPassed() const {
-      return this->semaphorePassed.load(std::memory_order::memory_order_acquire);
+      return this->latchPassed.load(std::memory_order::memory_order_acquire);
     }
 
-    /// <summary>Method that runs in a thread to check the semaphore function</summary>
+    /// <summary>Method that runs in a thread to check the latch function</summary>
     private: void threadMethod() {
-      this->semaphore.WaitThenDecrement();
-      this->semaphorePassed.store(true, std::memory_order::memory_order_release);
+      this->latch.Wait();
+      this->latchPassed.store(true, std::memory_order::memory_order_release);
     }
 
-    /// <summary>Semaphore that the test thread will attempt to pass</summary>
-    private: Nuclex::Support::Threading::Semaphore &semaphore;
+    /// <summary>Latch that the test thread will attempt to pass</summary>
+    private: Nuclex::Support::Threading::Latch &latch;
     /// <summary>Thread that will attempt to pass the gate</summary>
     private: std::thread thread;
-    /// <summary>Set to true as soon as the thread has passed the semaphore</summary>
-    private: std::atomic<bool> semaphorePassed;
+    /// <summary>Set to true as soon as the thread has passed the latch</summary>
+    private: std::atomic<bool> latchPassed;
 
   };
 
@@ -95,26 +94,25 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SemaphoreTest, InstancesCanBeCreated) {
+  TEST(LatchTest, InstancesCanBeCreated) {
     EXPECT_NO_THROW(
-      Semaphore semaphore;
+      Latch latch;
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SemaphoreTest, CanBeIncremented) {
-    Semaphore semaphore;
-    semaphore.Post();
+  TEST(LatchTest, CanBeIncremented) {
+    Latch latch;
+    latch.Post();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SemaphoreTest, ThreadCanPassIncrementedSemaphore) {
-    Semaphore semaphore;
-    semaphore.Post();
+  TEST(LatchTest, ThreadCanPassZeroLatch) {
+    Latch latch;
 
-    TestThread test(semaphore);
+    TestThread test(latch);
     test.LaunchThread();
     test.JoinThread();
     EXPECT_TRUE(test.HasPassed());
@@ -122,21 +120,22 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SemaphoreTest, ThreadWaitsBeforeZeroedSemaphore) {
-    Semaphore semaphore;
+  TEST(LatchTest, ThreadWaitsBeforeIncrementedLatch) {
+    Latch latch;
+    latch.Post();
 
-    TestThread test(semaphore);
+    TestThread test(latch);
     test.LaunchThread();
 
     // Give the thread some time to pass. We can't wait for the thread to
-    // reach the semaphore without building a race condition of our own,
-    // so we'll just give it ample time to hit the semaphore.
+    // reach the latch without building a race condition of our own,
+    // so we'll just give it ample time to hit the latch.
     Thread::Sleep(std::chrono::microseconds(25000)); // 25 ms
 
-    // Thread should still be waiting in front of the semaphore
+    // Thread should still be waiting in front of the latch
     EXPECT_FALSE(test.HasPassed());
 
-    semaphore.Post();
+    latch.CountDown();
 
     test.JoinThread();
     EXPECT_TRUE(test.HasPassed());
@@ -144,17 +143,18 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(SemaphoreTest, WaitCanTimeOut) {
-    Semaphore semaphore;
+  TEST(LatchTest, WaitCanTimeOut) {
+    Latch latch;
+    latch.Post();
 
-    bool hasPassed = semaphore.WaitForThenDecrement(
+    bool hasPassed = latch.WaitFor(
       std::chrono::microseconds(1000)
     );
     EXPECT_FALSE(hasPassed);
 
-    semaphore.Post();
+    latch.CountDown();
 
-    hasPassed = semaphore.WaitForThenDecrement(
+    hasPassed = latch.WaitFor(
       std::chrono::microseconds(1000)
     );
     EXPECT_TRUE(hasPassed);
