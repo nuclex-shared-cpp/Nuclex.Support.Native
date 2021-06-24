@@ -46,8 +46,21 @@ namespace Nuclex { namespace Support { namespace Text {
       const std::string &left, const std::string &right, bool caseSensitive = false
     );
 
+    /// <summary>Checks whether one UTF-8 string contains another UTF-8 string</summary>
+    /// <param name="haystack">
+    ///   String that will be scanned for instances of another string
+    /// </param>
+    /// <param name="needle">String which might appear inside the other string</param>
+    /// <param name="caseSensitive">Whether the comparison will be case sensitive</param>
+    /// <returns>
+    ///   True if the 'needle' string appears at least once in the 'haystack' string
+    /// </returns>
+    public: NUCLEX_SUPPORT_API static bool Contains(
+      const std::string &haystack, const std::string &needle, bool caseSensitive = false
+    );
+
     /// <summary>Checks whether a UTF-8 string matches a wildcard</summary>
-    /// <param name="text">Text that will be matches against the wildcard</param>
+    /// <param name="text">Text that will be matched against the wildcard</param>
     /// <param name="wildcard">Wildcard against which the text will be matched</param>
     /// <param name="caseSensitive">Whether the comparison will be case sensitive</param>
     /// <returns>True if the specified text matches the wildcard</returns>

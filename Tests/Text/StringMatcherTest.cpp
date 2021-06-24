@@ -47,6 +47,60 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StringMatcherTest, CanCheckForContainmentCaseInsensitive) {
+    EXPECT_TRUE(StringMatcher::Contains(u8"Hello World", u8"hello"));
+    EXPECT_TRUE(StringMatcher::Contains(u8"Hello World", u8"world"));
+
+    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"hellø"));
+    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"wørld"));
+
+    EXPECT_TRUE(StringMatcher::Contains(u8"Hello World", u8"h"));
+    EXPECT_TRUE(StringMatcher::Contains(u8"Hello World", u8"w"));
+
+    EXPECT_FALSE(StringMatcher::Contains(u8"H", u8"hello"));
+    EXPECT_FALSE(StringMatcher::Contains(u8"W", u8"world"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, ContainmentCheckHandlesEmptyNeedleCaseInsensitive) {
+    EXPECT_TRUE(StringMatcher::Contains(u8"Hello World", u8""));
+    EXPECT_TRUE(StringMatcher::Contains(u8"", u8""));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CanCheckForContainmentCaseSensitive) {
+    EXPECT_TRUE(StringMatcher::Contains(u8"Hello World", u8"Hello", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"Hello World", u8"hello", true));
+    EXPECT_TRUE(StringMatcher::Contains(u8"Hello World", u8"World", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"Hello World", u8"world", true));
+
+    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"HellØ", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"HellØ WØrld", u8"hellø", true));
+    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"WØrld", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"HellØ WØrld", u8"wørld", true));
+
+    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"H", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"HellØ WØrld", u8"h", true));
+    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"W", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"HellØ WØrld", u8"w", true));
+
+    EXPECT_FALSE(StringMatcher::Contains(u8"H", u8"Hello", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"H", u8"hello", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"W", u8"World", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"W", u8"world", true));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, ContainmentCheckHandlesEmptyNeedleCaseSensitive) {
+    EXPECT_TRUE(StringMatcher::Contains(u8"Hello World", u8"", true));
+    EXPECT_TRUE(StringMatcher::Contains(u8"", u8"", true));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(StringMatcherTest, WilcardMatchDefaultsToCaseInsensitive) {
     EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"hello world"));
     EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HellØ WØrld", u8"hellø wørld"));
