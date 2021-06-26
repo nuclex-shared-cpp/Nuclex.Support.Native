@@ -84,6 +84,23 @@ namespace Nuclex { namespace Support { namespace Settings {
       const std::string &categoryName = std::string()
     ) const = 0;
 
+    /// <summary>Deletes an entire category with all its properties from the store</summary>
+    /// <param name="categoryName">Name of the category that will be deleted</param>
+    /// <returns>True if the category existed and was deleted, false otherwise</returns>
+    public: NUCLEX_SUPPORT_API virtual bool DeleteCategory(
+      const std::string &categoryName
+    ) = 0;
+
+    /// <summary>Deletes the specified property from the store</summary>
+    /// <param name="categoryName">
+    ///   Name of the category from which the property will be deleted
+    /// </param>
+    /// <param name="propertyName">Name of the property that will be deleted</param>
+    /// <returns>True if the property existed and was deleted, false otherwise</returns>
+    public: NUCLEX_SUPPORT_API virtual bool DeleteProperty(
+      const std::string &categoryName, const std::string &propertyName
+    ) = 0;
+
     /// <summary>Retrieves the value of a property from the store</summary>
     /// <typeparam name="TValue">
     ///   Type of the property value that will be retrieved, must be either a boolean,
@@ -170,7 +187,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="value">Value that will be stored</param>
     protected: NUCLEX_SUPPORT_API virtual void StoreBooleanProperty(
       const std::string &categoryName, const std::string &propertyName, bool value
-    ) const = 0;
+    ) = 0;
 
     /// <summary>Stores or updates a 32 bit integer property in the settings store</summary>
     /// <param name="categoryName">Category from which the property will be read</param>
@@ -178,7 +195,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="value">Value that will be stored</param>
     protected: NUCLEX_SUPPORT_API virtual void StoreUInt32Property(
       const std::string &categoryName, const std::string &propertyName, std::uint32_t value
-    ) const = 0;
+    ) = 0;
 
     /// <summary>Stores or updates a 32 bit integer property in the settings store</summary>
     /// <param name="categoryName">Category from which the property will be read</param>
@@ -186,7 +203,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="value">Value that will be stored</param>
     protected: NUCLEX_SUPPORT_API virtual void StoreInt32Property(
       const std::string &categoryName, const std::string &propertyName, std::int32_t value
-    ) const = 0;
+    ) = 0;
 
     /// <summary>Stores or updates a 64 bit integer property in the settings store</summary>
     /// <param name="categoryName">Category from which the property will be read</param>
@@ -194,7 +211,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="value">Value that will be stored</param>
     protected: NUCLEX_SUPPORT_API virtual void StoreUInt64Property(
       const std::string &categoryName, const std::string &propertyName, std::uint64_t value
-    ) const = 0;
+    ) = 0;
 
     /// <summary>Stores or updates a 64 bit integer property in the settings store</summary>
     /// <param name="categoryName">Category from which the property will be read</param>
@@ -202,7 +219,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="value">Value that will be stored</param>
     protected: NUCLEX_SUPPORT_API virtual void StoreInt64Property(
       const std::string &categoryName, const std::string &propertyName, std::int64_t value
-    ) const = 0;
+    ) = 0;
 
     /// <summary>Stores or updates a string property in the settings store</summary>
     /// <param name="categoryName">Category from which the property will be read</param>
@@ -210,7 +227,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="value">Value that will be stored</param>
     protected: NUCLEX_SUPPORT_API virtual void StoreStringProperty(
       const std::string &categoryName, const std::string &propertyName, const std::string &value
-    ) const = 0;
+    ) = 0;
 
   };
 
