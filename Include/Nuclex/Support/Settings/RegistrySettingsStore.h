@@ -18,30 +18,53 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_SETTINGS_MEMORYSETTINGSSTORE_H
-#define NUCLEX_SUPPORT_SETTINGS_MEMORYSETTINGSSTORE_H
+#ifndef NUCLEX_SUPPORT_SETTINGS_REGISTRYSETTINGSSTORE_H
+#define NUCLEX_SUPPORT_SETTINGS_REGISTRYSETTINGSSTORE_H
 
 #include "Nuclex/Support/Config.h"
-#include "Nuclex/Support/Settings/SettingsStore.h"
-#include "Nuclex/Support/Variant.h"
 
-//#include <hash_map> // for std::hash_map
-#include <unordered_map> // for std::unordered_map
+#if defined(NUCLEX_SUPPORT_WIN32)
+
+#include "Nuclex/Support/Settings/SettingsStore.h"
 
 namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Stores application settings as named properties in memory</summary>
+  /// <summary>Stores application settings in the Windows registry</summary>
   /// <remarks>
-  ///   This is an implementation of the settings store that places all properties in
-  ///   memory. Useful to provide temporary settings or if the settings from another
-  ///   property store need to be modified in a transient manner.
+  ///   <para>
+  ///     With this implementation of the settings store, you can read and write settings
+  ///     from and into the Windows registry. The registry is a giant multi-leveled database
+  ///     of properties that stores vital operating system data together with application
+  ///     specific settings.
+  ///   </para>
+  ///   <para>
+  ///     The registry is not commonly accessed or understood by the user, there is no built-in
+  ///     documentation mechanism, it's not portable beyond Windows operating systems and
+  ///     you're prone to leave orphaned settings behind when uninstalling. Thus, unless you're
+  ///     having specific reason to interface with the registry, it's usually a bad idea that
+  ///     will only make your application harder to maintain and harder to port.
+  ///   </para>
+  ///   <para>
+  ///     Any changes made to the settings are immediately reflected in the registry. If you
+  ///     need transient changes, you should create a <see cref="MemorySettingsStore" /> and
+  ///     copy all settings over, then make the changes in the memory settings store.
+  ///   </para>
   /// </remarks>
-  class MemorySettingsStore : public SettingsStore {
+  class RegistrySettingsStore : public SettingsStore {
 
-    /// <summary>Frees all resources owned by the memory settings store</summary>
-    public: NUCLEX_SUPPORT_API ~MemorySettingsStore() override;
+    /// <summary>
+    ///   Initializes a new registry settings store with settings storing under
+    ///   the specified registry key
+    /// </summary>
+    /// <param name="registryPath">
+    ///   Absolute path of the registry key that will be accessed
+    /// </param>
+    public: NUCLEX_SUPPORT_API RegistrySettingsStore(const std::string &registryPath);
+
+    /// <summary>Frees all resources owned by the .ini settings store</summary>
+    public: NUCLEX_SUPPORT_API ~RegistrySettingsStore() override;
 
     /// <summary>Returns a list of all categories contained in the store</summary>
     /// <returns>A list of all categories present in the store currently</returns>
@@ -172,17 +195,12 @@ namespace Nuclex { namespace Support { namespace Settings {
       const std::string &categoryName, const std::string &propertyName, const std::string &value
     ) override;
 
-    /// <summary>Container for the properties in a category</summary>
-    private: typedef std::unordered_map<std::string, Nuclex::Support::Variant> PropertyMap;
-    /// <summary>Container for the categories in the settings store</summary>
-    private: typedef std::unordered_map<std::string, PropertyMap *> CategoryMap;
-    /// <summary>All categories stored in this settings store</summary>
-    private: CategoryMap categories;
-
   };
 
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Settings
 
-#endif // NUCLEX_SUPPORT_SETTINGS_MEMORYSETTINGSSTORE_H
+#endif // defined(NUCLEX_SUPPORT_WIN32)
+
+#endif // NUCLEX_SUPPORT_SETTINGS_REGISTRYSETTINGSSTORE_H
