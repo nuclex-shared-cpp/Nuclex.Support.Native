@@ -113,7 +113,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <returns>The value of the requested property or nothing if it didn't exist</returns>
     public: template<typename TValue>
-    inline std::optional<TValue> Retrieve(
+    NUCLEX_SUPPORT_API inline std::optional<TValue> Retrieve(
       const std::string &categoryName, const std::string &propertyName
     ) const;
 
@@ -129,7 +129,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be stored</param>
     /// <param name="value">Value that will be stored in the settings store</param>
     public: template<typename TValue>
-    inline void Store(
+    NUCLEX_SUPPORT_API inline void Store(
       const std::string &categoryName, const std::string &propertyName, const TValue &value
     );
 

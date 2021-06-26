@@ -28,7 +28,7 @@ License along with this library
 #include "../../Helpers/PosixApi.h"
 
 #include <cassert> // for assert()
-#include <chrono> // for std::chrono::milliseconds
+#include <chrono> // for std::chrono::microseconds, std::chrono::milliseconds
 
 namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 

@@ -25,7 +25,6 @@ License along with this library
 #include "Nuclex/Support/Settings/SettingsStore.h"
 #include "Nuclex/Support/Variant.h"
 
-//#include <hash_map> // for std::hash_map
 #include <unordered_map> // for std::unordered_map
 
 namespace Nuclex { namespace Support { namespace Settings {

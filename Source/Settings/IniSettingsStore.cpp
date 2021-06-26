@@ -69,13 +69,14 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   std::vector<std::uint8_t> IniSettingsStore::Save() const {
-
+    std::vector<std::uint8_t> contents;
+    return contents;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   bool IniSettingsStore::HasChangedSinceLoad() const {
-
+    return false;
   }
 
   // ------------------------------------------------------------------------------------------- //

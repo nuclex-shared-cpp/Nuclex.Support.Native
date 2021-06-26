@@ -29,6 +29,9 @@
     <Filter Include="Include\Services">
       <UniqueIdentifier>{a35a1321-4e93-4a53-bc8a-e98ab6a1e528}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\Settings">
+      <UniqueIdentifier>{ec970cff-00fc-4d8a-8e4a-1b4587ec855d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Include\Text">
       <UniqueIdentifier>{3ae3b2e0-1fd9-477a-9fc9-1eb06bd74a6b}</UniqueIdentifier>
     </Filter>
@@ -53,6 +56,15 @@
     </Filter>
     <Filter Include="Source\Services">
       <UniqueIdentifier>{8776ca34-6ac1-43ca-9e2f-723d4bc5843b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Settings">
+      <UniqueIdentifier>{1c7a2606-a660-4cff-abaa-ce94ce1d187b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Settings\Windows">
+      <UniqueIdentifier>{5320d6b7-e357-4b3b-b2a9-760259d9b3e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Settings\Posix">
+      <UniqueIdentifier>{7bb40138-0bcc-40a0-8f05-a94238f8ce73}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Text">
       <UniqueIdentifier>{f20ce72c-f037-4bfc-8e47-a38db78850de}</UniqueIdentifier>
@@ -190,6 +202,18 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services\IntegerSequence.inl">
       <Filter>Include\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Settings\IniSettingsStore.h">
+      <Filter>Include\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Settings\MemorySettingsStore.h">
+      <Filter>Include\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Settings\RegistrySettingsStore.h">
+      <Filter>Include\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Settings\SettingsStore.h">
+      <Filter>Include\Settings</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Text\CommandLine.h">
       <Filter>Include\Text</Filter>
@@ -345,6 +369,30 @@
     </ClCompile>
     <ClCompile Include="Source\Services\ServiceProvider.cpp">
       <Filter>Source\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Settings\Posix\PosixFileAccessApi.cpp">
+      <Filter>Source\Settings\Posix</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\Posix\PosixFileAccessApi.h">
+      <Filter>Source\Settings\Posix</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Settings\Windows\WindowsFileAccessApi.cpp">
+      <Filter>Source\Settings\Windows</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\Windows\WindowsFileAccessApi.h">
+      <Filter>Source\Settings\Windows</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Settings\IniSettingsStore.cpp">
+      <Filter>Source\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Settings\MemorySettingsStore.cpp">
+      <Filter>Source\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Settings\RegistrySettingsStore.cpp">
+      <Filter>Source\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Settings\SettingsStore.cpp">
+      <Filter>Source\Settings</Filter>
     </ClCompile>
     <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp">
       <Filter>Source\Text\Dragon4</Filter>
