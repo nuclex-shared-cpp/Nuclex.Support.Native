@@ -225,21 +225,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   void MemorySettingsStore::StoreBooleanProperty(
     const std::string &categoryName, const std::string &propertyName, bool value
   ) {
-    /*
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
       PropertyMap *properties = new PropertyMap();
-      this->categories.insert(categoryName, properties);
-      properties->insert(propertyName, Variant(value));
+      this->categories.insert(CategoryMap::value_type(categoryName, properties));
+      properties->insert(PropertyMap::value_type(propertyName, Variant(value)));
     } else {
       PropertyMap::const_iterator iterator = categoryIterator->second->find(propertyName);
       if(iterator == categoryIterator->second->end()) {
-        categoryIterator->second->insert(propertyName, Variant(value));
+        categoryIterator->second->insert(PropertyMap::value_type(propertyName, Variant(value)));
       } else {
-        // TODO
+        categoryIterator->second->insert_or_assign(iterator, propertyName, Variant(value));
       }
     }
-    */
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -247,7 +245,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   void MemorySettingsStore::StoreUInt32Property(
     const std::string &categoryName, const std::string &propertyName, std::uint32_t value
   ) {
-    
+    CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
+    if(categoryIterator == this->categories.end()) {
+      PropertyMap *properties = new PropertyMap();
+      this->categories.insert(CategoryMap::value_type(categoryName, properties));
+      properties->insert(PropertyMap::value_type(propertyName, Variant(value)));
+    } else {
+      PropertyMap::const_iterator iterator = categoryIterator->second->find(propertyName);
+      if(iterator == categoryIterator->second->end()) {
+        categoryIterator->second->insert(PropertyMap::value_type(propertyName, Variant(value)));
+      } else {
+        categoryIterator->second->insert_or_assign(iterator, propertyName, Variant(value));
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -255,7 +265,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   void MemorySettingsStore::StoreInt32Property(
     const std::string &categoryName, const std::string &propertyName, std::int32_t value
   ) {
-    
+    CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
+    if(categoryIterator == this->categories.end()) {
+      PropertyMap *properties = new PropertyMap();
+      this->categories.insert(CategoryMap::value_type(categoryName, properties));
+      properties->insert(PropertyMap::value_type(propertyName, Variant(value)));
+    } else {
+      PropertyMap::const_iterator iterator = categoryIterator->second->find(propertyName);
+      if(iterator == categoryIterator->second->end()) {
+        categoryIterator->second->insert(PropertyMap::value_type(propertyName, Variant(value)));
+      } else {
+        categoryIterator->second->insert_or_assign(iterator, propertyName, Variant(value));
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -263,7 +285,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   void MemorySettingsStore::StoreUInt64Property(
     const std::string &categoryName, const std::string &propertyName, std::uint64_t value
   ) {
-    
+    CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
+    if(categoryIterator == this->categories.end()) {
+      PropertyMap *properties = new PropertyMap();
+      this->categories.insert(CategoryMap::value_type(categoryName, properties));
+      properties->insert(PropertyMap::value_type(propertyName, Variant(value)));
+    } else {
+      PropertyMap::const_iterator iterator = categoryIterator->second->find(propertyName);
+      if(iterator == categoryIterator->second->end()) {
+        categoryIterator->second->insert(PropertyMap::value_type(propertyName, Variant(value)));
+      } else {
+        categoryIterator->second->insert_or_assign(iterator, propertyName, Variant(value));
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -271,7 +305,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   void MemorySettingsStore::StoreInt64Property(
     const std::string &categoryName, const std::string &propertyName, std::int64_t value
   ) {
-    
+    CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
+    if(categoryIterator == this->categories.end()) {
+      PropertyMap *properties = new PropertyMap();
+      this->categories.insert(CategoryMap::value_type(categoryName, properties));
+      properties->insert(PropertyMap::value_type(propertyName, Variant(value)));
+    } else {
+      PropertyMap::const_iterator iterator = categoryIterator->second->find(propertyName);
+      if(iterator == categoryIterator->second->end()) {
+        categoryIterator->second->insert(PropertyMap::value_type(propertyName, Variant(value)));
+      } else {
+        categoryIterator->second->insert_or_assign(iterator, propertyName, Variant(value));
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -279,7 +325,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   void MemorySettingsStore::StoreStringProperty(
     const std::string &categoryName, const std::string &propertyName, const std::string &value
   ) {
-
+    CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
+    if(categoryIterator == this->categories.end()) {
+      PropertyMap *properties = new PropertyMap();
+      this->categories.insert(CategoryMap::value_type(categoryName, properties));
+      properties->insert(PropertyMap::value_type(propertyName, Variant(value)));
+    } else {
+      PropertyMap::const_iterator iterator = categoryIterator->second->find(propertyName);
+      if(iterator == categoryIterator->second->end()) {
+        categoryIterator->second->insert(PropertyMap::value_type(propertyName, Variant(value)));
+      } else {
+        categoryIterator->second->insert_or_assign(iterator, propertyName, Variant(value));
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
