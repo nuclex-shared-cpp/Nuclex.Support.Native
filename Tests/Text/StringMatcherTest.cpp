@@ -101,6 +101,40 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StringMatcherTest, CanCheckIfStringStartsWithAnotherCaseInsensitive) {
+    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"Hello"));
+    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"hello"));
+    EXPECT_FALSE(StringMatcher::StartsWith(u8"Hello World", u8"World"));
+
+    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"HellØ"));
+    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"hellø"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, StartsWithHandlesEmptyNeedleCaseInsensitive) {
+    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8""));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CanCheckIfStringStartsWithAnotherCaseSensitive) {
+    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"Hello", true));
+    EXPECT_FALSE(StringMatcher::StartsWith(u8"Hello World", u8"hello", true));
+    EXPECT_FALSE(StringMatcher::StartsWith(u8"Hello World", u8"World", true));
+
+    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"HellØ", true));
+    EXPECT_FALSE(StringMatcher::Contains(u8"HellØ WØrld", u8"hellø", true));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, StartsWithHandlesEmptyNeedleCaseSensitive) {
+    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"", true));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(StringMatcherTest, WilcardMatchDefaultsToCaseInsensitive) {
     EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"hello world"));
     EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HellØ WØrld", u8"hellø wørld"));

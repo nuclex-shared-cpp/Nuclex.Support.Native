@@ -59,6 +59,19 @@ namespace Nuclex { namespace Support { namespace Text {
       const std::string &haystack, const std::string &needle, bool caseSensitive = false
     );
 
+    /// <summary>Checks whether one UTF-8 string starts with another UTF-8 string</summary>
+    /// <param name="haystack">
+    ///   String whose beginning will be compared with the searched-for string
+    /// </param>
+    /// <param name="needle">String with which the checked string must begin</param>
+    /// <param name="caseSensitive">Whether the comparison will be case sensitive</param>
+    /// <returns>
+    ///   True if the 'haystack' string starts with the 'needle' string
+    /// </returns>
+    public: NUCLEX_SUPPORT_API static bool StartsWith(
+      const std::string &haystack, const std::string &needle, bool caseSensitive = false
+    );
+
     /// <summary>Checks whether a UTF-8 string matches a wildcard</summary>
     /// <param name="text">Text that will be matched against the wildcard</param>
     /// <param name="wildcard">Wildcard against which the text will be matched</param>

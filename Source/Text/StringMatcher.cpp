@@ -297,6 +297,58 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>C-style function that checks if a string starts with another string</summary>
+  /// <param name="haystack">Text whose beginning will be checked for the other string</param>
+  /// <param name="needle">Substring that will be searched for</param>
+  /// <returns>True if the 'haystack' string starts with the 'needle' string</returns>
+  bool checkStringStartsWithUtf8(const char *haystack, const char *needle) {
+    using Nuclex::ToFoldedLowercase;
+
+    for(;;) {
+      std::uint32_t needleCodepoint = utf8::unchecked::next(needle);
+      if(needleCodepoint == 0) {
+        return true;
+      }
+
+      std::uint32_t haystackCodepoint = utf8::unchecked::next(haystack);
+      if(haystackCodepoint == 0) {
+        return false;
+      }
+
+      if(ToFoldedLowercase(needleCodepoint) != ToFoldedLowercase(haystackCodepoint)) {
+        return false;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>C-style function that checks if a string starts with another string</summary>
+  /// <param name="haystack">Text whose beginning will be checked for the other string</param>
+  /// <param name="needle">Substring that will be searched for</param>
+  /// <returns>True if the 'haystack' string starts with the 'needle' string</returns>
+  bool checkStringStartsWithUtf8CaseSensitive(const char *haystack, const char *needle) {
+    using Nuclex::ToFoldedLowercase;
+
+    for(;;) {
+      std::uint32_t needleCodepoint = utf8::unchecked::next(needle);
+      if(needleCodepoint == 0) {
+        return true;
+      }
+
+      std::uint32_t haystackCodepoint = utf8::unchecked::next(haystack);
+      if(haystackCodepoint == 0) {
+        return false;
+      }
+
+      if(needleCodepoint != haystackCodepoint) {
+        return false;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Text {
@@ -322,6 +374,19 @@ namespace Nuclex { namespace Support { namespace Text {
       return findSubstringUtf8CaseSensitive(haystack.c_str(), needle.c_str()) != nullptr;
     } else {
       return findSubstringUtf8(haystack.c_str(), needle.c_str()) != nullptr;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool StringMatcher::StartsWith(
+    const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
+  ) {
+    if(caseSensitive) {
+      return checkStringStartsWithUtf8CaseSensitive(haystack.c_str(), needle.c_str());
+    } else {
+      //return (haystack.rfind(needle, 0) == 0);
+      return checkStringStartsWithUtf8(haystack.c_str(), needle.c_str());
     }
   }
 
