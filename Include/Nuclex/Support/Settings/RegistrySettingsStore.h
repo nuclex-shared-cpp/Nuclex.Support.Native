@@ -26,6 +26,7 @@ License along with this library
 #if defined(NUCLEX_SUPPORT_WIN32)
 
 #include "Nuclex/Support/Settings/SettingsStore.h"
+#include <cstdint> // for std::intptr_t
 
 namespace Nuclex { namespace Support { namespace Settings {
 
@@ -59,9 +60,31 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   the specified registry key
     /// </summary>
     /// <param name="registryPath">
-    ///   Absolute path of the registry key that will be accessed
+    ///   Absolute path of the registry key that will be accessed. This must include
+    ///   the registry hive in short or long form.
     /// </param>
-    public: NUCLEX_SUPPORT_API RegistrySettingsStore(const std::string &registryPath);
+    /// <param name="readOnly">
+    ///   Whether the registry key should be opened for reading only
+    /// </param>
+    /// <remarks>
+    ///   <para>
+    ///     Any registry path must begin with the hive, for example:
+    ///     &quot;HKCU/HKEY_CURRENT_USER/SOFTWARE/MyCompany/MyApplication&quot; or,
+    ///     another example using the long form registry hive,
+    ///     &quot;HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Services/MyService&quot;.
+    ///     Paths are encoded as UTF-8 with forward slashes.
+    ///   </para>
+    ///   <para>
+    ///     By using the <paramref name="readOnly" /> argument, access flags can be passed
+    ///     to the Windows registry API that may allow reading from some keys that would
+    ///     otherwise require administrative privileges to access. If you use this parameter,
+    ///     it's a good idea to declare the registry settings store as const to hide all
+    ///     methods that aren't allowed on the read-only key anyway.
+    ///   </para>
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API RegistrySettingsStore(
+      const std::string &registryPath, bool readOnly = false
+    );
 
     /// <summary>Frees all resources owned by the .ini settings store</summary>
     public: NUCLEX_SUPPORT_API ~RegistrySettingsStore() override;
@@ -194,6 +217,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     protected: NUCLEX_SUPPORT_API void StoreStringProperty(
       const std::string &categoryName, const std::string &propertyName, const std::string &value
     ) override;
+
+    /// <summary>A registry key handle (HKEY) for the opened settings root key</summary>
+    private: std::intptr_t settingsKeyHandle;
 
   };
 

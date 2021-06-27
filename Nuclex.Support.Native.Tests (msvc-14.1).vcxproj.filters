@@ -690,6 +690,9 @@
     <ClCompile Include="Tests\Settings\MemorySettingsStoreTest.cpp">
       <Filter>Tests\Settings</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\Settings\RegistrySettingsStoreTest.cpp">
+      <Filter>Tests\Settings</Filter>
+    </ClCompile>
     <ClCompile Include="Tests\Text\LexicalCastTest.cpp">
       <Filter>Tests\Text</Filter>
     </ClCompile>
