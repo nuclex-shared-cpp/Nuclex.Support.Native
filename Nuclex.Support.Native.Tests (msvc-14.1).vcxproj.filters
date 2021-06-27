@@ -120,6 +120,12 @@
     <Filter Include="Tests\Threading\Windows">
       <UniqueIdentifier>{6892e1f6-d6ad-4ee8-b79f-22b0fe04f30d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\Settings\Posix">
+      <UniqueIdentifier>{bffe84eb-1f88-4955-9cf0-234aa590134b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests\Settings\Windows">
+      <UniqueIdentifier>{5dbac8be-79a4-4e94-8421-1f2b15b96f6d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\MoodyCamel\blockingconcurrentqueue.h">
@@ -409,6 +415,12 @@
     <ClInclude Include="Source\Settings\Windows\WindowsFileAccessApi.h">
       <Filter>Source\Settings\Windows</Filter>
     </ClInclude>
+    <ClCompile Include="Source\Settings\Windows\WindowsRegistryApi.cpp">
+      <Filter>Source\Settings\Windows</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\Windows\WindowsRegistryApi.h">
+      <Filter>Source\Settings\Windows</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Settings\IniSettingsStore.cpp">
       <Filter>Source\Settings</Filter>
     </ClCompile>
@@ -686,6 +698,9 @@
     </ClCompile>
     <ClCompile Include="Tests\Services\ServiceContainerTest.cpp">
       <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Settings\Windows\WindowsRegistryApiTest.cpp">
+      <Filter>Tests\Settings\Windows</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Settings\MemorySettingsStoreTest.cpp">
       <Filter>Tests\Settings</Filter>

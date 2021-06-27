@@ -287,7 +287,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     results.reserve(subKeyCount);
     {
       std::vector<WCHAR> keyName(longestSubKeyLength, 0);
-      DWORD subKeyLength = longestSubKeyLength;
+      DWORD keyNameLength = longestSubKeyLength;
 
       // This is how subkeys are collected, by querying them one by one. Combined with
       // the API documentation stating that when new keys are inserted, their index is
@@ -304,7 +304,7 @@ namespace Nuclex { namespace Support { namespace Settings {
             *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle),
             index,
             keyName.data(),
-            &subKeyLength,
+            &keyNameLength,
             nullptr,
             nullptr,
             nullptr,
@@ -313,7 +313,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           if(result == ERROR_MORE_DATA) {
             longestSubKeyLength += 256;
             keyName.resize(longestSubKeyLength);
-            subKeyLength = longestSubKeyLength;
+            keyNameLength = longestSubKeyLength;
           } else {
             break;
           }
@@ -331,7 +331,11 @@ namespace Nuclex { namespace Support { namespace Settings {
         // The registry API is, like any Windows API, bogged down with Microsoft's
         // poor choice of using UTF-16. So we need to convert everything returned by
         // said method into UTF-8 ourselves.
-        results.push_back(Text::StringConverter::Utf8FromWide(keyName.data()));
+        results.push_back(
+          Text::StringConverter::Utf8FromWide(
+            std::wstring(keyName.data(), keyNameLength)
+          )
+        );
       }
     }
 
@@ -413,7 +417,11 @@ namespace Nuclex { namespace Support { namespace Settings {
         // The registry API is, like any Windows API, bogged down with Microsoft's
         // poor choice of using UTF-16. So we need to convert everything returned by
         // said method into UTF-8 ourselves.
-        results.push_back(Text::StringConverter::Utf8FromWide(valueName.data()));
+        results.push_back(
+          Text::StringConverter::Utf8FromWide(
+            std::wstring(valueName.data(), valueNameLength)
+          )
+        );
       }
     }
 
@@ -439,7 +447,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<bool> RegistrySettingsStore::RetrieveBooleanProperty(
     const std::string &categoryName, const std::string &propertyName
   ) const {
+    if(this->settingsKeyHandle == 0) {
+      return std::optional<bool>();
+    }
+
+
+/*
+    //DWORD 
+    ::RegQueryValueExW(
+      this->settingsKeyHandle
+    )
+*/
     return std::optional<bool>();
+
   }
 
   // ------------------------------------------------------------------------------------------- //

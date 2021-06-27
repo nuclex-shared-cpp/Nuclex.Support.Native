@@ -18,24 +18,33 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-// If the library is compiled as a DLL, this ensures symbols are exported
-#define NUCLEX_SUPPORT_SOURCE 1
+#ifndef NUCLEX_SUPPORT_SETTINGS_WINDOWS_WINDOWSREGISTRYAPI_H
+#define NUCLEX_SUPPORT_SETTINGS_WINDOWS_WINDOWSREGISTRYAPI_H
 
-#include "WindowsFileAccessApi.h"
+#include "Nuclex/Support/Config.h"
 
 #if defined(NUCLEX_SUPPORT_WIN32)
 
-namespace {
+#include "../../Helpers/WindowsApi.h"
 
-  // ------------------------------------------------------------------------------------------- //
-
-  // ------------------------------------------------------------------------------------------- //
-
-} // anonymous namespace
+#include <string> // for std::string_view
 
 namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
 
   // ------------------------------------------------------------------------------------------- //
+
+  class WindowsRegistryApi {
+
+    /// <summary>Returns the registry hive matching its string name</summary>
+    /// <param name="hiveName">Name of the registry hive whose key will be returned</param>
+    /// <returns>The registry hive with the specified hive name</returns>
+    /// <remarks>
+    ///   This supports both the short form (HKCU/, HKLM/) and the long form
+    ///   (HKEY_CURRENT_USER/, HKEY_LOCAL_MACHINE/) for specifying the hive.
+    /// </remarks>
+    public: static ::HKEY GetHiveFromString(const std::string_view &hiveName);
+
+  };
 
 
   // ------------------------------------------------------------------------------------------- //
@@ -43,3 +52,5 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
 }}}} // namespace Nuclex::Support::Settings::Windows
 
 #endif // defined(NUCLEX_SUPPORT_WIN32)
+
+#endif // NUCLEX_SUPPORT_SETTINGS_WINDOWS_WINDOWSREGISTRYAPI_H

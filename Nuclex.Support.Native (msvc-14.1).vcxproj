@@ -288,6 +288,8 @@
     <ClInclude Include="Source\Settings\Posix\PosixFileAccessApi.h" />
     <ClCompile Include="Source\Settings\Windows\WindowsFileAccessApi.cpp" />
     <ClInclude Include="Source\Settings\Windows\WindowsFileAccessApi.h" />
+    <ClCompile Include="Source\Settings\Windows\WindowsRegistryApi.cpp" />
+    <ClInclude Include="Source\Settings\Windows\WindowsRegistryApi.h" />
     <ClCompile Include="Source\Settings\IniSettingsStore.cpp" />
     <ClCompile Include="Source\Settings\MemorySettingsStore.cpp" />
     <ClCompile Include="Source\Settings\RegistrySettingsStore.cpp" />

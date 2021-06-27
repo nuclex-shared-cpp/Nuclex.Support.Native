@@ -382,6 +382,12 @@
     <ClInclude Include="Source\Settings\Windows\WindowsFileAccessApi.h">
       <Filter>Source\Settings\Windows</Filter>
     </ClInclude>
+    <ClCompile Include="Source\Settings\Windows\WindowsRegistryApi.cpp">
+      <Filter>Source\Settings\Windows</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\Windows\WindowsRegistryApi.h">
+      <Filter>Source\Settings\Windows</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Settings\IniSettingsStore.cpp">
       <Filter>Source\Settings</Filter>
     </ClCompile>
