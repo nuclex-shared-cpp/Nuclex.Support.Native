@@ -52,6 +52,11 @@ namespace Nuclex { namespace Support { namespace Settings {
   ///     need transient changes, you should create a <see cref="MemorySettingsStore" /> and
   ///     copy all settings over, then make the changes in the memory settings store.
   ///   </para>
+  ///   <para>
+  ///     If you're storing any live data (i.e. resume indices or such) for your application,
+  ///     also notice that even on Windows 10 systems, the registry is amazingly slow and
+  ///     seemingly harmless operations may take several milliseconds to complete.
+  ///   </para>
   /// </remarks>
   class RegistrySettingsStore : public SettingsStore {
 

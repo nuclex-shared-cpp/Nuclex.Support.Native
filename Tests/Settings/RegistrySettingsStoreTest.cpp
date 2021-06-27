@@ -95,6 +95,24 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(RegistrySettingsStoreTest, CanEnumerateCategories) {
+    const RegistrySettingsStore settings(u8"hklm/SOFTWARE/Microsoft", true);
+
+    std::vector<std::string> categories = settings.GetAllCategories();
+    EXPECT_GE(categories.size(), 10U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(RegistrySettingsStoreTest, CanEnumerateProperties) {
+    const RegistrySettingsStore settings(u8"HKLM/SYSTEM/CurrentControlSet/Control", true);
+
+    std::vector<std::string> properties = settings.GetAllProperties();
+    EXPECT_GE(properties.size(), 5U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Settings
 
 #endif // defined(NUCLEX_SUPPORT_WIN32)
