@@ -55,6 +55,16 @@ namespace Nuclex { namespace Support { namespace Settings {
   /// </remarks>
   class RegistrySettingsStore : public SettingsStore {
 
+    /// <summary>Deletes the specified registry key and all its subkeys</summary>
+    /// <param name="registryPath">Path of the key that will be deleted</param>
+    /// <returns>True if the key existed and was deleted, false otherwise</returns>
+    /// <remarks>
+    ///   You can use this method to eliminate a key again if you want to remove your
+    ///   application's settings from the registry. It is also used by unit tests to
+    ///   ensure no garbage from previous tests is left to interfere with testing.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API bool DeleteKey(const std::string &registryPath);
+
     /// <summary>
     ///   Initializes a new registry settings store with settings storing under
     ///   the specified registry key

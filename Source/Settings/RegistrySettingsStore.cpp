@@ -162,54 +162,88 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  struct PrivateImplementationData {
-    public: ::HKEY openedKeyHandle;
-  };
+  bool RegistrySettingsStore::DeleteKey(const std::string &registryPath) {
+    return false; // TODO: Implement delete method
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
   RegistrySettingsStore::RegistrySettingsStore(
     const std::string &registryPath, bool readOnly /* = false */
   ) : settingsKeyHandle(0) {
-    ::REGSAM securityAccessMethods = (readOnly) ?
-      (KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE) :
-      (KEY_CREATE_SUB_KEY | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE | KEY_SET_VALUE);
       
-    std::string::size_type firstSlashIndex = findNextSlash(registryPath);
-    if(firstSlashIndex == std::string::npos) {
-      ::HKEY hiveKeyHandle = hiveFromPrefix(registryPath, registryPath.length());
-      ::LSTATUS result = ::RegOpenKeyExW(
-        hiveKeyHandle, nullptr,
-        0,
-        securityAccessMethods,
-        reinterpret_cast<::HKEY *>(&this->settingsKeyHandle)
-      );
-      if(result != ERROR_SUCCESS) {
-        this->settingsKeyHandle = 0; // RegOpenKeyExW() may write INVALID_HANDLE_VALUe here
-        Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not open registry key", result
+    // Attempt to open the requested key
+    ::LSTATUS result;
+    {
+      // Figure out the security flags for the access level requested by the caller
+      ::REGSAM securityAccessMethods = (readOnly) ?
+        (KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE) :
+        (KEY_CREATE_SUB_KEY | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE | KEY_SET_VALUE);
+
+      // If no slashes are in the path, it may still be a valid registry hive...
+      std::string::size_type firstSlashIndex = findNextSlash(registryPath);
+      if(firstSlashIndex == std::string::npos) {
+        ::HKEY hiveKeyHandle = hiveFromPrefix(registryPath, registryPath.length());
+        result = ::RegOpenKeyExW(
+          hiveKeyHandle, nullptr,
+          0,
+          securityAccessMethods,
+          reinterpret_cast<::HKEY *>(&this->settingsKeyHandle)
         );
-      }
-    } else {
-      ::HKEY hiveKeyHandle = hiveFromPrefix(registryPath, firstSlashIndex);
-      std::wstring subkey;
-      {
-        std::string subkeyUtf8 = registryPath.substr(firstSlashIndex + 1);
-        makeAllSlashesBackward(subkeyUtf8);
-        subkey = Text::StringConverter::WideFromUtf8(subkeyUtf8);
-      }
-      ::LSTATUS result = ::RegOpenKeyExW(
-        hiveKeyHandle, subkey.c_str(),
-        0,
-        securityAccessMethods,
-        reinterpret_cast<::HKEY *>(&this->settingsKeyHandle)
+      } else { // Slashes present, separate the registry hive from the rest
+        ::HKEY hiveKeyHandle = hiveFromPrefix(registryPath, firstSlashIndex);
+
+        // We need an UTF-16 string containing the subkey to open, also using only
+        // backward slashes (unlike Windows' file system API, the registry API isn't lax)
+        std::wstring subkey;
+        {
+          std::string subkeyUtf8 = registryPath.substr(firstSlashIndex + 1);
+          makeAllSlashesBackward(subkeyUtf8);
+          subkey = Text::StringConverter::WideFromUtf8(subkeyUtf8);
+        }
+
+        // If the key doesn't exist, we do one of two things:
+        //
+        // - in read-only mode, we act as if an empty key existed. This is consistent with
+        //   the behavior of the Retrieve() method and allows applications to start without
+        //   their registry keys present, using default settings.
+        //
+        // - in writable mode, we try to create a new key. This is the correct behavior here
+        //   because the caller expects us to hold onto any settings written to the registry
+        //   and we can't very well do that if we don't have a registry to write to.
+        //
+        if(readOnly) {
+          result = ::RegOpenKeyExW(
+            hiveKeyHandle, subkey.c_str(),
+            0,
+            securityAccessMethods,
+            reinterpret_cast<::HKEY *>(&this->settingsKeyHandle)
+          );
+          if(result == ERROR_FILE_NOT_FOUND) {
+            this->settingsKeyHandle = 0; // RegOpenKeyExW() may write INVALID_HANDLE_VALUe here
+            result = ERROR_SUCCESS;
+          }
+        } else {
+          result = ::RegCreateKeyExW(
+            hiveKeyHandle, subkey.c_str(),
+            0,
+            nullptr,
+            REG_OPTION_NON_VOLATILE,
+            securityAccessMethods,
+            nullptr,
+            reinterpret_cast<::HKEY *>(&this->settingsKeyHandle),
+            nullptr
+          );
+        } // if read-only
+      } // if slashes present
+    } // LSTATUS scope
+
+    // Check if the key was opened successfully
+    if(result != ERROR_SUCCESS) {
+      this->settingsKeyHandle = 0; // RegOpenKeyExW() may write INVALID_HANDLE_VALUe here
+      Helpers::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not open registry key", result
       );
-      if(result != ERROR_SUCCESS) {
-        this->settingsKeyHandle = 0; // RegOpenKeyExW() may write INVALID_HANDLE_VALUe here
-        Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not open registry key", result
-        );
-      }
     }
   }
 
@@ -227,6 +261,10 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   std::vector<std::string> RegistrySettingsStore::GetAllCategories() const {
+    if(this->settingsKeyHandle == 0) {
+      return std::vector<std::string>(); // Non-existent key accessed in read-only mode
+    }
+
     std::vector<std::string> results;
     return results;
   }
@@ -236,6 +274,10 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::vector<std::string> RegistrySettingsStore::GetAllProperties(
     const std::string &categoryName /* = std::string() */
   ) const {
+    if(this->settingsKeyHandle == 0) {
+      return std::vector<std::string>(); // Non-existent key accessed in read-only mode
+    }
+
     std::vector<std::string> results;
     return results;
   }
