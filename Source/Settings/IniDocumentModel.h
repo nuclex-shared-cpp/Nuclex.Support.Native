@@ -100,8 +100,26 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     #pragma endregion // struct PropertyLine
 
+    #pragma region class IndexedSection
+
+    /// <summary>A line in an .ini file containing a property assignment</summary>
+    protected: class IndexedSection {
+
+      /// <summary>Line in which this section is declared. Can be a nullptr.</summary>
+      public: SectionLine *Line;
+      /// <summary>Index of property lines in this section by their property name</summary>
+      public: std::unordered_map<std::string, PropertyLine *> PropertyMap;
+
+    };
+
+    #pragma endregion // class IndexedSection
+
+
     // Internal helper to estimate the memory needed to hold the parsed document model
     private: class MemoryEstimator;
+
+    // Internal helper that builds the model according to the parser
+    private: class ModelBuilder;
 
     /// <summary>Estimates the amount of memory required for the document model</summary>
     /// <param name="fileContents">Buffer holding the entire .ini file in memory</param>
@@ -111,10 +129,23 @@ namespace Nuclex { namespace Support { namespace Settings {
       const std::uint8_t *fileContents, std::size_t byteCount
     );
 
+    /// <summary>Parses the contents of an existing .ini file</summary>
+    /// <param name="fileContents">Buffer holding the entire .ini file in memory</param>
+    /// <param name="byteCount">Size of the .ini file in bytes</param>
+    /// <param name="allocatedBytCount">
+    ///   Amount of memory allocated in <see cref="createdLinesMemory" />
+    /// </param>
+    private: void parseFileContents(
+      const std::uint8_t *fileContents, std::size_t byteCount,
+      std::size_t allocatedByteCount
+    );
+
     /// <summary>Parses an .ini file into this easily accessible document model</summary>
     /// <param name="fileContents">The whole contents of an .ini file</param>
     /// <param name="byteCount">Lenght of the .ini file in bytes</param>
-    private: void parse(const std::uint8_t *fileContents, std::size_t byteCount);
+    private: std::pair<std::string::size_type, std::string::size_type> parseSectionName(
+      const std::uint8_t *fileContents, std::size_t byteCount
+    );
 
     /// <summary>Allocates memory for a single line</summary>
     /// <typeparam name="TLine">Type of line that will be allocated</typeparam>
@@ -144,7 +175,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Map from property name to the lines containing a property</summary>
     typedef std::unordered_map<std::string, PropertyLine *> PropertyMap;
     /// <summary>Map from section name to a map holding the properties in the section</summary>
-    typedef std::unordered_map<std::string, PropertyMap *> SectionMap;
+    typedef std::unordered_map<std::string, IndexedSection *> SectionMap;
 
     /// <summary>Pointer to the first line, useful to reconstruct the file</summary>
     private: Line *firstLine;

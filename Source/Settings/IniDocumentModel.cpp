@@ -26,15 +26,24 @@ License along with this library
 #include <memory> // for std::unique_ptr
 #include <type_traits> // for std::is_base_of
 #include <algorithm> // for std::copy_n()
+#include <cassert> // for assert()
 
 // Ambiguous cases and their resolution:
 //
-//   ["Hello]"       -> Bullshit
-//   [World          -> Bullshit
+//   ["Hello]"       -> Malformed
+//   [World          -> Malformed
 //   [Foo] = Bar     -> Assignment, no section
 //   [Woop][Woop]    -> Two sections, one w/newline one w/o
 //   [Foo] Bar = Baz -> Section and assignment
-//   [[Yay]          -> Bullshit, section
+//   [[Yay]          -> Malformed, section
+//
+
+// Allocation schemes:
+//
+//   By line                      -> lots of micro-allocations
+//   In blocks (custom allocator) -> I have to do reference counting to free anything
+//   Load pre-alloc, then by line -> Fast for typical case, no or few micro-allocations
+//
 
 namespace {
 
@@ -47,6 +56,45 @@ namespace {
     std::size_t extraByteCount = byteCount % alignment;
     if(extraByteCount > 0) {
       byteCount += (alignment - extraByteCount);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Checks whether the specified character is a whiteapce</summary>
+  /// <param name="utf8SingleByteCharacter">
+  ///   Character the will be checked for being a whitespace
+  /// </param>
+  /// <returns>True if the character was a whitespace, false otherwise</returns>
+  bool isWhitepace(std::uint8_t utf8SingleByteCharacter) {
+    return (
+      (utf8SingleByteCharacter == ' ') ||
+      (utf8SingleByteCharacter == '\t') ||
+      (utf8SingleByteCharacter == '\r') ||
+      (utf8SingleByteCharacter == '\n')
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Skips whitespace before and after other characters</summary>
+  /// <param name="begin">String beginning to trim in forward direction</param>
+  /// <param name="end">One past the string's end to trim backwards</param>
+  void trim(const std::uint8_t *begin, const std::uint8_t *end) {
+    while(end > begin) {
+      --end;
+      if(!isWhitepace(*end)) {
+        ++end;
+        break;
+      }
+    }
+
+    while(begin < end) {
+      if(!isWhitepace(*begin)) {
+        break;
+      }
+
+      ++begin;
     }
   }
 
@@ -70,7 +118,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       sectionStarted(false),
       sectionEnded(false),
       foundAssignment(false),
-      lineIsBullshit(false) {}
+      lineIsMalformed(false) {}
 
     /// <summary>Notifies the memory estimator that a new line has begun</summary>
     /// <param name="filePosition">Current position in the file scan</param>
@@ -85,7 +133,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Notifies the memory estimator that the current line has ended</summary>
     /// <param name="filePosition">Current position in the file scan</param>
     public: void EndLine(const std::uint8_t *filePosition) {
-      if(this->lineIsBullshit) {
+      if(this->lineIsMalformed) {
         growUntilAligned(this->ByteCount, alignof(Line));
         this->ByteCount += sizeof(Line[2]) / 2;
       } else if(this->foundAssignment) {
@@ -105,7 +153,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       this->sectionStarted = false;
       this->sectionEnded = false;
       this->foundAssignment =false;
-      this->lineIsBullshit = false;
+      this->lineIsMalformed = false;
     }
 
     /// <summary>Notifies the memory estimator that a section has been opened</summary>
@@ -128,7 +176,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Notifies the memory estimator that an equals sign has been found</summary>
     public: void AddAssignment() {
       if(this->foundAssignment) {
-        this->lineIsBullshit = true;
+        this->lineIsMalformed = true;
       } else {
         this->foundAssignment = true;
       }
@@ -145,7 +193,134 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Whether an equals sign was encountered</summary>
     private: bool foundAssignment;
     /// <summary>Whether we a proof that the current line is malformed</summary>
-    private: bool lineIsBullshit;
+    private: bool lineIsMalformed;
+
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Builds the document model according to the parsed file contents</summary>
+  class IniDocumentModel::ModelBuilder {
+
+    /// <summary>Initializes a new model builder filling the specified document model</summary>
+    /// <param name="targetDocumentModel">Document model the builder will fill</param>
+    /// <param name="allocatedByteCount">
+    ///   Number of bytes the document model has allocated as the initial chunk
+    /// </param>
+    public: ModelBuilder(IniDocumentModel *targetDocumentModel, std::size_t allocatedByteCount) :
+      targetDocumentModel(targetDocumentModel),
+      allocatedByteCount(allocatedByteCount),
+      lineStartPosition(nullptr),
+      sectionStartPosition(nullptr),
+      sectionEndPosition(nullptr),
+      equalsSignPosition(nullptr),
+      isMalformedLine(false) {}
+
+    /// <summary>Notifies the model builder that a new line has begun</summary>
+    /// <param name="filePosition">Current position in the parsed file</param>
+    public: void BeginLine(const std::uint8_t *filePosition) {
+      if(this->lineStartPosition != nullptr) {
+        EndLine(filePosition);
+      }
+
+      this->lineStartPosition = filePosition;
+    }
+
+    /// <summary>Notifies the memory estimator that the current line has ended</summary>
+    /// <param name="filePosition">Current position in the file scan</param>
+    public: void EndLine(const std::uint8_t *filePosition) {
+      if(!this->isMalformedLine) {
+        if(this->equalsSignPosition != nullptr) { // Is it a property assignment line?
+          PropertyLine *newLine = addLine<PropertyLine>(this->lineStartPosition, filePosition);
+        } else if(this->sectionEndPosition != nullptr) { // end is only set when start is set
+          SectionLine *newLine = addLine<SectionLine>(this->lineStartPosition, filePosition);
+          //newLine->NameStartIndex = nameStart - this->lineStartPosition;
+          //newLine->NameLength = nameEnd - nameStart;
+          //this->targetDocumentModel->sections.insert(
+          //  new IndexedSection()
+          //)
+        } else { // It's a meaningless line
+          Line *newLine = addLine<Line>(this->lineStartPosition, filePosition);
+        }
+      }
+
+      this->lineStartPosition = filePosition;
+      
+      this->sectionStartPosition = nullptr;
+      this->sectionEndPosition = nullptr;
+      this->equalsSignPosition = nullptr;
+      this->isMalformedLine = false;
+    }
+
+    /// <summary>Notifies the memory estimator that a section has been opened</summary>
+    /// <param name="filePosition">Current position in the file scan</param>
+    public: void BeginSection(const std::uint8_t *filePosition) {
+      if(this->sectionEndPosition != nullptr) {
+
+        // If there is a previous section, that means there are two sections in the same
+        // line and we need to cut the current line in two
+        if(this->sectionEndPosition == nullptr) {
+          this->isMalformedLine = true;
+        } else {
+          EndLine(filePosition);
+        }
+
+      }
+
+      this->sectionStartPosition = filePosition;
+    }
+
+    /// <summary>Notifies the memory estimator that a section has been closed</summary>
+    /// <param name="filePosition">Current position in the file scan</param>
+    /// <param name="nameStart">Position in the file where the section name begins</param>
+    /// <param name="nameEnd">File position one after the end of the section name</param>
+    public: void EndSection(
+      const std::uint8_t *filePosition,
+      const std::uint8_t *nameStart, const std::uint8_t *nameEnd
+    ) {
+      if(this->sectionStartPosition == nullptr) {
+        this->isMalformedLine = true;
+      } else if(this->sectionEndPosition == nullptr) {
+        this->sectionEndPosition = filePosition;
+      } else {
+        this->isMalformedLine = true;
+      }
+    }
+
+/*
+    /// <summary>Notifies the memory estimator that an equals sign has been found</summary>
+    public: void AddAssignment() {
+      if(this->foundAssignment) {
+        this->lineIsMalformed = true;
+      } else {
+        this->foundAssignment = true;
+      }
+    }
+*/
+
+    private: template<typename TLine>
+    TLine *addLine(const std::uint8_t *lineBegin, const std::uint8_t *lineEnd) { 
+      // initialize contents and length, too.
+      // decrement allocatedByteCount
+      // link new line into structures
+      return nullptr;
+    }
+
+    /// <summary>Document model this builder will fill with parsed elements</summary>
+    private: IniDocumentModel *targetDocumentModel;
+    /// <summary>Remaining bytes available of the document model's pre-allocation</summary>
+    private: std::size_t allocatedByteCount;
+
+    /// <summary>File offset at which the current line begins</summary>
+    private: const std::uint8_t *lineStartPosition;
+    /// <summary>File offset at which the current section starts, if any</summary>
+    private: const std::uint8_t *sectionStartPosition;
+    /// <summary>File offset at which the current section ended, if any</summary>
+    private: const std::uint8_t *sectionEndPosition;
+    /// <summary>File offset at which the current assignment's equals sign is</summary>
+    private: const std::uint8_t *equalsSignPosition;
+    /// <summary>Do we have conclusive evidence that the line is malformed?</summary>
+    private: bool isMalformedLine;
 
   };
 
@@ -179,11 +354,18 @@ namespace Nuclex { namespace Support { namespace Settings {
     hasEmptyLinesBetweenProperties(true) {
 
     std::size_t requiredMemory = estimateRequiredMemory(fileContents, byteCount);
+    this->loadedLinesMemory = new std::uint8_t[requiredMemory];
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::~IniDocumentModel() {
+
+    // This can be a nullptr if a new .ini file was constructed, but deleting
+    // a nullptr is allowed (it's a no-op) by the C++ standard
+    delete[] this->loadedLinesMemory;
+
+    // Delete the memory for any other lines that were created
     for(
       std::unordered_set<std::uint8_t *>::iterator iterator = this->createdLinesMemory.begin();
       iterator != this->createdLinesMemory.end();
@@ -191,6 +373,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ) {
       delete[] *iterator;
     }
+
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -215,9 +398,9 @@ namespace Nuclex { namespace Support { namespace Settings {
       const std::uint8_t *fileEnd = fileContents + byteCount;
       while(fileBegin < fileEnd) {
         std::uint8_t current = *fileBegin;
-        previousWasNewLine = (current == '\n');
 
         // Newlines always reset the state, this parser does not support multi-line statements
+        previousWasNewLine = (current == '\n');
         if(previousWasNewLine) {
           isInsideQuote = false;
           encounteredComment = false;
@@ -249,6 +432,63 @@ namespace Nuclex { namespace Support { namespace Settings {
     } // beauty scope
 
     return memoryEstimate.ByteCount;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void IniDocumentModel::parseFileContents(
+    const std::uint8_t *fileContents, std::size_t byteCount,
+    std::size_t allocatedByteCount
+  ) {
+    ModelBuilder modelBuilder(this, allocatedByteCount);
+    {
+      bool previousWasNewLine = false;
+      bool isInsideQuote = false;
+      bool encounteredComment = false;
+
+      // Make sure the memory estimator knows where the first line starts
+      modelBuilder.BeginLine(fileContents);
+
+      // Go through the entire file contents byte-by-byte and do some basic parsing
+      // to handle quotes and comments correctly. All of these characters are in
+      // the ASCII range, thus there are no UTF-8 sequences that could be mistaken for
+      // them (multi-byte UTF-8 codepoints will have the highest bit set in all bytes)
+      const std::uint8_t *fileBegin = fileContents;
+      const std::uint8_t *fileEnd = fileContents + byteCount;
+      while(fileBegin < fileEnd) {
+        std::uint8_t current = *fileBegin;
+        previousWasNewLine = (current == '\n');
+
+        // Newlines always reset the state, this parser does not support multi-line statements
+        if(previousWasNewLine) {
+          isInsideQuote = false;
+          encounteredComment = false;
+          modelBuilder.EndLine(fileBegin + 1);
+        } else if(isInsideQuote) { // Quotes make it ignore section and assignment characters
+          if(current == '"') {
+            isInsideQuote = false;
+          }
+        } else if(!encounteredComment) { // Otherwise, parse until comment encountered
+          switch(current) {
+            case ';':
+            case '#': { encounteredComment = true; break; }
+            case '[': { modelBuilder.BeginSection(fileBegin); break; }
+            case ']': { /* modelBuilder.EndSection(fileBegin); */ break; }
+            case '=': { /* modelBuilder.AddAssignment(fileBegin); */ break; }
+            case '"': { isInsideQuote = true; break; }
+            default: { break; }
+          }
+        }
+
+        ++fileBegin;
+      } // while fileBegin < fileEnd
+
+      // If the file didn't end with a line break, consider the contents of
+      // the file's final line as another line
+      if(!previousWasNewLine) {
+        modelBuilder.EndLine(fileEnd);
+      }
+    } // beauty scope
   }
 
   // ------------------------------------------------------------------------------------------- //
