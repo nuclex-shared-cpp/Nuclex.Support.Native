@@ -114,12 +114,8 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     #pragma endregion // class IndexedSection
 
-
-    // Internal helper to estimate the memory needed to hold the parsed document model
-    private: class MemoryEstimator;
-
     // Internal helper that builds the model according to the parser
-    private: class ModelBuilder;
+    private: class ModelLoader;
 
     /// <summary>Estimates the amount of memory required for the document model</summary>
     /// <param name="fileContents">Buffer holding the entire .ini file in memory</param>
@@ -161,6 +157,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: template<typename TLine>
     void freeLine(TLine *line);
 
+    /// <summary>Allocates memory for the specified type</summary>
+    /// <param name="extraByteCount">Extra bytes to make available after the type</param>
+    /// <returns>The memory address of the newly allocated type</returns>
+    private: template<typename T>
+    T *allocate(std::size_t extraByteCount = 0);
+
     /// <summary>Memory holding all Line instances from when the .ini file was loaded</summary>
     /// <remarks>
     ///   Instead of allocating lines individually, this document model allocates a big memory
@@ -168,13 +170,13 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   memory fragmentation and is fairly efficient as usually, .ini files aren't completely
     ///   restructured during an application run.
     /// </remarks>
-    private: std::uint8_t *loadedLinesMemory;
+    private: std::vector<std::uint8_t *> loadedLinesMemory;
     /// <summary>Memory for all Line instances that were created after loading</summary>
     private: std::unordered_set<std::uint8_t *> createdLinesMemory;
 
     /// <summary>Map from property name to the lines containing a property</summary>
     typedef std::unordered_map<std::string, PropertyLine *> PropertyMap;
-    /// <summary>Map from section name to a map holding the properties in the section</summary>
+    /// <summary>Map from section name to a type holding the properties in the section</summary>
     typedef std::unordered_map<std::string, IndexedSection *> SectionMap;
 
     /// <summary>Pointer to the first line, useful to reconstruct the file</summary>

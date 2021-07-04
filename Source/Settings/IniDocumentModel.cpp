@@ -23,7 +23,7 @@ License along with this library
 
 #include "IniDocumentModel.h"
 
-#include <memory> // for std::unique_ptr
+#include <memory> // for std::unique_ptr, std::align()
 #include <type_traits> // for std::is_base_of
 #include <algorithm> // for std::copy_n()
 #include <cassert> // for assert()
@@ -43,21 +43,9 @@ License along with this library
 //   By line                      -> lots of micro-allocations
 //   In blocks (custom allocator) -> I have to do reference counting to free anything
 //   Load pre-alloc, then by line -> Fast for typical case, no or few micro-allocations
-//
+//                                   But requires pre-scan of entire file + more code
 
 namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Grows the specified byte count until hittint the required alignment</summary>
-  /// <param name="byteCount">Byte counter that will be grown until aligned</param>
-  /// <param name="alignment">Alignment the byte counter must have</param>
-  void growUntilAligned(std::size_t &byteCount, std::size_t alignment) {
-    std::size_t extraByteCount = byteCount % alignment;
-    if(extraByteCount > 0) {
-      byteCount += (alignment - extraByteCount);
-    }
-  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -77,24 +65,16 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Skips whitespace before and after other characters</summary>
-  /// <param name="begin">String beginning to trim in forward direction</param>
-  /// <param name="end">One past the string's end to trim backwards</param>
-  void trim(const std::uint8_t *begin, const std::uint8_t *end) {
-    while(end > begin) {
-      --end;
-      if(!isWhitepace(*end)) {
-        ++end;
-        break;
-      }
-    }
-
-    while(begin < end) {
-      if(!isWhitepace(*begin)) {
-        break;
-      }
-
-      ++begin;
+  /// <summary>Determines the size of a type plus padding for another aligned member</summary>
+  /// <typeparam name="T">Type whose size plus padding will be determined</typeparam>
+  /// <returns>The size of the type plus padding with another aligned member</returns>
+  template<typename T>
+  constexpr std::size_t getSizePlusAlignmentPadding() {
+    constexpr std::size_t misalignment = (sizeof(T) % alignof(T));
+    if constexpr(misalignment > 0) {
+      return sizeof(T) + (alignof(T) - misalignment);
+    } else {
+      return sizeof(T);
     }
   }
 
@@ -106,114 +86,27 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>
-  ///   Accumulates an estimate of the memory required to hold the document model
-  /// </summary>
-  class Nuclex::Support::Settings::IniDocumentModel::MemoryEstimator {
-
-    /// <summary>Initializes a new memory estimator</summary>
-    public: MemoryEstimator() :
-      ByteCount(0),
-      lineStartPosition(nullptr),
-      sectionStarted(false),
-      sectionEnded(false),
-      foundAssignment(false),
-      lineIsMalformed(false) {}
-
-    /// <summary>Notifies the memory estimator that a new line has begun</summary>
-    /// <param name="filePosition">Current position in the file scan</param>
-    public: void BeginLine(const std::uint8_t *filePosition) {
-      if(this->lineStartPosition != nullptr) {
-        EndLine(filePosition);
-      }
-
-      this->lineStartPosition = filePosition;
-    }
-
-    /// <summary>Notifies the memory estimator that the current line has ended</summary>
-    /// <param name="filePosition">Current position in the file scan</param>
-    public: void EndLine(const std::uint8_t *filePosition) {
-      if(this->lineIsMalformed) {
-        growUntilAligned(this->ByteCount, alignof(Line));
-        this->ByteCount += sizeof(Line[2]) / 2;
-      } else if(this->foundAssignment) {
-        growUntilAligned(this->ByteCount, alignof(PropertyLine));
-        this->ByteCount += sizeof(PropertyLine[2]) / 2;
-      } else if(this->sectionStarted && this->sectionEnded) {
-        growUntilAligned(this->ByteCount, alignof(SectionLine));
-        this->ByteCount += sizeof(SectionLine[2]) / 2;
-      } else {
-        growUntilAligned(this->ByteCount, alignof(Line));
-        this->ByteCount += sizeof(Line[2]) / 2;
-      }
-
-      this->ByteCount += (filePosition - this->lineStartPosition);
-      this->lineStartPosition = filePosition;
-
-      this->sectionStarted = false;
-      this->sectionEnded = false;
-      this->foundAssignment =false;
-      this->lineIsMalformed = false;
-    }
-
-    /// <summary>Notifies the memory estimator that a section has been opened</summary>
-    /// <param name="filePosition">Current position in the file scan</param>
-    public: void BeginSection(const std::uint8_t *filePosition) {
-      if(this->sectionEnded) {
-        EndLine(filePosition);
-      }
-
-      this->sectionStarted = true;
-    }
-
-    /// <summary>Notifies the memory estimator that a section has been closed</summary>
-    public: void EndSection() {
-      if(this->sectionStarted) {
-        this->sectionEnded = true;
-      }
-    }
-
-    /// <summary>Notifies the memory estimator that an equals sign has been found</summary>
-    public: void AddAssignment() {
-      if(this->foundAssignment) {
-        this->lineIsMalformed = true;
-      } else {
-        this->foundAssignment = true;
-      }
-    }
-
-    /// <summary>Number of bytes accumulated so far</summary>
-    public: std::size_t ByteCount;
-    /// <summary>File offset at which the current line begins</summary>
-    private: const std::uint8_t *lineStartPosition;
-    /// <summary>Whether a section start marker was encountered</summary>
-    private: bool sectionStarted;
-    /// <summary>Whether a section end marker was encountered</summary>
-    private: bool sectionEnded;
-    /// <summary>Whether an equals sign was encountered</summary>
-    private: bool foundAssignment;
-    /// <summary>Whether we a proof that the current line is malformed</summary>
-    private: bool lineIsMalformed;
-
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Builds the document model according to the parsed file contents</summary>
-  class IniDocumentModel::ModelBuilder {
+  class IniDocumentModel::ModelLoader {
+
+    /// <summary>Amount of memory the model builder will allocate 
+    public: const static std::size_t ChunkSize = 4096; // bytes
 
     /// <summary>Initializes a new model builder filling the specified document model</summary>
     /// <param name="targetDocumentModel">Document model the builder will fill</param>
     /// <param name="allocatedByteCount">
     ///   Number of bytes the document model has allocated as the initial chunk
     /// </param>
-    public: ModelBuilder(IniDocumentModel *targetDocumentModel, std::size_t allocatedByteCount) :
+    public: ModelLoader(IniDocumentModel *targetDocumentModel) :
       targetDocumentModel(targetDocumentModel),
-      allocatedByteCount(allocatedByteCount),
+      memoryChunk(nullptr),
+      remainingByteCount(0),
       lineStartPosition(nullptr),
       sectionStartPosition(nullptr),
       sectionEndPosition(nullptr),
       equalsSignPosition(nullptr),
+      nameStartPosition(nullptr),
+      nameEndPosition(nullptr),
       isMalformedLine(false) {}
 
     /// <summary>Notifies the model builder that a new line has begun</summary>
@@ -300,6 +193,15 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     private: template<typename TLine>
     TLine *addLine(const std::uint8_t *lineBegin, const std::uint8_t *lineEnd) { 
+      TLine *newLine;
+      {
+        std::size_t lineLength = (lineEnd - lineBegin);
+
+        TLine *newLine = this->targetDocumentModel->allocateLine<TLine>(
+          lineBegin, lineLength
+        );
+      }
+
       // initialize contents and length, too.
       // decrement allocatedByteCount
       // link new line into structures
@@ -308,17 +210,25 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     /// <summary>Document model this builder will fill with parsed elements</summary>
     private: IniDocumentModel *targetDocumentModel;
-    /// <summary>Remaining bytes available of the document model's pre-allocation</summary>
-    private: std::size_t allocatedByteCount;
+    /// <summary>Memory chunk into which parsed lines are constructed</summary>
+    private: std::uint8_t *memoryChunk;
+    /// <summary>Remaining bytes available of the current memory chunk</summary>
+    private: std::size_t remainingByteCount;
 
     /// <summary>File offset at which the current line begins</summary>
     private: const std::uint8_t *lineStartPosition;
     /// <summary>File offset at which the current section starts, if any</summary>
     private: const std::uint8_t *sectionStartPosition;
-    /// <summary>File offset at which the current section ended, if any</summary>
+    /// <summary>File offset one after the end of the current section, if any</summary>
     private: const std::uint8_t *sectionEndPosition;
     /// <summary>File offset at which the current assignment's equals sign is</summary>
     private: const std::uint8_t *equalsSignPosition;
+
+    /// <summary>File offset at which the current section/property's name starts</summary>
+    private: const std::uint8_t *nameStartPosition;
+    /// <summary>File offset one after the end of the current section/property's name</summary>
+    private: const std::uint8_t *nameEndPosition;
+
     /// <summary>Do we have conclusive evidence that the line is malformed?</summary>
     private: bool isMalformedLine;
 
@@ -327,7 +237,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::IniDocumentModel() :
-    loadedLinesMemory(nullptr),
+    loadedLinesMemory(),
     createdLinesMemory(),
     firstLine(nullptr),
     sections(),
@@ -346,24 +256,39 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::IniDocumentModel(const std::uint8_t *fileContents, std::size_t byteCount) :
-    loadedLinesMemory(nullptr),
+    loadedLinesMemory(),
     createdLinesMemory(),
     firstLine(nullptr),
     sections(),
     hasSpacesAroundAssignment(true),
     hasEmptyLinesBetweenProperties(true) {
 
-    std::size_t requiredMemory = estimateRequiredMemory(fileContents, byteCount);
-    this->loadedLinesMemory = new std::uint8_t[requiredMemory];
+    //std::size_t requiredMemory = estimateRequiredMemory(fileContents, byteCount);
+    //this->loadedLinesMemory = new std::uint8_t[requiredMemory];
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::~IniDocumentModel() {
 
-    // This can be a nullptr if a new .ini file was constructed, but deleting
-    // a nullptr is allowed (it's a no-op) by the C++ standard
-    delete[] this->loadedLinesMemory;
+    /*
+    for(
+      SectionMap::iterator iterator = this->sections.begin();
+      iterator != this->sections.end();
+      ++iterator
+    ) {
+      delete iterator->second;
+    }
+    */
+
+    // If an existing .ini file was loaded, memory will have been allocated in chunks.
+    for(
+      std::vector<std::uint8_t *>::reverse_iterator iterator = this->loadedLinesMemory.rbegin();
+      iterator != this->loadedLinesMemory.rend();
+      ++iterator
+    ) {
+      delete[] *iterator;
+    }
 
     // Delete the memory for any other lines that were created
     for(
@@ -378,76 +303,18 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::size_t IniDocumentModel::estimateRequiredMemory(
-    const std::uint8_t *fileContents, std::size_t byteCount
-  ) {
-    MemoryEstimator memoryEstimate;
-    {
-      bool previousWasNewLine = false;
-      bool isInsideQuote = false;
-      bool encounteredComment = false;
-
-      // Make sure the memory estimator knows where the first line starts
-      memoryEstimate.BeginLine(fileContents);
-
-      // Go through the entire file contents byte-by-byte and do some basic parsing
-      // to handle quotes and comments correctly. All of these characters are in
-      // the ASCII range, thus there are no UTF-8 sequences that could be mistaken for
-      // them (multi-byte UTF-8 codepoints will have the highest bit set in all bytes)
-      const std::uint8_t *fileBegin = fileContents;
-      const std::uint8_t *fileEnd = fileContents + byteCount;
-      while(fileBegin < fileEnd) {
-        std::uint8_t current = *fileBegin;
-
-        // Newlines always reset the state, this parser does not support multi-line statements
-        previousWasNewLine = (current == '\n');
-        if(previousWasNewLine) {
-          isInsideQuote = false;
-          encounteredComment = false;
-          memoryEstimate.EndLine(fileBegin + 1);
-        } else if(isInsideQuote) { // Quotes make it ignore section and assignment characters
-          if(current == '"') {
-            isInsideQuote = false;
-          }
-        } else if(!encounteredComment) { // Otherwise, parse until comment encountered
-          switch(current) {
-            case ';':
-            case '#': { encounteredComment = true; break; }
-            case '[': { memoryEstimate.BeginSection(fileBegin); break; }
-            case ']': { memoryEstimate.EndSection(); break; }
-            case '=': { memoryEstimate.AddAssignment(); break; }
-            case '"': { isInsideQuote = true; break; }
-            default: { break; }
-          }
-        }
-
-        ++fileBegin;
-      } // while fileBegin < fileEnd
-
-      // If the file didn't end with a line break, consider the contents of
-      // the file's final line as another line
-      if(!previousWasNewLine) {
-        memoryEstimate.EndLine(fileEnd);
-      }
-    } // beauty scope
-
-    return memoryEstimate.ByteCount;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   void IniDocumentModel::parseFileContents(
     const std::uint8_t *fileContents, std::size_t byteCount,
     std::size_t allocatedByteCount
   ) {
-    ModelBuilder modelBuilder(this, allocatedByteCount);
+    ModelLoader modelLoader(this);
     {
       bool previousWasNewLine = false;
       bool isInsideQuote = false;
       bool encounteredComment = false;
 
       // Make sure the memory estimator knows where the first line starts
-      modelBuilder.BeginLine(fileContents);
+      modelLoader.BeginLine(fileContents);
 
       // Go through the entire file contents byte-by-byte and do some basic parsing
       // to handle quotes and comments correctly. All of these characters are in
@@ -463,7 +330,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         if(previousWasNewLine) {
           isInsideQuote = false;
           encounteredComment = false;
-          modelBuilder.EndLine(fileBegin + 1);
+          modelLoader.EndLine(fileBegin + 1);
         } else if(isInsideQuote) { // Quotes make it ignore section and assignment characters
           if(current == '"') {
             isInsideQuote = false;
@@ -472,7 +339,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           switch(current) {
             case ';':
             case '#': { encounteredComment = true; break; }
-            case '[': { modelBuilder.BeginSection(fileBegin); break; }
+            case '[': { modelLoader.BeginSection(fileBegin); break; }
             case ']': { /* modelBuilder.EndSection(fileBegin); */ break; }
             case '=': { /* modelBuilder.AddAssignment(fileBegin); */ break; }
             case '"': { isInsideQuote = true; break; }
@@ -486,7 +353,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       // If the file didn't end with a line break, consider the contents of
       // the file's final line as another line
       if(!previousWasNewLine) {
-        modelBuilder.EndLine(fileEnd);
+        modelLoader.EndLine(fileEnd);
       }
     } // beauty scope
   }
@@ -497,33 +364,13 @@ namespace Nuclex { namespace Support { namespace Settings {
   TLine *IniDocumentModel::allocateLine(const std::uint8_t *contents, std::size_t length) {
     static_assert(std::is_base_of<Line, TLine>::value && u8"TLine inherits from Line");
 
-    // Figure out how much space the structure would occupy in memory, including any padding
-    // before the next array element. This will let us safely created a single-allocation
-    // line instance that includes the actual line contents just behind the structure.
-    std::size_t alignedFooterOffset;
-    {
-      const TLine *dummy = nullptr;
-      alignedFooterOffset = (
-        reinterpret_cast<const std::uint8_t *>(dummy + 1) -
-        reinterpret_cast<const std::uint8_t *>(dummy)
-      );
-    }
+    TLine *newLine = allocate<TLine>(length);
+    newLine->Contents = (
+      reinterpret_cast<std::uint8_t *>(newLine) + getSizePlusAlignmentPadding<TLine>()
+    );
+    newLine->Length = length;
 
-    // Now allocate the memory block and place the line structure within it
-    TLine *newLine;
-    {
-      std::unique_ptr<std::uint8_t[]> memory(new std::uint8_t[alignedFooterOffset + length]);
-
-      newLine = reinterpret_cast<TLine *>(memory.get());
-      newLine->Contents = memory.get() + alignedFooterOffset;
-      newLine->Length = length;
-
-      std::copy_n(contents, length, newLine->Contents);
-
-      this->createdLinesMemory.insert(memory.get());
-
-      memory.release(); // Disown the unique_ptr so the line's memory is not freed
-    }
+    std::copy_n(contents, length, newLine->Contents);
 
     return newLine;
   }
@@ -537,6 +384,33 @@ namespace Nuclex { namespace Support { namespace Settings {
     std::uint8_t *memory = reinterpret_cast<std::uint8_t *>(line);
     this->createdLinesMemory.erase(memory);
     delete[] memory;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename T>
+  T *IniDocumentModel::allocate(std::size_t extraByteCount /* = 0 */) {
+
+    // While we're asked to allocate a specific type, making extra bytes available
+    // requires us to allocate as std::uint8_t. The start address still needs to be
+    // appropriately aligned for the requested type (otherwise we'd have to keep
+    // separate pointers for delete[] and for the allocated type).
+    #if defined(__STDCPP_DEFAULT_NEW_ALIGNMENT__)
+    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(Line));
+    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(SectionLine));
+    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(PropertyLine));
+    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(IndexedSection));
+    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(T));
+    #endif
+
+    // Calculate the exact amount of memory required, including the extra bytes
+    // aligned to the same conditions as the requested type.
+    constexpr std::size_t requiredMemory = getSizePlusAlignmentPadding<T>();
+    std::uint8_t *bytes = new std::uint8_t[requiredMemory + extraByteCount];
+    this->createdLinesMemory.insert(bytes);
+
+    return reinterpret_cast<T *>(bytes);
+
   }
 
   // ------------------------------------------------------------------------------------------- //
