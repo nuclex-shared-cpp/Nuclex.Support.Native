@@ -101,6 +101,8 @@ namespace Nuclex { namespace Support { namespace Settings {
       targetDocumentModel(targetDocumentModel),
       memoryChunk(nullptr),
       remainingByteCount(0),
+      currentLine(0),
+      currentSection(0),
       lineStartPosition(nullptr),
       sectionStartPosition(nullptr),
       sectionEndPosition(nullptr),
@@ -127,11 +129,14 @@ namespace Nuclex { namespace Support { namespace Settings {
           PropertyLine *newLine = addLine<PropertyLine>(this->lineStartPosition, filePosition);
         } else if(this->sectionEndPosition != nullptr) { // end is only set when start is set
           SectionLine *newLine = addLine<SectionLine>(this->lineStartPosition, filePosition);
-          //newLine->NameStartIndex = nameStart - this->lineStartPosition;
-          //newLine->NameLength = nameEnd - nameStart;
-          //this->targetDocumentModel->sections.insert(
-          //  new IndexedSection()
-          //)
+          /*
+          newLine->NameStartIndex = this->nameStartPosition;
+          if(this->nameEndPosition == nullptr) {
+            newLine->NameLength = 0;
+          } else {
+            newLine->NameLength = (this->nameEndPosition - this->nameStartPosition) + 1;
+          }
+          */
         } else { // It's a meaningless line
           Line *newLine = addLine<Line>(this->lineStartPosition, filePosition);
         }
@@ -167,10 +172,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="filePosition">Current position in the file scan</param>
     /// <param name="nameStart">Position in the file where the section name begins</param>
     /// <param name="nameEnd">File position one after the end of the section name</param>
-    public: void EndSection(
-      const std::uint8_t *filePosition,
-      const std::uint8_t *nameStart, const std::uint8_t *nameEnd
-    ) {
+    public: void EndSection(const std::uint8_t *filePosition) {
       if(this->sectionStartPosition == nullptr) {
         this->isMalformedLine = true;
       } else if(this->sectionEndPosition == nullptr) {
@@ -180,32 +182,45 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
     }
 
-/*
     /// <summary>Notifies the memory estimator that an equals sign has been found</summary>
-    public: void AddAssignment() {
-      if(this->foundAssignment) {
-        this->lineIsMalformed = true;
+    /// <param name="filePosition">Current position in the file scan</param>
+    public: void AddAssignment(const std::uint8_t *filePosition) {
+      if(this->equalsSignPosition == nullptr) {
+        this->equalsSignPosition = filePosition;
       } else {
-        this->foundAssignment = true;
+        this->isMalformedLine = true;
       }
     }
-*/
+
+    /// <summary>Sets position of the element name encountered while scanning</summary>
+    /// <param name="nameStartPosition">Position at which the element name begins</param>
+    /// <param name="nameEndPosition">Position one after the element name ends</param>
+    public: void SetName(
+      const std::uint8_t *nameStartPosition, const std::uint8_t *nameEndPosition
+    ) {
+      this->nameStartPosition = nameStartPosition;
+      this->nameEndPosition = nameEndPosition;
+    }
 
     private: template<typename TLine>
     TLine *addLine(const std::uint8_t *lineBegin, const std::uint8_t *lineEnd) { 
-      TLine *newLine;
-      {
-        std::size_t lineLength = (lineEnd - lineBegin);
+      TLine *newLine = this->targetDocumentModel->allocateLine<TLine>(
+        lineBegin, (lineEnd - lineBegin) + 1
+      );
+      if(this->currentLine == nullptr) {
+        newLine->Previous = newLine;
+        newLine->Next = newLine;
+      } else {
+        newLine->Previous = this->currentLine;
+        newLine->Next = this->currentLine->Next;
 
-        TLine *newLine = this->targetDocumentModel->allocateLine<TLine>(
-          lineBegin, lineLength
-        );
+        newLine->Next->Previous = newLine;
+        newLine->Previous->Next = newLine;
       }
 
-      // initialize contents and length, too.
-      // decrement allocatedByteCount
-      // link new line into structures
-      return nullptr;
+      this->currentLine = newLine;
+
+      return newLine;
     }
 
     /// <summary>Document model this builder will fill with parsed elements</summary>
@@ -214,6 +229,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: std::uint8_t *memoryChunk;
     /// <summary>Remaining bytes available of the current memory chunk</summary>
     private: std::size_t remainingByteCount;
+    private: Line *currentLine;
+    private: IndexedSection *currentSection;
 
     /// <summary>File offset at which the current line begins</summary>
     private: const std::uint8_t *lineStartPosition;
@@ -262,24 +279,21 @@ namespace Nuclex { namespace Support { namespace Settings {
     sections(),
     hasSpacesAroundAssignment(true),
     hasEmptyLinesBetweenProperties(true) {
-
-    //std::size_t requiredMemory = estimateRequiredMemory(fileContents, byteCount);
-    //this->loadedLinesMemory = new std::uint8_t[requiredMemory];
+    parseFileContents(fileContents, byteCount);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::~IniDocumentModel() {
 
-    /*
     for(
       SectionMap::iterator iterator = this->sections.begin();
       iterator != this->sections.end();
       ++iterator
     ) {
-      delete iterator->second;
+      //delete iterator->second;
+      iterator->second->~IndexedSection();
     }
-    */
 
     // If an existing .ini file was loaded, memory will have been allocated in chunks.
     for(
@@ -304,17 +318,20 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void IniDocumentModel::parseFileContents(
-    const std::uint8_t *fileContents, std::size_t byteCount,
-    std::size_t allocatedByteCount
+    const std::uint8_t *fileContents, std::size_t byteCount
   ) {
     ModelLoader modelLoader(this);
     {
       bool previousWasNewLine = false;
       bool isInsideQuote = false;
       bool encounteredComment = false;
+      //bool nameComplete = false;
 
       // Make sure the memory estimator knows where the first line starts
       modelLoader.BeginLine(fileContents);
+
+      const std::uint8_t *nameBegin = nullptr;
+      const std::uint8_t *nameEnd = nullptr;
 
       // Go through the entire file contents byte-by-byte and do some basic parsing
       // to handle quotes and comments correctly. All of these characters are in
@@ -330,6 +347,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         if(previousWasNewLine) {
           isInsideQuote = false;
           encounteredComment = false;
+          nameBegin = nameEnd = nullptr;
           modelLoader.EndLine(fileBegin + 1);
         } else if(isInsideQuote) { // Quotes make it ignore section and assignment characters
           if(current == '"') {
@@ -339,12 +357,33 @@ namespace Nuclex { namespace Support { namespace Settings {
           switch(current) {
             case ';':
             case '#': { encounteredComment = true; break; }
-            case '[': { modelLoader.BeginSection(fileBegin); break; }
-            case ']': { /* modelBuilder.EndSection(fileBegin); */ break; }
-            case '=': { /* modelBuilder.AddAssignment(fileBegin); */ break; }
             case '"': { isInsideQuote = true; break; }
+            case '[': {
+              nameBegin = nameEnd = nullptr;
+              modelLoader.BeginSection(fileBegin);
+              break;
+            }
+            case ']': {
+              modelLoader.SetName(nameBegin, nameEnd);
+              modelLoader.EndSection(fileBegin);
+              break;
+            }
+            case '=': {
+              modelLoader.SetName(nameBegin, nameEnd);
+              modelLoader.AddAssignment(fileBegin);
+              break;
+            }
             default: { break; }
           }
+        }
+
+        // Keep track of where the section or property name starts & ends
+        if(!isWhitepace(current) && (current != '[')) {
+          if(nameBegin == nullptr) {
+            nameBegin = fileBegin;
+          } else {
+            nameEnd = fileBegin;
+          } 
         }
 
         ++fileBegin;
@@ -364,6 +403,8 @@ namespace Nuclex { namespace Support { namespace Settings {
   TLine *IniDocumentModel::allocateLine(const std::uint8_t *contents, std::size_t length) {
     static_assert(std::is_base_of<Line, TLine>::value && u8"TLine inherits from Line");
 
+    // Allocate memory for a new line and assign its content pointer to hold
+    // the line loaded from the .ini file.
     TLine *newLine = allocate<TLine>(length);
     newLine->Contents = (
       reinterpret_cast<std::uint8_t *>(newLine) + getSizePlusAlignmentPadding<TLine>()

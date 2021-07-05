@@ -114,16 +114,11 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     #pragma endregion // class IndexedSection
 
+    // Internal helper that parses an existing .ini file into the document model
+    private: class FileParser;
+
     // Internal helper that builds the model according to the parser
     private: class ModelLoader;
-
-    /// <summary>Estimates the amount of memory required for the document model</summary>
-    /// <param name="fileContents">Buffer holding the entire .ini file in memory</param>
-    /// <param name="byteCount">Size of the .ini file in bytes</param>
-    /// <returns>The estimated amount of memory required to build the document model</returns>
-    private: static std::size_t estimateRequiredMemory(
-      const std::uint8_t *fileContents, std::size_t byteCount
-    );
 
     /// <summary>Parses the contents of an existing .ini file</summary>
     /// <param name="fileContents">Buffer holding the entire .ini file in memory</param>
@@ -132,14 +127,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   Amount of memory allocated in <see cref="createdLinesMemory" />
     /// </param>
     private: void parseFileContents(
-      const std::uint8_t *fileContents, std::size_t byteCount,
-      std::size_t allocatedByteCount
-    );
-
-    /// <summary>Parses an .ini file into this easily accessible document model</summary>
-    /// <param name="fileContents">The whole contents of an .ini file</param>
-    /// <param name="byteCount">Lenght of the .ini file in bytes</param>
-    private: std::pair<std::string::size_type, std::string::size_type> parseSectionName(
       const std::uint8_t *fileContents, std::size_t byteCount
     );
 
