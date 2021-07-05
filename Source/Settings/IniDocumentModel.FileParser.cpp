@@ -141,27 +141,137 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void IniDocumentModel::FileParser::parseName() {
+  void IniDocumentModel::FileParser::parseComment() {
+    while(this->parsePosition < this->fileEnd) {
+      std::uint8_t current = *this->parsePosition;
+      if(current == '\n') {
+        break;
+      } else { // Skip everything that isn't a newline character
+        ++this->parsePosition;
+      }
+    }
+  }
 
+  // ------------------------------------------------------------------------------------------- //
+
+  void IniDocumentModel::FileParser::parseName() {
+    bool isInQuote = false;
+    bool quoteEncountered = false;
+    bool isInSection = false;
+
+    while(this->parsePosition < this->fileEnd) {
+      std::uint8_t current = *this->parsePosition;
+
+      // When inside a quote, ignore everything but the closing quote
+      // (or newline / end-of-file which are handled in all cases)
+      if(isInQuote) {
+        isInQuote = (current != '"');
+        nameEnd = this->parsePosition;
+      } else { // Outside of quote
+        switch(current) {
+
+          // Section start found?
+          case '[': {
+            if((this->nameStart != nullptr) || isInSection) { // Bracket is not first char?
+              parseMalformedLine();
+              return;
+            } else if(this->sectionFound) { // Did we already see a section in this line?
+              submitLine();
+            }
+
+            isInSection = true;
+            nameStart = this->parsePosition + 1;
+            break;
+          }
+
+          // Section end found?
+          case ']': {
+            if((this->nameStart == nullptr) || !isInSection) { // Bracket is first char?
+              parseMalformedLine();
+              return;
+            }
+
+            isInSection = false;
+            this->nameEnd = this->parsePosition;
+            this->sectionFound = true;
+            break;
+          }
+
+          // Quoted name found?
+          case '"': {
+            if((this->nameStart != nullptr) || quoteEncountered) { // Quote is not first char?
+              parseMalformedLine();
+              return;
+            } else { // Quote is first char encountered
+              quoteEncountered = true;
+              isInQuote = true;
+              nameStart = this->parsePosition + 1;
+            }
+            break;
+          }
+
+          // Equals sign found? The name part is over, assignment follows
+          case '=': {
+            if(isInSection) { // Equals sign inside section name? -> line is malformed
+              parseMalformedLine();
+            }
+            return;
+          }
+
+          // Other characters without special meaning
+          default: {
+            if(!isWhitepace(current)) {
+              if(quoteEncountered) { // Characters after quote? -> line is malformed
+                parseMalformedLine();
+                return;
+              }
+              if(nameStart == nullptr) {
+                nameStart = this->parsePosition;
+              } else {
+                nameEnd = this->parsePosition + 1;
+              }
+            }
+            break;
+          }
+
+        } // switch on current byte
+      } // is outside of quote
+
+      // When a newline character is encountered, the name ends
+      if(current == '\n') {
+        if(isInQuote) { // newline inside a quote? -> line is malformed
+          this->lineIsMalformed = true;
+        }
+        return;
+      }
+    } // while parse position is before end of file
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void IniDocumentModel::FileParser::parseValue() {
+    bool isInQuote = false;
+    bool quoteEncountered = false;
+    bool isInSection = false;
+
+    while(this->parsePosition < this->fileEnd) {
+      std::uint8_t current = *this->parsePosition;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
-
-  void IniDocumentModel::FileParser::parseComment() {
-
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
 
   void IniDocumentModel::FileParser::parseMalformedLine() {
     this->lineIsMalformed = true;
 
+    while(this->parsePosition < this->fileEnd) {
+      std::uint8_t current = *this->parsePosition;
+      if(current == '\n') {
+        break;
+      }
+
+      ++this->parsePosition;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
