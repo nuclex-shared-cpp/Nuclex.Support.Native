@@ -75,17 +75,111 @@ namespace Nuclex { namespace Support { namespace Settings {
     const std::uint8_t *fileContents, std::size_t byteCount
   ) :
     fileBegin(fileContents),
-    fileEnd(fileContents + byteCount) {}
+    fileEnd(fileContents + byteCount),
+    parsePosition(nullptr),
+    lineStart(nullptr),
+    nameStart(nullptr),
+    nameEnd(nullptr),
+    valueStart(nullptr),
+    valueEnd(nullptr),
+    sectionFound(false),
+    equalsSignFound(false),
+    lineIsMalformed(false) {}
 
   // ------------------------------------------------------------------------------------------- //
 
-  void IniDocumentModel::FileParser::SetDocumentModel(IniDocumentModel *documentModel) {
+  void IniDocumentModel::FileParser::ParseInto(IniDocumentModel *documentModel) {
     this->target = documentModel;
+
+    // Reset the parser, just in case someone re-uses an instance
+    resetState();
+
+    // Go through the entire file contents byte-by-byte and select the correct parse
+    // mode for the elements we encounter. All of these characters are in the ASCII range,
+    // thus there are no UTF-8 sequences that could be mistaken for them (multi-byte UTF-8
+    // codepoints will have the highest bit set in all bytes)
+    this->parsePosition = this->lineStart = this->fileBegin;
+    while(this->parsePosition < this->fileEnd) {
+      std::uint8_t current = *this->parsePosition;
+      switch(current) {
+
+        // Comments (any section or property already found still counts)
+        case '#':
+        case ';': { parseComment(); break; }
+
+        // Equals sign, line is a property assignment
+        case '=': {
+          if(equalsSignFound) {
+            parseMalformedLine();
+          } else {
+            this->equalsSignFound = true;
+          }
+          break;
+        }
+
+        // Line break, submits the current line to the document model
+        case '\n': {
+          submitLine();
+          break;
+        }
+
+        // Other character, parse as section name, property name or property value
+        default: {
+          if(isWhitepace(current)) {
+            ++this->parsePosition; // skip over it
+          } else if(equalsSignFound) {
+            parseValue();
+          } else {
+            parseName();
+          }
+          break;
+        }
+
+      } // switch on current byte
+    } // while parse position is before end of file
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void IniDocumentModel::FileParser::Parse() {
+  void IniDocumentModel::FileParser::parseName() {
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void IniDocumentModel::FileParser::parseValue() {
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void IniDocumentModel::FileParser::parseComment() {
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+
+  void IniDocumentModel::FileParser::parseMalformedLine() {
+    this->lineIsMalformed = true;
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void IniDocumentModel::FileParser::submitLine() {
+    ++this->parsePosition;
+    resetState();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void IniDocumentModel::FileParser::resetState() {
+    this->lineStart = this->parsePosition;
+
+    this->nameStart = this->nameEnd = nullptr;
+    this->valueStart = this->valueEnd = nullptr;
+
+    this->sectionFound = this->equalsSignFound = this->lineIsMalformed = false;
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -37,14 +37,29 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="byteCount">Length of the .ini file in bytes</param>
     public: FileParser(const std::uint8_t *fileContents, std::size_t byteCount);
 
-    /// <summary>Sets the document model that will be filled by the parser</summary>
+    /// <summary>Parses the .ini file and fills the specified document model</summary>
     /// <param name="documentModel">
     ///   Document model into which the parsed properties will be written
     /// </param>
-    public: void SetDocumentModel(IniDocumentModel *documentModel);
+    public: void ParseInto(IniDocumentModel *documentModel);
 
-    /// <summary>Parses the .ini file and fills the specified document model</summary>
-    public: void Parse();
+    /// <summary>Parses a comment, must be called on the comment start character</summary>
+    private: void parseComment();
+
+    /// <summary>Parses a property or section name, must be called on first character</summary>
+    private: void parseName();
+
+    /// <summary>Parses a property value, must be called on first character</summary>
+    private: void parseValue();
+
+    /// <summary>Parses an invalid line until the next line break</summary>
+    private: void parseMalformedLine();
+
+    /// <summary>Submits was has been parsed so far as a line</summary>
+    private: void submitLine();
+
+    /// <summary>Resets the parser state</summary>
+    private: void resetState();
 
     /// <summary>The document model into this parser will fill</summary>
     private: IniDocumentModel *target;
@@ -53,7 +68,26 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: const std::uint8_t *fileBegin;
     /// <summary>Pointer one past the end of the .ini file in memory</memory>
     private: const std::uint8_t *fileEnd;
+    /// <summary>Pointer to the current parsing location</summary>
+    private: const std::uint8_t *parsePosition;
 
+    /// <summary>Position at which the current line in the .ini file begins</summary>
+    private: const std::uint8_t *lineStart;
+    /// <summary>Position at which the current section or property's name starts</summary>
+    private: const std::uint8_t *nameStart;
+    /// <summary>Position one after the end of the current section or property name</summary>
+    private: const std::uint8_t *nameEnd;
+    /// <summary>Position at which the current property's value starts, if any</summary>
+    private: const std::uint8_t *valueStart;
+    /// <summary>Position one after the end of the current property's value, if any</summary>
+    private: const std::uint8_t *valueEnd;
+
+    /// <summary>Whether a section was found in the current line</summary>
+    private: bool sectionFound;
+    /// <summary>Whether an equals sign was found in the current line</summary>
+    private: bool equalsSignFound;
+    /// <summary>Whether we encountered something that breaks the current line</summary>
+    private: bool lineIsMalformed;
 
   };
 
