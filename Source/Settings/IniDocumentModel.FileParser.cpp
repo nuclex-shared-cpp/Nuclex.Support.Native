@@ -36,14 +36,30 @@ License along with this library
 //   [Woop][Woop]    -> Two sections, one w/newline one w/o
 //   [Foo] Bar = Baz -> Section and assignment
 //   [[Yay]          -> Malformed, section
+//   Foo = Bar = Baz -> Malformed
+//   [Yay = Nay]     -> Malformed
+//   "Hello          -> Malformed
+//   Foo = [Bar]     -> Assignment, no section
+//   Foo = ]][Bar    -> Assignment
+//   "Foo" Bar = Baz -> Malformed
+//   Foo = "Bar" Baz -> Malformed
 //
 
-// Allocation schemes:
+// Considered allocation schemes:
 //
 //   By line                      -> lots of micro-allocations
 //   In blocks (custom allocator) -> I have to do reference counting to free anything
 //   Load pre-alloc, then by line -> Fast for typical case, no or few micro-allocations
 //                                   But requires pre-scan of entire file + more code
+
+// This could be done with tried-and-proven parser generators such as class Flex/Yacc/Bison
+// or Boost.Spirit. However, I wanted something lean, fast and without external dependencies.
+//
+// A middleground option would be a modern PEG parser generator like this:
+//   https://github.com/TheLartians/PEGParser
+//
+// But the implementation below, even if tedious, gets the job done, fast and efficient.
+//
 
 namespace {
 
@@ -93,6 +109,8 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     // Reset the parser, just in case someone re-uses an instance
     resetState();
+    this->currentSection = nullptr;
+    this->currentLine = nullptr;
 
     // Go through the entire file contents byte-by-byte and select the correct parse
     // mode for the elements we encounter. All of these characters are in the ASCII range,
@@ -113,6 +131,7 @@ namespace Nuclex { namespace Support { namespace Settings {
             parseMalformedLine();
           } else {
             this->equalsSignFound = true;
+            ++this->parsePosition;
           }
           break;
         }
@@ -215,6 +234,7 @@ namespace Nuclex { namespace Support { namespace Settings {
             if(isInSection) { // Equals sign inside section name? -> line is malformed
               parseMalformedLine();
             }
+            //this->equalsSignFound = true;
             return;
           }
 
@@ -227,9 +247,8 @@ namespace Nuclex { namespace Support { namespace Settings {
               }
               if(nameStart == nullptr) {
                 nameStart = this->parsePosition;
-              } else {
-                nameEnd = this->parsePosition + 1;
               }
+              nameEnd = this->parsePosition + 1;
             }
             break;
           }
@@ -244,6 +263,8 @@ namespace Nuclex { namespace Support { namespace Settings {
         }
         return;
       }
+
+      ++this->parsePosition;
     } // while parse position is before end of file
   }
 
@@ -252,11 +273,65 @@ namespace Nuclex { namespace Support { namespace Settings {
   void IniDocumentModel::FileParser::parseValue() {
     bool isInQuote = false;
     bool quoteEncountered = false;
-    bool isInSection = false;
 
     while(this->parsePosition < this->fileEnd) {
       std::uint8_t current = *this->parsePosition;
-    }
+
+      // When inside a quote, ignore everything but the closing quote
+      // (or newline / end-of-file which are handled in all cases)
+      if(isInQuote) {
+        isInQuote = (current != '"');
+        valueEnd = this->parsePosition;
+      } else { // Outside of quote
+        switch(current) {
+
+          // Quoted value found?
+          case '"': {
+            if((this->valueStart != nullptr) || quoteEncountered) { // Quote is not first char?
+              parseMalformedLine();
+              return;
+            } else { // Quote is first char encountered
+              quoteEncountered = true;
+              isInQuote = true;
+              valueStart = this->parsePosition + 1;
+            }
+            break;
+          }
+
+          // Another equals sign found? -> line is malformed
+          case '=': {
+            parseMalformedLine();
+            return;
+          }
+
+          // Other characters without special meaning
+          default: {
+            if(!isWhitepace(current)) {
+              if(quoteEncountered) { // Characters after quote? -> line is malformed
+                parseMalformedLine();
+                return;
+              }
+              if(valueStart == nullptr) {
+                valueStart = this->parsePosition;
+              }
+              valueEnd = this->parsePosition + 1;
+            }
+            break;
+          }
+
+        } // switch on current byte
+      } // is outside of quote
+
+      // When a newline character is encountered, the name ends
+      if(current == '\n') {
+        if(isInQuote) { // newline inside a quote? -> line is malformed
+          this->lineIsMalformed = true;
+        }
+        return;
+      }
+
+      ++this->parsePosition;
+    } // while parse position is before end of file
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -278,7 +353,80 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   void IniDocumentModel::FileParser::submitLine() {
     ++this->parsePosition;
+
+    Line *newLine;
+    if(this->lineIsMalformed) {
+      /*
+      newLine = this->target->allocateLine<Line>(
+        this->lineStart, this->parsePosition - this->lineStart
+      );
+      */
+      newLine = new Line();
+    } else if(this->equalsSignFound) {
+      newLine = generatePropertyLine();
+    } else if(this->sectionFound) {
+      newLine = generateSectionLine();
+    } else {
+      /*
+      newLine = this->target->allocateLine<Line>(
+        this->lineStart, this->parsePosition - this->lineStart
+      );
+      */
+      newLine = new Line();
+    }
+
+
     resetState();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  IniDocumentModel::PropertyLine *IniDocumentModel::FileParser::generatePropertyLine() {
+    /*
+    PropertyLine *newPropertyLine = this->target->allocateLine<PropertyLine>(
+      this->lineStart, this->parsePosition - this->lineStart
+    );
+    */
+    PropertyLine *newPropertyLine = new PropertyLine();
+
+    if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
+      newPropertyLine->NameStartIndex = this->nameStart - this->lineStart;
+      newPropertyLine->NameLength = this->nameEnd - this->nameStart;
+    } else {
+      newPropertyLine->NameStartIndex = 0;
+      newPropertyLine->NameLength = 0;
+    }
+
+    if((this->valueStart != nullptr) && (this->valueEnd != nullptr)) {
+      newPropertyLine->ValueStartIndex = this->valueStart - this->lineStart;
+      newPropertyLine->ValueLength = this->valueEnd - this->nameStart;
+    } else {
+      newPropertyLine->ValueStartIndex = 0;
+      newPropertyLine->ValueLength = 0;
+    }
+
+    return newPropertyLine;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  IniDocumentModel::SectionLine *IniDocumentModel::FileParser::generateSectionLine() {
+    /*
+    SectionLine *newSectionLine = this->target->allocateLine<SectionLine>(
+      this->lineStart, this->parsePosition - this->lineStart
+    );
+    */
+    SectionLine *newSectionLine = new SectionLine(); // TODO: Use chunk allocator
+
+    if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
+      newSectionLine->NameStartIndex = this->nameStart - this->lineStart;
+      newSectionLine->NameLength = this->nameEnd - this->nameStart;
+    } else {
+      newSectionLine->NameStartIndex = 0;
+      newSectionLine->NameLength = 0;
+    }
+
+    return newSectionLine;
   }
 
   // ------------------------------------------------------------------------------------------- //

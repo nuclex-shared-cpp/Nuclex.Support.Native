@@ -58,11 +58,27 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Submits was has been parsed so far as a line</summary>
     private: void submitLine();
 
+    //private: Line *generateMeaninglessLine();
+    private: PropertyLine *generatePropertyLine();
+    private: SectionLine *generateSectionLine();
+
     /// <summary>Resets the parser state</summary>
     private: void resetState();
 
+    /// <summary>Allocates memory for a single line</summary>
+    /// <typeparam name="TLine">Type of line that will be allocated</typeparam>
+    /// <param name="contents">The bytes this line consists of, including CR / CR-LF</param>
+    /// <param name="length">Length of the line in bytes</param>
+    /// <returns>The new line</returns>
+    private: template<typename TLine>
+    TLine *allocateLine(const std::uint8_t *contents, std::size_t length);
+
     /// <summary>The document model into this parser will fill</summary>
     private: IniDocumentModel *target;
+    /// <summary>Section into which parsed elements go currently</summary>
+    private: IndexedSection *currentSection;
+    /// <summary>Most recent parsed line</summary>
+    private: Line *currentLine;
 
     /// <summary>Pointer to the beginning of the .ini file in memory</summary>
     private: const std::uint8_t *fileBegin;

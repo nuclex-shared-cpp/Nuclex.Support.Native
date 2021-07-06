@@ -46,6 +46,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="byteCount">Lenght of the .ini file in bytes</param>
     public: IniDocumentModel(const std::uint8_t *fileContents, std::size_t byteCount);
 
+    // TODO: Provide second constructor with unique_ptr that transfers memory ownership
+
     /// <summary>Frees all memory owned by the instance</summary>
     public: ~IniDocumentModel();
 
