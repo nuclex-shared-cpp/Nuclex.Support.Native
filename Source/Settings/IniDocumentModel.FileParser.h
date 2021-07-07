@@ -25,6 +25,22 @@ License along with this library
 
 #include "IniDocumentModel.h"
 
+// Considered allocation schemes:
+//
+//   By line                      -> lots of micro-allocations
+//   In blocks (custom allocator) -> I have to do reference counting to free anything
+//   Load pre-alloc, then by line -> Fast for typical case, no or few micro-allocations
+//                                   But requires pre-scan of entire file + more code
+
+// This could be done with tried-and-proven parser generators such as classic Flex/Yacc/Bison
+// or Boost.Spirit. However, I wanted something lean, fast and without external dependencies.
+//
+// A middleground option would be a modern PEG parser generator like this:
+//   https://github.com/TheLartians/PEGParser
+//
+// But the implementation below, even if tedious, gets the job done, fast and efficient.
+//
+
 namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
@@ -58,23 +74,46 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Submits was has been parsed so far as a line</summary>
     private: void submitLine();
 
-    //private: Line *generateMeaninglessLine();
+    /// <summary>Generates a line in which a property is declared</summary>
+    /// <returns>A property-declaring line filled from the current parser state</returns>
     private: PropertyLine *generatePropertyLine();
+
+    /// <summary>Generates a line in which a section is declared</summary>
+    /// <returns>A section-declaring line filled from the current parser state</returns>
     private: SectionLine *generateSectionLine();
+
+    /// <summary>Retrieves the default section or create a new one if none exists</summary>
+    private: IndexedSection *getOrCreateDefaultSection();
 
     /// <summary>Resets the parser state</summary>
     private: void resetState();
 
-    /// <summary>Allocates memory for a single line</summary>
-    /// <typeparam name="TLine">Type of line that will be allocated</typeparam>
-    /// <param name="contents">The bytes this line consists of, including CR / CR-LF</param>
-    /// <param name="length">Length of the line in bytes</param>
-    /// <returns>The new line</returns>
-    private: template<typename TLine>
-    TLine *allocateLine(const std::uint8_t *contents, std::size_t length);
+    /// <summary>Allocates memory for the specified line and fills its content buffer</summary>
+    /// <typeparam name="TLine">
+    ///   Type of line that will be allocated. Must inherit from the <see cref="Line" /> type
+    /// <typeparam>
+    /// <param name="contents">Line contents that will be stored</param>
+    /// <param name="byteCount">Number of bytes the line long</param>
+    /// <returns>The newly allocated line with its content buffer filled</returns>
+    private: template<typename TLine> TLine *allocateLineChunked(
+      const std::uint8_t *contents, std::size_t byteCount
+    );
+
+    /// <summary>Allocates memory for the specified type with extra bytes</summary>
+    /// <typeparam name="T">Type for which memory will be allocated</typeparam>
+    /// <param name="extraByteCount">
+    ///   Number of extra bytes to make available behind the space used by the type
+    /// </param>
+    /// <returns>
+    ///   An *uninitialized* pointer to the requested type which is followed by
+    ///   the desired amount of extra bytes, aligned to the requirements of the type
+    /// </returns>
+    private: template<typename T> T *allocateChunked(std::size_t extraByteCount);
 
     /// <summary>The document model into this parser will fill</summary>
     private: IniDocumentModel *target;
+    /// <summary>Remaining space in the current allocation chunk</summary>
+    private: std::size_t remainingChunkByteCount;
     /// <summary>Section into which parsed elements go currently</summary>
     private: IndexedSection *currentSection;
     /// <summary>Most recent parsed line</summary>

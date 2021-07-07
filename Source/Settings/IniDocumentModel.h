@@ -108,9 +108,11 @@ namespace Nuclex { namespace Support { namespace Settings {
     protected: class IndexedSection {
 
       /// <summary>Line in which this section is declared. Can be a nullptr.</summary>
-      public: SectionLine *Line;
+      public: SectionLine *DeclarationLine;
       /// <summary>Index of property lines in this section by their property name</summary>
       public: std::unordered_map<std::string, PropertyLine *> PropertyMap;
+      /// <summary>Last line in this section</summary>
+      public: Line *LastLine;
 
     };
 

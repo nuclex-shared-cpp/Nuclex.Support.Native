@@ -45,23 +45,12 @@ License along with this library
 //   Foo = "Bar" Baz -> Malformed
 //
 
-// Considered allocation schemes:
-//
-//   By line                      -> lots of micro-allocations
-//   In blocks (custom allocator) -> I have to do reference counting to free anything
-//   Load pre-alloc, then by line -> Fast for typical case, no or few micro-allocations
-//                                   But requires pre-scan of entire file + more code
-
-// This could be done with tried-and-proven parser generators such as class Flex/Yacc/Bison
-// or Boost.Spirit. However, I wanted something lean, fast and without external dependencies.
-//
-// A middleground option would be a modern PEG parser generator like this:
-//   https://github.com/TheLartians/PEGParser
-//
-// But the implementation below, even if tedious, gets the job done, fast and efficient.
-//
-
 namespace {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Size if the chunks in which memory is allocated</summary>
+  const std::size_t AllocationChunkSize = 4096; // bytes
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -81,6 +70,21 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Determines the size of a type plus padding for another aligned member</summary>
+  /// <typeparam name="T">Type whose size plus padding will be determined</typeparam>
+  /// <returns>The size of the type plus padding with another aligned member</returns>
+  template<typename T>
+  constexpr std::size_t getSizePlusAlignmentPadding() {
+    constexpr std::size_t misalignment = (sizeof(T) % alignof(T));
+    if constexpr(misalignment > 0) {
+      return sizeof(T) + (alignof(T) - misalignment);
+    } else {
+      return sizeof(T);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Settings {
@@ -90,6 +94,10 @@ namespace Nuclex { namespace Support { namespace Settings {
   IniDocumentModel::FileParser::FileParser(
     const std::uint8_t *fileContents, std::size_t byteCount
   ) :
+    target(nullptr),
+    remainingChunkByteCount(0),
+    currentSection(nullptr),
+    currentLine(nullptr),
     fileBegin(fileContents),
     fileEnd(fileContents + byteCount),
     parsePosition(nullptr),
@@ -189,6 +197,13 @@ namespace Nuclex { namespace Support { namespace Settings {
       } else { // Outside of quote
         switch(current) {
 
+          // Comment start found?
+          case ';':
+          case '#': {
+            parseMalformedLine(); // Name without equals sign? -> Line is malformed
+            return;
+          }
+
           // Section start found?
           case '[': {
             if((this->nameStart != nullptr) || isInSection) { // Bracket is not first char?
@@ -285,6 +300,13 @@ namespace Nuclex { namespace Support { namespace Settings {
       } else { // Outside of quote
         switch(current) {
 
+          // Comment start found?
+          case ';':
+          case '#': {
+            parseComment();
+            return;
+          }
+
           // Quoted value found?
           case '"': {
             if((this->valueStart != nullptr) || quoteEncountered) { // Quote is not first char?
@@ -356,25 +378,19 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     Line *newLine;
     if(this->lineIsMalformed) {
-      /*
-      newLine = this->target->allocateLine<Line>(
+      newLine = allocateLineChunked<Line>(
         this->lineStart, this->parsePosition - this->lineStart
       );
-      */
       newLine = new Line();
     } else if(this->equalsSignFound) {
       newLine = generatePropertyLine();
     } else if(this->sectionFound) {
       newLine = generateSectionLine();
     } else {
-      /*
-      newLine = this->target->allocateLine<Line>(
+      newLine = allocateLineChunked<Line>(
         this->lineStart, this->parsePosition - this->lineStart
       );
-      */
-      newLine = new Line();
     }
-
 
     resetState();
   }
@@ -382,12 +398,9 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::PropertyLine *IniDocumentModel::FileParser::generatePropertyLine() {
-    /*
-    PropertyLine *newPropertyLine = this->target->allocateLine<PropertyLine>(
+    PropertyLine *newPropertyLine = allocateLineChunked<PropertyLine>(
       this->lineStart, this->parsePosition - this->lineStart
     );
-    */
-    PropertyLine *newPropertyLine = new PropertyLine();
 
     if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
       newPropertyLine->NameStartIndex = this->nameStart - this->lineStart;
@@ -411,12 +424,9 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::SectionLine *IniDocumentModel::FileParser::generateSectionLine() {
-    /*
-    SectionLine *newSectionLine = this->target->allocateLine<SectionLine>(
+    SectionLine *newSectionLine = allocateLineChunked<SectionLine>(
       this->lineStart, this->parsePosition - this->lineStart
     );
-    */
-    SectionLine *newSectionLine = new SectionLine(); // TODO: Use chunk allocator
 
     if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
       newSectionLine->NameStartIndex = this->nameStart - this->lineStart;
@@ -426,7 +436,26 @@ namespace Nuclex { namespace Support { namespace Settings {
       newSectionLine->NameLength = 0;
     }
 
+    //this->target->sections.find()
+
     return newSectionLine;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  IniDocumentModel::IndexedSection *IniDocumentModel::FileParser::getOrCreateDefaultSection() {
+    SectionMap::iterator sectionIterator = this->target->sections.find(std::string());
+    if(sectionIterator == this->target->sections.end()) {
+      //static std::uint8_t defaultSection = 
+      IndexedSection *newSection = allocateChunked<IndexedSection>(0);
+      new(newSection) IndexedSection();
+      this->target->sections.insert(
+        SectionMap::value_type(std::string(), newSection)
+      );
+      return newSection;
+    } else {
+      return sectionIterator->second;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -438,6 +467,64 @@ namespace Nuclex { namespace Support { namespace Settings {
     this->valueStart = this->valueEnd = nullptr;
 
     this->sectionFound = this->equalsSignFound = this->lineIsMalformed = false;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TLine>
+  TLine *IniDocumentModel::FileParser::allocateLineChunked(
+    const std::uint8_t *contents, std::size_t byteCount
+  ) {
+    static_assert(std::is_base_of<Line, TLine>::value && u8"TLine inherits from Line");
+
+    TLine *newLine = allocateChunked<TLine>(byteCount);
+    {
+      newLine->Contents = (
+        reinterpret_cast<std::uint8_t *>(newLine) + getSizePlusAlignmentPadding<TLine>()
+      );
+      newLine->Length = byteCount;
+
+      std::copy_n(contents, byteCount, newLine->Contents);
+    }
+    
+    return newLine;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename T>
+  T *IniDocumentModel::FileParser::allocateChunked(std::size_t extraByteCount) {
+
+    // While we're asked to allocate a specific type, making extra bytes available
+    // requires us to allocate as std::uint8_t. The start address still needs to be
+    // appropriately aligned for the requested type (otherwise we'd have to keep
+    // separate pointers for delete[] and for the allocated type).
+    #if defined(__STDCPP_DEFAULT_NEW_ALIGNMENT__)
+    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(T));
+    #endif
+
+    // Try to obtain the requested memory. If it is larger than half the allocation chunk
+    // size, it gets its own special allocation. Otherwise, it's either 
+    std::size_t totalByteCount = getSizePlusAlignmentPadding<T>() + extraByteCount;
+    if(totalByteCount * 2 < AllocationChunkSize) {
+      if(this->remainingChunkByteCount < totalByteCount) {
+        std::unique_ptr<std::uint8_t[]> newChunk(new std::uint8_t[AllocationChunkSize]);
+        this->target->loadedLinesMemory.push_back(newChunk.get());
+        this->remainingChunkByteCount = AllocationChunkSize - totalByteCount;
+        return reinterpret_cast<T *>(newChunk.release());
+      } else {
+        std::size_t chunkCount = this->target->loadedLinesMemory.size();
+        std::uint8_t *memory = this->target->loadedLinesMemory[chunkCount - 1];
+        memory += AllocationChunkSize - this->remainingChunkByteCount;
+        this->remainingChunkByteCount -= totalByteCount;
+        return reinterpret_cast<T *>(memory);
+      }
+    } else {
+      std::unique_ptr<std::uint8_t[]> newChunk(new std::uint8_t[totalByteCount]);
+      this->target->createdLinesMemory.insert(newChunk.get());
+      return reinterpret_cast<T *>(newChunk.release());
+    }
+
   }
 
   // ------------------------------------------------------------------------------------------- //
