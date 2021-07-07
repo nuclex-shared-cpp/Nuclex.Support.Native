@@ -164,6 +164,12 @@ namespace Nuclex { namespace Support { namespace Settings {
 
       } // switch on current byte
     } // while parse position is before end of file
+
+    // Even if the file's last line didn't end with a line break,
+    // we still treat it as a line of its own
+    if(this->parsePosition > this->lineStart) {
+      submitLine();
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -172,6 +178,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     while(this->parsePosition < this->fileEnd) {
       std::uint8_t current = *this->parsePosition;
       if(current == '\n') {
+        //submitLine();
         break;
       } else { // Skip everything that isn't a newline character
         ++this->parsePosition;
@@ -402,14 +409,8 @@ namespace Nuclex { namespace Support { namespace Settings {
       this->lineStart, this->parsePosition - this->lineStart
     );
 
-    if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
-      newPropertyLine->NameStartIndex = this->nameStart - this->lineStart;
-      newPropertyLine->NameLength = this->nameEnd - this->nameStart;
-    } else {
-      newPropertyLine->NameStartIndex = 0;
-      newPropertyLine->NameLength = 0;
-    }
-
+    // Initialize the property value. This will allow the document model to look up
+    // and read or write the property's value quickly when accessed by the user.
     if((this->valueStart != nullptr) && (this->valueEnd != nullptr)) {
       newPropertyLine->ValueStartIndex = this->valueStart - this->lineStart;
       newPropertyLine->ValueLength = this->valueEnd - this->nameStart;
@@ -417,6 +418,25 @@ namespace Nuclex { namespace Support { namespace Settings {
       newPropertyLine->ValueStartIndex = 0;
       newPropertyLine->ValueLength = 0;
     }
+
+    // Place the property name in the declaration line and also properly initialize
+    // a string we can use to look up or insert this property into the index.
+    std::string propertyName;
+    {
+      if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
+        newPropertyLine->NameStartIndex = this->nameStart - this->lineStart;
+        newPropertyLine->NameLength = this->nameEnd - this->nameStart;
+
+        propertyName.assign(nameStart, nameEnd);
+      } else {
+        newPropertyLine->NameStartIndex = 0;
+        newPropertyLine->NameLength = 0;
+
+        // leave propertyName unassigned
+      }
+    }
+
+
 
     return newPropertyLine;
   }
@@ -428,15 +448,41 @@ namespace Nuclex { namespace Support { namespace Settings {
       this->lineStart, this->parsePosition - this->lineStart
     );
 
-    if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
-      newSectionLine->NameStartIndex = this->nameStart - this->lineStart;
-      newSectionLine->NameLength = this->nameEnd - this->nameStart;
-    } else {
-      newSectionLine->NameStartIndex = 0;
-      newSectionLine->NameLength = 0;
+    // Place the section name in the declaration line and also properly initialize
+    // a string we can use to look up or insert this section into the index.
+    std::string sectionName;
+    {
+      if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
+        newSectionLine->NameStartIndex = this->nameStart - this->lineStart;
+        newSectionLine->NameLength = this->nameEnd - this->nameStart;
+
+        sectionName.assign(nameStart, nameEnd);
+      } else {
+        newSectionLine->NameStartIndex = 0;
+        newSectionLine->NameLength = 0;
+
+        // Leave sectionName empty
+      }
     }
 
-    //this->target->sections.find()
+    /*
+    SectionMap::iterator sectionIterator = this->target->sections.find(sectionName);
+    if(sectionIterator == this->target->sections.end()) {
+      IndexedSection *newSection = allocateChunked<IndexedSection>(0);
+      new(newSection) IndexedSection();
+      newSection->DeclarationLine = newSectionLine;
+      newSection->LastLine = nullptr;
+      this->currentSection = newSection;
+      this->target->sections.insert(
+        SectionMap::value_type(sectionName, newSection)
+      );
+    } else { // If a section appears twice or multiple .inis are loaded
+      this->currentSection = sectionIterator->second;
+      if(this->currentSection->LastLine == nullptr) {
+        this->currentSection->LastLine = newSectionLine;
+      }
+    }
+    */
 
     return newSectionLine;
   }
