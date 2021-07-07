@@ -137,16 +137,10 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Allocates memory for a single line</summary>
     /// <typeparam name="TLine">Type of line that will be allocated</typeparam>
     /// <param name="contents">The bytes this line consists of, including CR / CR-LF</param>
-    /// <param name="length">Length of the line in bytes</param>
+    /// <param name="byteCount">Length of the line in bytes</param>
     /// <returns>The new line</returns>
     private: template<typename TLine>
-    TLine *allocateLine(const std::uint8_t *contents, std::size_t length);
-
-    /// <summary>Frees memory for a single line</summary>
-    /// <typeparam name="TLine">Type of line that will be freed</typeparam>
-    /// <param name="line">Line instance that will be freed</param>
-    private: template<typename TLine>
-    void freeLine(TLine *line);
+    TLine *allocateLine(const std::uint8_t *contents, std::size_t byteCount);
 
     /// <summary>Allocates memory for the specified type</summary>
     /// <param name="extraByteCount">Extra bytes to make available after the type</param>

@@ -50,22 +50,6 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Checks whether the specified character is a whiteapce</summary>
-  /// <param name="utf8SingleByteCharacter">
-  ///   Character the will be checked for being a whitespace
-  /// </param>
-  /// <returns>True if the character was a whitespace, false otherwise</returns>
-  bool isWhitepace(std::uint8_t utf8SingleByteCharacter) {
-    return (
-      (utf8SingleByteCharacter == ' ') ||
-      (utf8SingleByteCharacter == '\t') ||
-      (utf8SingleByteCharacter == '\r') ||
-      (utf8SingleByteCharacter == '\n')
-    );
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Determines the size of a type plus padding for another aligned member</summary>
   /// <typeparam name="T">Type whose size plus padding will be determined</typeparam>
   /// <returns>The size of the type plus padding with another aligned member</returns>
@@ -161,31 +145,22 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TLine>
-  TLine *IniDocumentModel::allocateLine(const std::uint8_t *contents, std::size_t length) {
+  TLine *IniDocumentModel::allocateLine(const std::uint8_t *contents, std::size_t byteCount) {
     static_assert(std::is_base_of<Line, TLine>::value && u8"TLine inherits from Line");
 
-    // Allocate memory for a new line and assign its content pointer to hold
-    // the line loaded from the .ini file.
-    TLine *newLine = allocate<TLine>(length);
-    newLine->Contents = (
-      reinterpret_cast<std::uint8_t *>(newLine) + getSizePlusAlignmentPadding<TLine>()
-    );
-    newLine->Length = length;
+    // Allocate memory for a new line, assign its content pointer to hold
+    // the line loaded from the .ini file and copy the line contents into it.
+    TLine *newLine = allocate<TLine>(byteCount);
+    {
+      newLine->Contents = (
+        reinterpret_cast<std::uint8_t *>(newLine) + getSizePlusAlignmentPadding<TLine>()
+      );
+      newLine->Length = byteCount;
 
-    std::copy_n(contents, length, newLine->Contents);
+      std::copy_n(contents, byteCount, newLine->Contents);
+    }
 
     return newLine;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  template<typename TLine>
-  void IniDocumentModel::freeLine(TLine *line) {
-    static_assert(std::is_base_of<Line, TLine>::value && u8"TLine inherits from Line");
-
-    std::uint8_t *memory = reinterpret_cast<std::uint8_t *>(line);
-    this->createdLinesMemory.erase(memory);
-    delete[] memory;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -198,10 +173,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     // appropriately aligned for the requested type (otherwise we'd have to keep
     // separate pointers for delete[] and for the allocated type).
     #if defined(__STDCPP_DEFAULT_NEW_ALIGNMENT__)
-    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(Line));
-    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(SectionLine));
-    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(PropertyLine));
-    static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(IndexedSection));
     static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ >= alignof(T));
     #endif
 

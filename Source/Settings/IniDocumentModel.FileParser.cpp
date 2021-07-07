@@ -97,7 +97,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     target(nullptr),
     remainingChunkByteCount(0),
     currentSection(nullptr),
-    currentLine(nullptr),
     fileBegin(fileContents),
     fileEnd(fileContents + byteCount),
     parsePosition(nullptr),
@@ -118,7 +117,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     // Reset the parser, just in case someone re-uses an instance
     resetState();
     this->currentSection = nullptr;
-    this->currentLine = nullptr;
 
     // Go through the entire file contents byte-by-byte and select the correct parse
     // mode for the elements we encounter. All of these characters are in the ASCII range,
@@ -256,7 +254,7 @@ namespace Nuclex { namespace Support { namespace Settings {
             if(isInSection) { // Equals sign inside section name? -> line is malformed
               parseMalformedLine();
             }
-            //this->equalsSignFound = true;
+            // Just return, the root parser will set the equalsSignFound property.
             return;
           }
 
@@ -399,6 +397,25 @@ namespace Nuclex { namespace Support { namespace Settings {
       );
     }
 
+    // If this is the first line we submit to the document model,
+    // initialize the firstLine attribute so the file can be serialized top-to-bottom
+    if(this->target->firstLine == nullptr) {
+      this->target->firstLine = newLine;
+      newLine->Previous = newLine;
+      newLine->Next = newLine;
+    } else {
+      Line *lastLine = this->target->firstLine->Previous;
+
+      newLine->Next = this->target->firstLine;
+      newLine->Previous = lastLine;
+
+      lastLine->Next = newLine;
+      this->target->firstLine->Previous = newLine;
+    }
+
+    // The currentSection and index work is done by the generatePropertyLine()
+    // and generateSectionLine() methods, so we're already done here!
+
     resetState();
   }
 
@@ -436,7 +453,16 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
     }
 
-
+    // Add the new property to the index so it can be looked up by name
+    if(this->currentSection == nullptr) {
+      this->currentSection = getOrCreateDefaultSection();
+    }
+    if(this->currentSection->LastLine == nullptr) {
+      this->currentSection->LastLine = newPropertyLine;
+    }
+    this->currentSection->PropertyMap.insert(
+      PropertyMap::value_type(propertyName, newPropertyLine)
+    );
 
     return newPropertyLine;
   }
@@ -465,24 +491,22 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
     }
 
-    /*
+    // Update the currentSection attribute to 
     SectionMap::iterator sectionIterator = this->target->sections.find(sectionName);
     if(sectionIterator == this->target->sections.end()) {
       IndexedSection *newSection = allocateChunked<IndexedSection>(0);
       new(newSection) IndexedSection();
       newSection->DeclarationLine = newSectionLine;
-      newSection->LastLine = nullptr;
-      this->currentSection = newSection;
+      newSection->LastLine = newSectionLine;
       this->target->sections.insert(
         SectionMap::value_type(sectionName, newSection)
       );
+      this->currentSection = newSection;
     } else { // If a section appears twice or multiple .inis are loaded
       this->currentSection = sectionIterator->second;
-      if(this->currentSection->LastLine == nullptr) {
-        this->currentSection->LastLine = newSectionLine;
-      }
     }
-    */
+
+    this->currentSection->LastLine = newSectionLine;
 
     return newSectionLine;
   }
@@ -492,7 +516,6 @@ namespace Nuclex { namespace Support { namespace Settings {
   IniDocumentModel::IndexedSection *IniDocumentModel::FileParser::getOrCreateDefaultSection() {
     SectionMap::iterator sectionIterator = this->target->sections.find(std::string());
     if(sectionIterator == this->target->sections.end()) {
-      //static std::uint8_t defaultSection = 
       IndexedSection *newSection = allocateChunked<IndexedSection>(0);
       new(newSection) IndexedSection();
       this->target->sections.insert(
@@ -523,6 +546,8 @@ namespace Nuclex { namespace Support { namespace Settings {
   ) {
     static_assert(std::is_base_of<Line, TLine>::value && u8"TLine inherits from Line");
 
+    // Allocate memory for a new line, assign its content pointer to hold
+    // the line loaded from the .ini file and copy the line contents into it.
     TLine *newLine = allocateChunked<TLine>(byteCount);
     {
       newLine->Contents = (
@@ -539,7 +564,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   template<typename T>
-  T *IniDocumentModel::FileParser::allocateChunked(std::size_t extraByteCount) {
+  T *IniDocumentModel::FileParser::allocateChunked(std::size_t extraByteCount /* = 0 */) {
 
     // While we're asked to allocate a specific type, making extra bytes available
     // requires us to allocate as std::uint8_t. The start address still needs to be
@@ -553,19 +578,32 @@ namespace Nuclex { namespace Support { namespace Settings {
     // size, it gets its own special allocation. Otherwise, it's either 
     std::size_t totalByteCount = getSizePlusAlignmentPadding<T>() + extraByteCount;
     if(totalByteCount * 2 < AllocationChunkSize) {
-      if(this->remainingChunkByteCount < totalByteCount) {
+
+      // Calculate the offset within the chunk at which the new instance would start.
+      // Since the chunk itself is already aligned (__STDCPP_DEFAULT_NEW_ALIGNMENT__),
+      // we don't have to even look at the memory address itself. 
+      std::size_t occupiedByteCount = AllocationChunkSize - this->remainingChunkByteCount;
+      {
+        std::size_t misalignment = occupiedByteCount % alignof(T);
+        if(misalignment > 0) {
+          occupiedByteCount += alignof(T) - misalignment;
+        }
+      }
+
+      // If the new instance fits into the current chunk, place it there.
+      if(occupiedByteCount + totalByteCount < AllocationChunkSize) {
+        this->remainingChunkByteCount = AllocationChunkSize - occupiedByteCount - totalByteCount;
+        std::size_t chunkCount = this->target->loadedLinesMemory.size();
+        std::uint8_t *memory = this->target->loadedLinesMemory[chunkCount - 1];
+        return reinterpret_cast<T *>(memory + occupiedByteCount);
+      } else { // Instance didn't fit in the current chunk or no chunk allocated
         std::unique_ptr<std::uint8_t[]> newChunk(new std::uint8_t[AllocationChunkSize]);
         this->target->loadedLinesMemory.push_back(newChunk.get());
         this->remainingChunkByteCount = AllocationChunkSize - totalByteCount;
         return reinterpret_cast<T *>(newChunk.release());
-      } else {
-        std::size_t chunkCount = this->target->loadedLinesMemory.size();
-        std::uint8_t *memory = this->target->loadedLinesMemory[chunkCount - 1];
-        memory += AllocationChunkSize - this->remainingChunkByteCount;
-        this->remainingChunkByteCount -= totalByteCount;
-        return reinterpret_cast<T *>(memory);
       }
-    } else {
+
+    } else { // Requested instance would take half the allocation chunk size or more
       std::unique_ptr<std::uint8_t[]> newChunk(new std::uint8_t[totalByteCount]);
       this->target->createdLinesMemory.insert(newChunk.get());
       return reinterpret_cast<T *>(newChunk.release());

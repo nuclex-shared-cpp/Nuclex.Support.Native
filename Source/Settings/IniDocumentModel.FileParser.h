@@ -108,7 +108,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   An *uninitialized* pointer to the requested type which is followed by
     ///   the desired amount of extra bytes, aligned to the requirements of the type
     /// </returns>
-    private: template<typename T> T *allocateChunked(std::size_t extraByteCount);
+    private: template<typename T> T *allocateChunked(std::size_t extraByteCount = 0);
 
     /// <summary>The document model into this parser will fill</summary>
     private: IniDocumentModel *target;
@@ -116,8 +116,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: std::size_t remainingChunkByteCount;
     /// <summary>Section into which parsed elements go currently</summary>
     private: IndexedSection *currentSection;
-    /// <summary>Most recent parsed line</summary>
-    private: Line *currentLine;
 
     /// <summary>Pointer to the beginning of the .ini file in memory</summary>
     private: const std::uint8_t *fileBegin;
