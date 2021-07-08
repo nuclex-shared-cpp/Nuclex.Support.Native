@@ -40,6 +40,10 @@ namespace {
     u8"Negative = -42\n"
     u8"Big = 1152921504606846976\n"
     u8"BigNegative = -1152921504606846976\n"
+    u8"\n"
+    u8"[Strings]\n"
+    u8"Simple = Hello\n"
+    u8"Quoted = \"World\"\n"
     u8"\n";
 
   // ------------------------------------------------------------------------------------------- //
@@ -164,6 +168,28 @@ namespace Nuclex { namespace Support { namespace Settings {
     );
     ASSERT_TRUE(negativeInteger.has_value());
     EXPECT_EQ(negativeInteger.value(), -1152921504606846976LL);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniSettingsStoreTest, CanReadStrings) {
+    IniSettingsStore store;
+    store.Load(
+      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      sizeof(ExampleIniFile) - 1
+    );
+
+    std::optional<std::string> simpleString = store.Retrieve<std::string>(
+      u8"Strings", u8"Simple"
+    );
+    ASSERT_TRUE(simpleString.has_value());
+    EXPECT_EQ(simpleString.value(), u8"Hello");
+
+    std::optional<std::string> quotedString = store.Retrieve<std::string>(
+      u8"Strings", u8"Quoted"
+    );
+    ASSERT_TRUE(quotedString.has_value());
+    EXPECT_EQ(quotedString.value(), u8"World");
   }
 
   // ------------------------------------------------------------------------------------------- //
