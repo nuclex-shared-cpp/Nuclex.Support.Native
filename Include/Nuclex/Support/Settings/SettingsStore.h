@@ -133,6 +133,10 @@ namespace Nuclex { namespace Support { namespace Settings {
       const std::string &categoryName, const std::string &propertyName, const TValue &value
     );
 
+    //
+    // *** public interface ends here, all methods below are protected or private ***
+    //
+
     /// <summary>Retrieves the value of a boolean property from the store</summary>
     /// <param name="categoryName">Category from which the property will be read</param>
     /// <param name="propertyName">Name of the property whose value will be read</param>
