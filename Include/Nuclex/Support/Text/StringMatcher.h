@@ -97,7 +97,9 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <summary>Calculates a case-insensitive hash of an UTF-8 string</summary>
     /// <param name="text">UTF-8 string of which a hash value will be calculated</param>
     /// <returns>The case-insensitive hash value of the provided string</returns>
-    public: NUCLEX_SUPPORT_API std::size_t operator()(const std::string &text) const noexcept;
+    public: NUCLEX_SUPPORT_API std::size_t operator()(
+      const std::string &text
+    ) const noexcept;
   };
 
   // ------------------------------------------------------------------------------------------- //
@@ -108,7 +110,9 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="left">First UTF-8 string to compare</param>
     /// <param name="right">Other UTF-8 string to compare</param>
     /// <returns>True if both UTF-8 strings have equal contents</returns>
-    public: bool operator()(const std::string &left, const std::string &right) const noexcept;
+    public: NUCLEX_SUPPORT_API bool operator()(
+      const std::string &left, const std::string &right
+    ) const noexcept;
   };
 
   // ------------------------------------------------------------------------------------------- //
@@ -119,7 +123,9 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="left">First UTF-8 string to compare</param>
     /// <param name="right">Other UTF-8 string to compare</param>
     /// <returns>True if the first UTF-8 string is 'less', ignoring case</returns>
-    public: bool operator()(const std::string &left, const std::string &right) const noexcept;
+    public: NUCLEX_SUPPORT_API bool operator()(
+      const std::string &left, const std::string &right
+    ) const noexcept;
   };
 
   // ------------------------------------------------------------------------------------------- //
