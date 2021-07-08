@@ -46,6 +46,8 @@ namespace {
     u8"\n"
     u8"[ MoreStuff ]\n"
     u8"AlsoNoValue = ;\n"
+    u8"TrailingSpaces = Hello  \n"
+    u8"Quoted = \"Hello \" \n"
     u8"WeirdOne = \"\n"
     u8"YetAgain = #";
 
@@ -131,6 +133,18 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(IniDocumentModelTest, NamesAreCaseInsensitive) {
+    IniDocumentModel dom(
+      reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
+      sizeof(VanillaIniFile) - 1
+    );
+    std::optional<std::string> value = dom.GetPropertyValue(u8"impOrtantstUff", u8"nOrmAl");
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(value.value(), u8"42");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(IniDocumentModelTest, IgnoresComments) {
     IniDocumentModel dom(
       reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
@@ -189,6 +203,30 @@ namespace Nuclex { namespace Support { namespace Settings {
     value = dom.GetPropertyValue(u8"MoreStuff", u8"YetAgain");
     ASSERT_TRUE(value.has_value());
     ASSERT_EQ(value.value(), std::string());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniDocumentModelTest, SpacesAfterPropertyValueAreIgnored) {
+    IniDocumentModel dom(
+      reinterpret_cast<const std::uint8_t *>(EmptyAssignments),
+      sizeof(EmptyAssignments) - 1
+    );
+    std::optional<std::string> value = dom.GetPropertyValue(u8"MoreStuff", u8"TrailingSpaces");
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(value.value(), u8"Hello");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniDocumentModelTest, SpacesInsideQuotesAreKept) {
+    IniDocumentModel dom(
+      reinterpret_cast<const std::uint8_t *>(EmptyAssignments),
+      sizeof(EmptyAssignments) - 1
+    );
+    std::optional<std::string> value = dom.GetPropertyValue(u8"MoreStuff", u8"Quoted");
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(value.value(), u8"Hello ");
   }
 
   // ------------------------------------------------------------------------------------------- //

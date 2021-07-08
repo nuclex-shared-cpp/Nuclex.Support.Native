@@ -228,7 +228,10 @@ namespace Nuclex { namespace Support { namespace Settings {
       Text::CaseInsensitiveUtf8Hash, Text::CaseInsensitiveUtf8EqualTo
     > PropertyMap;
     /// <summary>Map from section name to a type holding the properties in the section</summary>
-    typedef std::unordered_map<std::string, IndexedSection *> SectionMap;
+    typedef std::unordered_map<
+      std::string, IndexedSection *,
+      Text::CaseInsensitiveUtf8Hash, Text::CaseInsensitiveUtf8EqualTo
+    > SectionMap;
 
     /// <summary>Pointer to the first line, useful to reconstruct the file</summary>
     private: Line *firstLine;
