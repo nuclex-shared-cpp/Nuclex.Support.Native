@@ -26,14 +26,39 @@ License along with this library
 #include <vector> // for std::vector
 #include <string> // for std::string
 #include <cstdint> // for std::uint8_t
+#include <optional> // for std::optional
 
 #include <unordered_map> // for std::unordered_map
 #include <unordered_set> // for std::unordered_set
+
+// IDEA: Provide second constructor with unique_ptr that transfers memory ownership
+//   This could, perhaps, save on a few allocations
+//   Downside is that ther parse would have to support two different allocation models
 
 namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>
+  ///   Document model storing the contents of an .ini file in an easily traversable format
+  /// </summary>
+  /// <remarks>
+  ///   <para>
+  ///     This is the same concept as you might find in a DOM (document object model) style
+  ///     XML parser, a representation of the .ini file's contents as a set of objects
+  ///     allowing easy manipulation and search through all nodes/elements.
+  ///   </para>
+  ///   <para>
+  ///     This document model takes great care to preserve the original lines and merely
+  ///     memorize where each lines' important characters are. Meaningless lines (comments
+  ///     and un-parseable ones) are preserved as well, allowing the reconstruction of
+  ///     the whole .ini file in its original format, even if values are modified.
+  ///   </para>
+  ///   <para>
+  ///     Allocation is done in chunks, reducing memory fragmentation and improving
+  ///     cache locality.
+  ///   </para>
+  /// </remarks>
   class IniDocumentModel {
 
     /// <summary>Initializes a new empty .ini file document model</summary>
@@ -45,8 +70,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="fileContents">The whole contents of an .ini file</param>
     /// <param name="byteCount">Lenght of the .ini file in bytes</param>
     public: IniDocumentModel(const std::uint8_t *fileContents, std::size_t byteCount);
-
-    // TODO: Provide second constructor with unique_ptr that transfers memory ownership
 
     /// <summary>Frees all memory owned by the instance</summary>
     public: ~IniDocumentModel();
@@ -121,8 +144,41 @@ namespace Nuclex { namespace Support { namespace Settings {
     // Internal helper that parses an existing .ini file into the document model
     private: class FileParser;
 
-    // Internal helper that builds the model according to the parser
-    private: class ModelLoader;
+    /// <summary>Retrieves a list of all sections that exist in the .ini file</summary>
+    /// <returns>A list of all sections contained in the .ini file</returns>
+    public: std::vector<std::string> GetAllSections() const;
+
+    /// <summary>Retrieves a list of all properties defined within a section</summary>
+    /// <param name="sectionName">Name of the section whose properties will be liste</param>
+    /// <returns>A list of all properties defined in the specified section</returns>
+    public: std::vector<std::string> GetAllProperties(const std::string &sectionName) const;
+
+    /// <summary>Looks up the value of a property</summary>
+    /// <param name="sectionName">Name of the section in which the property exists</param>
+    /// <param name="propertyName">Name of the property that will be looked up</param>
+    /// <returns>The value of the property if the property exists</returns>
+    public: std::optional<std::string> GetPropertyValue(
+      const std::string &sectionName, const std::string &propertyName
+    ) const;
+
+    /// <summary>Creates a property or updates an existing property's value</summary>
+    /// <param name="sectionName">Name of the section in which the property will be set</param>
+    /// <param name="propertyName">Name of the property that will be set</param>
+    /// <param name="propertyValue">Value that will be assigned to the property</param>
+    public: void SetPropertyValue(
+      const std::string &sectionName,
+      const std::string &propertyName,
+      const std::string &propertyValue
+    );
+
+    /// <summary>Deletes a property if it exists</summary>
+    /// <param name="sectionName">Name of the section in which the property exists</param>
+    /// <param name="propertyName">Name of the property that will be deleted</param>
+    /// <returns>True if the property existed and was deleted, false otherwise</returns>
+    public: bool DeleteProperty(
+      const std::string &sectionName,
+      const std::string &propertyName
+    );
 
     /// <summary>Parses the contents of an existing .ini file</summary>
     /// <param name="fileContents">Buffer holding the entire .ini file in memory</param>

@@ -234,6 +234,13 @@ namespace Nuclex { namespace Support { namespace Settings {
       const std::string &categoryName, const std::string &propertyName, const std::string &value
     ) override;
 
+    /// <summary>Hidden document model and formatting informations</summary>
+    private: struct PrivateImplementationData;
+    /// <summary>Hidden implementation details only required internally</summary>
+    private: PrivateImplementationData *privateImplementationData;
+    /// <summary>Whether the settings have been modified since they were loaded</summary>
+    private: bool modified;
+
   };
 
   // ------------------------------------------------------------------------------------------- //

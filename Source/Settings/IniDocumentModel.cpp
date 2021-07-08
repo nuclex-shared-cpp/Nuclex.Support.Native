@@ -104,13 +104,24 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   IniDocumentModel::~IniDocumentModel() {
 
+    // Indexed sections need to be destructed. The memory taken by the instances will
+    // be tracked in either the chunked lines memory (below) or the individual
+    // created lines memory (also below).
     for(
       SectionMap::iterator iterator = this->sections.begin();
       iterator != this->sections.end();
       ++iterator
     ) {
-      //delete iterator->second;
       iterator->second->~IndexedSection();
+    }
+
+    // Delete the memory for any lines that were created by the user
+    for(
+      std::unordered_set<std::uint8_t *>::iterator iterator = this->createdLinesMemory.begin();
+      iterator != this->createdLinesMemory.end();
+      ++iterator
+    ) {
+      delete[] *iterator;
     }
 
     // If an existing .ini file was loaded, memory will have been allocated in chunks.
@@ -122,15 +133,110 @@ namespace Nuclex { namespace Support { namespace Settings {
       delete[] *iterator;
     }
 
-    // Delete the memory for any other lines that were created
-    for(
-      std::unordered_set<std::uint8_t *>::iterator iterator = this->createdLinesMemory.begin();
-      iterator != this->createdLinesMemory.end();
-      ++iterator
-    ) {
-      delete[] *iterator;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::vector<std::string> IniDocumentModel::GetAllSections() const {
+    std::vector<std::string> sectionNames;
+    sectionNames.reserve(this->sections.size());
+
+    // If the default (global) section exists, list it first
+    SectionMap::const_iterator firstSectionIterator = this->sections.find(std::string());
+    if(firstSectionIterator != this->sections.end()) {
+      sectionNames.push_back(std::string());
     }
 
+    // Then add the remaining sections (in undefined order, thanks to unordered_map)
+    for(
+      SectionMap::const_iterator iterator = this->sections.begin();
+      iterator != this->sections.end();
+      ++iterator
+    ) {
+      const std::string &sectionName = iterator->first;
+      if(!sectionName.empty()) { // Don't add the default (global) a second time
+        sectionNames.push_back(sectionName);
+      }
+    }
+
+    return sectionNames;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::vector<std::string> IniDocumentModel::GetAllProperties(
+    const std::string &sectionName
+  ) const {
+    SectionMap::const_iterator sectionIterator = this->sections.find(sectionName);
+    if(sectionIterator == this->sections.end()) {
+      return std::vector<std::string>();
+    } else {
+      const PropertyMap &properties = sectionIterator->second->PropertyMap;
+
+      std::vector<std::string> propertyNames;
+      propertyNames.reserve(properties.size());
+
+      for(
+        PropertyMap::const_iterator propertyIterator = properties.begin();
+        propertyIterator != properties.end();
+        ++propertyIterator
+      ) {
+        propertyNames.push_back(propertyIterator->first);
+      }
+
+      return propertyNames;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::optional<std::string> IniDocumentModel::GetPropertyValue(
+    const std::string &sectionName, const std::string &propertyName
+  ) const {
+    SectionMap::const_iterator sectionIterator = this->sections.find(sectionName);
+    if(sectionIterator == this->sections.end()) {
+      return std::optional<std::string>();
+    } else {
+      const PropertyMap &properties = sectionIterator->second->PropertyMap;
+      PropertyMap::const_iterator propertyIterator = properties.find(propertyName);
+      if(propertyIterator == properties.end()) {
+        return std::optional<std::string>();
+      } else {
+        PropertyLine *propertyLine = propertyIterator->second;
+        if(propertyLine->ValueLength > 0) {
+          return std::string(
+            propertyLine->Contents + propertyLine->ValueStartIndex,
+            propertyLine->Contents + propertyLine->ValueStartIndex + propertyLine->ValueLength
+          );
+        } else {
+          return std::string(); // Property has an empty, but assigned value
+        }
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void IniDocumentModel::SetPropertyValue(
+    const std::string &sectionName,
+    const std::string &propertyName,
+    const std::string &propertyValue
+  ) {
+    (void)sectionName;
+    (void)propertyName;
+    (void)propertyValue;
+    throw u8"Not implemented yet";
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool IniDocumentModel::DeleteProperty(
+    const std::string &sectionName,
+    const std::string &propertyName
+  ) {
+    (void)sectionName;
+    (void)propertyName;
+    throw u8"Not implemented yet";
   }
 
   // ------------------------------------------------------------------------------------------- //

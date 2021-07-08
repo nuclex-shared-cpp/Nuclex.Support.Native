@@ -22,16 +22,24 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Settings/IniSettingsStore.h"
+#include "Nuclex/Support/Text/LexicalCast.h"
+#include "IniDocumentModel.h"
+
+#include <memory> // for std::unique_ptr
 
 namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  IniSettingsStore::IniSettingsStore() {}
+  IniSettingsStore::IniSettingsStore() :
+    privateImplementationData(nullptr),
+    modified(false) {}
 
   // ------------------------------------------------------------------------------------------- //
 
-  IniSettingsStore::IniSettingsStore(const std::string &iniFilePath) {
+  IniSettingsStore::IniSettingsStore(const std::string &iniFilePath) :
+    privateImplementationData(nullptr),
+    modified(false) {
     Load(iniFilePath);
   }
 
@@ -39,25 +47,37 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   IniSettingsStore::IniSettingsStore(
     const std::uint8_t *iniFileContents, std::size_t iniFileByteCount
-  ) {
+  ) :
+    privateImplementationData(nullptr),
+    modified(false) {
     Load(iniFileContents, iniFileByteCount);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   IniSettingsStore::~IniSettingsStore() {
+    if(this->privateImplementationData != nullptr) {
+      delete reinterpret_cast<IniDocumentModel *>(this->privateImplementationData);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void IniSettingsStore::Load(const std::string &iniFilePath) {
-
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void IniSettingsStore::Load(const std::uint8_t *iniFileContents, std::size_t iniFileByteCount) {
-
+    std::unique_ptr<IniDocumentModel> newDocumentModel(
+      new IniDocumentModel(iniFileContents, iniFileByteCount)
+    );
+    if(this->privateImplementationData != nullptr) {
+      delete reinterpret_cast<IniDocumentModel *>(this->privateImplementationData);
+    }
+    this->privateImplementationData = reinterpret_cast<PrivateImplementationData *>(
+      newDocumentModel.release()
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -76,14 +96,15 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   bool IniSettingsStore::HasChangedSinceLoad() const {
-    return false;
+    return this->modified;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   std::vector<std::string> IniSettingsStore::GetAllCategories() const {
-    std::vector<std::string> results;
-    return results;
+    return (
+      reinterpret_cast<IniDocumentModel *>(this->privateImplementationData)->GetAllSections()
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -91,13 +112,17 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::vector<std::string> IniSettingsStore::GetAllProperties(
     const std::string &categoryName /* = std::string() */
   ) const {
-    std::vector<std::string> results;
-    return results;
+    return (
+      reinterpret_cast<IniDocumentModel *>(this->privateImplementationData)->GetAllProperties(
+        categoryName
+      )
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   bool IniSettingsStore::DeleteCategory(const std::string &categoryName) {
+    
     return false;
   }
 
@@ -114,7 +139,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<bool> IniSettingsStore::RetrieveBooleanProperty(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<bool>();
+    if(this->privateImplementationData == nullptr) {
+      return std::optional<bool>();
+    } else {
+      std::optional<std::string> value = reinterpret_cast<IniDocumentModel *>(
+        this->privateImplementationData
+      )->GetPropertyValue(categoryName, propertyName);
+
+      if(value.has_value()) {
+        return Text::lexical_cast<bool>(value.value());
+      } else {
+        return std::optional<bool>();
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

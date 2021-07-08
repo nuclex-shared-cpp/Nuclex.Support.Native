@@ -63,8 +63,8 @@ namespace {
     return (
       (utf8SingleByteCharacter == ' ') ||
       (utf8SingleByteCharacter == '\t') ||
-      (utf8SingleByteCharacter == '\r') ||
-      (utf8SingleByteCharacter == '\n')
+      (utf8SingleByteCharacter == '\r')
+      //(utf8SingleByteCharacter == '\n')
     );
   }
 
@@ -197,6 +197,17 @@ namespace Nuclex { namespace Support { namespace Settings {
       // When inside a quote, ignore everything but the closing quote
       // (or newline / end-of-file which are handled in all cases)
       if(isInQuote) {
+        nameEnd = this->parsePosition; // Quotes name includes anything until closing quote
+        switch(current) {
+          case '"': {
+            isInQuote = false;
+            break;
+          }
+          case '\n': { // Newline without closing quote? -> Line is malformed
+            this->lineIsMalformed = true;
+            return;
+          }
+        }
         isInQuote = (current != '"');
         nameEnd = this->parsePosition;
       } else { // Outside of quote
@@ -219,7 +230,7 @@ namespace Nuclex { namespace Support { namespace Settings {
             }
 
             isInSection = true;
-            nameStart = this->parsePosition + 1;
+            //nameStart = this->parsePosition + 1;
             break;
           }
 
@@ -231,7 +242,7 @@ namespace Nuclex { namespace Support { namespace Settings {
             }
 
             isInSection = false;
-            this->nameEnd = this->parsePosition;
+            //this->nameEnd = this->parsePosition;
             this->sectionFound = true;
             break;
           }
@@ -258,6 +269,12 @@ namespace Nuclex { namespace Support { namespace Settings {
             return;
           }
 
+          // Newline found? Either the section was closed or the line is malformed.
+          case '\n': {
+            this->lineIsMalformed |= isInSection;
+            return;
+          }
+
           // Other characters without special meaning
           default: {
             if(!isWhitepace(current)) {
@@ -276,14 +293,6 @@ namespace Nuclex { namespace Support { namespace Settings {
         } // switch on current byte
       } // is outside of quote
 
-      // When a newline character is encountered, the name ends
-      if(current == '\n') {
-        if(isInQuote) { // newline inside a quote? -> line is malformed
-          this->lineIsMalformed = true;
-        }
-        return;
-      }
-
       ++this->parsePosition;
     } // while parse position is before end of file
   }
@@ -300,8 +309,17 @@ namespace Nuclex { namespace Support { namespace Settings {
       // When inside a quote, ignore everything but the closing quote
       // (or newline / end-of-file which are handled in all cases)
       if(isInQuote) {
-        isInQuote = (current != '"');
-        valueEnd = this->parsePosition;
+        valueEnd = this->parsePosition; // Quotes name includes anything until closing quote
+        switch(current) {
+          case '"': {
+            isInQuote = false;
+            break;
+          }
+          case '\n': { // Newline without closing quote? -> Line is malformed
+            this->lineIsMalformed = true;
+            return;
+          }
+        }
       } else { // Outside of quote
         switch(current) {
 
@@ -331,6 +349,11 @@ namespace Nuclex { namespace Support { namespace Settings {
             return;
           }
 
+          // Newline found? The value ends, we're done
+          case '\n': {
+            return;
+          }
+
           // Other characters without special meaning
           default: {
             if(!isWhitepace(current)) {
@@ -348,14 +371,6 @@ namespace Nuclex { namespace Support { namespace Settings {
 
         } // switch on current byte
       } // is outside of quote
-
-      // When a newline character is encountered, the name ends
-      if(current == '\n') {
-        if(isInQuote) { // newline inside a quote? -> line is malformed
-          this->lineIsMalformed = true;
-        }
-        return;
-      }
 
       ++this->parsePosition;
     } // while parse position is before end of file
@@ -430,7 +445,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     // and read or write the property's value quickly when accessed by the user.
     if((this->valueStart != nullptr) && (this->valueEnd != nullptr)) {
       newPropertyLine->ValueStartIndex = this->valueStart - this->lineStart;
-      newPropertyLine->ValueLength = this->valueEnd - this->nameStart;
+      newPropertyLine->ValueLength = this->valueEnd - this->valueStart;
     } else {
       newPropertyLine->ValueStartIndex = 0;
       newPropertyLine->ValueLength = 0;
@@ -575,7 +590,10 @@ namespace Nuclex { namespace Support { namespace Settings {
     #endif
 
     // Try to obtain the requested memory. If it is larger than half the allocation chunk
-    // size, it gets its own special allocation. Otherwise, it's either 
+    // size, it gets its own special allocation. Otherwise, it either fits in the current
+    // chunk or we need to start a new one. The alignment of the extra bytes is only for
+    // good manners but uses the same alignment as members of type T, relative to the start
+    // address of type T, which is also aligned, so we don't need to look at the pointer.
     std::size_t totalByteCount = getSizePlusAlignmentPadding<T>() + extraByteCount;
     if(totalByteCount * 2 < AllocationChunkSize) {
 
