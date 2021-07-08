@@ -222,10 +222,40 @@ namespace Nuclex { namespace Support { namespace Settings {
     const std::string &propertyName,
     const std::string &propertyValue
   ) {
+#if 1
     (void)sectionName;
     (void)propertyName;
     (void)propertyValue;
     throw u8"Not implemented yet";
+#else
+    IndexedSection *targetSection;
+    {
+      SectionMap::iterator sectionIterator = this->sections.find(sectionName);
+      if(sectionIterator == this->sections.end()) {
+        targetSection = allocate<IndexedSection>(0);
+        new(targetSection) IndexedSection;
+
+        // Can the default section at the start of the file be used for this?
+        if(sectionName.empty()) {
+          targetSection->DeclarationLine = nullptr;
+          targetSection->LastLine = nullptr;
+        } else { // No, we need an explicit section
+          SectionLine *newSectionLine = allocateLine<SectionLine>(
+            nullptr, sectionName.size() + 3
+          );
+          newSectionLine->NameStartIndex = 1;
+          newSectionLine->NameLength = sectionName.length();
+
+          newSectionLine->Contents[0] = '[';
+          std::copy_n(
+            sectionName.c_str(), newSectionLine->NameLength, newSectionLine->Contents + 1
+          );
+          newSectionLine->Contents[newSectionLine->NameLength + 1] = ']';
+          newSectionLine->Contents[newSectionLine->NameLength + 2] = '\n';
+        }
+      }
+    }
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -263,7 +293,9 @@ namespace Nuclex { namespace Support { namespace Settings {
       );
       newLine->Length = byteCount;
 
-      std::copy_n(contents, byteCount, newLine->Contents);
+      if(contents != nullptr) {
+        std::copy_n(contents, byteCount, newLine->Contents);
+      }
     }
 
     return newLine;

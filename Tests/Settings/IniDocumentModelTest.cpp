@@ -280,4 +280,34 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(IniDocumentModelTest, AllMalformedElementsAreIgnored) {
+    IniDocumentModel dom(
+      reinterpret_cast<const std::uint8_t *>(MalformedLines),
+      sizeof(MalformedLines) - 1
+    );
+
+    // All "bad" (malformed) sections and lines conveniently have a name
+    // that includes the word "Bad" :-)
+    bool badSectionOrPropertyFound = false;
+
+    std::vector<std::string> sections = dom.GetAllSections();
+    for(std::size_t index = 0; index < sections.size(); ++index) {
+      if(sections[index].find("Bad") != std::string::npos) {
+        badSectionOrPropertyFound = true;
+      }
+    }
+    for(std::size_t sectionIndex = 0; sectionIndex < sections.size(); ++sectionIndex) {
+      std::vector<std::string> properties = dom.GetAllProperties(sections[sectionIndex]);
+      for(std::size_t propertyIndex = 0; propertyIndex < properties.size(); ++propertyIndex) {
+        if(properties[propertyIndex].find("Bad") != std::string::npos) {
+          badSectionOrPropertyFound = true;
+        }
+      }
+    }
+
+    EXPECT_FALSE(badSectionOrPropertyFound);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Settings

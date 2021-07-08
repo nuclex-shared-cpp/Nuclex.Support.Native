@@ -147,7 +147,22 @@ namespace Nuclex { namespace Support { namespace Settings {
       )->GetPropertyValue(categoryName, propertyName);
 
       if(value.has_value()) {
-        return Text::lexical_cast<bool>(value.value());
+        const std::string &stringValue = value.value();
+        switch(stringValue.length()) {
+          case 1: {
+            return (stringValue[0] != '0');
+          }
+          case 3: {
+            return (
+              ((stringValue[0] == 'y') || (stringValue[0] == 'Y')) &&
+              ((stringValue[1] == 'e') || (stringValue[1] == 'E')) &&
+              ((stringValue[2] == 's') || (stringValue[2] == 'S'))
+            );
+          }
+          default: {
+            return Text::lexical_cast<bool>(value.value());
+          }
+        }
       } else {
         return std::optional<bool>();
       }
@@ -159,7 +174,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::uint32_t> IniSettingsStore::RetrieveUInt32Property(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::uint32_t>();
+    if(this->privateImplementationData == nullptr) {
+      return std::optional<std::uint32_t>();
+    } else {
+      std::optional<std::string> value = reinterpret_cast<IniDocumentModel *>(
+        this->privateImplementationData
+      )->GetPropertyValue(categoryName, propertyName);
+
+      if(value.has_value()) {
+        return Text::lexical_cast<std::uint32_t>(value.value());
+      } else {
+        return std::optional<std::uint32_t>();
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -167,7 +194,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::int32_t> IniSettingsStore::RetrieveInt32Property(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::int32_t>();
+    if(this->privateImplementationData == nullptr) {
+      return std::optional<std::int32_t>();
+    } else {
+      std::optional<std::string> value = reinterpret_cast<IniDocumentModel *>(
+        this->privateImplementationData
+      )->GetPropertyValue(categoryName, propertyName);
+
+      if(value.has_value()) {
+        return Text::lexical_cast<std::int32_t>(value.value());
+      } else {
+        return std::optional<std::int32_t>();
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -175,7 +214,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::uint64_t> IniSettingsStore::RetrieveUInt64Property(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::uint64_t>();
+    if(this->privateImplementationData == nullptr) {
+      return std::optional<std::uint64_t>();
+    } else {
+      std::optional<std::string> value = reinterpret_cast<IniDocumentModel *>(
+        this->privateImplementationData
+      )->GetPropertyValue(categoryName, propertyName);
+
+      if(value.has_value()) {
+        return Text::lexical_cast<std::uint64_t>(value.value());
+      } else {
+        return std::optional<std::uint64_t>();
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -183,7 +234,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::int64_t> IniSettingsStore::RetrieveInt64Property(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::int64_t>();
+    if(this->privateImplementationData == nullptr) {
+      return std::optional<std::int64_t>();
+    } else {
+      std::optional<std::string> value = reinterpret_cast<IniDocumentModel *>(
+        this->privateImplementationData
+      )->GetPropertyValue(categoryName, propertyName);
+
+      if(value.has_value()) {
+        return Text::lexical_cast<std::int64_t>(value.value());
+      } else {
+        return std::optional<std::int64_t>();
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -191,7 +254,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::string> IniSettingsStore::RetrieveStringProperty(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::string>();
+    if(this->privateImplementationData == nullptr) {
+      return std::optional<std::string>();
+    } else {
+      std::optional<std::string> value = reinterpret_cast<IniDocumentModel *>(
+        this->privateImplementationData
+      )->GetPropertyValue(categoryName, propertyName);
+
+      if(value.has_value()) {
+        return value.value();
+      } else {
+        return std::optional<std::string>();
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
