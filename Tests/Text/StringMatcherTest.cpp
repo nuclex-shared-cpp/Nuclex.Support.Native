@@ -189,4 +189,45 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StringMatcherTest, CaseInsensitiveStringHashWorks) {
+    CaseInsensitiveUtf8Hash hasher;
+    std::size_t hash1 = hasher(u8"Hellø Wørld This is a test for the hashing method");
+    std::size_t hash2 = hasher(u8"Hellø Wørld This is another test for the hashing method");
+    std::size_t hash3 = hasher(u8"HELLØ WØRLD This is a test for the hashing method");
+
+    EXPECT_EQ(hash1, hash3);
+    EXPECT_NE(hash1, hash2);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CaseInsensitiveStringEqualsToWorks) {
+    CaseInsensitiveUtf8EqualTo equals;
+
+    EXPECT_TRUE(equals(u8"Hello", u8"hello"));
+    EXPECT_TRUE(equals(u8"hello", u8"hello"));
+    EXPECT_TRUE(equals(u8"Ünicøde", u8"üNICØDE"));
+    EXPECT_TRUE(equals(u8"ünicøde", u8"ünicøde"));
+    EXPECT_FALSE(equals(u8"hello", u8"olleh"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CaseInsensitiveStringLessWorks) {
+    //std::less<std::string> lesser;
+    CaseInsensitiveUtf8Less lesser;
+
+    EXPECT_TRUE(lesser(u8"a", u8"b"));
+    EXPECT_FALSE(lesser(u8"b", u8"b"));
+    EXPECT_TRUE(lesser(u8"a9999", u8"b0000"));
+    EXPECT_TRUE(lesser(u8"a9999", u8"b0"));
+    EXPECT_TRUE(lesser(u8"a", u8"aa"));
+
+    // Neither is less because in lowercase, they're identical
+    EXPECT_FALSE(lesser(u8"Ünicøde", u8"üNICØDE"));
+    EXPECT_FALSE(lesser(u8"üNICØDE", u8"Ünicøde"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text

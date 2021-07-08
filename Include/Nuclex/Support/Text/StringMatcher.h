@@ -24,6 +24,7 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 
 #include <string> // for std::string
+#include <functional> //for std::hash, std::equal_to, std::less
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -87,6 +88,24 @@ namespace Nuclex { namespace Support { namespace Text {
       const std::string &text, const std::string &wildcard, bool caseSensitive = false
     );
 
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  struct CaseInsensitiveUtf8Hash {
+    public: NUCLEX_SUPPORT_API std::size_t operator()(const std::string &text) const noexcept;
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  struct CaseInsensitiveUtf8EqualTo {
+    public: bool operator()(const std::string &left, const std::string &right) const noexcept;
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  struct CaseInsensitiveUtf8Less {
+    public: bool operator()(const std::string &left, const std::string &right) const noexcept;
   };
 
   // ------------------------------------------------------------------------------------------- //
