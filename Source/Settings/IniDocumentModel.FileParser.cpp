@@ -475,7 +475,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     if(this->currentSection->LastLine == nullptr) {
       this->currentSection->LastLine = newPropertyLine;
     }
-    this->currentSection->PropertyMap.insert(
+    this->currentSection->Properties.insert(
       PropertyMap::value_type(propertyName, newPropertyLine)
     );
 

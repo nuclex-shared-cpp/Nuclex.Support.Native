@@ -171,7 +171,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     if(sectionIterator == this->sections.end()) {
       return std::vector<std::string>();
     } else {
-      const PropertyMap &properties = sectionIterator->second->PropertyMap;
+      const PropertyMap &properties = sectionIterator->second->Properties;
 
       std::vector<std::string> propertyNames;
       propertyNames.reserve(properties.size());
@@ -197,7 +197,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     if(sectionIterator == this->sections.end()) {
       return std::optional<std::string>();
     } else {
-      const PropertyMap &properties = sectionIterator->second->PropertyMap;
+      const PropertyMap &properties = sectionIterator->second->Properties;
       PropertyMap::const_iterator propertyIterator = properties.find(propertyName);
       if(propertyIterator == properties.end()) {
         return std::optional<std::string>();

@@ -508,6 +508,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
       codepoint = ToFoldedLowercase(codepoint);
 
+      // We're abusing the Murmur hashing function a bit here. It's not intended for
+      // incremental generation and this will likely decrease hashing quality...
       if constexpr(sizeof(std::size_t) >= 8) {
         hash = CalculateMurmur64(
           reinterpret_cast<const std::uint8_t *>(&codepoint), 4, hash

@@ -22,6 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_SETTINGS_INIDOCUMENTMODEL_H
 
 #include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Text/StringMatcher.h"
 
 #include <vector> // for std::vector
 #include <string> // for std::string
@@ -130,10 +131,16 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>A line in an .ini file containing a property assignment</summary>
     protected: class IndexedSection {
 
+      /// <summary>Map from (case-insensitive) property name to property line</summary>
+      public: typedef std::unordered_map<
+        std::string, PropertyLine *,
+        Text::CaseInsensitiveUtf8Hash, Text::CaseInsensitiveUtf8EqualTo
+      > PropertyMap;
+
       /// <summary>Line in which this section is declared. Can be a nullptr.</summary>
       public: SectionLine *DeclarationLine;
       /// <summary>Index of property lines in this section by their property name</summary>
-      public: std::unordered_map<std::string, PropertyLine *> PropertyMap;
+      public: PropertyMap Properties;
       /// <summary>Last line in this section</summary>
       public: Line *LastLine;
 
@@ -216,7 +223,10 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: std::unordered_set<std::uint8_t *> createdLinesMemory;
 
     /// <summary>Map from property name to the lines containing a property</summary>
-    typedef std::unordered_map<std::string, PropertyLine *> PropertyMap;
+    typedef std::unordered_map<
+      std::string, PropertyLine *,
+      Text::CaseInsensitiveUtf8Hash, Text::CaseInsensitiveUtf8EqualTo
+    > PropertyMap;
     /// <summary>Map from section name to a type holding the properties in the section</summary>
     typedef std::unordered_map<std::string, IndexedSection *> SectionMap;
 
