@@ -42,7 +42,32 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
     ///   This supports both the short form (HKCU/, HKLM/) and the long form
     ///   (HKEY_CURRENT_USER/, HKEY_LOCAL_MACHINE/) for specifying the hive.
     /// </remarks>
-    public: static ::HKEY GetHiveFromString(const std::string_view &hiveName);
+    public: static ::HKEY GetHiveFromString(
+      const std::string &hiveName, std::string::size_type hiveNameLength
+    );
+
+    /// <summary>
+    ///   Builds a list of the names of all registry keys directly below the key with
+    ///   the specified handle
+    /// </summary>
+    /// <param name="keyHandle">Handle of the key whose direct children will be queried</param>
+    /// <returns>A list containing the names of all child keys</returns>
+    public: std::vector<std::string> WindowsRegistryApi::GetAllSubKeyNames(::HKEY keyHandle);
+
+    /// <summary>
+    ///   Builds a list of the names of all value directly below the key with
+    ///   the specified handle
+    /// </summary>
+    /// <param name="keyHandle">Handle of the key whose values will be queried</param>
+    /// <returns>A list containing the names of all value below the key</returns>
+    public: std::vector<std::string> WindowsRegistryApi::GetAllValueNames(::HKEY keyHandle);
+
+/*
+    public: static ::HKEY OpenKeyReadOnly(const std::string &registryPath);
+
+    public: static ::HKEY OpenKeyWritable(const std::string &registryPath);
+*/
+
 
   };
 

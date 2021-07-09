@@ -18,76 +18,85 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_SETTINGS_POSIX_POSIXFILEACCESSAPI_H
-#define NUCLEX_SUPPORT_SETTINGS_POSIX_POSIXFILEACCESSAPI_H
+#ifndef NUCLEX_SUPPORT_SETTINGS_LINUX_LINUXFILEACCESSAPI_H
+#define NUCLEX_SUPPORT_SETTINGS_LINUX_LINUXFILEACCESSAPI_H
 
 #include "Nuclex/Support/Config.h"
 
-#if !defined(NUCLEX_STORAGE_WIN32)
+#if defined(NUCLEX_SUPPORT_LINUX)
 
-#include <string> // for std::string
-#include <cstdint> // for std::uint8_t
-#include <cstdio> // for FILE, ::fopen(), etc.
+#include <string> // std::string
+#include <cstdint> // std::uint8_t and std::size_t
 
-namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
+#include <sys/stat.h> // ::fstat() and permission flags
+#include <dirent.h> // struct ::dirent
+
+namespace Nuclex { namespace Support { namespace Settings { namespace Linux {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Wraps the Posix file system API</summary>
+  /// <summary>Wraps the Linux file system API</summary>
   /// <remarks>
   ///   <para>
-  ///     This is a helper class that wraps Posix calls with error checking and conversion
-  ///     between C strings and C++ strings so that this boilerplate code does not have
-  ///     to be repeated over and over in other places.
+  ///     This is just a small helper class that reduces the amount of boilerplate code
+  ///     required when calling the file system API functions, such as checking
+  ///     result codes over and over again.
+  ///   </para>
+  ///   <para>
+  ///     It is not intended to hide operating system details or make this API platform
+  ///     neutral (the File and Container classes do that), so depending on the amount
+  ///     of noise required by the file system APIs, only some methods will be wrapped here.
   ///   </para>
   /// </remarks>
-  class PosixFileAccessApi {
+  class LinuxFileAccessApi {
 
     /// <summary>Opens the specified file for shared reading</summary>
     /// <param name="path">Path of the file that will be opened</param>
-    /// <returns>A pointer representing the opened file</returns>
-    public: static FILE *OpenFileForReading(const std::string &path);
+    /// <returns>The descriptor (numeric handle) of the opened file</returns>
+    public: static int OpenFileForReading(const std::string &path);
 
     /// <summary>Creates or opens the specified file for exclusive writing</summary>
     /// <param name="path">Path of the file that will be opened</param>
-    /// <returns>A pointer representing the opened file</returns>
-    public: static FILE *OpenFileForWriting(const std::string &path);
+    /// <returns>The descriptor (numeric handle) of the opened file</returns>
+    public: static int OpenFileForWriting(const std::string &path);
 
     /// <summary>Reads data from the specified file</summary>
-    /// <param name="file">File from which data will be read</param>
+    /// <param name="fileDescriptor">Handle of the file from which data will be read</param>
     /// <param name="buffer">Buffer into which the data will be put</param>
     /// <param name="count">Number of bytes that will be read from the file</param>
     /// <returns>The number of bytes that were actually read</returns>
     public: static std::size_t Read(
-      FILE *file, std::uint8_t *buffer, std::size_t count
+      int fileDescriptor, std::uint8_t *buffer, std::size_t count
     );
 
     /// <summary>Writes data into the specified file</summary>
-    /// <param name="file">File into which data will be written</param>
+    /// <param name="fileDescriptor">Handle of the file into which data will be written</param>
     /// <param name="buffer">Buffer containing the data that will be written</param>
     /// <param name="count">Number of bytes that will be written into the file</param>
     /// <returns>The number of bytes that were actually written</returns>
     public: static std::size_t Write(
-      FILE *file, const std::uint8_t *buffer, std::size_t count
+      int fileDescriptor, const std::uint8_t *buffer, std::size_t count
     );
 
     /// <summary>Flushes all buffered output to the hard drive<summary>
-    /// <param name="file">File for whose buffered output will be flushed</param>
-    public: static void Flush(FILE *file);
+    /// <param name="fileDescriptor">
+    ///   File descriptor whose buffered output will be flushed
+    /// </param>
+    public: static void Flush(int fileDescriptor);
 
     /// <summary>Closes the specified file</summary>
-    /// <param name="file">File pointer returned by the open method</param>
+    /// <param name="fileDescriptor">Handle of the file that will be closed</param>
     /// <param name="throwOnError">
     ///   Whether to throw an exception if the file cannot be closed
     /// </param>
-    public: static void Close(FILE *file, bool throwOnError = true);
+    public: static void Close(int fileDescriptor, bool throwOnError = true);
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Settings::Posix
+}}}} // namespace Nuclex::Support::Settings::Linux
 
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_LINUX)
 
-#endif // NUCLEX_SUPPORT_SETTINGS_POSIX_POSIXFILEACCESSAPI_H
+#endif // NUCLEX_SUPPORT_SETTINGS_LINUX_LINUXFILEACCESSAPI_H

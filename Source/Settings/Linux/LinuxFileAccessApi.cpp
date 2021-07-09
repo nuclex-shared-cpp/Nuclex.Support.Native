@@ -21,16 +21,18 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "PosixFileAccessApi.h"
+#include "LinuxFileAccessApi.h"
 
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_LINUX)
 
-#include "../../Helpers/PosixApi.h"
+#include "../../Helpers/PosixApi.h" // Linux uses Posix error handling
 
-#include <cstdio> // for fopen() and fclose()
+#include <linux/limits.h> // for PATH_MAX
+#include <fcntl.h> // ::open() and flags
+#include <unistd.h> // ::read(), ::write(), ::rmdir(), etc.
+
 #include <cerrno> // To access ::errno directly
-#include <cassert> // for assert()
-#include <limits> // for std::numeric_limits
+#include <vector> // std::vector
 
 namespace {
 
@@ -40,15 +42,13 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
+namespace Nuclex { namespace Support { namespace Settings { namespace Linux {
 
   // ------------------------------------------------------------------------------------------- //
 
-  FILE *PosixFileAccessApi::OpenFileForReading(const std::string &path) {
-    static const char *fileMode = "rb";
-
-    FILE *file = ::fopen(path.c_str(), fileMode);
-    if(unlikely(file == nullptr)) {
+  int LinuxFileAccessApi::OpenFileForReading(const std::string &path) {
+    int fileDescriptor = ::open(path.c_str(), O_RDONLY | O_LARGEFILE);
+    if(unlikely(fileDescriptor < 0)) {
       int errorNumber = errno;
 
       std::string errorMessage(u8"Could not open file '");
@@ -58,16 +58,18 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
       Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
-    return file;
+    return fileDescriptor;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  FILE *PosixFileAccessApi::OpenFileForWriting(const std::string &path) {
-    static const char *fileMode = "w+b";
-
-    FILE *file = ::fopen(path.c_str(), fileMode);
-    if(unlikely(file == nullptr)) {
+  int LinuxFileAccessApi::OpenFileForWriting(const std::string &path) {
+    int fileDescriptor = ::open(
+      path.c_str(),
+      O_RDWR | O_CREAT | O_LARGEFILE,
+      S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH
+    );
+    if(unlikely(fileDescriptor < 0)) {
       int errorNumber = errno;
 
       std::string errorMessage(u8"Could not open file '");
@@ -77,52 +79,44 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
       Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
-    return file;
+    return fileDescriptor;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::size_t PosixFileAccessApi::Read(FILE *file, std::uint8_t *buffer, std::size_t count) {
-    size_t readByteCount = ::fread(buffer, 1, count, file);
-    if(unlikely(readByteCount == 0)) {
+  std::size_t LinuxFileAccessApi::Read(
+    int fileDescriptor, std::uint8_t *buffer, std::size_t count
+  ) {
+    ssize_t result = ::read(fileDescriptor, buffer, count);
+    if(unlikely(result == static_cast<ssize_t>(-1))) {
       int errorNumber = errno;
-
-      int result = ::feof(file);
-      if(result != 0) {
-        return 0; // Read was successful, but end of file has been reached
-      }
-
       std::string errorMessage(u8"Could not read data from file");
       Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
-    return static_cast<std::size_t>(readByteCount);
+    return static_cast<std::size_t>(result);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::size_t PosixFileAccessApi::Write(FILE *file, const std::uint8_t *buffer, std::size_t count) {
-    size_t writtenByteCount = ::fwrite(buffer, 1, count, file);
-    if(unlikely(writtenByteCount == 0)) {
+  std::size_t LinuxFileAccessApi::Write(
+    int fileDescriptor, const std::uint8_t *buffer, std::size_t count
+  ) {
+    ssize_t result = ::write(fileDescriptor, buffer, count);
+    if(unlikely(result == static_cast<ssize_t>(-1))) {
       int errorNumber = errno;
-
-      int result = ::ferror(file);
-      if(result == 0) {
-        return 0; // Write was successful but no bytes could be written ?_?
-      }
-
       std::string errorMessage(u8"Could not write data to file");
       Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
-    return writtenByteCount;
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void PosixFileAccessApi::Flush(FILE *file) {
-    int result = ::fflush(file);
-    if(unlikely(result == EOF)) {
+  void LinuxFileAccessApi::Flush(int fileDescriptor) {
+    int result = ::fsync(fileDescriptor);
+    if(unlikely(result == -1)) {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not flush file buffers");
       Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
@@ -131,9 +125,9 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void PosixFileAccessApi::Close(FILE *file, bool throwOnError /* = true */) {
-    int result = ::fclose(file);
-    if(throwOnError && unlikely(result != 0)) {
+  void LinuxFileAccessApi::Close(int fileDescriptor, bool throwOnError /* = true */) {
+    int result = ::close(fileDescriptor);
+    if(throwOnError && unlikely(result == -1)) {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not close file");
       Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
@@ -142,6 +136,6 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Settings::Posix
+}}}} // namespace Nuclex::Support::Settings::Linux
 
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_LINUX)

@@ -31,12 +31,28 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Checks whether a string starts with a specified sequence of characters</summary>
+  /// <param name="text">Text whose starting characters will be checked</param>
+  /// <param name="beginningUppercase">
+  ///   Character sequence the string's beginning is checked against in uppercase
+  /// </param>
+  /// <param name="beginningLowercase">
+  ///   Character sequence the string's beginning is checked against in lowercase
+  /// </param>
+  /// <param name="length">Length of the character sequence in bytes</param>
+  /// <returns>
+  ///   True if the string specified via <paramref name="text" /> starts with
+  ///   the provided character sequence either in uppercase, lowercase or any mix
+  ///   of both. False otherwise.
+  /// </returns>
   bool startsWith(
     const std::string_view &text,
     const char *beginningUppercase,
     const char *beginningLowercase,
     std::string_view::size_type length
   ) {
+    assert((text.length() >= length) && u8"Text is long enough to compare");
+
     for(std::string_view::size_type index = 0; index < length; ++index) {
       char current = text[index];
       bool match = (
@@ -53,15 +69,64 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Looks for the next forward or backward slash in a string</summary>
+  /// <param name="path">Path in which the next forward or backward slash is searched</param>
+  /// <param nam=e"startIndex">Index at which the search will start</param>
+  /// <returns>
+  ///   The index of the next forward or backward slash. If no slashes were found,
+  ///   std::string::npos is returned.
+  /// </returns>
+  std::string::size_type findNextSlash(
+    const std::string &path, std::string::size_type startIndex = 0
+  ) {
+    std::string::size_type length = path.length();
+    for(std::string::size_type index = startIndex; index < length; ++index) {
+      char current = path[index];
+      if((current == '\\') || (current == '/')) {
+        return index;
+      }
+    }
+
+    return std::string::npos;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Changes all slashes in a UTF-8 string to backward slashes</summary>
+  /// <param name="stringToChange">String in which the slashes will be changed</param>
+  void makeAllSlashesBackward(std::string &stringToChange) {
+    std::string::size_type length = stringToChange.length();
+    for(std::string::size_type index = 0; index < length; ++index) {
+      if(stringToChange[index] == '/') {
+        stringToChange[index] = '\\';
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Changes all slashes in a UTF-8 string to backward slashes</summary>
+  /// <param name="stringToChange">String in which the slashes will be changed</param>
+  void makeAllSlashesBackward(std::wstring &stringToChange) {
+    std::string::size_type length = stringToChange.length();
+    for(std::string::size_type index = 0; index < length; ++index) {
+      if(stringToChange[index] == L'/') {
+        stringToChange[index] = L'\\';
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
 
   // ------------------------------------------------------------------------------------------- //
 
-  ::HKEY WindowsRegistryApi::GetHiveFromString(const std::string_view &hiveName) {
-    std::string_view::size_type hiveNameLength = hiveName.length();
-
+  ::HKEY WindowsRegistryApi::GetHiveFromString(
+    const std::string &hiveName, std::string::size_type hiveNameLength
+  ) {
     if(hiveNameLength >= 3) {
       bool isHk = (
         ((hiveName[0] == 'H') || (hiveName[0] == 'h')) &&
@@ -135,6 +200,158 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
 
     // No match found, return a null pointer to let the caller know
     return nullptr;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::vector<std::string> WindowsRegistryApi::GetAllSubKeyNames(::HKEY keyHandle) {
+    DWORD subKeyCount, longestSubKeyLength;
+    {
+      ::LSTATUS result = ::RegQueryInfoKeyW(
+        keyHandle,,
+        nullptr, nullptr, nullptr, &subKeyCount,
+        &longestSubKeyLength, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr
+      );
+      if(result != ERROR_SUCCESS) {
+        Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not query number of subkeys from registry key", result
+        );
+      }
+    }
+
+    // Collect a list of all subkeys below the root settings key
+    std::vector<std::string> results;
+    results.reserve(subKeyCount);
+    {
+      std::vector<WCHAR> keyName(longestSubKeyLength, 0);
+      DWORD keyNameLength = longestSubKeyLength;
+
+      // This is how subkeys are collected, by querying them one by one. Combined with
+      // the API documentation stating that when new keys are inserted, their index is
+      // random, this design has a high likelihood of producing garbage results if
+      // the registry changes while we're enumerating it.
+      for(DWORD index = 0;; ++index) {
+
+        // Query the name of the current key. We should have enough buffer size for any
+        // subkey present, but the registry can change at any moment, so we'll repeat
+        // the query with larger and larger buffer sizes if it fails with ERROR_MORE_DATA
+        ::LSTATUS result;
+        for(;;) {
+          result = ::RegEnumKeyExW(
+            keyHandle,
+            index,
+            keyName.data(),
+            &keyNameLength,
+            nullptr, nullptr, nullptr, nullptr
+          );
+          if(result == ERROR_MORE_DATA) {
+            longestSubKeyLength += 256;
+            keyName.resize(longestSubKeyLength);
+            keyNameLength = longestSubKeyLength;
+          } else {
+            break;
+          }
+        }
+        if(result == ERROR_NO_MORE_ITEMS) {
+          break; // end reached
+        } else if(result != ERROR_SUCCESS) {
+          Helpers::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not query name of subkey from registry key", result
+          );
+        }
+
+        // TODO: Instead of Utf8FromWide, manually do the conversion here to avoid a copy
+
+        // The registry API is, like any Windows API, bogged down with Microsoft's
+        // poor choice of using UTF-16. So we need to convert everything returned by
+        // said method into UTF-8 ourselves.
+        results.push_back(
+          Text::StringConverter::Utf8FromWide(
+            std::wstring(keyName.data(), keyNameLength)
+          )
+        );
+      }
+    }
+
+    return results;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::vector<std::string> WindowsRegistryApi::GetAllValueNames(::HKEY keyHandle) {
+    // Query the number of subkeys in our root settings key
+    DWORD valueCount;
+    DWORD longestValueNameLength;
+    {
+      ::LSTATUS result = ::RegQueryInfoKeyW(
+        keyHandle,
+        nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, &valueCount, &longestValueNameLength,
+        nullptr, nullptr, nullptr
+      );
+      if(result != ERROR_SUCCESS) {
+        Helpers::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not query number of values in registry key", result
+        );
+      }
+    }
+
+    // Collect a list of all subkeys below the root settings key
+    std::vector<std::string> results;
+    results.reserve(valueCount);
+    {
+      std::vector<WCHAR> valueName(longestValueNameLength, 0);
+      DWORD valueNameLength = longestValueNameLength;
+
+      // This is how values are collected, by querying them one by one. Combined with
+      // the API documentation stating that when new keys are inserted, their index is
+      // random, this design has a high likelihood of producing garbage results if
+      // the registry changes while we're enumerating it.
+      for(DWORD index = 0;; ++index) {
+
+        // Query the name of the current key. We should have enough buffer size for any
+        // subkey present, but the registry can change at any moment, so we'll repeat
+        // the query with larger and larger buffer sizes if it fails with ERROR_MORE_DATA
+        ::LSTATUS result;
+        for(;;) {
+          result = ::RegEnumValueW(
+            keyHandle,
+            index,
+            valueName.data(),
+            &valueNameLength,
+            nullptr, nullptr, nullptr, nullptr
+          );
+          if(result == ERROR_MORE_DATA) {
+            longestValueNameLength += 256;
+            valueName.resize(longestValueNameLength);
+            valueNameLength = longestValueNameLength;
+          } else {
+            break;
+          }
+        }
+        if(result == ERROR_NO_MORE_ITEMS) {
+          break; // end reached
+        } else if(result != ERROR_SUCCESS) {
+          Helpers::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not query name of subkey from registry key", result
+          );
+        }
+
+        // TODO: Instead of Utf8FromWide, manually do the conversion here to avoid a copy
+
+        // The registry API is, like any Windows API, bogged down with Microsoft's
+        // poor choice of using UTF-16. So we need to convert everything returned by
+        // said method into UTF-8 ourselves.
+        results.push_back(
+          Text::StringConverter::Utf8FromWide(
+            std::wstring(valueName.data(), valueNameLength)
+          )
+        );
+      }
+    }
+
+    return results;
   }
 
   // ------------------------------------------------------------------------------------------- //
