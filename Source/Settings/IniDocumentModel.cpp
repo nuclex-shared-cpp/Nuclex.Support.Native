@@ -77,16 +77,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     firstLine(nullptr),
     sections(),
     hasSpacesAroundAssignment(true),
-    hasEmptyLinesBetweenProperties(true) {
-
+    hasEmptyLinesBetweenProperties(true),
 #if defined(NUCLEX_SUPPORT_WIN32)
-    this->firstLine = allocateLine<Line>(reinterpret_cast<const std::uint8_t *>(u8"\r\n"), 2);
+    usesCrLf(true) {}
 #else
-    this->firstLine = allocateLine<Line>(reinterpret_cast<const std::uint8_t *>(u8"\n"), 1);
+    usesCrLf(false) {}
 #endif
-    this->firstLine->Previous = this->firstLine;
-    this->firstLine->Next = this->firstLine;
-  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -137,13 +133,38 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  std::vector<std::uint8_t> IniDocumentModel::Serialize() const {
+    std::vector<std::uint8_t> result;
+
+    if(this->firstLine != nullptr) {
+      result.reserve(4096);
+      result.insert(
+        result.end(),
+        this->firstLine->Contents, this->firstLine->Contents + this->firstLine->Length
+      );
+
+      Line *nextLine = this->firstLine->Next;
+      while(nextLine != this->firstLine) {
+        result.insert(
+          result.end(),
+          nextLine->Contents, nextLine->Contents + nextLine->Length
+        );
+        nextLine = nextLine->Next;
+      }
+    }
+
+    return result;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   std::vector<std::string> IniDocumentModel::GetAllSections() const {
     std::vector<std::string> sectionNames;
     sectionNames.reserve(this->sections.size());
 
     // If the default (global) section exists, list it first
     SectionMap::const_iterator firstSectionIterator = this->sections.find(std::string());
-    if(firstSectionIterator != this->sections.end()) {
+    if(firstSectionIterator != this->sections.end()) { // If default section exists
       sectionNames.push_back(std::string());
     }
 
@@ -168,9 +189,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     const std::string &sectionName
   ) const {
     SectionMap::const_iterator sectionIterator = this->sections.find(sectionName);
-    if(sectionIterator == this->sections.end()) {
+    if(sectionIterator == this->sections.end()) { // If section doesn't exist
       return std::vector<std::string>();
-    } else {
+    } else { // Section exists
       const PropertyMap &properties = sectionIterator->second->Properties;
 
       std::vector<std::string> propertyNames;
@@ -194,22 +215,22 @@ namespace Nuclex { namespace Support { namespace Settings {
     const std::string &sectionName, const std::string &propertyName
   ) const {
     SectionMap::const_iterator sectionIterator = this->sections.find(sectionName);
-    if(sectionIterator == this->sections.end()) {
+    if(sectionIterator == this->sections.end()) { // If section doesn't exist
       return std::optional<std::string>();
-    } else {
+    } else { // Section exists
       const PropertyMap &properties = sectionIterator->second->Properties;
       PropertyMap::const_iterator propertyIterator = properties.find(propertyName);
-      if(propertyIterator == properties.end()) {
+      if(propertyIterator == properties.end()) { // If property doesn't exist
         return std::optional<std::string>();
-      } else {
+      } else { // Property exists
         PropertyLine *propertyLine = propertyIterator->second;
-        if(propertyLine->ValueLength > 0) {
+        if(propertyLine->ValueLength > 0) { // Is value present?
           return std::string(
             propertyLine->Contents + propertyLine->ValueStartIndex,
             propertyLine->Contents + propertyLine->ValueStartIndex + propertyLine->ValueLength
           );
-        } else {
-          return std::string(); // Property has an empty, but assigned value
+        } else { // Property has empty value
+          return std::string();
         }
       }
     }
@@ -222,6 +243,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     const std::string &propertyName,
     const std::string &propertyValue
   ) {
+    IndexedSection *section = getOrCreateSection(sectionName);
+    
+
 #if 1
     (void)sectionName;
     (void)propertyName;
@@ -267,6 +291,98 @@ namespace Nuclex { namespace Support { namespace Settings {
     (void)sectionName;
     (void)propertyName;
     throw u8"Not implemented yet";
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  IniDocumentModel::IndexedSection *IniDocumentModel::getOrCreateSection(
+    const std::string &sectionName
+  ) {
+    SectionMap::iterator sectionIterator = this->sections.find(sectionName);
+    if(sectionIterator == this->sections.end()) {
+      IndexedSection *newSection = allocate<IndexedSection>(0);
+      new(newSection) IndexedSection();
+      this->sections.insert(
+        SectionMap::value_type(sectionName, newSection)
+      );
+
+      // Can the default section at the start of the file be used for this?
+      if(sectionName.empty()) {
+
+        // Caller *must* place new properties at beginning of file when
+        // LastLine and DeclarationLine as both nullptr.
+        newSection->DeclarationLine = nullptr;
+        newSection->LastLine = nullptr;
+        return newSection;
+
+      } else { // Section has a name, explicit declaration needed
+        SectionLine *newDeclarationLine = allocateLine<SectionLine>(
+          nullptr, sectionName.size() + (this->usesCrLf ? 4 : 3)
+        );
+
+        newDeclarationLine->Contents[0] = '[';
+        std::copy_n(
+          sectionName.c_str(),
+          newDeclarationLine->NameLength,
+          newDeclarationLine->Contents + 1
+        );
+        newDeclarationLine->Contents[newDeclarationLine->NameLength + 1] = ']';
+        if(this->usesCrLf) {
+          newDeclarationLine->Contents[newDeclarationLine->NameLength + 2] = '\r';
+          newDeclarationLine->Contents[newDeclarationLine->NameLength + 3] = '\n';
+        } else {
+          newDeclarationLine->Contents[newDeclarationLine->NameLength + 2] = '\n';
+        }
+
+        newDeclarationLine->NameStartIndex = 1;
+        newDeclarationLine->NameLength = sectionName.length();
+
+        if(this->firstLine != nullptr) {
+          integrateLine(this->firstLine->Previous, newDeclarationLine, true);
+        } else {
+          newDeclarationLine->Next = newDeclarationLine;
+          newDeclarationLine->Previous = newDeclarationLine;
+          this->firstLine = newDeclarationLine;
+        }
+
+        newSection->DeclarationLine = newDeclarationLine;
+        newSection->LastLine = newDeclarationLine;
+        return newSection;
+      }
+    } else { // Way at the beginning of this method, a section was found
+      return sectionIterator->second;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void IniDocumentModel::integrateLine(
+    Line *previous, Line *newLine, bool extraBlankLineBefore /* = false */
+  ) {
+    if(extraBlankLineBefore) {
+      Line *blankLine = allocateLine<Line>(nullptr, (this->usesCrLf ? 2 : 1));
+      if(this->usesCrLf) {
+        blankLine->Contents[0] = '\r';
+        blankLine->Contents[1] = '\n';
+      } else {
+        blankLine->Contents[0] = '\n';
+      }
+
+      blankLine->Previous = previous;
+      blankLine->Next = newLine;
+
+      newLine->Previous = blankLine;
+      newLine->Next = previous->Next;
+
+      previous->Next->Previous = newLine;
+      previous->Next = blankLine;
+    } else {
+      newLine->Previous = previous;
+      newLine->Next = previous->Next;
+
+      previous->Next->Previous = newLine;
+      previous->Next = newLine;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

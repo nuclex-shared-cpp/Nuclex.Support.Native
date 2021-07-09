@@ -34,6 +34,7 @@ namespace {
     u8"NumericBoolean = 1\n"
     u8"TrueFalseBoolean = TRUE\n"
     u8"YesNoBoolean = YES\n"
+    u8"OnOffBoolean = ON\n"
     u8"\n"
     u8"[Integers]\n"
     u8"Tiny = 42\n"
@@ -56,15 +57,15 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniSettingsStoreTest, HasDefaultConstructor) {
     EXPECT_NO_THROW(
-      IniSettingsStore store;
+      IniSettingsStore settings;
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniSettingsStoreTest, CanLoadIniFileFromMemory) {
-    IniSettingsStore store;
-    store.Load(
+    IniSettingsStore settings;
+    settings.Load(
       reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
@@ -73,36 +74,40 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniSettingsStoreTest, CanReadBooleanTypes) {
-    IniSettingsStore store;
-    store.Load(
+    IniSettingsStore settings;
+    settings.Load(
       reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
     std::string none;
-    std::optional<bool> numericBoolean = store.Retrieve<bool>(none, u8"NumericBoolean");
+    std::optional<bool> numericBoolean = settings.Retrieve<bool>(none, u8"NumericBoolean");
     ASSERT_TRUE(numericBoolean.has_value());
     EXPECT_TRUE(numericBoolean.value());
 
-    std::optional<bool> trueFalseBoolean = store.Retrieve<bool>(none, u8"TrueFalseBoolean");
+    std::optional<bool> trueFalseBoolean = settings.Retrieve<bool>(none, u8"TrueFalseBoolean");
     ASSERT_TRUE(trueFalseBoolean.has_value());
     EXPECT_TRUE(trueFalseBoolean.value());
 
-    std::optional<bool> yesNoBoolean = store.Retrieve<bool>(none, u8"YesNoBoolean");
+    std::optional<bool> yesNoBoolean = settings.Retrieve<bool>(none, u8"YesNoBoolean");
     ASSERT_TRUE(yesNoBoolean.has_value());
     EXPECT_TRUE(yesNoBoolean.value());
+
+    std::optional<bool> onOffBoolean = settings.Retrieve<bool>(none, u8"OnOffBoolean");
+    ASSERT_TRUE(onOffBoolean.has_value());
+    EXPECT_TRUE(onOffBoolean.value());
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniSettingsStoreTest, CanReadUnsigned32BitIntegers) {
-    IniSettingsStore store;
-    store.Load(
+    IniSettingsStore settings;
+    settings.Load(
       reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
-    std::optional<std::uint32_t> integer = store.Retrieve<std::uint32_t>(
+    std::optional<std::uint32_t> integer = settings.Retrieve<std::uint32_t>(
       u8"Integers", u8"Tiny"
     );
     ASSERT_TRUE(integer.has_value());
@@ -112,19 +117,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniSettingsStoreTest, CanReadSigned32BitIntegers) {
-    IniSettingsStore store;
-    store.Load(
+    IniSettingsStore settings;
+    settings.Load(
       reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
-    std::optional<std::int32_t> integer = store.Retrieve<std::int32_t>(
+    std::optional<std::int32_t> integer = settings.Retrieve<std::int32_t>(
       u8"Integers", u8"Tiny"
     );
     ASSERT_TRUE(integer.has_value());
     EXPECT_EQ(integer.value(), 42);
 
-    std::optional<std::int32_t> negativeInteger = store.Retrieve<std::int32_t>(
+    std::optional<std::int32_t> negativeInteger = settings.Retrieve<std::int32_t>(
       u8"Integers", u8"Negative"
     );
     ASSERT_TRUE(negativeInteger.has_value());
@@ -135,13 +140,13 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniSettingsStoreTest, CanReadUnsigned64BitIntegers) {
-    IniSettingsStore store;
-    store.Load(
+    IniSettingsStore settings;
+    settings.Load(
       reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
-    std::optional<std::uint64_t> integer = store.Retrieve<std::uint64_t>(
+    std::optional<std::uint64_t> integer = settings.Retrieve<std::uint64_t>(
       u8"Integers", u8"Big"
     );
     ASSERT_TRUE(integer.has_value());
@@ -151,19 +156,19 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniSettingsStoreTest, CanReadSigned64BitIntegers) {
-    IniSettingsStore store;
-    store.Load(
+    IniSettingsStore settings;
+    settings.Load(
       reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
-    std::optional<std::int64_t> integer = store.Retrieve<std::int64_t>(
+    std::optional<std::int64_t> integer = settings.Retrieve<std::int64_t>(
       u8"Integers", u8"Big"
     );
     ASSERT_TRUE(integer.has_value());
     EXPECT_EQ(integer.value(), 1152921504606846976LL);
 
-    std::optional<std::int64_t> negativeInteger = store.Retrieve<std::int64_t>(
+    std::optional<std::int64_t> negativeInteger = settings.Retrieve<std::int64_t>(
       u8"Integers", u8"BigNegative"
     );
     ASSERT_TRUE(negativeInteger.has_value());
@@ -173,23 +178,37 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniSettingsStoreTest, CanReadStrings) {
-    IniSettingsStore store;
-    store.Load(
+    IniSettingsStore settings;
+    settings.Load(
       reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
-    std::optional<std::string> simpleString = store.Retrieve<std::string>(
+    std::optional<std::string> simpleString = settings.Retrieve<std::string>(
       u8"Strings", u8"Simple"
     );
     ASSERT_TRUE(simpleString.has_value());
     EXPECT_EQ(simpleString.value(), u8"Hello");
 
-    std::optional<std::string> quotedString = store.Retrieve<std::string>(
+    std::optional<std::string> quotedString = settings.Retrieve<std::string>(
       u8"Strings", u8"Quoted"
     );
     ASSERT_TRUE(quotedString.has_value());
     EXPECT_EQ(quotedString.value(), u8"World");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniSettingsStoreTest, CanChangeBooleans) {
+    IniSettingsStore settings;
+    settings.Load(
+      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      sizeof(ExampleIniFile) - 1
+    );
+
+    settings.Store<std::uint32_t>(std::string(), u8"TrueFalseBoolean", false);
+    //ASSERT_TRUE(integer.has_value());
+    //EXPECT_EQ(integer.value(), 42U);
   }
 
   // ------------------------------------------------------------------------------------------- //

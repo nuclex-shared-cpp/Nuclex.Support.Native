@@ -109,6 +109,15 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(IniDocumentModelTest, EmptyDocumentCanBeSerialized) {
+    IniDocumentModel dom;
+
+    std::vector<std::uint8_t> contents = dom.Serialize();
+    EXPECT_EQ(contents.size(), 0U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(IniDocumentModelTest, CanParseVanillaProperty) {
     IniDocumentModel dom(
       reinterpret_cast<const std::uint8_t *>(VanillaIniFile),

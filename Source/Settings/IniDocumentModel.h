@@ -75,6 +75,50 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Frees all memory owned by the instance</summary>
     public: ~IniDocumentModel();
 
+    /// <summary>Serializes the entire document model into a memory block</summary>
+    /// <returns>Vector holding the entire .ini file contents</returns>
+    public: std::vector<std::uint8_t> Serialize() const;
+
+    /// <summary>Serializes the entire document model back into an .ini file</summary>
+    /// <param name="path">Path of the .ini file in to save the document model</param>
+    public: void Serialize(const std::string &path) const;
+
+    /// <summary>Retrieves a list of all sections that exist in the .ini file</summary>
+    /// <returns>A list of all sections contained in the .ini file</returns>
+    public: std::vector<std::string> GetAllSections() const;
+
+    /// <summary>Retrieves a list of all properties defined within a section</summary>
+    /// <param name="sectionName">Name of the section whose properties will be liste</param>
+    /// <returns>A list of all properties defined in the specified section</returns>
+    public: std::vector<std::string> GetAllProperties(const std::string &sectionName) const;
+
+    /// <summary>Looks up the value of a property</summary>
+    /// <param name="sectionName">Name of the section in which the property exists</param>
+    /// <param name="propertyName">Name of the property that will be looked up</param>
+    /// <returns>The value of the property if the property exists</returns>
+    public: std::optional<std::string> GetPropertyValue(
+      const std::string &sectionName, const std::string &propertyName
+    ) const;
+
+    /// <summary>Creates a property or updates an existing property's value</summary>
+    /// <param name="sectionName">Name of the section in which the property will be set</param>
+    /// <param name="propertyName">Name of the property that will be set</param>
+    /// <param name="propertyValue">Value that will be assigned to the property</param>
+    public: void SetPropertyValue(
+      const std::string &sectionName,
+      const std::string &propertyName,
+      const std::string &propertyValue
+    );
+
+    /// <summary>Deletes a property if it exists</summary>
+    /// <param name="sectionName">Name of the section in which the property exists</param>
+    /// <param name="propertyName">Name of the property that will be deleted</param>
+    /// <returns>True if the property existed and was deleted, false otherwise</returns>
+    public: bool DeleteProperty(
+      const std::string &sectionName,
+      const std::string &propertyName
+    );
+
     #pragma region struct Line
 
     /// <summary>An arbitrary line from an .ini file</summary>
@@ -151,41 +195,16 @@ namespace Nuclex { namespace Support { namespace Settings {
     // Internal helper that parses an existing .ini file into the document model
     private: class FileParser;
 
-    /// <summary>Retrieves a list of all sections that exist in the .ini file</summary>
-    /// <returns>A list of all sections contained in the .ini file</returns>
-    public: std::vector<std::string> GetAllSections() const;
+    /// <summary>Retrieves or creates the section with the specified name</summary>
+    /// <param name="sectionName">Name of the section that will be retrieved or created</param>
+    /// <returns>The new or existing section of the specified name</returns>
+    private: IndexedSection *getOrCreateSection(const std::string &sectionName);
 
-    /// <summary>Retrieves a list of all properties defined within a section</summary>
-    /// <param name="sectionName">Name of the section whose properties will be liste</param>
-    /// <returns>A list of all properties defined in the specified section</returns>
-    public: std::vector<std::string> GetAllProperties(const std::string &sectionName) const;
-
-    /// <summary>Looks up the value of a property</summary>
-    /// <param name="sectionName">Name of the section in which the property exists</param>
-    /// <param name="propertyName">Name of the property that will be looked up</param>
-    /// <returns>The value of the property if the property exists</returns>
-    public: std::optional<std::string> GetPropertyValue(
-      const std::string &sectionName, const std::string &propertyName
-    ) const;
-
-    /// <summary>Creates a property or updates an existing property's value</summary>
-    /// <param name="sectionName">Name of the section in which the property will be set</param>
-    /// <param name="propertyName">Name of the property that will be set</param>
-    /// <param name="propertyValue">Value that will be assigned to the property</param>
-    public: void SetPropertyValue(
-      const std::string &sectionName,
-      const std::string &propertyName,
-      const std::string &propertyValue
-    );
-
-    /// <summary>Deletes a property if it exists</summary>
-    /// <param name="sectionName">Name of the section in which the property exists</param>
-    /// <param name="propertyName">Name of the property that will be deleted</param>
-    /// <returns>True if the property existed and was deleted, false otherwise</returns>
-    public: bool DeleteProperty(
-      const std::string &sectionName,
-      const std::string &propertyName
-    );
+    /// <summary>Integrates a line into the linked list of lines</summary>
+    /// <param name="previous">Line after which the new line will appear</param>
+    /// <param name="newLine">New line that will be integrated</param>
+    /// <param name="blankLineBefore">Whether generate an extra blank line first</param>
+    private: void integrateLine(Line *previous, Line *newLine, bool blankLineBefore = false);
 
     /// <summary>Parses the contents of an existing .ini file</summary>
     /// <param name="fileContents">Buffer holding the entire .ini file in memory</param>
@@ -246,6 +265,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: bool hasSpacesAroundAssignment;
     /// <summary>Should property assignments be padded with empty lines between them?</summary>
     private: bool hasEmptyLinesBetweenProperties;
+    /// <summary>Whether the configuration file uses weird Windows line breaks</summary>
+    private: bool usesCrLf;
 
   };
 
