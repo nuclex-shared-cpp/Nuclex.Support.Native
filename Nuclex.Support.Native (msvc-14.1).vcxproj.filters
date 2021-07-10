@@ -87,6 +87,9 @@
     <Filter Include="Source\Threading">
       <UniqueIdentifier>{c3c71559-2291-4f45-8938-c3cf232c87c5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Settings\Linux">
+      <UniqueIdentifier>{ef6cf501-e814-4a84-8800-b65a48202f02}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Threading\Posix">
       <UniqueIdentifier>{f5e9e180-aad4-42a8-b104-926aece4a71c}</UniqueIdentifier>
     </Filter>
@@ -370,6 +373,12 @@
     <ClCompile Include="Source\Services\ServiceProvider.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Settings\Linux\LinuxFileAccessApi.cpp">
+      <Filter>Source\Settings\Linux</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\Linux\LinuxFileAccessApi.h">
+      <Filter>Source\Settings\Linux</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Settings\Posix\PosixFileAccessApi.cpp">
       <Filter>Source\Settings\Posix</Filter>
     </ClCompile>
@@ -387,6 +396,18 @@
     </ClCompile>
     <ClInclude Include="Source\Settings\Windows\WindowsRegistryApi.h">
       <Filter>Source\Settings\Windows</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Settings\IniDocumentModel.FileParser.cpp">
+      <Filter>Source\Settings</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\IniDocumentModel.FileParser.h">
+      <Filter>Source\Settings</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Settings\IniDocumentModel.cpp">
+      <Filter>Source\Settings</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\IniDocumentModel.h">
+      <Filter>Source\Settings</Filter>
     </ClInclude>
     <ClCompile Include="Source\Settings\IniSettingsStore.cpp">
       <Filter>Source\Settings</Filter>

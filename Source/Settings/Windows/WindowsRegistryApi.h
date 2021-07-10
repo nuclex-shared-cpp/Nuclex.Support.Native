@@ -23,11 +23,12 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "../../Helpers/WindowsApi.h"
 
-#include <string> // for std::string_view
+#include <string> // for std::string
+#include <vector> // for std::vector
 
 namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
 
@@ -52,7 +53,9 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
     /// </summary>
     /// <param name="keyHandle">Handle of the key whose direct children will be queried</param>
     /// <returns>A list containing the names of all child keys</returns>
-    public: std::vector<std::string> WindowsRegistryApi::GetAllSubKeyNames(::HKEY keyHandle);
+    public: static std::vector<std::string> WindowsRegistryApi::GetAllSubKeyNames(
+      ::HKEY keyHandle
+    );
 
     /// <summary>
     ///   Builds a list of the names of all value directly below the key with
@@ -60,7 +63,9 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
     /// </summary>
     /// <param name="keyHandle">Handle of the key whose values will be queried</param>
     /// <returns>A list containing the names of all value below the key</returns>
-    public: std::vector<std::string> WindowsRegistryApi::GetAllValueNames(::HKEY keyHandle);
+    public: static std::vector<std::string> WindowsRegistryApi::GetAllValueNames(
+      ::HKEY keyHandle
+    );
 
 /*
     public: static ::HKEY OpenKeyReadOnly(const std::string &registryPath);
@@ -76,6 +81,6 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
 
 }}}} // namespace Nuclex::Support::Settings::Windows
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
 #endif // NUCLEX_SUPPORT_SETTINGS_WINDOWS_WINDOWSREGISTRYAPI_H

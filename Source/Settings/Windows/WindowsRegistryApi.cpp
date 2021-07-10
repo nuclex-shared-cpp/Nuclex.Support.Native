@@ -23,9 +23,11 @@ License along with this library
 
 #include "WindowsRegistryApi.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
-//#include "../../Text/Utf8Fold/Utf8Fold.h"
+#include "Nuclex/Support/Text/StringConverter.h"
+
+#include <cassert> // for assert()
 
 namespace {
 
@@ -208,7 +210,7 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
     DWORD subKeyCount, longestSubKeyLength;
     {
       ::LSTATUS result = ::RegQueryInfoKeyW(
-        keyHandle,,
+        keyHandle,
         nullptr, nullptr, nullptr, &subKeyCount,
         &longestSubKeyLength, nullptr, nullptr, nullptr,
         nullptr, nullptr, nullptr
@@ -358,4 +360,4 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
 
 }}}} // namespace Nuclex::Support::Settings::Windows
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)

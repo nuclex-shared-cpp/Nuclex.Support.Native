@@ -23,7 +23,7 @@ License along with this library
 
 #include "WindowsApi.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/Text/StringConverter.h"
 #include "../Text/Utf8/checked.h"
@@ -232,4 +232,4 @@ namespace Nuclex { namespace Support { namespace Helpers {
 
 }}} // namespace Nuclex::Support::Helpers
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)

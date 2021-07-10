@@ -23,100 +23,16 @@ License along with this library
 
 #include "Nuclex/Support/Settings/RegistrySettingsStore.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/Text/StringMatcher.h"
 #include "Nuclex/Support/Text/StringConverter.h"
-#include "../Helpers/WindowsApi.h"
+
+#include "Windows/WindowsRegistryApi.h"
 
 #include <cassert> // for assert()
 
 namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Figures out the registry hive specified in a registry path</summary>
-  /// <param name="pathWithPrefix">Full registry path with hive prefix</param>
-  /// <param name="prefixLength">Length of the hive prefix in bytes</param>
-  /// <returns>The registry hive specified in the registry path</returns>
-  /// <remarks>
-  ///   This supports both the short form (HKCU/, HKLM/) and the long form
-  ///   (HKEY_CURRENT_USER/, HKEY_LOCAL_MACHINE/) for specifying the hive.
-  /// </remarks>
-  ::HKEY hiveFromPrefix(const std::string &pathWithPrefix, std::size_t prefixLength) {
-    using Nuclex::Support::Text::StringMatcher;
-
-    // Check for the short-form hive constants (HKCU, HKLM, etc.)
-    if(prefixLength >= 3) {
-      bool isHk = (
-        ((pathWithPrefix[0] == 'H') || (pathWithPrefix[0] == 'h')) &&
-        ((pathWithPrefix[1] == 'K') || (pathWithPrefix[1] == 'k'))
-      );
-      if(isHk) {
-
-        // Is the prefix 'HKU' for HKEY_USERS?
-        if(prefixLength == 3) {
-          if((pathWithPrefix[2] == 'U') || (pathWithPrefix[2] == 'u')) {
-            return HKEY_USERS;
-          }
-        }
-
-        if(prefixLength == 4) {
-
-          // Is the prefix 'HKCR', 'HKCU' or 'HKCC'?
-          if((pathWithPrefix[2] == 'C') || (pathWithPrefix[2] == 'c')) {
-            if((pathWithPrefix[3] == 'R') || (pathWithPrefix[3] == 'r')) {
-              return HKEY_CLASSES_ROOT;
-            }
-            if((pathWithPrefix[3] == 'U') || (pathWithPrefix[3] == 'u')) {
-              return HKEY_CURRENT_USER;
-            }
-            if((pathWithPrefix[3] == 'C') || (pathWithPrefix[3] == 'c')) {
-              return HKEY_CURRENT_CONFIG;
-            }
-          }
-
-          // Is the prefix 'HKLM' for HKEY_LOCAL_MACHINE?
-          bool isHklm = (
-            ((pathWithPrefix[2] == 'L') || (pathWithPrefix[2] == 'l')) &&
-            ((pathWithPrefix[3] == 'M') || (pathWithPrefix[3] == 'm'))
-          );
-          if(isHklm) {
-            return HKEY_LOCAL_MACHINE;
-          }
-
-        } // prefixLength == 4
-      } // isHk
-    } // prefixLength >= 3
-
-    if(prefixLength == 10) {
-      if(StringMatcher::StartsWith(pathWithPrefix, u8"HKEY_USERS")) {
-        return HKEY_USERS;
-      }
-    }
-    if(prefixLength == 17) {
-      if(StringMatcher::StartsWith(pathWithPrefix, u8"HKEY_CLASSES_ROOT")) {
-        return HKEY_CLASSES_ROOT;
-      }
-      if(StringMatcher::StartsWith(pathWithPrefix, u8"HKEY_CURRENT_USER")) {
-        return HKEY_CURRENT_USER;
-      }
-    }
-    if(prefixLength == 18) {
-      if(StringMatcher::StartsWith(pathWithPrefix, u8"HKEY_LOCAL_MACHINE")) {
-        return HKEY_LOCAL_MACHINE;
-      }
-    }
-    if(prefixLength == 19) {
-      if(StringMatcher::StartsWith(pathWithPrefix, u8"HKEY_CURRENT_CONFIG")) {
-        return HKEY_CURRENT_CONFIG;
-      }
-    }
-
-    throw std::runtime_error(
-      u8"Registry path does not begin with a known registry hive (i.e. HKLM/some/path)"
-    );
-  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -183,7 +99,9 @@ namespace Nuclex { namespace Support { namespace Settings {
       // If no slashes are in the path, it may still be a valid registry hive...
       std::string::size_type firstSlashIndex = findNextSlash(registryPath);
       if(firstSlashIndex == std::string::npos) {
-        ::HKEY hiveKeyHandle = hiveFromPrefix(registryPath, registryPath.length());
+        ::HKEY hiveKeyHandle = Windows::WindowsRegistryApi::GetHiveFromString(
+          registryPath, registryPath.length()
+        );
         result = ::RegOpenKeyExW(
           hiveKeyHandle, nullptr,
           0,
@@ -191,7 +109,9 @@ namespace Nuclex { namespace Support { namespace Settings {
           reinterpret_cast<::HKEY *>(&this->settingsKeyHandle)
         );
       } else { // Slashes present, separate the registry hive from the rest
-        ::HKEY hiveKeyHandle = hiveFromPrefix(registryPath, firstSlashIndex);
+        ::HKEY hiveKeyHandle = Windows::WindowsRegistryApi::GetHiveFromString(
+          registryPath, firstSlashIndex
+        );
 
         // We need an UTF-16 string containing the subkey to open, also using only
         // backward slashes (unlike Windows' file system API, the registry API isn't lax)
@@ -265,81 +185,9 @@ namespace Nuclex { namespace Support { namespace Settings {
       return std::vector<std::string>(); // Non-existent key accessed in read-only mode
     }
 
-    // Query the number of subkeys in our root settings key
-    DWORD subKeyCount;
-    DWORD longestSubKeyLength;
-    {
-      ::LSTATUS result = ::RegQueryInfoKeyW(
-        *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle),
-        nullptr, nullptr, nullptr, &subKeyCount,
-        &longestSubKeyLength, nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr
-      );
-      if(result != ERROR_SUCCESS) {
-        Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not query number of subkeys from registry key", result
-        );
-      }
-    }
-
-    // Collect a list of all subkeys below the root settings key
-    std::vector<std::string> results;
-    results.reserve(subKeyCount);
-    {
-      std::vector<WCHAR> keyName(longestSubKeyLength, 0);
-      DWORD keyNameLength = longestSubKeyLength;
-
-      // This is how subkeys are collected, by querying them one by one. Combined with
-      // the API documentation stating that when new keys are inserted, their index is
-      // random, this design has a high likelihood of producing garbage results if
-      // the registry changes while we're enumerating it.
-      for(DWORD index = 0;; ++index) {
-
-        // Query the name of the current key. We should have enough buffer size for any
-        // subkey present, but the registry can change at any moment, so we'll repeat
-        // the query with larger and larger buffer sizes if it fails with ERROR_MORE_DATA
-        ::LSTATUS result;
-        for(;;) {
-          result = ::RegEnumKeyExW(
-            *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle),
-            index,
-            keyName.data(),
-            &keyNameLength,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr
-          );
-          if(result == ERROR_MORE_DATA) {
-            longestSubKeyLength += 256;
-            keyName.resize(longestSubKeyLength);
-            keyNameLength = longestSubKeyLength;
-          } else {
-            break;
-          }
-        }
-        if(result == ERROR_NO_MORE_ITEMS) {
-          break; // end reached
-        } else if(result != ERROR_SUCCESS) {
-          Helpers::WindowsApi::ThrowExceptionForSystemError(
-            u8"Could not query name of subkey from registry key", result
-          );
-        }
-
-        // TODO: Instead of Utf8FromWide, manually do the conversion here to avoid a copy
-
-        // The registry API is, like any Windows API, bogged down with Microsoft's
-        // poor choice of using UTF-16. So we need to convert everything returned by
-        // said method into UTF-8 ourselves.
-        results.push_back(
-          Text::StringConverter::Utf8FromWide(
-            std::wstring(keyName.data(), keyNameLength)
-          )
-        );
-      }
-    }
-
-    return results;
+    return Windows::WindowsRegistryApi::GetAllSubKeyNames(
+      *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle)
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -351,81 +199,9 @@ namespace Nuclex { namespace Support { namespace Settings {
       return std::vector<std::string>(); // Non-existent key accessed in read-only mode
     }
 
-    // Query the number of subkeys in our root settings key
-    DWORD valueCount;
-    DWORD longestValueNameLength;
-    {
-      ::LSTATUS result = ::RegQueryInfoKeyW(
-        *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle),
-        nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, &valueCount, &longestValueNameLength,
-        nullptr, nullptr, nullptr
-      );
-      if(result != ERROR_SUCCESS) {
-        Helpers::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not query number of values in registry key", result
-        );
-      }
-    }
-
-    // Collect a list of all subkeys below the root settings key
-    std::vector<std::string> results;
-    results.reserve(valueCount);
-    {
-      std::vector<WCHAR> valueName(longestValueNameLength, 0);
-      DWORD valueNameLength = longestValueNameLength;
-
-      // This is how values are collected, by querying them one by one. Combined with
-      // the API documentation stating that when new keys are inserted, their index is
-      // random, this design has a high likelihood of producing garbage results if
-      // the registry changes while we're enumerating it.
-      for(DWORD index = 0;; ++index) {
-
-        // Query the name of the current key. We should have enough buffer size for any
-        // subkey present, but the registry can change at any moment, so we'll repeat
-        // the query with larger and larger buffer sizes if it fails with ERROR_MORE_DATA
-        ::LSTATUS result;
-        for(;;) {
-          result = ::RegEnumValueW(
-            *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle),
-            index,
-            valueName.data(),
-            &valueNameLength,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr
-          );
-          if(result == ERROR_MORE_DATA) {
-            longestValueNameLength += 256;
-            valueName.resize(longestValueNameLength);
-            valueNameLength = longestValueNameLength;
-          } else {
-            break;
-          }
-        }
-        if(result == ERROR_NO_MORE_ITEMS) {
-          break; // end reached
-        } else if(result != ERROR_SUCCESS) {
-          Helpers::WindowsApi::ThrowExceptionForSystemError(
-            u8"Could not query name of subkey from registry key", result
-          );
-        }
-
-        // TODO: Instead of Utf8FromWide, manually do the conversion here to avoid a copy
-
-        // The registry API is, like any Windows API, bogged down with Microsoft's
-        // poor choice of using UTF-16. So we need to convert everything returned by
-        // said method into UTF-8 ourselves.
-        results.push_back(
-          Text::StringConverter::Utf8FromWide(
-            std::wstring(valueName.data(), valueNameLength)
-          )
-        );
-      }
-    }
-
-    return results;
+    return Windows::WindowsRegistryApi::GetAllValueNames(
+      *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle)
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -548,4 +324,4 @@ namespace Nuclex { namespace Support { namespace Settings {
 
 }}} // namespace Nuclex::Support::Settings
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)

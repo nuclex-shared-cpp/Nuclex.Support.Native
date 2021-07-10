@@ -28,7 +28,7 @@ License along with this library
 #include <ctime> // for ::clock_gettime() and ::clock_nanosleep()
 #include <cstdlib> // for ldiv_t
 #include <algorithm> // for std::min()
-#elif defined(NUCLEX_SUPPORT_WIN32)
+#elif defined(NUCLEX_SUPPORT_WINDOWS)
 #include "../Helpers/WindowsApi.h" // for ::Sleep(), ::GetCurrentThreadId() and more
 #endif
 
@@ -60,7 +60,7 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   /// <summary>Figures out the thread affinity mask for the specified thread</summary>
   /// <param name="windowsThreadHandle">
   ///   Handle of the thread or current thread pseudo handle for the thread to check
@@ -114,9 +114,9 @@ namespace {
       *reinterpret_cast<std::uintptr_t *>(&previousAffinityMask)
     );
   }
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
   /// <summary>Queries the CPU affinity mask of the specified thread</summary>
   /// <param name="thread">Thread for which the affinity mask will be queried</param>
   /// <returns>
@@ -148,9 +148,9 @@ namespace {
     return result;
 
   }
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
+#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
   /// <summary>
   ///   Updates the affinity mask of the specified thread, changin which CPUs is may be
   ///   scheduled on
@@ -184,7 +184,7 @@ namespace {
     }
 
   }
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
+#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -194,7 +194,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   void Thread::Sleep(std::chrono::microseconds time) {
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
     std::int64_t microseconds = time.count();
     if(microseconds > 0) {
       microseconds += std::int64_t(500); // To round to nearest mllisecond
@@ -263,7 +263,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 #if defined(MICROSOFTS_API_ISNT_DESIGNED_SO_POORLY)
   std::uintptr_t Thread::GetCurrentThreadId() {
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
     throw std::logic_error(u8"This method cannot be implementation on Windows");
 
     thread_local static HANDLE duplicatedThreadHandle = INVALID_HANDLE_VALUE;
@@ -298,7 +298,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   std::uintptr_t Thread::GetStdThreadId(std::thread &thread) {
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
     assert(
       (sizeof(std::uintptr_t) >= sizeof(HANDLE)) &&
       u8"Windows thread handle (HANDLE) can be stored inside an std::uintptr_t"
@@ -326,7 +326,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   std::uint64_t Thread::GetCpuAffinityMask(std::uintptr_t threadId) {
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
     assert(
       (sizeof(std::uintptr_t) >= sizeof(HANDLE)) &&
       u8"Windows thread id (DWORD) can be stored inside an std::uintptr_t"
@@ -350,7 +350,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   std::uint64_t Thread::GetCpuAffinityMask() {
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
     HANDLE currentThreadPseudoHandle = ::GetCurrentThread();
     return getWindowsThreadAffinityMask(currentThreadPseudoHandle);
 #else // LINUX and POSIX
@@ -362,7 +362,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   void Thread::SetCpuAffinityMask(std::uintptr_t threadId, std::uint64_t affinityMask) {
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
     assert(
       (sizeof(std::uintptr_t) >= sizeof(HANDLE)) &&
       u8"Windows thread id (DWORD) can be stored inside an std::uintptr_t"
@@ -397,7 +397,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   void Thread::SetCpuAffinityMask(std::uint64_t affinityMask) {
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
     HANDLE currentThreadPseudoHandle = ::GetCurrentThread();
 
     // Assign a temporary, unwanted thread affinity. That's the only way to query

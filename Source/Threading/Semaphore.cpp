@@ -31,7 +31,7 @@ License along with this library
 #include <sys/syscall.h> // for ::SYS_futex
 #include <ctime> // for ::clock_gettime()
 #include <atomic> // for std::atomic
-#elif defined(NUCLEX_SUPPORT_WIN32) // Use standard win32 threading primitives
+#elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
 #include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
 #include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
@@ -41,7 +41,7 @@ License along with this library
 
 #include <cassert> // for assert()
 
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS)
   // Just some safety checks to make sure pthread_condattr_setclock() is available.
   // https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
   //
@@ -95,7 +95,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: volatile std::uint32_t FutexWord;
     /// <summary>Available tickets, negative for each thread waiting for a ticket</summary>
     public: std::atomic<std::size_t> AdmitCounter; 
-#elif defined(NUCLEX_SUPPORT_WIN32)
+#elif defined(NUCLEX_SUPPORT_WINDOWS)
     /// <summary>Handle of the semaphore used to pass or block threads</summary>
     public: ::HANDLE SemaphoreHandle;
 #else // Posix
@@ -118,7 +118,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     AdmitCounter(initialCount) {}
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   Semaphore::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
@@ -145,7 +145,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   Semaphore::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
@@ -181,7 +181,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   Semaphore::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     BOOL result = ::CloseHandle(this->SemaphoreHandle);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -189,7 +189,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   Semaphore::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     int result = ::pthread_mutex_destroy(&this->Mutex);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -278,7 +278,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   void Semaphore::Post(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -292,7 +292,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   void Semaphore::Post(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -409,7 +409,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   void Semaphore::WaitThenDecrement() {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -425,7 +425,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   void Semaphore::WaitThenDecrement() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -572,7 +572,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   bool Semaphore::WaitForThenDecrement(const std::chrono::microseconds &patience)  {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -591,7 +591,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   bool Semaphore::WaitForThenDecrement(const std::chrono::microseconds &patience) {
     PlatformDependentImplementationData &impl = getImplementationData();
 

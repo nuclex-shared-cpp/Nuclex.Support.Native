@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Threading/ThreadPool.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/ScopeGuard.h" // for ScopeGuard
 #include "Nuclex/Support/Threading/Latch.h" // for Latch
@@ -374,4 +374,4 @@ namespace Nuclex { namespace Support { namespace Threading {
 
 }}} // namespace Nuclex::Support::Threading
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)

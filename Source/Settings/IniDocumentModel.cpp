@@ -78,7 +78,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     sections(),
     hasSpacesAroundAssignment(true),
     hasEmptyLinesBetweenProperties(true),
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
     usesCrLf(true) {}
 #else
     usesCrLf(false) {}

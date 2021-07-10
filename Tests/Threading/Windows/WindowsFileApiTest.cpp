@@ -23,7 +23,7 @@ License along with this library
 
 #include "../Source/Threading/Windows/WindowsFileApi.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <gtest/gtest.h>
 
@@ -103,4 +103,4 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
 }}}} // namespace Nuclex::Support::Threading::Windows
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)

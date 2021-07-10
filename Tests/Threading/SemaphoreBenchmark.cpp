@@ -36,14 +36,14 @@ License along with this library
 #include <atomic> // for std::atomic
 #include <thread> // for std::thread
 
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
 #include <semaphore.h> // for ::sem_t, ::sem_init(), ::sem_post(), ::sem_wait()...
 #endif
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
   /// <summary>Benchmark that repeatedly increments and waits on a ::sem_t</summary>
   class SemTBenchmark : public Nuclex::Support::Collections::HighContentionBufferTest {
 
@@ -135,7 +135,7 @@ namespace {
     private: std::atomic<std::size_t> cycleCount;
 
   };
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
+#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Benchmark that repeatedly increments and waits on a Nuclex semaphore</summary>
@@ -211,7 +211,7 @@ namespace {
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
   TEST(SemaphoreTest, SemTBenchmarkSucceeds) {
     SemTBenchmark bench;
 

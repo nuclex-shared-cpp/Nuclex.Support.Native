@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Settings/RegistrySettingsStore.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <gtest/gtest.h>
 #include <stdexcept> // for std::runtime_error
@@ -115,4 +115,4 @@ namespace Nuclex { namespace Support { namespace Settings {
 
 }}} // namespace Nuclex::Support::Settings
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)

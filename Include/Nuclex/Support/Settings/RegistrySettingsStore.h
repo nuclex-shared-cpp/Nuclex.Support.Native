@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/Settings/SettingsStore.h"
 #include <cstdint> // for std::intptr_t
@@ -242,6 +242,6 @@ namespace Nuclex { namespace Support { namespace Settings {
 
 }}} // namespace Nuclex::Support::Settings
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
 #endif // NUCLEX_SUPPORT_SETTINGS_REGISTRYSETTINGSSTORE_H

@@ -29,7 +29,7 @@ License along with this library
 #include <unistd.h> // for ::syscall()
 #include <limits.h> // for INT_MAX
 #include <sys/syscall.h> // for ::SYS_futex
-#elif defined(NUCLEX_SUPPORT_WIN32) // Use standard win32 threading primitives
+#elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
 #include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #else // Posix: use a pthreads conditional variable to emulate a gate
 #include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
@@ -37,7 +37,7 @@ License along with this library
 #include <atomic> // for std::atomic
 #endif
 
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS)
   // Just some safety checks to make sure pthread_condattr_setclock() is available.
   // https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
   //
@@ -71,7 +71,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 #if defined(NUCLEX_SUPPORT_LINUX)
     /// <summary>Stores the current state of the futex</summary>
     public: volatile std::uint32_t FutexWord;
-#elif defined(NUCLEX_SUPPORT_WIN32)
+#elif defined(NUCLEX_SUPPORT_WINDOWS)
     /// <summary>Handle of the event used to pass or block threads</summary>
     public: HANDLE EventHandle;
 #else // Posix
@@ -93,7 +93,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     FutexWord(initiallyOpen ? 1 : 0) {}
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   Gate::PlatformDependentImplementationData::PlatformDependentImplementationData(
     bool initiallyOpen
   ) :
@@ -113,7 +113,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   Gate::PlatformDependentImplementationData::PlatformDependentImplementationData(
     bool initiallyOpen
   ) :
@@ -148,7 +148,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   Gate::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     BOOL result = ::CloseHandle(this->EventHandle);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -156,7 +156,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   Gate::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     int result = ::pthread_mutex_destroy(&this->Mutex);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -219,7 +219,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   void Gate::Open() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -233,7 +233,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   void Gate::Open() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -274,7 +274,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   void Gate::Close() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -288,7 +288,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   void Gate::Close() {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -351,7 +351,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   void Gate::Wait() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -367,7 +367,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   void Gate::Wait() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -485,7 +485,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   bool Gate::WaitFor(const std::chrono::microseconds &patience) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -504,7 +504,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   bool Gate::WaitFor(const std::chrono::microseconds &patience) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 

@@ -30,7 +30,7 @@ License along with this library
 #include <limits.h> // for INT_MAX
 #include <sys/syscall.h> // for ::SYS_futex
 #include <ctime> // for ::clock_gettime()
-#elif defined(NUCLEX_SUPPORT_WIN32) // Use standard win32 threading primitives
+#elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
 #include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #include <mutex> // for std::mutex
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
@@ -41,7 +41,7 @@ License along with this library
 #include <atomic> // for std::atomic
 #include <cassert> // for assert()
 
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS)
   // Just some safety checks to make sure pthread_condattr_setclock() is available.
   // https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
   //
@@ -75,7 +75,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: mutable volatile std::uint32_t FutexWord;
     /// <summary>Counter, unlocks the latch when it reaches zero</summary>
     public: std::atomic<std::size_t> Countdown; 
-#elif defined(NUCLEX_SUPPORT_WIN32)
+#elif defined(NUCLEX_SUPPORT_WINDOWS)
     /// <summary>Countdown until the latch will open</summary>
     public: std::atomic<std::size_t> Countdown;
     /// <summary>Gate that lets threads through if the countdown is zero</summary>
@@ -102,7 +102,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     Countdown(initialCount) {}
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   Latch::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
@@ -126,7 +126,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   Latch::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
@@ -162,11 +162,11 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   Latch::PlatformDependentImplementationData::~PlatformDependentImplementationData() {}
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   Latch::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     int result = ::pthread_mutex_destroy(&this->Mutex);
     NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -243,7 +243,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   void Latch::Post(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -269,7 +269,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   void Latch::Post(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -343,7 +343,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   void Latch::CountDown(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -371,7 +371,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   void Latch::CountDown(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -464,7 +464,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   void Latch::Wait() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -484,7 +484,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   void Latch::Wait() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -591,7 +591,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
   bool Latch::WaitFor(const std::chrono::microseconds &patience) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
@@ -618,7 +618,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WIN32) // -> Posix
+#if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
   bool Latch::WaitFor(const std::chrono::microseconds &patience) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 

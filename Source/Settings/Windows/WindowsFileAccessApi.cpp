@@ -23,10 +23,10 @@ License along with this library
 
 #include "WindowsFileAccessApi.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "../../Helpers/WindowsApi.h"
-#include "../../Helpers/Utf8/checked.h"
+#include "../../Text/Utf8/checked.h"
 
 namespace {
 
@@ -36,7 +36,7 @@ namespace {
   /// <param name="utf8Path">String containing a UTF-8 path</param>
   /// <returns>The UTF-16 path with magic prefix to eliminate the path length limit</returns>
   std::wstring utf16FromUtf8Path(const std::string &utf8Path) {
-    if(utf8Pat.empty()) {
+    if(utf8Path.empty()) {
       return std::wstring();
     }
 
@@ -181,4 +181,4 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
 
 }}}} // namespace Nuclex::Support::Settings::Windows
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)

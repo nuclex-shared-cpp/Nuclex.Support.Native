@@ -88,6 +88,6 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
 
 }}}} // namespace Nuclex::Support::Settings::Posix
 
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
+#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
 
 #endif // NUCLEX_SUPPORT_SETTINGS_POSIX_POSIXFILEACCESSAPI_H

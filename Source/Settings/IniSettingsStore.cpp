@@ -23,7 +23,17 @@ License along with this library
 
 #include "Nuclex/Support/Settings/IniSettingsStore.h"
 #include "Nuclex/Support/Text/LexicalCast.h"
+#include "Nuclex/Support/ScopeGuard.h"
+
 #include "IniDocumentModel.h"
+
+#if defined(NUCLEX_SUPPORT_LINUX)
+#include "Linux/LinuxFileAccessApi.h"
+#elif defined(NUCLEX_SUPPORT_WINDOWS)
+#include "Windows/WindowsFileAccessApi.h"
+#else
+#include "Posix/PosixFileAccessApi.h"
+#endif
 
 #include <memory> // for std::unique_ptr
 
@@ -64,6 +74,45 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void IniSettingsStore::Load(const std::string &iniFilePath) {
+    std::vector<std::uint8_t> contents;
+
+#if defined(NUCLEX_SUPPORT_LINUX)
+    {
+      int fileDescriptor = Linux::LinuxFileAccessApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Linux::LinuxFileAccessApi::Close(fileDescriptor); };
+
+      contents.resize(4096);
+      for(std::size_t offset = 0;; offset += 4096) {
+        std::size_t readByteCount = Linux::LinuxFileAccessApi::Read(
+          fileDescriptor, contents.data() + offset, 4096
+        );
+        if(readByteCount < 4096) {
+          contents.resize(contents.size() - 4096 + readByteCount);
+          break;
+        } else {
+          contents.resize(contents.size() + readByteCount);
+        }
+      }
+    }
+#elif defined(NUCLEX_SUPPORT_WINDOWS)
+    {
+      ::HANDLE fileHandle = Windows::WindowsFileAccessApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Windows::WindowsFileAccessApi::CloseFile(fileHandle); };
+
+      contents.resize(4096);
+      for(std::size_t offset = 0;; offset += 4096) {
+        std::size_t readByteCount = Windows::WindowsFileAccessApi::Read(
+          fileHandle, contents.data() + offset, 4096
+        );
+        if(readByteCount < 4096) {
+          contents.resize(contents.size() - 4096 + readByteCount);
+          break;
+        } else {
+          contents.resize(contents.size() + readByteCount);
+        }
+      }
+    }
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //

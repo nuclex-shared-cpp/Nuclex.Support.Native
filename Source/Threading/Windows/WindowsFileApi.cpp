@@ -23,7 +23,7 @@ License along with this library
 
 #include "WindowsFileApi.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/Text/StringConverter.h"
 //#include <Shlwapi.h> // for ::PahtRemoveFileSpecW(), ::PathIsRelativeW(), PathAppendW()
@@ -320,7 +320,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
 }}}} // namespace Nuclex::Support::Threading::Windows
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
 #if 0
 std::wstring WindowsProcessApi::combinePaths(std::wstring &path, const std::wstring &extra) {

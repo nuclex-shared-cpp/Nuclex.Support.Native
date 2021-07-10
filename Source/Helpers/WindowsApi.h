@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 // The Windows headers tend to include a ton of crap and pollute the global namespace
 // like nothing else. These macros cut down on that a bit.
@@ -129,6 +129,6 @@ namespace Nuclex { namespace Support { namespace Helpers {
 
 }}} // namespace Nuclex::Support::Helpers
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
 #endif // NUCLEX_SUPPORT_HELPERS_WINDOWSAPI_H

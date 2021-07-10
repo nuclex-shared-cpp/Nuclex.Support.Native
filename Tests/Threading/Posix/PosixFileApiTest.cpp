@@ -23,7 +23,7 @@ License along with this library
 
 #include "../Source/Threading/Posix/PosixFileApi.h"
 
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <gtest/gtest.h>
 
@@ -72,4 +72,4 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
 }}}} // namespace Nuclex::Support::Threading::Posix
 
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
+#endif // !defined(NUCLEX_SUPPORT_WINDOWS)

@@ -60,6 +60,9 @@
     <Filter Include="Source\Settings">
       <UniqueIdentifier>{4820b6d0-4bd4-4837-9152-c4201b241226}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Settings\Linux">
+      <UniqueIdentifier>{6a388887-0124-47d4-b28e-be51b144ee7f}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Settings\Posix">
       <UniqueIdentifier>{dba19423-1600-4945-8453-58ef7012ad1a}</UniqueIdentifier>
     </Filter>
@@ -108,6 +111,15 @@
     <Filter Include="Tests\Settings">
       <UniqueIdentifier>{ed2b2723-dbc9-4e61-ab6a-a8e94062406b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\Settings\Linux">
+      <UniqueIdentifier>{8de6b64c-a4e6-4b2f-abad-ffdde65eacd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests\Settings\Posix">
+      <UniqueIdentifier>{bffe84eb-1f88-4955-9cf0-234aa590134b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests\Settings\Windows">
+      <UniqueIdentifier>{5dbac8be-79a4-4e94-8421-1f2b15b96f6d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Tests\Text">
       <UniqueIdentifier>{e379eb40-5772-47b9-96be-58023afd7cd0}</UniqueIdentifier>
     </Filter>
@@ -119,12 +131,6 @@
     </Filter>
     <Filter Include="Tests\Threading\Windows">
       <UniqueIdentifier>{6892e1f6-d6ad-4ee8-b79f-22b0fe04f30d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Tests\Settings\Posix">
-      <UniqueIdentifier>{bffe84eb-1f88-4955-9cf0-234aa590134b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Tests\Settings\Windows">
-      <UniqueIdentifier>{5dbac8be-79a4-4e94-8421-1f2b15b96f6d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -403,6 +409,12 @@
     <ClCompile Include="Source\Services\ServiceProvider.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Settings\Linux\LinuxFileAccessApi.cpp">
+      <Filter>Source\Settings\Linux</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\Linux\LinuxFileAccessApi.h">
+      <Filter>Source\Settings\Linux</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Settings\Posix\PosixFileAccessApi.cpp">
       <Filter>Source\Settings\Posix</Filter>
     </ClCompile>
@@ -420,6 +432,18 @@
     </ClCompile>
     <ClInclude Include="Source\Settings\Windows\WindowsRegistryApi.h">
       <Filter>Source\Settings\Windows</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Settings\IniDocumentModel.FileParser.cpp">
+      <Filter>Source\Settings</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\IniDocumentModel.FileParser.h">
+      <Filter>Source\Settings</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Settings\IniDocumentModel.cpp">
+      <Filter>Source\Settings</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Settings\IniDocumentModel.h">
+      <Filter>Source\Settings</Filter>
     </ClInclude>
     <ClCompile Include="Source\Settings\IniSettingsStore.cpp">
       <Filter>Source\Settings</Filter>
@@ -701,6 +725,12 @@
     </ClCompile>
     <ClCompile Include="Tests\Settings\Windows\WindowsRegistryApiTest.cpp">
       <Filter>Tests\Settings\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Settings\IniDocumentModelTest.cpp">
+      <Filter>Tests\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Settings\IniSettingsStoreTest.cpp">
+      <Filter>Tests\Settings</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Settings\MemorySettingsStoreTest.cpp">
       <Filter>Tests\Settings</Filter>

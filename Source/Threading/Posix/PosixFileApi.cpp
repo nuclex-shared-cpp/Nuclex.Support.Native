@@ -23,7 +23,7 @@ License along with this library
 
 #include "PosixFileApi.h"
 
-#if !defined(NUCLEX_SUPPORT_WIN32)
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/Text/LexicalAppend.h"
 
@@ -107,4 +107,4 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
 }}}} // namespace Nuclex::Support::Threading::Posix
 
-#endif // !defined(NUCLEX_SUPPORT_WIN32)
+#endif // !defined(NUCLEX_SUPPORT_WINDOWS)

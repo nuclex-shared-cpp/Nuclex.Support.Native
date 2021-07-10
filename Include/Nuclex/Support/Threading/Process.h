@@ -229,7 +229,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       ///   Small performance / memory fragmentation improvement.
       ///   This avoids a micro-allocation for the implenmentation data structure in most cases.
       /// </remarks>
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
       unsigned char implementationDataBuffer[32];
 #else // Posix and Linux
       unsigned char implementationDataBuffer[24];

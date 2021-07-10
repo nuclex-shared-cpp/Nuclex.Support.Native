@@ -23,7 +23,7 @@ License along with this library
 
 #include "../Source/Settings/Windows/WindowsRegistryApi.h"
 
-#if defined(NUCLEX_SUPPORT_WIN32)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <gtest/gtest.h>
 
@@ -32,51 +32,59 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(WindowsRegistryApiTest, CanGetHiveFromStringInShortForm) {
-    EXPECT_EQ(HKEY_CLASSES_ROOT, WindowsRegistryApi::GetHiveFromString(u8"hkcr"));
-    EXPECT_EQ(HKEY_CLASSES_ROOT, WindowsRegistryApi::GetHiveFromString(u8"HKCR"));
+    EXPECT_EQ(HKEY_CLASSES_ROOT, WindowsRegistryApi::GetHiveFromString(u8"hkcr", 4));
+    EXPECT_EQ(HKEY_CLASSES_ROOT, WindowsRegistryApi::GetHiveFromString(u8"HKCR", 4));
 
-    EXPECT_EQ(HKEY_CURRENT_CONFIG, WindowsRegistryApi::GetHiveFromString(u8"hkcc"));
-    EXPECT_EQ(HKEY_CURRENT_CONFIG, WindowsRegistryApi::GetHiveFromString(u8"HKCC"));
+    EXPECT_EQ(HKEY_CURRENT_CONFIG, WindowsRegistryApi::GetHiveFromString(u8"hkcc", 4));
+    EXPECT_EQ(HKEY_CURRENT_CONFIG, WindowsRegistryApi::GetHiveFromString(u8"HKCC", 4));
 
-    EXPECT_EQ(HKEY_CURRENT_USER, WindowsRegistryApi::GetHiveFromString(u8"hkcu"));
-    EXPECT_EQ(HKEY_CURRENT_USER, WindowsRegistryApi::GetHiveFromString(u8"HKCU"));
+    EXPECT_EQ(HKEY_CURRENT_USER, WindowsRegistryApi::GetHiveFromString(u8"hkcu", 4));
+    EXPECT_EQ(HKEY_CURRENT_USER, WindowsRegistryApi::GetHiveFromString(u8"HKCU", 4));
 
-    EXPECT_EQ(HKEY_LOCAL_MACHINE, WindowsRegistryApi::GetHiveFromString(u8"hklm"));
-    EXPECT_EQ(HKEY_LOCAL_MACHINE, WindowsRegistryApi::GetHiveFromString(u8"HKLM"));
+    EXPECT_EQ(HKEY_LOCAL_MACHINE, WindowsRegistryApi::GetHiveFromString(u8"hklm", 4));
+    EXPECT_EQ(HKEY_LOCAL_MACHINE, WindowsRegistryApi::GetHiveFromString(u8"HKLM", 4));
 
-    EXPECT_EQ(HKEY_USERS, WindowsRegistryApi::GetHiveFromString(u8"hku"));
-    EXPECT_EQ(HKEY_USERS, WindowsRegistryApi::GetHiveFromString(u8"HKU"));
+    EXPECT_EQ(HKEY_USERS, WindowsRegistryApi::GetHiveFromString(u8"hku", 3));
+    EXPECT_EQ(HKEY_USERS, WindowsRegistryApi::GetHiveFromString(u8"HKU", 3));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(WindowsRegistryApiTest, CanGetHiveFromStringInLongForm) {
-    EXPECT_EQ(HKEY_CLASSES_ROOT, WindowsRegistryApi::GetHiveFromString(u8"hkey_classes_root"));
-    EXPECT_EQ(HKEY_CLASSES_ROOT, WindowsRegistryApi::GetHiveFromString(u8"HKEY_CLASSES_ROOT"));
-
     EXPECT_EQ(
-      HKEY_CURRENT_CONFIG, WindowsRegistryApi::GetHiveFromString(u8"hkey_current_config")
+      HKEY_CLASSES_ROOT, WindowsRegistryApi::GetHiveFromString(u8"hkey_classes_root", 17)
     );
     EXPECT_EQ(
-      HKEY_CURRENT_CONFIG, WindowsRegistryApi::GetHiveFromString(u8"HKEY_CURRENT_CONFIG")
+      HKEY_CLASSES_ROOT, WindowsRegistryApi::GetHiveFromString(u8"HKEY_CLASSES_ROOT", 17)
     );
-
-    EXPECT_EQ(HKEY_CURRENT_USER, WindowsRegistryApi::GetHiveFromString(u8"hkey_current_user"));
-    EXPECT_EQ(HKEY_CURRENT_USER, WindowsRegistryApi::GetHiveFromString(u8"HKEY_CURRENT_USER"));
 
     EXPECT_EQ(
-      HKEY_LOCAL_MACHINE, WindowsRegistryApi::GetHiveFromString(u8"hkey_local_machine")
+      HKEY_CURRENT_CONFIG, WindowsRegistryApi::GetHiveFromString(u8"hkey_current_config", 19)
     );
     EXPECT_EQ(
-      HKEY_LOCAL_MACHINE, WindowsRegistryApi::GetHiveFromString(u8"HKEY_LOCAL_MACHINE")
+      HKEY_CURRENT_CONFIG, WindowsRegistryApi::GetHiveFromString(u8"HKEY_CURRENT_CONFIG", 19)
     );
 
-    EXPECT_EQ(HKEY_USERS, WindowsRegistryApi::GetHiveFromString(u8"hkey_users"));
-    EXPECT_EQ(HKEY_USERS, WindowsRegistryApi::GetHiveFromString(u8"HKEY_USERS"));
+    EXPECT_EQ(
+      HKEY_CURRENT_USER, WindowsRegistryApi::GetHiveFromString(u8"hkey_current_user", 17)
+    );
+    EXPECT_EQ(
+      HKEY_CURRENT_USER, WindowsRegistryApi::GetHiveFromString(u8"HKEY_CURRENT_USER", 17)
+    );
+
+    EXPECT_EQ(
+      HKEY_LOCAL_MACHINE, WindowsRegistryApi::GetHiveFromString(u8"hkey_local_machine", 18)
+    );
+    EXPECT_EQ(
+      HKEY_LOCAL_MACHINE, WindowsRegistryApi::GetHiveFromString(u8"HKEY_LOCAL_MACHINE", 18)
+    );
+
+    EXPECT_EQ(HKEY_USERS, WindowsRegistryApi::GetHiveFromString(u8"hkey_users", 10));
+    EXPECT_EQ(HKEY_USERS, WindowsRegistryApi::GetHiveFromString(u8"HKEY_USERS", 10));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
 }}}} // namespace Nuclex::Support::Settings::Windows
 
-#endif // defined(NUCLEX_SUPPORT_WIN32)
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
