@@ -81,7 +81,9 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     /// <summary>Serializes the entire document model back into an .ini file</summary>
     /// <param name="path">Path of the .ini file in to save the document model</param>
-    public: void Serialize(const std::string &path) const;
+    public: void Serialize(
+      void *context, void write(void *context, const std::uint8_t *, std::size_t)
+    ) const;
 
     /// <summary>Retrieves a list of all sections that exist in the .ini file</summary>
     /// <returns>A list of all sections contained in the .ini file</returns>

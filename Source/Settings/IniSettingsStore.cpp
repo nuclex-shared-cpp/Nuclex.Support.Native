@@ -112,7 +112,27 @@ namespace Nuclex { namespace Support { namespace Settings {
         }
       }
     }
+#else
+    {
+      ::FILE *file = Posix::PosixFileAccessApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Posix::PosixFileAccessApi::Close(file); };
+
+      contents.resize(4096);
+      for(std::size_t offset = 0;; offset += 4096) {
+        std::size_t readByteCount = Posix::PosixFileAccessApi::Read(
+          file, contents.data() + offset, 4096
+        );
+        if(readByteCount < 4096) {
+          contents.resize(contents.size() - 4096 + readByteCount);
+          break;
+        } else {
+          contents.resize(contents.size() + readByteCount);
+        }
+      }
+    }
 #endif
+
+    Load(contents.data(), contents.size());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -132,7 +152,67 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void IniSettingsStore::Save(const std::string &iniFilePath) const {
+#if defined(NUCLEX_SUPPORT_LINUX)
+    {
+      int fileDescriptor = Linux::LinuxFileAccessApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Linux::LinuxFileAccessApi::Close(fileDescriptor); };
 
+      if(this->privateImplementationData != nullptr) {
+        reinterpret_cast<const IniDocumentModel *>(
+          this->privateImplementationData
+        )->Serialize(
+          &fileDescriptor,
+          [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
+            Linux::LinuxFileAccessApi::Write(
+              *reinterpret_cast<int *>(context), buffer, byteCount
+            );
+          }
+        );
+      }
+
+      Linux::LinuxFileAccessApi::Flush(fileDescriptor);
+    }
+#elif defined(NUCLEX_SUPPORT_WINDOWS)
+    {
+      ::HANDLE fileHandle = Windows::WindowsFileAccessApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Windows::WindowsFileAccessApi::CloseFile(fileHandle); };
+
+      if(this->privateImplementationData != nullptr) {
+        reinterpret_cast<const IniDocumentModel *>(
+          this->privateImplementationData
+        )->Serialize(
+          &fileHandle,
+          [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
+            Windows::WindowsFileAccessApi::Write(
+              *reinterpret_cast<::HANDLE *>(context), buffer, byteCount
+            );
+          }
+        );
+      }
+
+      Windows::WindowsFileAccessApi::FlushFileBuffers(fileHandle);
+    }
+#else
+    {
+      ::FILE *file = Posix::PosixFileAccessApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Posix::PosixFileAccessApi::Close(file); };
+
+      if(this->privateImplementationData != nullptr) {
+        reinterpret_cast<const IniDocumentModel *>(
+          this->privateImplementationData
+        )->Serialize(
+          file,
+          [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
+            Posix::PosixFileAccessApi::Write(
+              reinterpret_cast<::FILE *>(context), buffer, byteCount
+            );
+          }
+        );
+      }
+
+      Posix::PosixFileAccessApi::Flush(file);
+    }
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //

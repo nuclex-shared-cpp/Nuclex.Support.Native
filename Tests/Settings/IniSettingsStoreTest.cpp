@@ -63,12 +63,19 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IniSettingsStoreTest, CanLoadIniFileFromMemory) {
+  TEST(IniSettingsStoreTest, FileCanBeLoadedFromMemory) {
     IniSettingsStore settings;
     settings.Load(
       reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniSettingsStoreTest, FileCanBeLoadedFromHardDrive) {
+    IniSettingsStore settings;
+    //settings.Load(u8"C:\\Windows\\System.ini");
   }
 
   // ------------------------------------------------------------------------------------------- //

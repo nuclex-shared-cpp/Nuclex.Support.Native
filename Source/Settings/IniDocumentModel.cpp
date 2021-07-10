@@ -158,6 +158,22 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  void IniDocumentModel::Serialize(
+    void *context, void write(void *context, const std::uint8_t *, std::size_t)
+  ) const {
+    if(this->firstLine != nullptr) {
+      write(context, this->firstLine->Contents, this->firstLine->Length);
+
+      Line *nextLine = this->firstLine->Next;
+      while(nextLine != this->firstLine) {
+        write(context, nextLine->Contents, nextLine->Length);
+        nextLine = nextLine->Next;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   std::vector<std::string> IniDocumentModel::GetAllSections() const {
     std::vector<std::string> sectionNames;
     sectionNames.reserve(this->sections.size());

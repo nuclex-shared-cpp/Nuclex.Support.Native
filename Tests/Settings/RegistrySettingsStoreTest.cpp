@@ -71,9 +71,9 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(RegistrySettingsStoreTest, NonExistentKeyCanBeAccessedInReadOnlyMode) {
     // If a non-existent key is specified in read-only mode, the settings store acts
-    // as if it was completely empty. This makes the behavior consistent with the Retrieeve()
+    // as if it was completely empty. This makes the behavior consistent with the Retrieve()
     // method. If an error was thrown instead, it would make applications un-runnable unless
-    // some useless, empty registry was present rather than gracefully using default settings.
+    // some useless, empty registry key was present rather than gracefully using defaults.
     EXPECT_NO_THROW(
       const RegistrySettingsStore settings(u8"HKEY_LOCAL_MACHINE/Lalala123ThisDoesntExist", true);
     );
