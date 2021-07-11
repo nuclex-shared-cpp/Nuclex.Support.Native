@@ -49,6 +49,11 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  //const char *writeTemporaryIniFile() {
+  //}
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Settings {

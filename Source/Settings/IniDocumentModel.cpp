@@ -65,6 +65,21 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Checks whether the specified character is a whiteapce</summary>
+  /// <param name="utf8SingleByteCharacter">
+  ///   Character the will be checked for being a whitespace
+  /// </param>
+  /// <returns>True if the character was a whitespace, false otherwise</returns>
+  bool isWhitepace(std::uint8_t utf8SingleByteCharacter) {
+    return (
+      (utf8SingleByteCharacter == ' ') ||
+      (utf8SingleByteCharacter == '\t') ||
+      (utf8SingleByteCharacter == '\r')
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Settings {
@@ -77,7 +92,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     firstLine(nullptr),
     sections(),
     hasSpacesAroundAssignment(true),
-    hasEmptyLinesBetweenProperties(true),
+    usesPaddingLines(false),
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     usesCrLf(true) {}
 #else
@@ -92,7 +107,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     firstLine(nullptr),
     sections(),
     hasSpacesAroundAssignment(true),
-    hasEmptyLinesBetweenProperties(true) {
+    usesPaddingLines(false) {
     parseFileContents(fileContents, byteCount);
   }
 
@@ -260,42 +275,36 @@ namespace Nuclex { namespace Support { namespace Settings {
     const std::string &propertyValue
   ) {
     IndexedSection *section = getOrCreateSection(sectionName);
-    
+    PropertyMap::iterator propertyIterator = section->Properties.find(propertyName);
 
-#if 1
-    (void)sectionName;
-    (void)propertyName;
-    (void)propertyValue;
-    throw u8"Not implemented yet";
-#else
-    IndexedSection *targetSection;
-    {
-      SectionMap::iterator sectionIterator = this->sections.find(sectionName);
-      if(sectionIterator == this->sections.end()) {
-        targetSection = allocate<IndexedSection>(0);
-        new(targetSection) IndexedSection;
-
-        // Can the default section at the start of the file be used for this?
-        if(sectionName.empty()) {
-          targetSection->DeclarationLine = nullptr;
-          targetSection->LastLine = nullptr;
-        } else { // No, we need an explicit section
-          SectionLine *newSectionLine = allocateLine<SectionLine>(
-            nullptr, sectionName.size() + 3
-          );
-          newSectionLine->NameStartIndex = 1;
-          newSectionLine->NameLength = sectionName.length();
-
-          newSectionLine->Contents[0] = '[';
-          std::copy_n(
-            sectionName.c_str(), newSectionLine->NameLength, newSectionLine->Contents + 1
-          );
-          newSectionLine->Contents[newSectionLine->NameLength + 1] = ']';
-          newSectionLine->Contents[newSectionLine->NameLength + 2] = '\n';
+    // Is this a new property? Create a new declaration line for it
+    if(propertyIterator == section->Properties.end()) {
+      PropertyLine *newPropertyLine = createPropertyLine(propertyName, propertyValue);
+      section->Properties.insert(
+        PropertyMap::value_type(propertyName, newPropertyLine)
+      );
+      if(section->LastLine == nullptr) {
+        if(section->DeclarationLine == nullptr) {
+          if(this->firstLine == nullptr) {
+            this->firstLine = newPropertyLine;
+            newPropertyLine->Previous = newPropertyLine;
+            newPropertyLine->Next = newPropertyLine;
+          } else {
+            integrateLine(this->firstLine->Previous, newPropertyLine, this->usesPaddingLines);
+            this->firstLine = newPropertyLine;
+          }
+        } else {
+          integrateLine(section->DeclarationLine, newPropertyLine, this->usesPaddingLines);
         }
+      } else {
+        integrateLine(section->LastLine, newPropertyLine, this->usesPaddingLines);
       }
+    } else if(propertyIterator->second->ValueLength >= propertyValue.length()) {
+
+      // exi
+    } else {
+      // Property already exists
     }
-#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -326,39 +335,51 @@ namespace Nuclex { namespace Support { namespace Settings {
       if(sectionName.empty()) {
 
         // Caller *must* place new properties at beginning of file when
-        // LastLine and DeclarationLine as both nullptr.
+        // LastLine and DeclarationLine are both nullptr.
         newSection->DeclarationLine = nullptr;
         newSection->LastLine = nullptr;
         return newSection;
 
       } else { // Section has a name, explicit declaration needed
+        std::string::size_type nameLength = sectionName.length();
         SectionLine *newDeclarationLine = allocateLine<SectionLine>(
-          nullptr, sectionName.size() + (this->usesCrLf ? 4 : 3)
+          nullptr, nameLength + (this->usesCrLf ? 4 : 3)
         );
 
         newDeclarationLine->Contents[0] = '[';
         std::copy_n(
           sectionName.c_str(),
-          newDeclarationLine->NameLength,
+          nameLength,
           newDeclarationLine->Contents + 1
         );
-        newDeclarationLine->Contents[newDeclarationLine->NameLength + 1] = ']';
+        newDeclarationLine->Contents[nameLength + 1] = ']';
         if(this->usesCrLf) {
-          newDeclarationLine->Contents[newDeclarationLine->NameLength + 2] = '\r';
-          newDeclarationLine->Contents[newDeclarationLine->NameLength + 3] = '\n';
+          newDeclarationLine->Contents[nameLength + 2] = '\r';
+          newDeclarationLine->Contents[nameLength + 3] = '\n';
         } else {
-          newDeclarationLine->Contents[newDeclarationLine->NameLength + 2] = '\n';
+          newDeclarationLine->Contents[nameLength + 2] = '\n';
         }
 
         newDeclarationLine->NameStartIndex = 1;
-        newDeclarationLine->NameLength = sectionName.length();
+        newDeclarationLine->NameLength = nameLength;
 
         if(this->firstLine != nullptr) {
           integrateLine(this->firstLine->Previous, newDeclarationLine, true);
         } else {
-          newDeclarationLine->Next = newDeclarationLine;
-          newDeclarationLine->Previous = newDeclarationLine;
-          this->firstLine = newDeclarationLine;
+          Line *blankLine = allocateLine<Line>(nullptr, (this->usesCrLf ? 2 : 1));
+          if(this->usesCrLf) {
+            blankLine->Contents[0] = '\r';
+            blankLine->Contents[1] = '\n';
+          } else {
+            blankLine->Contents[0] = '\n';
+          }
+
+          this->firstLine = blankLine;
+
+          blankLine->Next = newDeclarationLine;
+          blankLine->Previous = newDeclarationLine;
+          newDeclarationLine->Previous = blankLine;
+          newDeclarationLine->Next = blankLine;
         }
 
         newSection->DeclarationLine = newDeclarationLine;
@@ -368,6 +389,81 @@ namespace Nuclex { namespace Support { namespace Settings {
     } else { // Way at the beginning of this method, a section was found
       return sectionIterator->second;
     }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  IniDocumentModel::PropertyLine *IniDocumentModel::createPropertyLine(
+    const std::string &propertyName, const std::string &propertyValue
+  ) {
+    bool requiresQuotes = false;
+    if(propertyValue.length() > 0) {
+      requiresQuotes = (
+        isWhitepace(propertyValue[0]) ||
+        isWhitepace(propertyValue[propertyValue.length() - 1])
+      );
+    }
+    
+    // Generate a new property declaration line
+    PropertyLine *newPropertyLine = allocateLine<PropertyLine>(
+      nullptr,
+      (
+        propertyName.length() + propertyValue.length() +
+        (this->hasSpacesAroundAssignment ? 3 : 1) +
+        (this->usesCrLf ? 2 : 1) +
+        (requiresQuotes ? 2 : 0)
+      )
+    );
+
+    // Add the property name to the line
+    {
+      newPropertyLine->NameStartIndex = 0;
+      newPropertyLine->NameLength = newPropertyLine->Length = propertyName.length();
+      std::copy_n(
+        propertyName.begin(),
+        newPropertyLine->NameLength,
+        newPropertyLine->Contents
+      );
+    }
+
+    // Add an equals sign after the property name
+    if(this->hasSpacesAroundAssignment) {
+      newPropertyLine->Contents[newPropertyLine->Length++] = ' ';
+      newPropertyLine->Contents[newPropertyLine->Length++] = '=';
+      newPropertyLine->Contents[newPropertyLine->Length++] = ' ';
+    } else {
+      newPropertyLine->Contents[newPropertyLine->Length++] = '=';
+    }
+
+    // Write the value of the property behind the equals sign
+    {
+      if(requiresQuotes) {
+        newPropertyLine->Contents[newPropertyLine->Length++] = '"';
+      }
+
+      newPropertyLine->ValueStartIndex = newPropertyLine->Length;
+      newPropertyLine->ValueLength = propertyValue.length();
+      std::copy_n(
+        propertyValue.c_str(),
+        newPropertyLine->ValueLength,
+        newPropertyLine->Contents + newPropertyLine->Length
+      );
+      newPropertyLine->Length += newPropertyLine->ValueLength;
+
+      if(requiresQuotes) {
+        newPropertyLine->Contents[newPropertyLine->Length++] = '"';
+      }
+    }
+
+    // Add a line break at the end of the line
+    if(this->usesCrLf) {
+      newPropertyLine->Contents[newPropertyLine->Length++] = '\r';
+      newPropertyLine->Contents[newPropertyLine->Length++] = '\n';
+    } else {
+      newPropertyLine->Contents[newPropertyLine->Length++] = '\n';
+    }
+
+    return newPropertyLine;
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -202,6 +202,14 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <returns>The new or existing section of the specified name</returns>
     private: IndexedSection *getOrCreateSection(const std::string &sectionName);
 
+    /// <summary>Creates a new line to declare the specified property</summary>
+    /// <param name="propertyName">Name of the property the line will declare</param>
+    /// <param name="propertyValue">Value that will be assigned to the property</param>
+    /// <returns>The new property declaration line</returns>
+    private: PropertyLine *createPropertyLine(
+      const std::string &propertyName, const std::string &propertyValue
+    );
+
     /// <summary>Integrates a line into the linked list of lines</summary>
     /// <param name="previous">Line after which the new line will appear</param>
     /// <param name="newLine">New line that will be integrated</param>
@@ -266,7 +274,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Should there be spaces before and after the equals sign?</summary>
     private: bool hasSpacesAroundAssignment;
     /// <summary>Should property assignments be padded with empty lines between them?</summary>
-    private: bool hasEmptyLinesBetweenProperties;
+    private: bool usesPaddingLines;
     /// <summary>Whether the configuration file uses weird Windows line breaks</summary>
     private: bool usesCrLf;
 

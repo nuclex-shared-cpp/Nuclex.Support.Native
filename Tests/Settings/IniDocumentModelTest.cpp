@@ -357,4 +357,17 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(IniDocumentModelTest, NewPropertyCanBeCreated) {
+    IniDocumentModel dom;
+    dom.SetPropertyValue(u8"MySection", u8"World", u8"Hello");
+    dom.SetPropertyValue(std::string(), u8"Hello", u8"World");
+
+    std::vector<std::uint8_t> fileContents = dom.Serialize();
+
+    std::string fileContentsAsString(fileContents.begin(), fileContents.end());
+    EXPECT_TRUE(fileContentsAsString.find(u8"Hello = World") != std::string::npos);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Settings

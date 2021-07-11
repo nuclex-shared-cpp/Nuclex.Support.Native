@@ -29,7 +29,7 @@ License along with this library
 
 #include <linux/limits.h> // for PATH_MAX
 #include <fcntl.h> // ::open() and flags
-#include <unistd.h> // ::read(), ::write(), ::rmdir(), etc.
+#include <unistd.h> // ::read(), ::write(), ::close(), etc.
 
 #include <cerrno> // To access ::errno directly
 #include <vector> // std::vector

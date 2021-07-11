@@ -64,7 +64,6 @@ namespace {
       (utf8SingleByteCharacter == ' ') ||
       (utf8SingleByteCharacter == '\t') ||
       (utf8SingleByteCharacter == '\r')
-      //(utf8SingleByteCharacter == '\n')
     );
   }
 
