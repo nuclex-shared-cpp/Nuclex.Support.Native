@@ -48,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// </remarks>
   class ParserHelper {
 
-    /// <summary>Checks whether the specified character is a whiteapce</summary>
+    /// <summary>Checks whether the specified character is a whitespace</summary>
     /// <param name="utf8Byte">
     ///   UTF-8 byte or single-byte character that will be checked for being a whitespace
     /// </param>
@@ -57,7 +57,7 @@ namespace Nuclex { namespace Support { namespace Text {
       std::uint8_t utf8Byte
     );
 
-    /// <summary>Checks whether the specified character is a whiteapce</summary>
+    /// <summary>Checks whether the specified character is a whitespace</summary>
     /// <param name="utf8SingleByteCharacter">
     ///   Character that will be checked for being a whitespace
     /// </param>
