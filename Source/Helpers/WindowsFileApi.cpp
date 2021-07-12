@@ -28,7 +28,7 @@ License along with this library
 #include "Nuclex/Support/Text/StringConverter.h"
 //#include <Shlwapi.h> // for ::PahtRemoveFileSpecW(), ::PathIsRelativeW(), PathAppendW()
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
+namespace Nuclex { namespace Support { namespace Helprs {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -318,7 +318,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 #endif // defined(NUCLEX_SUPPORT_EMULATE_SHLWAPI)
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Windows
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 

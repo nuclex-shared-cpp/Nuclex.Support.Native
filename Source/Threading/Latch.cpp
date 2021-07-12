@@ -24,7 +24,7 @@ License along with this library
 #include "Nuclex/Support/Threading/Latch.h"
 
 #if defined(NUCLEX_SUPPORT_LINUX) // Directly use futex via kernel syscalls
-#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetRemainingTimeout()
+#include "../Helpers/PosixTimeApi.h" // for PosixTimeApi::GetRemainingTimeout()
 #include <linux/futex.h> // for futex constants
 #include <unistd.h> // for ::syscall()
 #include <limits.h> // for INT_MAX
@@ -34,7 +34,7 @@ License along with this library
 #include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #include <mutex> // for std::mutex
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
-#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
+#include "../Helpers/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
 #endif
 
@@ -136,7 +136,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Attribute necessary to use CLOCK_MONOTONIC for condition variable timeouts
     ::pthread_condattr_t *monotonicClockAttribute = (
-      Posix::PosixTimeApi::GetMonotonicClockAttribute()
+      Helpers::PosixTimeApi::GetMonotonicClockAttribute()
     );
     
     // Create a new pthread conditional variable
@@ -542,7 +542,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // Calculate the remaining timeout until the wait should fail. Note that this is
       // a relative timeout (in contrast to ::sem_t and most things Posix).
-      struct ::timespec timeout = Posix::PosixTimeApi::GetRemainingTimeout(
+      struct ::timespec timeout = Helpers::PosixTimeApi::GetRemainingTimeout(
         CLOCK_MONOTONIC, startTime, patience
       );
 
@@ -623,7 +623,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
     // Forced to use CLOCK_REALTIME, which means the semaphore is broken :-(
-    struct ::timespec endTime = Posix::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
+    struct ::timespec endTime = Helpers::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
     if(unlikely(result != 0)) {

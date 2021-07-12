@@ -63,7 +63,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -476,6 +476,6 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Windows
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)

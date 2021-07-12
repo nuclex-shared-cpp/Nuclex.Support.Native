@@ -21,7 +21,7 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "../Source/Threading/Posix/PosixTimeApi.h"
+#include "../Source/Helpers/PosixTimeApi.h"
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
@@ -29,7 +29,7 @@ License along with this library
 
 #include <gtest/gtest.h>
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -71,7 +71,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
     );
 
     EXPECT_FALSE(PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, futureTime));
-    Thread::Sleep(std::chrono::milliseconds(25));
+    Threading::Thread::Sleep(std::chrono::milliseconds(25));
     EXPECT_TRUE(PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, futureTime));
   }
 
@@ -115,7 +115,7 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
     );
 
     EXPECT_FALSE(PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, futureTime));
-    Thread::Sleep(std::chrono::milliseconds(25));
+    Threading::Thread::Sleep(std::chrono::milliseconds(25));
     EXPECT_TRUE(PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, futureTime));
   }
 
@@ -176,6 +176,6 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
   
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Posix
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)

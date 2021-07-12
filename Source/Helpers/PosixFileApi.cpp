@@ -37,7 +37,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -105,6 +105,6 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Posix
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)

@@ -18,18 +18,18 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_THREADING_WINDOWS_WINDOWSPROCESSAPI_H
-#define NUCLEX_SUPPORT_THREADING_WINDOWS_WINDOWSPROCESSAPI_H
+#ifndef NUCLEX_SUPPORT_HELPERS_WINDOWSPROCESSAPI_H
+#define NUCLEX_SUPPORT_HELPERS_WINDOWSPROCESSAPI_H
 
 #include "Nuclex/Support/Config.h"
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "../../Helpers/WindowsApi.h"
+#include "WindowsApi.h"
 
 #include <cassert> // for assert()
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -206,8 +206,8 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Windows
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_THREADING_WINDOWS_WINDOWSPROCESSAPI_H
+#endif // NUCLEX_SUPPORT_HELPERS_WINDOWSPROCESSAPI_H

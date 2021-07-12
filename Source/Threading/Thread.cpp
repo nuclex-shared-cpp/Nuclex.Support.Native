@@ -24,12 +24,14 @@ License along with this library
 #include "Nuclex/Support/Threading/Thread.h"
 
 #if defined(NUCLEX_SUPPORT_LINUX)
-#include "Posix/PosixProcessApi.h" // for PosixProcessApi
+#include "../Helpers/PosixProcessApi.h" // for PosixProcessApi
 #include <ctime> // for ::clock_gettime() and ::clock_nanosleep()
 #include <cstdlib> // for ldiv_t
 #include <algorithm> // for std::min()
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
 #include "../Helpers/WindowsApi.h" // for ::Sleep(), ::GetCurrentThreadId() and more
+#else
+#include "../Helpers/PosixProcessApi.h" // for PosixProcessApi
 #endif
 
 #include "ThreadPoolConfig.h" // for ThreadPoolConfig::IsThreadPoolThread

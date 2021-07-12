@@ -18,20 +18,20 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_THREADING_WINDOWS_WINDOWSFILEAPI_H
-#define NUCLEX_SUPPORT_THREADING_WINDOWS_WINDOWSFILEAPI_H
+#ifndef NUCLEX_SUPPORT_HELPERS_WINDOWSPATHAPI_H
+#define NUCLEX_SUPPORT_HELPERS_WINDOWSPATHAPI_H
 
 #include "Nuclex/Support/Config.h"
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "../../Helpers/WindowsApi.h"
+#include "WindowsApi.h"
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Wraps the Windows file API</summary>
+  /// <summary>Wraps the Windows path API</summary>
   class WindowsFileApi {
 
     /// <summary>Checks if the specified path is a relative path</summary>
@@ -107,8 +107,8 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Windows
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_THREADING_WINDOWS_WINDOWSFILEAPI_H
+#endif // NUCLEX_SUPPORT_HELPERS_WINDOWSPATHAPI_H

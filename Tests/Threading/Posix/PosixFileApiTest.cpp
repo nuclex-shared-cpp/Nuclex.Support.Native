@@ -21,13 +21,13 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "../Source/Threading/Posix/PosixFileApi.h"
+#include "../Source/Helpers/PosixFileApi.h"
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <gtest/gtest.h>
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -70,6 +70,6 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Posix
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)

@@ -18,16 +18,16 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_THREADING_POSIX_POSIXFILEAPI_H
-#define NUCLEX_SUPPORT_THREADING_POSIX_POSIXFILEAPI_H
+#ifndef NUCLEX_SUPPORT_HELPERS_POSIXPATHAPI_H
+#define NUCLEX_SUPPORT_HELPERS_POSIXPATHAPI_H
 
 #include "Nuclex/Support/Config.h"
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "../../Helpers/PosixApi.h"
+#include "PosixApi.h"
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -57,8 +57,8 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Posix
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_THREADING_POSIX_POSIXFILEAPI_H
+#endif // NUCLEX_SUPPORT_HELPERS_POSIXPATHAPI_H

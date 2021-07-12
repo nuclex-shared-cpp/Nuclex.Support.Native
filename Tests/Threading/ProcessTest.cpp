@@ -23,6 +23,8 @@ License along with this library
 
 #include "Nuclex/Support/Threading/Process.h"
 
+#if defined(NUCLEX_SUPPORT_LINUX) || defined(NUCLEX_SUPPORT_WINDOWS)
+
 #include <gtest/gtest.h>
 
 #include <stdexcept> // for std::logic_error
@@ -251,3 +253,5 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading
+
+#endif // defined(NUCLEX_SUPPORT_LINUX) || defined(NUCLEX_SUPPORT_WINDOWS)

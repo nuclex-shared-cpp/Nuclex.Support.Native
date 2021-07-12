@@ -114,12 +114,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 #else
     {
-      ::FILE *file = Posix::PosixFileAccessApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Posix::PosixFileAccessApi::Close(file); };
+      ::FILE *file = Helpers::PosixFileAccessApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::PosixFileAccessApi::Close(file); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;; offset += 4096) {
-        std::size_t readByteCount = Posix::PosixFileAccessApi::Read(
+        std::size_t readByteCount = Helpers::PosixFileAccessApi::Read(
           file, contents.data() + offset, 4096
         );
         if(readByteCount < 4096) {
@@ -194,8 +194,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 #else
     {
-      ::FILE *file = Posix::PosixFileAccessApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Posix::PosixFileAccessApi::Close(file); };
+      ::FILE *file = Helpers::PosixFileAccessApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::PosixFileAccessApi::Close(file); };
 
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(
@@ -203,14 +203,14 @@ namespace Nuclex { namespace Support { namespace Settings {
         )->Serialize(
           file,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
-            Posix::PosixFileAccessApi::Write(
+            Helpers::PosixFileAccessApi::Write(
               reinterpret_cast<::FILE *>(context), buffer, byteCount
             );
           }
         );
       }
 
-      Posix::PosixFileAccessApi::Flush(file);
+      Helpers::PosixFileAccessApi::Flush(file);
     }
 #endif
   }

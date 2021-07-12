@@ -21,13 +21,13 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "../Source/Threading/Windows/WindowsFileApi.h"
+#include "../Source/Helpers/WindowsFileApi.h"
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <gtest/gtest.h>
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -101,6 +101,6 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Windows {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Windows
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)

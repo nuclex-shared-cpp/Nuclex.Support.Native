@@ -25,9 +25,9 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
-#include "Posix/PosixTimeApi.h" // for PosixTimeApi
-#include "Posix/PosixProcessApi.h" // for Pipe, PosixProcessApi
-#include "Posix/PosixFileApi.h" // for PosixFileApi
+#include "../Helpers/PosixTimeApi.h" // for PosixTimeApi
+#include "../Helpers/PosixProcessApi.h" // for Pipe, PosixProcessApi
+#include "../Helpers/PosixFileApi.h" // for PosixFileApi
 
 #include "Nuclex/Support/Errors/TimeoutError.h"
 #include "Nuclex/Support/ScopeGuard.h"
@@ -299,7 +299,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     const std::vector<std::string> &arguments /* = std::vector<std::string>() */,
     bool prependExecutableName /* = true */
   ) {
-    using Nuclex::Support::Threading::Posix::Pipe;
+    using Nuclex::Support::Helpers::Pipe;
 
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId != 0) {
@@ -312,11 +312,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     // variables happens to be the child process.
     std::string absoluteWorkingDirectory, absoluteExecutablePath;
 
-    Nuclex::Support::Threading::Posix::PosixProcessApi::GetAbsoluteExecutablePath(
+    Nuclex::Support::Helpers::PosixProcessApi::GetAbsoluteExecutablePath(
       absoluteExecutablePath, this->executablePath
     );
     if(!this->workingDirectory.empty()) {
-      Nuclex::Support::Threading::Posix::PosixProcessApi::GetAbsoluteWorkingDirectory(
+      Nuclex::Support::Helpers::PosixProcessApi::GetAbsoluteWorkingDirectory(
         absoluteWorkingDirectory, this->workingDirectory
       );
     }
@@ -425,7 +425,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   bool Process::Wait(
     std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */
   ) const {
-    using Nuclex::Support::Threading::Posix::PosixProcessApi;
+    using Nuclex::Support::Helpers::PosixProcessApi;
 
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
@@ -439,7 +439,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Calculate the absolute time at which the timeout occurs (the clock is
     // monotonic, so even if the system clock is adjusted, this won't be affected)
-    struct ::timespec timeoutTime = Posix::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
+    struct ::timespec timeoutTime = Helpers::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
     struct ::timespec waitTime;
     {
       waitTime.tv_sec = 0;
@@ -474,7 +474,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
         // Check if the caller-specified patience time has been exceeded.
         // If the provided timeout was 0, this will bail out after the first ::waitpid().
-        if(Posix::PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, timeoutTime)) {
+        if(Helpers::PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, timeoutTime)) {
           return false;
         }
 
@@ -567,7 +567,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   void Process::Kill(std::chrono::milliseconds patience /* = std::chrono::milliseconds(5000) */) {
-    using Nuclex::Support::Threading::Posix::PosixProcessApi;
+    using Nuclex::Support::Helpers::PosixProcessApi;
 
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {

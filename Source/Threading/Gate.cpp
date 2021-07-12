@@ -24,7 +24,7 @@ License along with this library
 #include "Nuclex/Support/Threading/Gate.h"
 
 #if defined(NUCLEX_SUPPORT_LINUX) // Directly use futex via kernel syscalls
-#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
+#include "../Helpers/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <linux/futex.h> // for futex constants
 #include <unistd.h> // for ::syscall()
 #include <limits.h> // for INT_MAX
@@ -32,7 +32,7 @@ License along with this library
 #elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
 #include "../Helpers/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #else // Posix: use a pthreads conditional variable to emulate a gate
-#include "Posix/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
+#include "../Helpers/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
 #include <atomic> // for std::atomic
 #endif
@@ -122,7 +122,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Attribute necessary to use CLOCK_MONOTONIC for condition variable timeouts
     ::pthread_condattr_t *monotonicClockAttribute = (
-      Posix::PosixTimeApi::GetMonotonicClockAttribute()
+      Helpers::PosixTimeApi::GetMonotonicClockAttribute()
     );
     
     // Create a new pthread conditional variable
@@ -477,7 +477,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // Calculate the new relative timeout. If this is some kind of spurious
       // wake-up, but the value does indeed change while we're here, that's not
       // a problem since the futex syscall will re-check the futex word.
-      timeout = Posix::PosixTimeApi::GetRemainingTimeout(CLOCK_MONOTONIC, startTime, patience);
+      timeout = Helpers::PosixTimeApi::GetRemainingTimeout(CLOCK_MONOTONIC, startTime, patience);
 
     }
 
@@ -508,7 +508,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   bool Gate::WaitFor(const std::chrono::microseconds &patience) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
-    struct ::timespec waitEndTime = Posix::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
+    struct ::timespec waitEndTime = Helpers::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
     if(unlikely(result != 0)) {

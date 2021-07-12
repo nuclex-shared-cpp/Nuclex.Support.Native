@@ -92,14 +92,14 @@ namespace {
 
     target.resize(characterCount);
 
-    Nuclex::Support::Threading::Posix::PosixFileApi::RemoveFileFromPath(target);
+    Nuclex::Support::Helpers::PosixFileApi::RemoveFileFromPath(target);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -272,6 +272,6 @@ namespace Nuclex { namespace Support { namespace Threading { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Threading::Posix
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
