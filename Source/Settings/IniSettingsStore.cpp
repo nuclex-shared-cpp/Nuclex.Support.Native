@@ -28,11 +28,11 @@ License along with this library
 #include "IniDocumentModel.h"
 
 #if defined(NUCLEX_SUPPORT_LINUX)
-#include "../Helpers/LinuxFileAccessApi.h"
+#include "../Helpers/LinuxFileApi.h"
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
-#include "../Helpers/WindowsFileAccessApi.h"
+#include "../Helpers/WindowsFileApi.h"
 #else
-#include "../Helpers/PosixFileAccessApi.h"
+#include "../Helpers/PosixFileApi.h"
 #endif
 
 #include <memory> // for std::unique_ptr
@@ -78,12 +78,12 @@ namespace Nuclex { namespace Support { namespace Settings {
 
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Helpers::LinuxFileAccessApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::LinuxFileAccessApi::Close(fileDescriptor); };
+      int fileDescriptor = Helpers::LinuxFileApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::LinuxFileApi::Close(fileDescriptor); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;; offset += 4096) {
-        std::size_t readByteCount = Helpers::LinuxFileAccessApi::Read(
+        std::size_t readByteCount = Helpers::LinuxFileApi::Read(
           fileDescriptor, contents.data() + offset, 4096
         );
         if(readByteCount < 4096) {
@@ -114,12 +114,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 #else
     {
-      ::FILE *file = Helpers::PosixFileAccessApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::PosixFileAccessApi::Close(file); };
+      ::FILE *file = Helpers::PosixFileApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::PosixFileApi::Close(file); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;; offset += 4096) {
-        std::size_t readByteCount = Helpers::PosixFileAccessApi::Read(
+        std::size_t readByteCount = Helpers::PosixFileApi::Read(
           file, contents.data() + offset, 4096
         );
         if(readByteCount < 4096) {
@@ -154,8 +154,8 @@ namespace Nuclex { namespace Support { namespace Settings {
   void IniSettingsStore::Save(const std::string &iniFilePath) const {
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Helpers::LinuxFileAccessApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::LinuxFileAccessApi::Close(fileDescriptor); };
+      int fileDescriptor = Helpers::LinuxFileApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::LinuxFileApi::Close(fileDescriptor); };
 
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(
@@ -163,14 +163,14 @@ namespace Nuclex { namespace Support { namespace Settings {
         )->Serialize(
           &fileDescriptor,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
-            Helpers::LinuxFileAccessApi::Write(
+            Helpers::LinuxFileApi::Write(
               *reinterpret_cast<int *>(context), buffer, byteCount
             );
           }
         );
       }
 
-      Helpers::LinuxFileAccessApi::Flush(fileDescriptor);
+      Helpers::LinuxFileApi::Flush(fileDescriptor);
     }
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
     {
@@ -194,8 +194,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 #else
     {
-      ::FILE *file = Helpers::PosixFileAccessApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::PosixFileAccessApi::Close(file); };
+      ::FILE *file = Helpers::PosixFileApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::PosixFileApi::Close(file); };
 
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(
@@ -203,14 +203,14 @@ namespace Nuclex { namespace Support { namespace Settings {
         )->Serialize(
           file,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
-            Helpers::PosixFileAccessApi::Write(
+            Helpers::PosixFileApi::Write(
               reinterpret_cast<::FILE *>(context), buffer, byteCount
             );
           }
         );
       }
 
-      Helpers::PosixFileAccessApi::Flush(file);
+      Helpers::PosixFileApi::Flush(file);
     }
 #endif
   }

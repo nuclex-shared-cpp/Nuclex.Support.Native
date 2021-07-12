@@ -27,7 +27,7 @@ License along with this library
 
 #include "../Helpers/PosixTimeApi.h" // for PosixTimeApi
 #include "../Helpers/PosixProcessApi.h" // for Pipe, PosixProcessApi
-#include "../Helpers/PosixFileApi.h" // for PosixFileApi
+#include "../Helpers/PosixPathApi.h" // for PosixFileApi
 
 #include "Nuclex/Support/Errors/TimeoutError.h"
 #include "Nuclex/Support/ScopeGuard.h"

@@ -21,7 +21,7 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "../Source/Helpers/PosixFileApi.h"
+#include "../Source/Helpers/PosixPathApi.h"
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
@@ -32,10 +32,10 @@ namespace Nuclex { namespace Support { namespace Helpers {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(PosixFileApiTest, DetectsIfPathIsRelative) {
-    EXPECT_TRUE(PosixFileApi::IsPathRelative(u8"relative/path"));
-    EXPECT_TRUE(PosixFileApi::IsPathRelative(u8"~file"));
-    EXPECT_FALSE(PosixFileApi::IsPathRelative(u8"/absolute/path"));
-    EXPECT_FALSE(PosixFileApi::IsPathRelative(u8"~/file"));
+    EXPECT_TRUE(PosixPathApi::IsPathRelative(u8"relative/path"));
+    EXPECT_TRUE(PosixPathApi::IsPathRelative(u8"~file"));
+    EXPECT_FALSE(PosixPathApi::IsPathRelative(u8"/absolute/path"));
+    EXPECT_FALSE(PosixPathApi::IsPathRelative(u8"~/file"));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -43,11 +43,11 @@ namespace Nuclex { namespace Support { namespace Helpers {
   TEST(PosixFileApiTest, CanAppendPath) {
     std::string testPath = u8"/home";
 
-    PosixFileApi::AppendPath(testPath, u8"nobody");
+    PosixPathApi::AppendPath(testPath, u8"nobody");
     EXPECT_EQ(testPath, u8"/home/nobody");
 
     testPath.push_back('/');
-    PosixFileApi::AppendPath(testPath, u8".bashrc");
+    PosixPathApi::AppendPath(testPath, u8".bashrc");
     EXPECT_EQ(testPath, u8"/home/nobody/.bashrc");
   }
 
@@ -55,17 +55,17 @@ namespace Nuclex { namespace Support { namespace Helpers {
 
   TEST(PosixFileApiTest, CanRemoveFilenameFromPath) {
     std::string testPath = u8"/home/nobody/random-file";
-    PosixFileApi::RemoveFileFromPath(testPath);
+    PosixPathApi::RemoveFileFromPath(testPath);
     EXPECT_EQ(testPath, u8"/home/nobody/");
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(PosixFileApiTest, CanCheckIfFileExists) {
-    EXPECT_TRUE(PosixFileApi::DoesFileExist(u8"/proc/version"));
+    EXPECT_TRUE(PosixPathApi::DoesFileExist(u8"/proc/version"));
 
-    EXPECT_FALSE(PosixFileApi::DoesFileExist(u8"/testing/this/does/not/exist"));
-    EXPECT_FALSE(PosixFileApi::DoesFileExist(u8"/testing-this-does-not-exist"));
+    EXPECT_FALSE(PosixPathApi::DoesFileExist(u8"/testing/this/does/not/exist"));
+    EXPECT_FALSE(PosixPathApi::DoesFileExist(u8"/testing-this-does-not-exist"));
   }
 
   // ------------------------------------------------------------------------------------------- //

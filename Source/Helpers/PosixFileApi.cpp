@@ -25,10 +25,12 @@ License along with this library
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "Nuclex/Support/Text/LexicalAppend.h"
+#include "PosixApi.h"
 
-#include <limits.h> // for PATH_MAX
-#include <sys/stat.h> // for ::stat()
+#include <cstdio> // for fopen() and fclose()
+#include <cerrno> // To access ::errno directly
+#include <cassert> // for assert()
+#include <limits> // for std::numeric_limits
 
 namespace {
 
@@ -41,66 +43,100 @@ namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool PosixFileApi::IsPathRelative(const std::string &path) {
-    std::string::size_type length = path.length();
-    if(length == 0) {
-      return true;
-    }
+  FILE *PosixFileApi::OpenFileForReading(const std::string &path) {
+    static const char *fileMode = "rb";
 
-    if(length >= 2) {
-      if((path[0] == '~') && (path[1] == L'/')) {
-        return false;
-      }
-    }
-
-    return (path[0] != '/');
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  void PosixFileApi::AppendPath(std::string &path, const std::string &extra) {
-    std::string::size_type length = path.length();
-    if(length == 0) {
-      path.assign(extra);
-    } else {
-      if(path[length - 1] != '/') {
-        path.push_back('/');
-      }
-      path.append(extra);
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  void PosixFileApi::RemoveFileFromPath(std::string &path) {
-    std::string::size_type lastBackslashIndex = path.find_last_of('/');
-    if(lastBackslashIndex != std::string::npos) {
-      path.resize(lastBackslashIndex + 1); // Keep the slash on
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  bool PosixFileApi::DoesFileExist(const std::string &path) {
-    struct ::stat fileStatus;
-
-    int result = ::stat(path.c_str(), &fileStatus);
-    if(result == -1) {
+    FILE *file = ::fopen(path.c_str(), fileMode);
+    if(unlikely(file == nullptr)) {
       int errorNumber = errno;
 
-      // This is an okay outcome for us: the file or directory does not exist.
-      if((errorNumber == ENOENT) || (errorNumber == ENOTDIR)) {
-        return false;
-      }
-
-      std::string errorMessage(u8"Could not obtain file status for '");
+      std::string errorMessage(u8"Could not open file '");
       errorMessage.append(path);
-      errorMessage.append(u8"'");
+      errorMessage.append(u8"' for reading");
 
       Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
-    return true;
+    return file;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  FILE *PosixFileApi::OpenFileForWriting(const std::string &path) {
+    static const char *fileMode = "w+b";
+
+    FILE *file = ::fopen(path.c_str(), fileMode);
+    if(unlikely(file == nullptr)) {
+      int errorNumber = errno;
+
+      std::string errorMessage(u8"Could not open file '");
+      errorMessage.append(path);
+      errorMessage.append(u8"' for writing");
+
+      Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return file;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::size_t PosixFileApi::Read(FILE *file, std::uint8_t *buffer, std::size_t count) {
+    size_t readByteCount = ::fread(buffer, 1, count, file);
+    if(unlikely(readByteCount == 0)) {
+      int errorNumber = errno;
+
+      int result = ::feof(file);
+      if(result != 0) {
+        return 0; // Read was successful, but end of file has been reached
+      }
+
+      std::string errorMessage(u8"Could not read data from file");
+      Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return static_cast<std::size_t>(readByteCount);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::size_t PosixFileApi::Write(FILE *file, const std::uint8_t *buffer, std::size_t count) {
+    size_t writtenByteCount = ::fwrite(buffer, 1, count, file);
+    if(unlikely(writtenByteCount == 0)) {
+      int errorNumber = errno;
+
+      int result = ::ferror(file);
+      if(result == 0) {
+        return 0; // Write was successful but no bytes could be written ?_?
+      }
+
+      std::string errorMessage(u8"Could not write data to file");
+      Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return writtenByteCount;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void PosixFileApi::Flush(FILE *file) {
+    int result = ::fflush(file);
+    if(unlikely(result == EOF)) {
+      int errorNumber = errno;
+      std::string errorMessage(u8"Could not flush file buffers");
+      Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void PosixFileApi::Close(FILE *file, bool throwOnError /* = true */) {
+    int result = ::fclose(file);
+    if(throwOnError && unlikely(result != 0)) {
+      int errorNumber = errno;
+      std::string errorMessage(u8"Could not close file");
+      Helpers::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

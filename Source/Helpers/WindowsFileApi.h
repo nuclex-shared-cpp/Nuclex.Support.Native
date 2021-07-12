@@ -18,8 +18,8 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_HELPERS_WINDOWSPATHAPI_H
-#define NUCLEX_SUPPORT_HELPERS_WINDOWSPATHAPI_H
+#ifndef NUCLEX_SUPPORT_HELPERS_WINDOWSFILEAPI_H
+#define NUCLEX_SUPPORT_HELPERS_WINDOWSFILEAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -31,77 +31,56 @@ namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Wraps the Windows path API</summary>
+  /// <summary>Wraps file access functions from the Windows file system API</summary>
+  /// <remarks>
+  ///   <para>
+  ///     This is just a small helper class that reduces the amount of boilerplate code
+  ///     required when calling the file system API functions from Windows, such as
+  ///     checking result codes and transforming paths from UTF-8 to UTF-16 stored in
+  ///     wchar_ts of non-standard 2 byte size.
+  ///   </para>
+  ///   <para>
+  ///     It is not intended to hide operating system details or make this API platform
+  ///     neutral (the File and Container classes do that), so depending on the amount
+  ///     of noise required by the file system APIs, only some methods will be wrapped here.
+  ///   </para>
+  /// </remarks>
   class WindowsFileApi {
 
-    /// <summary>Checks if the specified path is a relative path</summary>
-    /// <param name="path">Path that will be checked</param>
-    /// <returns>True if the path is a relative path</returns>
-    public: static bool IsPathRelative(const std::wstring &path);
+    /// <summary>Opens the specified file for shared reading</summary>
+    /// <param name="path">Path of the file that will be opened</param>
+    /// <returns>The handle of the opened file</returns>
+    public: static HANDLE OpenFileForReading(const std::string &path);
 
-    /// <summary>Appends one path to another</summary>
-    /// <param name="path">Path to which another path will be appended</param>
-    /// <param name="extra">Other path that will be appended</param>
-    public: static void AppendPath(std::wstring &path, const std::wstring &extra);
+    /// <summary>Creates or opens the specified file for exclusive writing</summary>
+    /// <param name="path">Path of the file that will be opened</param>
+    /// <returns>The handle of the opened file</returns>
+    public: static HANDLE OpenFileForWriting(const std::string &path);
 
-    /// <summary>Removes the file name from a path containing a file name</summary>
-    /// <param name="path">Path from which the file name will be removed</param>
-    public: static void RemoveFileFromPath(std::wstring &path);
+    /// <summary>Reads data from the specified file</summary>
+    /// <param name="fileHandle">Handle of the file from which data will be read</param>
+    /// <param name="buffer">Buffer into which the data will be put</param>
+    /// <param name="count">Number of bytes that will be read from the file</param>
+    /// <returns>The number of bytes that were actually read</returns>
+    public: static std::size_t Read(HANDLE fileHandle, void *buffer, std::size_t count);
 
-    /// <summary>Checks whether the specified path has a filename extension</summary>
-    /// <param name="path">Path that will be checked for having an extension</param>
-    /// <returns>True if the path has a filename extension, false otherwise</returns>
-    public: static bool HasExtension(const std::wstring &path);
+    /// <summary>Writes data into the specified file</summary>
+    /// <param name="fileHandle">Handle of the file into which data will be written</param>
+    /// <param name="buffer">Buffer containing the data that will be written</param>
+    /// <param name="count">Number of bytes that will be written into the file</param>
+    /// <returns>The number of bytes that were actually written</returns>
+    public: static std::size_t Write(HANDLE fileHandle, const void *buffer, std::size_t count);
 
-    /// <summary>Checks if the specified path exists and if it is a file</summary>
-    /// <param name="path">Path that will be checked</param>
-    /// <returns>True if the path exists and is a file, false otherwise</returns>
-    public: static bool DoesFileExist(const std::wstring &path);
+    /// <summary>Ensures changes to the specified file have been written to disk</summary>
+    /// <param name="fileHandle">Handle of the file that will be flushed</param>
+    public: static void FlushFileBuffers(HANDLE fileHandle);
 
-    /// <summary>Discovers the Windows system directory</summary>
-    /// <param name="target">
-    ///   String in which the full path to the Windows system directory will be placed
+    /// <summary>Closes the specified file</summary>
+    /// <param name="fileHandle">Handle of the file that will be closed</param>
+    /// <param name="throwOnError">
+    ///   Whether to throw an exception if the file cannot be closed
     /// </param>
-    public: static void GetSystemDirectory(std::wstring &target);
-
-    /// <summary>Discovers the Windows directory</summary>
-    /// <param name="target">
-    ///   String in which the full path to the Windows directory will be placed
-    /// </param>
-    public: static void GetWindowsDirectory(std::wstring &target);
-
-#if defined(NUCLEX_SUPPORT_EMULATE_SHLWAPI)
-    /// <summary>Removes the filename from a full path</summary>
-    /// <param name="pszPath">Path from which the filename will be removed</param>
-    /// <returns>TRUE if the filename was removed, FALSE if nothing was removed</returns>
-    /// <remarks>
-    ///   This is a reimplementation of the same-named method from Microsoft's shlwapi,
-    ///   done so we don't have to link shlwapi for three measly methods.
-    /// </remarks>
-    public: static BOOL PathRemoveFileSpecW(LPWSTR pszPath);
-
-    /// <summary>Checks whether a path is relative</summary>
-    /// <param name="pszPath">Path that will be checked for being relative</param>
-    /// <returns>TRUE if the path is relative, FALSE if it is absolute</returns>
-    /// <remarks>
-    ///   This is a reimplementation of the same-named method from Microsoft's shlwapi,
-    ///   done so we don't have to link shlwapi for three measly methods.
-    /// </remarks>
-    public: static BOOL PathIsRelativeW(LPCWSTR pszPath);
-
-    /// <summary>Appends a directory or filename to an existing path</summary>
-    /// <param name="pszPath">Path to which the other path will be appended</param>
-    /// <param name="pszMore">Other path that will be appended to the first path</param>
-    /// <returns>TRUE if the path is relative, FALSE if it is absolute</returns>
-    /// <remarks>
-    ///   This is a reimplementation of the same-named method from Microsoft's shlwapi,
-    ///   done so we don't have to link shlwapi for three measly methods.
-    ///   Unlike the original, this can destroy pszPath if it starts with dots ('.')
-    ///   and the combined path does not fit in the buffer. This library does not
-    ///   encounter that case, but if you want to rip this code, you should be aware :)
-    /// </remarks>
-    BOOL PathAppendW(LPWSTR pszPath, LPCWSTR pszMore);
-#endif // defined(NUCLEX_SUPPORT_EMULATE_SHLWAPI)
+    public: static void CloseFile(HANDLE fileHandle, bool throwOnError = true);
 
   };
 
@@ -111,4 +90,4 @@ namespace Nuclex { namespace Support { namespace Helpers {
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_HELPERS_WINDOWSPATHAPI_H
+#endif // NUCLEX_SUPPORT_HELPERS_WINDOWSFILEAPI_H

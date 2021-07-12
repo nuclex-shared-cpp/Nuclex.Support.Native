@@ -25,7 +25,7 @@ License along with this library
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "PosixFileApi.h"
+#include "PosixPathApi.h"
 
 #include "Nuclex/Support/Text/LexicalAppend.h"
 
@@ -92,7 +92,7 @@ namespace {
 
     target.resize(characterCount);
 
-    Nuclex::Support::Helpers::PosixFileApi::RemoveFileFromPath(target);
+    Nuclex::Support::Helpers::PosixPathApi::RemoveFileFromPath(target);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -208,10 +208,10 @@ namespace Nuclex { namespace Support { namespace Helpers {
   void PosixProcessApi::GetAbsoluteExecutablePath(
     std::string &target, const std::string &executable
   ) {
-    if(PosixFileApi::IsPathRelative(executable)) {
+    if(PosixPathApi::IsPathRelative(executable)) {
       getExecutablePath(target);
-      PosixFileApi::AppendPath(target, executable);
-      if(PosixFileApi::DoesFileExist(target)) {
+      PosixPathApi::AppendPath(target, executable);
+      if(PosixPathApi::DoesFileExist(target)) {
         return;
       }
 
@@ -226,9 +226,9 @@ namespace Nuclex { namespace Support { namespace Helpers {
   void PosixProcessApi::GetAbsoluteWorkingDirectory(
     std::string &target, const std::string &workingDirectory
   ) {
-    if(PosixFileApi::IsPathRelative(workingDirectory)) {
+    if(PosixPathApi::IsPathRelative(workingDirectory)) {
       getExecutablePath(target);
-      PosixFileApi::AppendPath(target, workingDirectory);
+      PosixPathApi::AppendPath(target, workingDirectory);
     } else {
       target.assign(workingDirectory);
     }
@@ -246,8 +246,8 @@ namespace Nuclex { namespace Support { namespace Helpers {
         if(*path == ':') {
           if(path > start) {
             target.assign(start, path);
-            PosixFileApi::AppendPath(target, executable);
-            if(PosixFileApi::DoesFileExist(target)) {
+            PosixPathApi::AppendPath(target, executable);
+            if(PosixPathApi::DoesFileExist(target)) {
               return;
             }
           }
@@ -260,8 +260,8 @@ namespace Nuclex { namespace Support { namespace Helpers {
       // Final path in list.
       if(path > start) {
         target.assign(start, path);
-        PosixFileApi::AppendPath(target, executable);
-        if(PosixFileApi::DoesFileExist(target)) {
+        PosixPathApi::AppendPath(target, executable);
+        if(PosixPathApi::DoesFileExist(target)) {
           return;
         }
       }

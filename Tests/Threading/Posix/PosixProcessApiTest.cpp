@@ -25,7 +25,7 @@ License along with this library
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "../Source/Helpers/PosixFileApi.h"
+#include "../Source/Helpers/PosixPathApi.h"
 
 #include <gtest/gtest.h>
 
@@ -38,7 +38,7 @@ namespace Nuclex { namespace Support { namespace Helpers {
     PosixProcessApi::GetAbsoluteExecutablePath(path, u8"ls");
 
     EXPECT_GT(path.length(), 5U); // shortest possible valid path
-    EXPECT_TRUE(PosixFileApi::DoesFileExist(path));
+    EXPECT_TRUE(PosixPathApi::DoesFileExist(path));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -48,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Helpers {
     PosixProcessApi::GetAbsoluteExecutablePath(path, u8"NuclexSupportNativeTests");
 
     EXPECT_GT(path.length(), 26U); // shortest possible valid path
-    EXPECT_TRUE(PosixFileApi::DoesFileExist(path));
+    EXPECT_TRUE(PosixPathApi::DoesFileExist(path));
   }
 
   // ------------------------------------------------------------------------------------------- //
