@@ -27,8 +27,8 @@ License along with this library
 
 #include "Nuclex/Support/Errors/TimeoutError.h"
 #include "Nuclex/Support/Text/StringConverter.h"
-#include "../Helpers/WindowsApi.h"
-#include "Windows/WindowsProcessApi.h"
+//#include "../Helpers/WindowsApi.h"
+#include "../Helpers/WindowsProcessApi.h"
 
 #include <exception> // for std::terminate()
 #include <cassert> // for assert()
@@ -156,7 +156,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     const std::vector<std::string> &arguments /* = std::vector<std::string>() */,
     bool prependExecutableName /* = true */
   ) {
-    using Nuclex::Support::Threading::Windows::WindowsProcessApi;
+    using Nuclex::Support::Helpers::WindowsProcessApi;
     using Nuclex::Support::Text::StringConverter;
 
     PlatformDependentImplementationData &impl = getImplementationData();
@@ -172,12 +172,12 @@ namespace Nuclex { namespace Support { namespace Threading {
     pipeSecurityAttributes.lpSecurityDescriptor = nullptr;
 
     // Create 3 pipes and set the ends that belong to our side as non-inheritable
-    Nuclex::Support::Threading::Windows::Pipe stdinPipe(pipeSecurityAttributes);
+    Nuclex::Support::Helpers::Pipe stdinPipe(pipeSecurityAttributes);
     stdinPipe.SetEndNonInheritable(1);
     stdinPipe.SetEndNonBlocking(1);
-    Nuclex::Support::Threading::Windows::Pipe stdoutPipe(pipeSecurityAttributes);
+    Nuclex::Support::Helpers::Pipe stdoutPipe(pipeSecurityAttributes);
     stdoutPipe.SetEndNonInheritable(0);
-    Nuclex::Support::Threading::Windows::Pipe stderrPipe(pipeSecurityAttributes);
+    Nuclex::Support::Helpers::Pipe stderrPipe(pipeSecurityAttributes);
     stderrPipe.SetEndNonInheritable(0);
 
     ::PROCESS_INFORMATION childProcessInfo = {0};
@@ -289,7 +289,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Try to get the process' exit code. If the process hasn't exited yet,
     // this method will return the special exit code STILL_ACTIVE.
-    DWORD exitCode = Nuclex::Support::Threading::Windows::WindowsProcessApi::GetProcessExitCode(
+    DWORD exitCode = Nuclex::Support::Helpers::WindowsProcessApi::GetProcessExitCode(
       impl.ChildProcessHandle
     );
 
@@ -354,7 +354,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   int Process::Join(std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */) {
-    using Nuclex::Support::Threading::Windows::WindowsProcessApi;
+    using Nuclex::Support::Helpers::WindowsProcessApi;
 
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
@@ -527,7 +527,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   void Process::Kill(std::chrono::milliseconds patience /* = std::chrono::milliseconds(5000) */) {
-    using Nuclex::Support::Threading::Windows::WindowsProcessApi;
+    using Nuclex::Support::Helpers::WindowsProcessApi;
 
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {

@@ -25,10 +25,10 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "WindowsFileApi.h"
+#include "WindowsPathApi.h"
 
 #include "Nuclex/Support/Text/StringConverter.h"
-#include "../../Text/Utf8/checked.h"
+#include "../Text/Utf8/checked.h"
 #include "Nuclex/Support/ScopeGuard.h"
 
 #include <algorithm> // for std::max()
@@ -304,19 +304,19 @@ namespace Nuclex { namespace Support { namespace Helpers {
   ) {
     static const std::wstring exeExtension(L".exe", 4);
 
-    if(WindowsFileApi::IsPathRelative(executable)) {
+    if(WindowsPathApi::IsPathRelative(executable)) {
 
       // Try the executable's own path
       {
         getModuleFileName(target);
-        WindowsFileApi::RemoveFileFromPath(target);
-        WindowsFileApi::AppendPath(target, executable);
-        if(WindowsFileApi::DoesFileExist(target)) {
+        WindowsPathApi::RemoveFileFromPath(target);
+        WindowsPathApi::AppendPath(target, executable);
+        if(WindowsPathApi::DoesFileExist(target)) {
           return;
         }
-        if(!WindowsFileApi::HasExtension(executable)) {
+        if(!WindowsPathApi::HasExtension(executable)) {
           target.append(exeExtension);
-          if(WindowsFileApi::DoesFileExist(target)) {
+          if(WindowsPathApi::DoesFileExist(target)) {
             return;
           }
         }
@@ -324,14 +324,14 @@ namespace Nuclex { namespace Support { namespace Helpers {
 
       // Try the Windows system directory
       {
-        WindowsFileApi::GetSystemDirectory(target);
-        WindowsFileApi::AppendPath(target, executable);
-        if(WindowsFileApi::DoesFileExist(target)) {
+        WindowsPathApi::GetSystemDirectory(target);
+        WindowsPathApi::AppendPath(target, executable);
+        if(WindowsPathApi::DoesFileExist(target)) {
           return;
         }
-        if(!WindowsFileApi::HasExtension(executable)) {
+        if(!WindowsPathApi::HasExtension(executable)) {
           target.append(exeExtension);
-          if(WindowsFileApi::DoesFileExist(target)) {
+          if(WindowsPathApi::DoesFileExist(target)) {
             return;
           }
         }
@@ -339,14 +339,14 @@ namespace Nuclex { namespace Support { namespace Helpers {
 
       // Try the Windows directory
       {
-        WindowsFileApi::GetWindowsDirectory(target);
-        WindowsFileApi::AppendPath(target, executable);
-        if(WindowsFileApi::DoesFileExist(target)) {
+        WindowsPathApi::GetWindowsDirectory(target);
+        WindowsPathApi::AppendPath(target, executable);
+        if(WindowsPathApi::DoesFileExist(target)) {
           return;
         }
-        if(!WindowsFileApi::HasExtension(executable)) {
+        if(!WindowsPathApi::HasExtension(executable)) {
           target.append(exeExtension);
-          if(WindowsFileApi::DoesFileExist(target)) {
+          if(WindowsPathApi::DoesFileExist(target)) {
             return;
           }
         }
@@ -362,7 +362,7 @@ namespace Nuclex { namespace Support { namespace Helpers {
       {
         const bool throwOnError = false;
         searchExecutablePath(target, executable, throwOnError);
-        if(WindowsFileApi::DoesFileExist(target)) {
+        if(WindowsPathApi::DoesFileExist(target)) {
           return;
         }
       }
@@ -378,10 +378,10 @@ namespace Nuclex { namespace Support { namespace Helpers {
   void WindowsProcessApi::GetAbsoluteWorkingDirectory(
     std::wstring &target, const std::wstring &workingDirectory
   ) {
-    if(WindowsFileApi::IsPathRelative(workingDirectory)) {
+    if(WindowsPathApi::IsPathRelative(workingDirectory)) {
       getModuleFileName(target);
-      WindowsFileApi::RemoveFileFromPath(target);
-      WindowsFileApi::AppendPath(target, workingDirectory);
+      WindowsPathApi::RemoveFileFromPath(target);
+      WindowsPathApi::AppendPath(target, workingDirectory);
     } else {
       target.assign(workingDirectory);
     }

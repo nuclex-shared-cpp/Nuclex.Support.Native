@@ -28,7 +28,7 @@ License along with this library
 #include "Nuclex/Support/Text/StringMatcher.h"
 #include "Nuclex/Support/Text/StringConverter.h"
 
-#include "Windows/WindowsRegistryApi.h"
+#include "../Helpers/WindowsRegistryApi.h"
 
 #include <cassert> // for assert()
 
@@ -99,7 +99,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       // If no slashes are in the path, it may still be a valid registry hive...
       std::string::size_type firstSlashIndex = findNextSlash(registryPath);
       if(firstSlashIndex == std::string::npos) {
-        ::HKEY hiveKeyHandle = Windows::WindowsRegistryApi::GetHiveFromString(
+        ::HKEY hiveKeyHandle = Helpers::WindowsRegistryApi::GetHiveFromString(
           registryPath, registryPath.length()
         );
         result = ::RegOpenKeyExW(
@@ -109,7 +109,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           reinterpret_cast<::HKEY *>(&this->settingsKeyHandle)
         );
       } else { // Slashes present, separate the registry hive from the rest
-        ::HKEY hiveKeyHandle = Windows::WindowsRegistryApi::GetHiveFromString(
+        ::HKEY hiveKeyHandle = Helpers::WindowsRegistryApi::GetHiveFromString(
           registryPath, firstSlashIndex
         );
 
@@ -185,7 +185,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       return std::vector<std::string>(); // Non-existent key accessed in read-only mode
     }
 
-    return Windows::WindowsRegistryApi::GetAllSubKeyNames(
+    return Helpers::WindowsRegistryApi::GetAllSubKeyNames(
       *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle)
     );
   }
@@ -199,7 +199,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       return std::vector<std::string>(); // Non-existent key accessed in read-only mode
     }
 
-    return Windows::WindowsRegistryApi::GetAllValueNames(
+    return Helpers::WindowsRegistryApi::GetAllValueNames(
       *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle)
     );
   }

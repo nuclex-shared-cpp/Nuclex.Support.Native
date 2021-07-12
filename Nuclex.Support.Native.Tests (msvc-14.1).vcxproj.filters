@@ -60,15 +60,6 @@
     <Filter Include="Source\Settings">
       <UniqueIdentifier>{4820b6d0-4bd4-4837-9152-c4201b241226}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Settings\Linux">
-      <UniqueIdentifier>{6a388887-0124-47d4-b28e-be51b144ee7f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Settings\Posix">
-      <UniqueIdentifier>{dba19423-1600-4945-8453-58ef7012ad1a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Settings\Windows">
-      <UniqueIdentifier>{65a0251e-196a-4f91-93aa-5cdbd5d25be2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Text">
       <UniqueIdentifier>{f20ce72c-f037-4bfc-8e47-a38db78850de}</UniqueIdentifier>
     </Filter>
@@ -90,12 +81,6 @@
     <Filter Include="Source\Threading">
       <UniqueIdentifier>{c3c71559-2291-4f45-8938-c3cf232c87c5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Threading\Posix">
-      <UniqueIdentifier>{f5e9e180-aad4-42a8-b104-926aece4a71c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Threading\Windows">
-      <UniqueIdentifier>{acc68a38-05f6-4285-b03f-6b69ca1bc918}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tests">
       <UniqueIdentifier>{6bba9bc0-cf59-4753-8206-8b3ee0c353d1}</UniqueIdentifier>
     </Filter>
@@ -111,15 +96,6 @@
     <Filter Include="Tests\Settings">
       <UniqueIdentifier>{ed2b2723-dbc9-4e61-ab6a-a8e94062406b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Tests\Settings\Linux">
-      <UniqueIdentifier>{8de6b64c-a4e6-4b2f-abad-ffdde65eacd6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Tests\Settings\Posix">
-      <UniqueIdentifier>{bffe84eb-1f88-4955-9cf0-234aa590134b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Tests\Settings\Windows">
-      <UniqueIdentifier>{5dbac8be-79a4-4e94-8421-1f2b15b96f6d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tests\Text">
       <UniqueIdentifier>{e379eb40-5772-47b9-96be-58023afd7cd0}</UniqueIdentifier>
     </Filter>
@@ -131,6 +107,9 @@
     </Filter>
     <Filter Include="Tests\Threading\Windows">
       <UniqueIdentifier>{6892e1f6-d6ad-4ee8-b79f-22b0fe04f30d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests\Helpers">
+      <UniqueIdentifier>{58263473-d1ad-4d79-8851-ed0abea806d6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -269,6 +248,9 @@
     <ClInclude Include="Include\Nuclex\Support\Text\Logger.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\ParserHelper.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Text\RollingLogger.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
@@ -319,6 +301,9 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Heleprs\WindowsProcessApi.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -388,18 +373,69 @@
     <ClCompile Include="Source\Events\Event.cpp">
       <Filter>Source\Events</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\PosixApi.h">
+    <ClCompile Include="Source\Helpers\LinuxFileApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\LinuxFileApi.h">
       <Filter>Source\Helpers</Filter>
     </ClInclude>
     <ClCompile Include="Source\Helpers\PosixApi.cpp">
       <Filter>Source\Helpers</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\WindowsApi.h">
+    <ClInclude Include="Source\Helpers\PosixApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixFileApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixFileApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixPathApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixPathApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixProcessApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixProcessApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixTimeApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixTimeApi.h">
       <Filter>Source\Helpers</Filter>
     </ClInclude>
     <ClCompile Include="Source\Helpers\WindowsApi.cpp">
       <Filter>Source\Helpers</Filter>
     </ClCompile>
+    <ClInclude Include="Source\Helpers\WindowsApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\WindowsFileApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\WindowsFileApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\WindowsPathApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\WindowsPathApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\WindowsProcessApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Helpers\WindowsRegistryApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\WindowsRegistryApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
@@ -409,30 +445,6 @@
     <ClCompile Include="Source\Services\ServiceProvider.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Settings\Linux\LinuxFileAccessApi.cpp">
-      <Filter>Source\Settings\Linux</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Settings\Linux\LinuxFileAccessApi.h">
-      <Filter>Source\Settings\Linux</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Settings\Posix\PosixFileAccessApi.cpp">
-      <Filter>Source\Settings\Posix</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Settings\Posix\PosixFileAccessApi.h">
-      <Filter>Source\Settings\Posix</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Settings\Windows\WindowsFileAccessApi.cpp">
-      <Filter>Source\Settings\Windows</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Settings\Windows\WindowsFileAccessApi.h">
-      <Filter>Source\Settings\Windows</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Settings\Windows\WindowsRegistryApi.cpp">
-      <Filter>Source\Settings\Windows</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Settings\Windows\WindowsRegistryApi.h">
-      <Filter>Source\Settings\Windows</Filter>
-    </ClInclude>
     <ClCompile Include="Source\Settings\IniDocumentModel.FileParser.cpp">
       <Filter>Source\Settings</Filter>
     </ClCompile>
@@ -568,6 +580,9 @@
     <ClCompile Include="Source\Text\Logger.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Text\ParserHelper.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Text\RollingLogger.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
@@ -580,36 +595,6 @@
     <ClCompile Include="Source\Text\StringMatcher.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Threading\Posix\PosixFileApi.cpp">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Posix\PosixFileApi.h">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Threading\Posix\PosixTimeApi.cpp">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Posix\PosixTimeApi.h">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Threading\Windows\WindowsFileApi.cpp">
-      <Filter>Source\Threading\Windows</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Windows\WindowsFileApi.h">
-      <Filter>Source\Threading\Windows</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Threading\Windows\WindowsProcessApi.cpp">
-      <Filter>Source\Threading\Windows</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Windows\WindowsProcessApi.h">
-      <Filter>Source\Threading\Windows</Filter>
-    </ClInclude>
     <ClCompile Include="Source\Threading\Latch.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
@@ -717,14 +702,20 @@
     <ClCompile Include="Tests\Events\EventTests.cpp">
       <Filter>Tests\Events</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\Helpers\PosixApiTest.cpp">
+      <Filter>Tests\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Helpers\WindowsApiTest.cpp">
+      <Filter>Tests\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Helpers\WindowsRegistryApiTest.cpp">
+      <Filter>Tests\Helpers</Filter>
+    </ClCompile>
     <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Services\ServiceContainerTest.cpp">
       <Filter>Tests\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\Settings\Windows\WindowsRegistryApiTest.cpp">
-      <Filter>Tests\Settings\Windows</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Settings\IniDocumentModelTest.cpp">
       <Filter>Tests\Settings</Filter>
@@ -742,6 +733,9 @@
       <Filter>Tests\Text</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Text\LexicalAppendTest.cpp">
+      <Filter>Tests\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Text\ParserHelperTest.cpp">
       <Filter>Tests\Text</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Text\RollingLoggerTest.cpp">

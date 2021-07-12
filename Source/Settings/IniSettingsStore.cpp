@@ -96,12 +96,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      ::HANDLE fileHandle = Windows::WindowsFileAccessApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Windows::WindowsFileAccessApi::CloseFile(fileHandle); };
+      ::HANDLE fileHandle = Helpers::WindowsFileApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::WindowsFileApi::CloseFile(fileHandle); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;; offset += 4096) {
-        std::size_t readByteCount = Windows::WindowsFileAccessApi::Read(
+        std::size_t readByteCount = Helpers::WindowsFileApi::Read(
           fileHandle, contents.data() + offset, 4096
         );
         if(readByteCount < 4096) {
@@ -174,8 +174,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      ::HANDLE fileHandle = Windows::WindowsFileAccessApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Windows::WindowsFileAccessApi::CloseFile(fileHandle); };
+      ::HANDLE fileHandle = Helpers::WindowsFileApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::WindowsFileApi::CloseFile(fileHandle); };
 
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(
@@ -183,14 +183,14 @@ namespace Nuclex { namespace Support { namespace Settings {
         )->Serialize(
           &fileHandle,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
-            Windows::WindowsFileAccessApi::Write(
+            Helpers::WindowsFileApi::Write(
               *reinterpret_cast<::HANDLE *>(context), buffer, byteCount
             );
           }
         );
       }
 
-      Windows::WindowsFileAccessApi::FlushFileBuffers(fileHandle);
+      Helpers::WindowsFileApi::FlushFileBuffers(fileHandle);
     }
 #else
     {

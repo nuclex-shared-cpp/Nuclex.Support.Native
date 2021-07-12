@@ -60,12 +60,6 @@
     <Filter Include="Source\Settings">
       <UniqueIdentifier>{1c7a2606-a660-4cff-abaa-ce94ce1d187b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Settings\Windows">
-      <UniqueIdentifier>{5320d6b7-e357-4b3b-b2a9-760259d9b3e7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Settings\Posix">
-      <UniqueIdentifier>{7bb40138-0bcc-40a0-8f05-a94238f8ce73}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Text">
       <UniqueIdentifier>{f20ce72c-f037-4bfc-8e47-a38db78850de}</UniqueIdentifier>
     </Filter>
@@ -86,15 +80,6 @@
     </Filter>
     <Filter Include="Source\Threading">
       <UniqueIdentifier>{c3c71559-2291-4f45-8938-c3cf232c87c5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Settings\Linux">
-      <UniqueIdentifier>{ef6cf501-e814-4a84-8800-b65a48202f02}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Threading\Posix">
-      <UniqueIdentifier>{f5e9e180-aad4-42a8-b104-926aece4a71c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Threading\Windows">
-      <UniqueIdentifier>{acc68a38-05f6-4285-b03f-6b69ca1bc918}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -233,6 +218,9 @@
     <ClInclude Include="Include\Nuclex\Support\Text\Logger.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\ParserHelper.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Text\RollingLogger.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
@@ -283,6 +271,9 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Heleprs\WindowsProcessApi.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -358,12 +349,69 @@
     <ClCompile Include="Source\Helpers\PosixApi.cpp">
       <Filter>Source\Helpers</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\WindowsApi.h">
+    <ClCompile Include="Source\Helpers\LinuxFileApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\LinuxFileApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixFileApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixFileApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixPathApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixPathApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixProcessApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixProcessApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\PosixTimeApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\PosixTimeApi.h">
       <Filter>Source\Helpers</Filter>
     </ClInclude>
     <ClCompile Include="Source\Helpers\WindowsApi.cpp">
       <Filter>Source\Helpers</Filter>
     </ClCompile>
+    <ClInclude Include="Source\Helpers\WindowsApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\WindowsFileApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\WindowsFileApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\WindowsPathApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\WindowsPathApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Helpers\WindowsProcessApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Helpers\WindowsRegistryApi.cpp">
+      <Filter>Source\Helpers</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Helpers\WindowsRegistryApi.h">
+      <Filter>Source\Helpers</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
@@ -373,30 +421,6 @@
     <ClCompile Include="Source\Services\ServiceProvider.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Settings\Linux\LinuxFileAccessApi.cpp">
-      <Filter>Source\Settings\Linux</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Settings\Linux\LinuxFileAccessApi.h">
-      <Filter>Source\Settings\Linux</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Settings\Posix\PosixFileAccessApi.cpp">
-      <Filter>Source\Settings\Posix</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Settings\Posix\PosixFileAccessApi.h">
-      <Filter>Source\Settings\Posix</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Settings\Windows\WindowsFileAccessApi.cpp">
-      <Filter>Source\Settings\Windows</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Settings\Windows\WindowsFileAccessApi.h">
-      <Filter>Source\Settings\Windows</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Settings\Windows\WindowsRegistryApi.cpp">
-      <Filter>Source\Settings\Windows</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Settings\Windows\WindowsRegistryApi.h">
-      <Filter>Source\Settings\Windows</Filter>
-    </ClInclude>
     <ClCompile Include="Source\Settings\IniDocumentModel.FileParser.cpp">
       <Filter>Source\Settings</Filter>
     </ClCompile>
@@ -532,6 +556,9 @@
     <ClCompile Include="Source\Text\Logger.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Text\ParserHelper.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Text\RollingLogger.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
@@ -544,36 +571,6 @@
     <ClCompile Include="Source\Text\StringMatcher.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Threading\Posix\PosixFileApi.cpp">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Posix\PosixFileApi.h">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Threading\Posix\PosixProcessApi.cpp">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Posix\PosixProcessApi.h">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Threading\Posix\PosixTimeApi.cpp">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Posix\PosixTimeApi.h">
-      <Filter>Source\Threading\Posix</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Threading\Windows\WindowsFileApi.cpp">
-      <Filter>Source\Threading\Windows</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Windows\WindowsFileApi.h">
-      <Filter>Source\Threading\Windows</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Threading\Windows\WindowsProcessApi.cpp">
-      <Filter>Source\Threading\Windows</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Threading\Windows\WindowsProcessApi.h">
-      <Filter>Source\Threading\Windows</Filter>
-    </ClInclude>
     <ClCompile Include="Source\Threading\Latch.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>

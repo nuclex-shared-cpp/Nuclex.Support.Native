@@ -28,7 +28,7 @@ License along with this library
 #include "Nuclex/Support/Text/StringConverter.h"
 //#include <Shlwapi.h> // for ::PahtRemoveFileSpecW(), ::PathIsRelativeW(), PathAppendW()
 
-namespace Nuclex { namespace Support { namespace Helprs {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
