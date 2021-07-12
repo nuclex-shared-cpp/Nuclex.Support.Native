@@ -53,7 +53,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   UTF-8 byte or single-byte character that will be checked for being a whitespace
     /// </param>
     /// <returns>True if the character was a whitespace, false otherwise</returns>
-    public: NUCLEX_SUPPORT_API static inline bool IsWhitepace(
+    public: NUCLEX_SUPPORT_API static constexpr bool IsWhitepace(
       std::uint8_t utf8Byte
     );
 
@@ -62,7 +62,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   Character that will be checked for being a whitespace
     /// </param>
     /// <returns>True if the character was a whitespace, false otherwise</returns>
-    public: NUCLEX_SUPPORT_API static inline bool IsWhitepace(
+    public: NUCLEX_SUPPORT_API static constexpr bool IsWhitepace(
       char32_t utf8Character
     );
 
@@ -70,7 +70,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline bool ParserHelper::IsWhitepace(std::uint8_t utf8SingleByteCharacter) {
+  inline constexpr bool ParserHelper::IsWhitepace(std::uint8_t utf8SingleByteCharacter) {
     return (
       (utf8SingleByteCharacter == std::uint8_t(0x09)) || // tab
       (utf8SingleByteCharacter == std::uint8_t(0x0a)) || // line feed
@@ -83,7 +83,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline bool ParserHelper::IsWhitepace(char32_t utf8Character) {
+  inline constexpr bool ParserHelper::IsWhitepace(char32_t utf8Character) {
     switch(utf8Character & char32_t(0xff00)) {
       case char32_t(0x0000): {
         return (

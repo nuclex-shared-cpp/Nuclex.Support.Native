@@ -25,8 +25,8 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "../../Helpers/WindowsApi.h"
-#include "../../Text/Utf8/checked.h"
+#include "WindowsApi.h"
+#include "../Text/Utf8/checked.h"
 
 namespace {
 
@@ -65,7 +65,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -179,6 +179,6 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Settings::Windows
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)

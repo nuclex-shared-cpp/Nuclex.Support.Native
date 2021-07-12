@@ -24,27 +24,12 @@ License along with this library
 #include "IniDocumentModel.h"
 #include "IniDocumentModel.FileParser.h"
 
+#include "Nuclex/Support/Text/ParserHelper.h"
+
 #include <memory> // for std::unique_ptr, std::align()
 #include <type_traits> // for std::is_base_of
 #include <algorithm> // for std::copy_n()
 #include <cassert> // for assert()
-
-// Ambiguous cases and their resolution:
-//
-//   ["Hello]"       -> Malformed
-//   [World          -> Malformed
-//   [Foo] = Bar     -> Assignment, no section
-//   [Woop][Woop]    -> Two sections, one w/newline one w/o
-//   [Foo] Bar = Baz -> Section and assignment
-//   [[Yay]          -> Malformed, section
-//
-
-// Allocation schemes:
-//
-//   By line                      -> lots of micro-allocations
-//   In blocks (custom allocator) -> I have to do reference counting to free anything
-//   Load pre-alloc, then by line -> Fast for typical case, no or few micro-allocations
-//                                   But requires pre-scan of entire file + more code
 
 namespace {
 
@@ -61,21 +46,6 @@ namespace {
     } else {
       return sizeof(T);
     }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Checks whether the specified character is a whiteapce</summary>
-  /// <param name="utf8SingleByteCharacter">
-  ///   Character the will be checked for being a whitespace
-  /// </param>
-  /// <returns>True if the character was a whitespace, false otherwise</returns>
-  bool isWhitepace(std::uint8_t utf8SingleByteCharacter) {
-    return (
-      (utf8SingleByteCharacter == ' ') ||
-      (utf8SingleByteCharacter == '\t') ||
-      (utf8SingleByteCharacter == '\r')
-    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -283,27 +253,50 @@ namespace Nuclex { namespace Support { namespace Settings {
       section->Properties.insert(
         PropertyMap::value_type(propertyName, newPropertyLine)
       );
-      if(section->LastLine == nullptr) {
-        if(section->DeclarationLine == nullptr) {
-          if(this->firstLine == nullptr) {
+      if(section->LastLine == nullptr) { // Does section have no properties yet?
+        if(section->DeclarationLine == nullptr) { // If so, is this the default section?
+          if(this->firstLine == nullptr) { // Are there any lines at all?
             this->firstLine = newPropertyLine;
             newPropertyLine->Previous = newPropertyLine;
             newPropertyLine->Next = newPropertyLine;
-          } else {
+          } else { // First line present, but property has to become new first line
             integrateLine(this->firstLine->Previous, newPropertyLine, this->usesPaddingLines);
             this->firstLine = newPropertyLine;
           }
-        } else {
+        } else { // Section declaration line exists, put property below
           integrateLine(section->DeclarationLine, newPropertyLine, this->usesPaddingLines);
         }
-      } else {
+      } else { // Section exists and already has properties, put new property after them
         integrateLine(section->LastLine, newPropertyLine, this->usesPaddingLines);
       }
-    } else if(propertyIterator->second->ValueLength >= propertyValue.length()) {
+    } else { // A property line already exists
+      PropertyLine *existingPropertyLine = propertyIterator->second;
+      if(existingPropertyLine->ValueLength >= propertyValue.length()) { // Has enough space?
+        
+        // TODO: Add quotes if needed and not present
 
-      // exi
-    } else {
-      // Property already exists
+        // Copy the new value over the existing property value
+        std::uint8_t *writeStart = (
+          existingPropertyLine->Contents + existingPropertyLine->ValueStartIndex
+        );
+        std::copy_n(propertyValue.c_str(), propertyValue.length(), writeStart);
+/*
+        std::size_t trailerStartIndex = 
+        std::size_t removedByteCount = existingPropertyLine->ValueLength - propertyValue.length();
+        std::copy_n(
+          writeStart + existingPropertyLine->ValueLength,
+          (
+              existingPropertyLine->Length -
+              existingPropertyLine->ValueStartIndex -
+              existingPropertyLine->ValueLength
+          ),
+          writeStart + propertyValue.length()
+        );
+        existingPropertyLine->Length = 
+*/
+      } else {
+        // Property already exists
+      }
     }
   }
 
@@ -399,8 +392,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     bool requiresQuotes = false;
     if(propertyValue.length() > 0) {
       requiresQuotes = (
-        isWhitepace(propertyValue[0]) ||
-        isWhitepace(propertyValue[propertyValue.length() - 1])
+        Text::ParserHelper::IsWhitepace(std::uint8_t(propertyValue[0])) ||
+        Text::ParserHelper::IsWhitepace(std::uint8_t(propertyValue[propertyValue.length() - 1]))
       );
     }
     
@@ -505,6 +498,41 @@ namespace Nuclex { namespace Support { namespace Settings {
     FileParser parser(fileContents, byteCount);
     parser.ParseInto(this);
   }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool IniDocumentModel::hasQuotes(PropertyLine *propertyLine) {
+    if(propertyLine->ValueStartIndex == 0) {
+      return false;
+    }
+
+    char before = propertyLine->Contents[propertyLine->ValueStartIndex - 1];
+    return (before == '"');
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool IniDocumentModel::requiresQuotes(const std::string &propertyValue) {
+    std::string::size_type length = propertyValue.length();
+    if(length > 0) {
+      bool startsOrEndsWithSpace = (
+        Text::ParserHelper::IsWhitepace(std::uint8_t(propertyValue[0])) ||
+        Text::ParserHelper::IsWhitepace(std::uint8_t(propertyValue[length - 1]))
+      );
+      if(startsOrEndsWithSpace) {
+        return true;
+      }
+      for(std::string::size_type index = 0; index < length; ++index) {
+        char current = propertyValue[index];
+        if((current == '"') || (current == '=')) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
 
   // ------------------------------------------------------------------------------------------- //
 

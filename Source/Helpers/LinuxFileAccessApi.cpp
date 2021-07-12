@@ -25,7 +25,7 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
-#include "../../Helpers/PosixApi.h" // Linux uses Posix error handling
+#include "PosixApi.h" // Linux uses Posix error handling
 
 #include <linux/limits.h> // for PATH_MAX
 #include <fcntl.h> // ::open() and flags
@@ -37,12 +37,11 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
-
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Settings { namespace Linux {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -136,6 +135,6 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Linux {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Settings::Linux
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // defined(NUCLEX_SUPPORT_LINUX)

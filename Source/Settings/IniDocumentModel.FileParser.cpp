@@ -23,6 +23,8 @@ License along with this library
 
 #include "IniDocumentModel.FileParser.h"
 
+#include "Nuclex/Support/Text/ParserHelper.h"
+
 #include <memory> // for std::unique_ptr, std::align()
 #include <type_traits> // for std::is_base_of
 #include <algorithm> // for std::copy_n()
@@ -45,27 +47,19 @@ License along with this library
 //   Foo = "Bar" Baz -> Malformed
 //
 
+// Allocation schemes:
+//
+//   By line                      -> lots of micro-allocations
+//   In blocks (custom allocator) -> I have to do reference counting to free anything
+//   Load pre-alloc, then by line -> Fast for typical case, no or few micro-allocations
+//                                   But requires pre-scan of entire file + more code
+
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Size if the chunks in which memory is allocated</summary>
   const std::size_t AllocationChunkSize = 4096; // bytes
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Checks whether the specified character is a whiteapce</summary>
-  /// <param name="utf8SingleByteCharacter">
-  ///   Character the will be checked for being a whitespace
-  /// </param>
-  /// <returns>True if the character was a whitespace, false otherwise</returns>
-  bool isWhitepace(std::uint8_t utf8SingleByteCharacter) {
-    return (
-      (utf8SingleByteCharacter == ' ') ||
-      (utf8SingleByteCharacter == '\t') ||
-      (utf8SingleByteCharacter == '\r')
-    );
-  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -149,7 +143,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
         // Other character, parse as section name, property name or property value
         default: {
-          if(isWhitepace(current)) {
+          if(Text::ParserHelper::IsWhitepace(std::uint8_t(current))) {
             ++this->parsePosition; // skip over it
           } else if(equalsSignFound) {
             parseValue();
@@ -276,7 +270,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
           // Other characters without special meaning
           default: {
-            if(!isWhitepace(current)) {
+            if(!Text::ParserHelper::IsWhitepace(std::uint8_t(current))) {
               if(quoteEncountered) { // Characters after quote? -> line is malformed
                 parseMalformedLine();
                 return;
@@ -355,7 +349,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
           // Other characters without special meaning
           default: {
-            if(!isWhitepace(current)) {
+            if(!Text::ParserHelper::IsWhitepace(std::uint8_t(current))) {
               if(quoteEncountered) { // Characters after quote? -> line is malformed
                 parseMalformedLine();
                 return;
@@ -457,13 +451,11 @@ namespace Nuclex { namespace Support { namespace Settings {
       if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
         newPropertyLine->NameStartIndex = this->nameStart - this->lineStart;
         newPropertyLine->NameLength = this->nameEnd - this->nameStart;
-
         propertyName.assign(nameStart, nameEnd);
       } else {
         newPropertyLine->NameStartIndex = 0;
         newPropertyLine->NameLength = 0;
-
-        // leave propertyName unassigned
+        // intentionally leaves propertyName as an empty string
       }
     }
 
@@ -495,13 +487,11 @@ namespace Nuclex { namespace Support { namespace Settings {
       if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
         newSectionLine->NameStartIndex = this->nameStart - this->lineStart;
         newSectionLine->NameLength = this->nameEnd - this->nameStart;
-
         sectionName.assign(nameStart, nameEnd);
       } else {
         newSectionLine->NameStartIndex = 0;
         newSectionLine->NameLength = 0;
-
-        // Leave sectionName empty
+        // intentionally leaves sectionName as an empty string
       }
     }
 

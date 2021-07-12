@@ -93,6 +93,9 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Case-insensitive UTF-8 version of std::hash&lt;std::string&gt;</summary>
+  /// <remarks>
+  ///   You can use this to construct a case-insensitive <code>std::unordered_map</code>.
+  /// </remarks>
   struct CaseInsensitiveUtf8Hash {
     /// <summary>Calculates a case-insensitive hash of an UTF-8 string</summary>
     /// <param name="text">UTF-8 string of which a hash value will be calculated</param>
@@ -105,6 +108,9 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Case-insensitive UTF-8 version of std::equal_to&lt;std::string&gt;</summary>
+  /// <remarks>
+  ///   You can use this to construct a case-insensitive <code>std::unordered_map</code>.
+  /// </remarks>
   struct CaseInsensitiveUtf8EqualTo {
     /// <summary>Checks if two UTF-8 strings are equal, ignoring case</summary>
     /// <param name="left">First UTF-8 string to compare</param>
@@ -118,6 +124,9 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Case-insensitive UTF-8 version of std::less&lt;std::string&gt;</summary>
+  /// <remarks>
+  ///   You can use this to construct a case-insensitive <code>std::map</code>.
+  /// </remarks>
   struct CaseInsensitiveUtf8Less {
     /// <summary>Checks if the first UTF-8 string is 'less' than the second</summary>
     /// <param name="left">First UTF-8 string to compare</param>

@@ -18,18 +18,18 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_SETTINGS_POSIX_POSIXFILEACCESSAPI_H
-#define NUCLEX_SUPPORT_SETTINGS_POSIX_POSIXFILEACCESSAPI_H
+#ifndef NUCLEX_SUPPORT_HELPERS_POSIXFILEACCESSAPI_H
+#define NUCLEX_SUPPORT_HELPERS_POSIXFILEACCESSAPI_H
 
 #include "Nuclex/Support/Config.h"
 
-#if !defined(NUCLEX_STORAGE_WIN32)
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <string> // for std::string
 #include <cstdint> // for std::uint8_t
 #include <cstdio> // for FILE, ::fopen(), etc.
 
-namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -86,8 +86,8 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Settings::Posix
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_SETTINGS_POSIX_POSIXFILEACCESSAPI_H
+#endif // NUCLEX_SUPPORT_HELPERS_POSIXFILEACCESSAPI_H

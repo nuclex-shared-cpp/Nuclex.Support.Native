@@ -226,6 +226,16 @@ namespace Nuclex { namespace Support { namespace Settings {
       const std::uint8_t *fileContents, std::size_t byteCount
     );
 
+    /// <summary>Checks whether the specified property's value has quotes around it</summary>
+    /// <param name="propertyLine">Property line that will be checked</param>
+    /// <returns>True if the property line uses quotes, false if not</returns>
+    private: static bool hasQuotes(PropertyLine *propertyLine);
+
+    /// <summary>Checks whether the specified property value requires quotes</summary>
+    /// <param name="propertyValue">Value that will be checked for requiring quotes</param>
+    /// <returns>True if the property value has to be surrounded with quotes</returns>
+    private: static bool requiresQuotes(const std::string &propertyValue);
+
     /// <summary>Allocates memory for a single line</summary>
     /// <typeparam name="TLine">Type of line that will be allocated</typeparam>
     /// <param name="contents">The bytes this line consists of, including CR / CR-LF</param>
@@ -240,6 +250,14 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: template<typename T>
     T *allocate(std::size_t extraByteCount = 0);
 
+    /// <summary>Map from property name to the lines containing a property</summary>
+    private: typedef IndexedSection::PropertyMap PropertyMap;
+    /// <summary>Map from section name to a type holding the properties in the section</summary>
+    private: typedef std::unordered_map<
+      std::string, IndexedSection *,
+      Text::CaseInsensitiveUtf8Hash, Text::CaseInsensitiveUtf8EqualTo
+    > SectionMap;
+
     /// <summary>Memory holding all Line instances from when the .ini file was loaded</summary>
     /// <remarks>
     ///   Instead of allocating lines individually, this document model allocates a big memory
@@ -250,17 +268,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: std::vector<std::uint8_t *> loadedLinesMemory;
     /// <summary>Memory for all Line instances that were created after loading</summary>
     private: std::unordered_set<std::uint8_t *> createdLinesMemory;
-
-    /// <summary>Map from property name to the lines containing a property</summary>
-    typedef std::unordered_map<
-      std::string, PropertyLine *,
-      Text::CaseInsensitiveUtf8Hash, Text::CaseInsensitiveUtf8EqualTo
-    > PropertyMap;
-    /// <summary>Map from section name to a type holding the properties in the section</summary>
-    typedef std::unordered_map<
-      std::string, IndexedSection *,
-      Text::CaseInsensitiveUtf8Hash, Text::CaseInsensitiveUtf8EqualTo
-    > SectionMap;
 
     /// <summary>Pointer to the first line, useful to reconstruct the file</summary>
     private: Line *firstLine;

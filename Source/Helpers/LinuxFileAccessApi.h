@@ -18,26 +18,29 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_SETTINGS_WINDOWS_WINDOWSFILEACCESSAPI_H
-#define NUCLEX_SUPPORT_SETTINGS_WINDOWS_WINDOWSFILEACCESSAPI_H
+#ifndef NUCLEX_SUPPORT_HELPERS_LINUXFILEACCESSAPI_H
+#define NUCLEX_SUPPORT_HELPERS_LINUXFILEACCESSAPI_H
 
 #include "Nuclex/Support/Config.h"
 
-#if defined(NUCLEX_SUPPORT_WINDOWS)
+#if defined(NUCLEX_SUPPORT_LINUX)
 
-#include "../../Helpers/WindowsApi.h"
+#include <string> // std::string
+#include <cstdint> // std::uint8_t and std::size_t
 
-namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
+#include <sys/stat.h> // ::fstat() and permission flags
+#include <dirent.h> // struct ::dirent
+
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Wraps file access functions from the Windows file system API</summary>
+  /// <summary>Wraps the Linux file system API</summary>
   /// <remarks>
   ///   <para>
   ///     This is just a small helper class that reduces the amount of boilerplate code
-  ///     required when calling the file system API functions from Windows, such as
-  ///     checking result codes and transforming paths from UTF-8 to UTF-16 stored in
-  ///     wchar_ts of non-standard 2 byte size.
+  ///     required when calling the file system API functions, such as checking
+  ///     result codes over and over again.
   ///   </para>
   ///   <para>
   ///     It is not intended to hide operating system details or make this API platform
@@ -45,49 +48,55 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Windows {
   ///     of noise required by the file system APIs, only some methods will be wrapped here.
   ///   </para>
   /// </remarks>
-  class WindowsFileAccessApi {
+  class LinuxFileAccessApi {
 
     /// <summary>Opens the specified file for shared reading</summary>
     /// <param name="path">Path of the file that will be opened</param>
-    /// <returns>The handle of the opened file</returns>
-    public: static HANDLE OpenFileForReading(const std::string &path);
+    /// <returns>The descriptor (numeric handle) of the opened file</returns>
+    public: static int OpenFileForReading(const std::string &path);
 
     /// <summary>Creates or opens the specified file for exclusive writing</summary>
     /// <param name="path">Path of the file that will be opened</param>
-    /// <returns>The handle of the opened file</returns>
-    public: static HANDLE OpenFileForWriting(const std::string &path);
+    /// <returns>The descriptor (numeric handle) of the opened file</returns>
+    public: static int OpenFileForWriting(const std::string &path);
 
     /// <summary>Reads data from the specified file</summary>
-    /// <param name="fileHandle">Handle of the file from which data will be read</param>
+    /// <param name="fileDescriptor">Handle of the file from which data will be read</param>
     /// <param name="buffer">Buffer into which the data will be put</param>
     /// <param name="count">Number of bytes that will be read from the file</param>
     /// <returns>The number of bytes that were actually read</returns>
-    public: static std::size_t Read(HANDLE fileHandle, void *buffer, std::size_t count);
+    public: static std::size_t Read(
+      int fileDescriptor, std::uint8_t *buffer, std::size_t count
+    );
 
     /// <summary>Writes data into the specified file</summary>
-    /// <param name="fileHandle">Handle of the file into which data will be written</param>
+    /// <param name="fileDescriptor">Handle of the file into which data will be written</param>
     /// <param name="buffer">Buffer containing the data that will be written</param>
     /// <param name="count">Number of bytes that will be written into the file</param>
     /// <returns>The number of bytes that were actually written</returns>
-    public: static std::size_t Write(HANDLE fileHandle, const void *buffer, std::size_t count);
+    public: static std::size_t Write(
+      int fileDescriptor, const std::uint8_t *buffer, std::size_t count
+    );
 
-    /// <summary>Ensures changes to the specified file have been written to disk</summary>
-    /// <param name="fileHandle">Handle of the file that will be flushed</param>
-    public: static void FlushFileBuffers(HANDLE fileHandle);
+    /// <summary>Flushes all buffered output to the hard drive<summary>
+    /// <param name="fileDescriptor">
+    ///   File descriptor whose buffered output will be flushed
+    /// </param>
+    public: static void Flush(int fileDescriptor);
 
     /// <summary>Closes the specified file</summary>
-    /// <param name="fileHandle">Handle of the file that will be closed</param>
+    /// <param name="fileDescriptor">Handle of the file that will be closed</param>
     /// <param name="throwOnError">
     ///   Whether to throw an exception if the file cannot be closed
     /// </param>
-    public: static void CloseFile(HANDLE fileHandle, bool throwOnError = true);
+    public: static void Close(int fileDescriptor, bool throwOnError = true);
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Settings::Windows
+}}} // namespace Nuclex::Support::Helpers
 
-#endif // defined(NUCLEX_SUPPORT_WINDOWS)
+#endif // defined(NUCLEX_SUPPORT_LINUX)
 
-#endif // NUCLEX_SUPPORT_SETTINGS_WINDOWS_WINDOWSFILEACCESSAPI_H
+#endif // NUCLEX_SUPPORT_HELPERS_LINUXFILEACCESSAPI_H

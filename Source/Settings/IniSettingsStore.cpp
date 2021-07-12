@@ -28,11 +28,11 @@ License along with this library
 #include "IniDocumentModel.h"
 
 #if defined(NUCLEX_SUPPORT_LINUX)
-#include "Linux/LinuxFileAccessApi.h"
+#include "../Helpers/LinuxFileAccessApi.h"
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
-#include "Windows/WindowsFileAccessApi.h"
+#include "../Helpers/WindowsFileAccessApi.h"
 #else
-#include "Posix/PosixFileAccessApi.h"
+#include "../Helpers/PosixFileAccessApi.h"
 #endif
 
 #include <memory> // for std::unique_ptr
@@ -78,12 +78,12 @@ namespace Nuclex { namespace Support { namespace Settings {
 
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Linux::LinuxFileAccessApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Linux::LinuxFileAccessApi::Close(fileDescriptor); };
+      int fileDescriptor = Helpers::LinuxFileAccessApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::LinuxFileAccessApi::Close(fileDescriptor); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;; offset += 4096) {
-        std::size_t readByteCount = Linux::LinuxFileAccessApi::Read(
+        std::size_t readByteCount = Helpers::LinuxFileAccessApi::Read(
           fileDescriptor, contents.data() + offset, 4096
         );
         if(readByteCount < 4096) {
@@ -154,8 +154,8 @@ namespace Nuclex { namespace Support { namespace Settings {
   void IniSettingsStore::Save(const std::string &iniFilePath) const {
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Linux::LinuxFileAccessApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Linux::LinuxFileAccessApi::Close(fileDescriptor); };
+      int fileDescriptor = Helpers::LinuxFileAccessApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Helpers::LinuxFileAccessApi::Close(fileDescriptor); };
 
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(
@@ -163,14 +163,14 @@ namespace Nuclex { namespace Support { namespace Settings {
         )->Serialize(
           &fileDescriptor,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
-            Linux::LinuxFileAccessApi::Write(
+            Helpers::LinuxFileAccessApi::Write(
               *reinterpret_cast<int *>(context), buffer, byteCount
             );
           }
         );
       }
 
-      Linux::LinuxFileAccessApi::Flush(fileDescriptor);
+      Helpers::LinuxFileAccessApi::Flush(fileDescriptor);
     }
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
     {

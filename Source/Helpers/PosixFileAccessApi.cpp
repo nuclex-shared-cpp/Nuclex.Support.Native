@@ -25,7 +25,7 @@ License along with this library
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "../../Helpers/PosixApi.h"
+#include "PosixApi.h"
 
 #include <cstdio> // for fopen() and fclose()
 #include <cerrno> // To access ::errno directly
@@ -35,12 +35,11 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
-
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
+namespace Nuclex { namespace Support { namespace Helpers {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -142,6 +141,6 @@ namespace Nuclex { namespace Support { namespace Settings { namespace Posix {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}}} // namespace Nuclex::Support::Settings::Posix
+}}} // namespace Nuclex::Support::Helpers
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
