@@ -25,6 +25,7 @@ License along with this library
 #include <gtest/gtest.h>
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
+#include <unistd.h> // for ::access()
 #include <sys/stat.h> // for ::stat()
 #include <sys/types.h> // for S_ISDIR
 #else
@@ -85,6 +86,57 @@ namespace Nuclex { namespace Support {
 #else
     // TODO
 #endif
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(TemporaryDirectoryScopeTest, CanCreateFilesFromStrings) {
+    TemporaryDirectoryScope scope;
+
+    std::string firstFile = scope.PlaceFile(u8"first", std::string(u8"First file."));
+    std::string secondFile = scope.PlaceFile(u8"second", std::string(u8"Second file."));
+
+    int result = ::access(firstFile.c_str(), R_OK);
+    EXPECT_EQ(result, 0);
+
+    result = ::access(secondFile.c_str(), R_OK);
+    EXPECT_EQ(result, 0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(TemporaryDirectoryScopeTest, CanCreateFilesFromVectors) {
+    TemporaryDirectoryScope scope;
+
+    std::vector<std::uint8_t> firstContents = { 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8 };
+    std::vector<std::uint8_t> secondContents = { 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1 };
+
+    std::string firstFile = scope.PlaceFile(u8"first", firstContents);
+    std::string secondFile = scope.PlaceFile(u8"second", secondContents);
+
+    int result = ::access(firstFile.c_str(), R_OK);
+    EXPECT_EQ(result, 0);
+
+    result = ::access(secondFile.c_str(), R_OK);
+    EXPECT_EQ(result, 0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(TemporaryDirectoryScopeTest, FilesGetDeletedWithTemporaryDirectory) {
+    std::string firstFilePath, secondFilePath;
+    {
+      TemporaryDirectoryScope scope;
+
+      firstFilePath = scope.PlaceFile(u8"a.txt", std::string(u8"First file."));
+      secondFilePath = scope.PlaceFile(u8"b.txt", std::string(u8"Second file."));
+    }
+
+    int result = ::access(firstFilePath.c_str(), R_OK);
+    EXPECT_LT(result, 0); // should be -1 for failure
+
+    result = ::access(secondFilePath.c_str(), R_OK);
+    EXPECT_LT(result, 0); // should be -1 for failure
   }
 
   // ------------------------------------------------------------------------------------------- //

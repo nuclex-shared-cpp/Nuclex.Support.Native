@@ -36,6 +36,8 @@ License along with this library
 #include "Platform/WindowsFileApi.h" // for WindowsApi
 #endif
 
+#include "Nuclex/Support/ScopeGuard.h"
+
 #include <vector> // for std::vector
 #include <cassert> // for assert()
 
@@ -178,6 +180,7 @@ namespace Nuclex { namespace Support {
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 #else
+    throw u8"Not implemented yet";
 #endif
   }
 
@@ -186,16 +189,27 @@ namespace Nuclex { namespace Support {
   std::string TemporaryDirectoryScope::PlaceFile(
     const std::string &name, const std::uint8_t *contents, std::size_t byteCount
   ) {
-    throw u8"Not implemented yet";
-    /*
-    int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
-    assert((fileDescriptor != 0) && u8"File is opened and accessible");
+    std::string fullPath = this->path;
+    {
+      if(fullPath.length() > 0) {
+        if(fullPath[fullPath.length() - 1] != '/') {
+          fullPath.push_back('/');
+        }
+      }
+      fullPath.append(name);
+    }
 
-    Platform::LinuxFileApi::Seek(fileDescriptor, ::off_t(0), SEEK_SET);
-    Platform::LinuxFileApi::Write(fileDescriptor, contents, byteCount);
-    Platform::LinuxFileApi::SetLength(fileDescriptor, byteCount);
-    Platform::LinuxFileApi::Flush(fileDescriptor);
-    */
+    {
+      int fileDescriptor = Platform::LinuxFileApi::OpenFileForWriting(fullPath);
+      ON_SCOPE_EXIT {
+        Platform::LinuxFileApi::Close(fileDescriptor);
+      };
+
+      Platform::LinuxFileApi::Write(fileDescriptor, contents, byteCount);
+      Platform::LinuxFileApi::Flush(fileDescriptor);
+    }
+
+    return fullPath;
   }
 
   // ------------------------------------------------------------------------------------------- //
