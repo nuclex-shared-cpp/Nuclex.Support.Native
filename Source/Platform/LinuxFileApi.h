@@ -60,6 +60,13 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <returns>The descriptor (numeric handle) of the opened file</returns>
     public: static int OpenFileForWriting(const std::string &path);
 
+    /// <summary>Changes the position of the file cursor</summary>
+    /// <param name="fileDescriptor">File handle whose file cursor will be moved</param>
+    /// <param name="offset">Relative position, in bytes, to move the file cursor to</param>
+    /// <param name="anchor">Position to which the offset is relative</param>
+    /// <returns>The absolute position in bytes from the beginning of the file</returns>
+    public: static std::size_t Seek(int fileDescriptor, ::off_t offset, int anchor);
+
     /// <summary>Reads data from the specified file</summary>
     /// <param name="fileDescriptor">Handle of the file from which data will be read</param>
     /// <param name="buffer">Buffer into which the data will be put</param>
@@ -77,6 +84,11 @@ namespace Nuclex { namespace Support { namespace Platform {
     public: static std::size_t Write(
       int fileDescriptor, const std::uint8_t *buffer, std::size_t count
     );
+
+    /// <summary>Truncates or pads the file to the specified length</summary>
+    /// <param name="fileDescriptor">Handle of the file whose length will be set</param>
+    /// <param name="byteCount">New length fo the file in bytes</param>
+    public: static void SetLength(int fileDescriptor, std::size_t byteCount);
 
     /// <summary>Flushes all buffered output to the hard drive<summary>
     /// <param name="fileDescriptor">

@@ -83,6 +83,19 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
+  std::size_t LinuxFileApi::Seek(int fileDescriptor, ::off_t offset, int anchor) {
+    ::off_t absolutePosition = ::lseek(fileDescriptor, offset, anchor);
+    if(absolutePosition == -1) {
+      int errorNumber = errno;
+      std::string errorMessage(u8"Could not seek within file");
+      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return static_cast<std::size_t>(absolutePosition);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   std::size_t LinuxFileApi::Read(
     int fileDescriptor, std::uint8_t *buffer, std::size_t count
   ) {
@@ -109,6 +122,17 @@ namespace Nuclex { namespace Support { namespace Platform {
     }
 
     return result;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void LinuxFileApi::SetLength(int fileDescriptor, std::size_t byteCount) {
+    int result = ::ftruncate(fileDescriptor, static_cast<::off_t>(byteCount));
+    if(result == -1) {
+      int errorNumber = errno;
+      std::string errorMessage(u8"Could not truncate/pad file to specified length");
+      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -139,7 +139,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       );
       if(errorMessageLength == 0) {
         std::string message(u8"Windows API error ");
-        Text::lexical_append(message, errorCode);
+        Text::lexical_append(message, static_cast<std::uint32_t>(errorCode));
         return message;
       }
     }
@@ -169,7 +169,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     // If the error message is empty, return a generic one
     if(size == 0) {
       std::string message(u8"Windows API error ");
-      Text::lexical_append(message, errorCode);
+      Text::lexical_append(message, static_cast<std::uint32_t>(errorCode));
       return message;
     } else { // Error message had content, return it
       return std::string(&utf8ErrorMessage[0], size);

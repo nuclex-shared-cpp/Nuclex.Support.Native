@@ -401,7 +401,7 @@
     <ClCompile Include="Tests\Platform\PosixProcessApiTest.cpp" />
     <ClCompile Include="Tests\Platform\PosixTimeApiTest.cpp" />
     <ClCompile Include="Tests\Platform\WindowsApiTest.cpp" />
-    <ClCompile Include="Tests\Platform\WindowsFileApiTest.cpp" />
+    <ClCompile Include="Tests\Platform\WindowsPathApiTest.cpp" />
     <ClCompile Include="Tests\Platform\WindowsRegistryApiTest.cpp" />
     <ClCompile Include="Tests\Platform\WindowsProcessApiTest.cpp" />
     <ClCompile Include="Tests\Services\LazyServiceInjectorTest.cpp" />

@@ -143,7 +143,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
         // Other character, parse as section name, property name or property value
         default: {
-          if(Text::ParserHelper::IsWhitepace(std::uint8_t(current))) {
+          if(Text::ParserHelper::IsWhitespace(std::uint8_t(current))) {
             ++this->parsePosition; // skip over it
           } else if(equalsSignFound) {
             parseValue();
@@ -270,7 +270,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
           // Other characters without special meaning
           default: {
-            if(!Text::ParserHelper::IsWhitepace(std::uint8_t(current))) {
+            if(!Text::ParserHelper::IsWhitespace(std::uint8_t(current))) {
               if(quoteEncountered) { // Characters after quote? -> line is malformed
                 parseMalformedLine();
                 return;
@@ -349,7 +349,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
           // Other characters without special meaning
           default: {
-            if(!Text::ParserHelper::IsWhitepace(std::uint8_t(current))) {
+            if(!Text::ParserHelper::IsWhitespace(std::uint8_t(current))) {
               if(quoteEncountered) { // Characters after quote? -> line is malformed
                 parseMalformedLine();
                 return;

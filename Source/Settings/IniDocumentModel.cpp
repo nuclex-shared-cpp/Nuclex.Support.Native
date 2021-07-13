@@ -271,6 +271,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
     } else { // A property line already exists
       PropertyLine *existingPropertyLine = propertyIterator->second;
+      //std::string::size_type requiredLength = propertyValue.length();
       if(existingPropertyLine->ValueLength >= propertyValue.length()) { // Has enough space?
         
         // TODO: Add quotes if needed and not present
@@ -392,8 +393,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     bool requiresQuotes = false;
     if(propertyValue.length() > 0) {
       requiresQuotes = (
-        Text::ParserHelper::IsWhitepace(std::uint8_t(propertyValue[0])) ||
-        Text::ParserHelper::IsWhitepace(std::uint8_t(propertyValue[propertyValue.length() - 1]))
+        Text::ParserHelper::IsWhitespace(std::uint8_t(propertyValue[0])) ||
+        Text::ParserHelper::IsWhitespace(std::uint8_t(propertyValue[propertyValue.length() - 1]))
       );
     }
     
@@ -516,8 +517,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     std::string::size_type length = propertyValue.length();
     if(length > 0) {
       bool startsOrEndsWithSpace = (
-        Text::ParserHelper::IsWhitepace(std::uint8_t(propertyValue[0])) ||
-        Text::ParserHelper::IsWhitepace(std::uint8_t(propertyValue[length - 1]))
+        Text::ParserHelper::IsWhitespace(std::uint8_t(propertyValue[0])) ||
+        Text::ParserHelper::IsWhitespace(std::uint8_t(propertyValue[length - 1]))
       );
       if(startsOrEndsWithSpace) {
         return true;

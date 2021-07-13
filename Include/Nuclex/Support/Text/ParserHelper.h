@@ -53,7 +53,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   UTF-8 byte or single-byte character that will be checked for being a whitespace
     /// </param>
     /// <returns>True if the character was a whitespace, false otherwise</returns>
-    public: NUCLEX_SUPPORT_API static constexpr bool IsWhitepace(
+    public: NUCLEX_SUPPORT_API static constexpr bool IsWhitespace(
       std::uint8_t utf8Byte
     );
 
@@ -62,7 +62,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   Character that will be checked for being a whitespace
     /// </param>
     /// <returns>True if the character was a whitespace, false otherwise</returns>
-    public: NUCLEX_SUPPORT_API static constexpr bool IsWhitepace(
+    public: NUCLEX_SUPPORT_API static constexpr bool IsWhitespace(
       char32_t unicodeCharacter
     );
 
@@ -70,7 +70,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline constexpr bool ParserHelper::IsWhitepace(std::uint8_t utf8Byte) {
+  inline constexpr bool ParserHelper::IsWhitespace(std::uint8_t utf8Byte) {
     return (
       (
         (utf8Byte >= std::uint8_t(0x09)) && // (see below)
@@ -87,7 +87,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline constexpr bool ParserHelper::IsWhitepace(char32_t unicodeCharacter) {
+  inline constexpr bool ParserHelper::IsWhitespace(char32_t unicodeCharacter) {
     switch(unicodeCharacter & char32_t(0xffffff00)) {
       case char32_t(0x0000): {
         return (

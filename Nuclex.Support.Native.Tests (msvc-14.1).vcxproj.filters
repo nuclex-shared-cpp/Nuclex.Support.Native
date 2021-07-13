@@ -717,7 +717,7 @@
     <ClCompile Include="Tests\Platform\WindowsApiTest.cpp">
       <Filter>Tests\Platform</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\Platform\WindowsFileApiTest.cpp">
+    <ClCompile Include="Tests\Platform\WindowsPathApiTest.cpp">
       <Filter>Tests\Platform</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Platform\WindowsProcessApiTest.cpp">
