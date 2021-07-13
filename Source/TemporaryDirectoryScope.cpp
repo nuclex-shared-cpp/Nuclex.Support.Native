@@ -21,12 +21,14 @@ License along with this library
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "Nuclex/Support/TemporaryFileScope.h"
+#include "Nuclex/Support/TemporaryDirectoryScope.h"
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 #include "Platform/LinuxFileApi.h"
 #include "Platform/PosixApi.h"
 
+#include <ftw.h> // for struct ::ftw
+#include <sys/stat.h> // for struct ::stat
 #include <unistd.h> // for ::write(), ::close(), ::unlink()
 #include <cstdlib> // for ::getenv(), ::mkdtemp()
 #else
@@ -69,10 +71,10 @@ namespace {
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
-  /// <summary>Builds the full template string that's passed to ::mkstemp()</summary>
+  /// <summary>Builds the full template string that's passed to ::mkdtemp()</summary>
   /// <param name="path">Path vector the template will be stored in</param>
   /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
-  void buildTemplateForMksTemp(std::vector<char> &path, const std::string &prefix) {
+  void buildTemplateForMkdTemp(std::vector<char> &path, const std::string &prefix) {
       path.reserve(256); // PATH_MAX would be a bit too bloaty usually...
 
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
@@ -102,6 +104,24 @@ namespace {
   }
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
+#if !defined(NUCLEX_PIXELS_WINDOWS)
+  /// <summary>Callback for the file-tree-walk function that deletes files</summary>
+  /// <param name="path">Path of the current file or directory</param>
+  /// <param name="nodeStat">Stat structure of the current file or directory</param>
+  /// <param name="typeflag">Type of the current node (FTW_F or FTW_D)</param>
+  /// <param name="ftwinfo">Folder depth an other info provided by nftw()</param>
+  /// <returns>0 on success, a standard Posix error code in case of failure</returns>
+  int removeFileOrDirectoryCallback(
+    const char *path, const struct ::stat *nodeStat, int typeflag, struct ::FTW *ftwinfo
+  ) {
+    (void)nodeStat;
+    (void)typeflag;
+    (void)ftwinfo;
+
+    return ::remove(path);
+  }
+#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
+  // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
@@ -109,7 +129,9 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TemporaryFileScope::TemporaryFileScope(const std::string &namePrefix /* = u8"tmp" */) :
+  TemporaryDirectoryScope::TemporaryDirectoryScope(
+    const std::string &namePrefix /* = u8"tmp" */
+  ) :
     path(),
     privateImplementationData {0} {
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
@@ -118,25 +140,23 @@ namespace Nuclex { namespace Support {
       u8"File descriptor fits in space provided for private implementation data"
     );
 
-    // Build the path template including the system's temporary directory
     std::vector<char> pathTemplate;
-    buildTemplateForMksTemp(pathTemplate, namePrefix);
+    buildTemplateForMkdTemp(pathTemplate, namePrefix);
 
-    // Select and open a unique temporary filename
-    int fileDescriptor = ::mkstemp(pathTemplate.data());
-    if(unlikely(fileDescriptor == -1)) {
+    // Select and open a unique temporary directory name
+    const char *path = ::mkdtemp(pathTemplate.data());
+    if(unlikely(path == nullptr)) {
       int errorNumber = errno;
 
-      std::string errorMessage(u8"Could not create temporary file '");
-      errorMessage.append(pathTemplate.data(), pathTemplate.size());
+      std::string errorMessage(u8"Could not create temporary directory '");
+      errorMessage.append(pathTemplate.data());
       errorMessage.append(u8"'");
 
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
-    // Store the file handle in the private implementation data block and
-    // remember the full path for when the user queries it later
-    *reinterpret_cast<int *>(this->privateImplementationData) = fileDescriptor;
+    // Store the full path to the temporary directory we just created
+    assert((path == pathTemplate.data()) && u8"Original path buffer is modified");
     this->path.assign(pathTemplate.begin(), pathTemplate.end());
 #else
     throw u8"Not implemented yet";
@@ -145,35 +165,29 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TemporaryFileScope::~TemporaryFileScope() {
+  TemporaryDirectoryScope::~TemporaryDirectoryScope() {
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
-    int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
+    int result = ::nftw(this->path.c_str(), removeFileOrDirectoryCallback, 64, FTW_DEPTH | FTW_PHYS);
+    if(unlikely(result != 0)) {
+      int errorNumber = errno;
 
-    // Close the file so we don't leak handles
-    if(likely(fileDescriptor != 0)) {
-      int result = ::close(fileDescriptor);
-      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-      assert((result != -1) && u8"Temporary file is closed successfully");
-    }
+      std::string errorMessage(u8"Could not erase temporary directory contents in '");
+      errorMessage.append(this->path);
+      errorMessage.append(u8"'");
 
-    // Delete the file. Even if the close failed, on Linux systems we
-    // can delete the file and it will be removed from the file index
-    // (and the data will disppear as soon as the last process closes it).
-    if(likely(!this->path.empty())) {
-      int result = ::unlink(this->path.c_str());
-      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-      assert((result != -1) && u8"Temporary file is deleted successfully");
+      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 #else
-    throw u8"Not implemented yet";
 #endif
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void TemporaryFileScope::SetFileContents(
-    const std::uint8_t *contents, std::size_t byteCount
+  std::string TemporaryDirectoryScope::PlaceFile(
+    const std::string &name, const std::uint8_t *contents, std::size_t byteCount
   ) {
+    throw u8"Not implemented yet";
+    /*
     int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
     assert((fileDescriptor != 0) && u8"File is opened and accessible");
 
@@ -181,6 +195,7 @@ namespace Nuclex { namespace Support {
     Platform::LinuxFileApi::Write(fileDescriptor, contents, byteCount);
     Platform::LinuxFileApi::SetLength(fileDescriptor, byteCount);
     Platform::LinuxFileApi::Flush(fileDescriptor);
+    */
   }
 
   // ------------------------------------------------------------------------------------------- //

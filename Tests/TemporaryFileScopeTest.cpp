@@ -26,6 +26,7 @@ License along with this library
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 #include <unistd.h> // for ::access()
+#include <sys/stat.h> // for ::stat()
 #else
 #include "../Source/Platform/WindowsApi.h"
 #endif
