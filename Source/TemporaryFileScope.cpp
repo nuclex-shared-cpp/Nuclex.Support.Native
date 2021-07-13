@@ -23,15 +23,16 @@ License along with this library
 
 #include "Nuclex/Support/TemporaryFileScope.h"
 
-#if !defined(NUCLEX_SUPPORT_WINDOWS)
-#include "Platform/LinuxFileApi.h"
-#include "Platform/PosixApi.h"
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
+#include "Platform/WindowsApi.h" // for WindowsApi
+#include "Platform/WindowsFileApi.h" // for WindowsFileApi
+#else
+#include "Platform/LinuxFileApi.h" // for LinuxApi
+#include "Platform/PosixApi.h" // for PosixApi
 
 #include <unistd.h> // for ::write(), ::close(), ::unlink()
 #include <cstdlib> // for ::getenv(), ::mkdtemp()
-#else
-#include "Platform/WindowsApi.h" // for WindowsApi
-#include "Platform/WindowsFileApi.h" // for WindowsApi
 #endif
 
 #include <vector> // for std::vector
@@ -39,6 +40,28 @@ License along with this library
 
 namespace {
 
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+  /// <summary>Appends the user's/system's preferred temp directory to a path</summary>
+  /// <param name="path">Path vector the temp directory will be appended to</param>
+  void appendTempDirectory(std::wstring &path) {
+
+    // Ask for the current users or for the system's temporary directory
+    path.resize(MAX_PATH + 1);
+    DWORD result = ::GetTempPathW(MAX_PATH + 1, path.data());
+    if(unlikely(result == 0)) {
+      DWORD errorCode = ::GetLastError();
+
+      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not obtain path to temp directory", errorCode
+      );
+    }
+
+    // Append the temporary directory to the provided string
+    path.resize(result);
+
+  }
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
   /// <summary>Appends the user's/system's preferred temp directory to a path</summary>
@@ -67,6 +90,50 @@ namespace {
 
   }
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+  /// <summary>Creates a temporary file with a unique name on Windows systems</summary>
+  /// <param name="path">Directory in which the temporary file will be created</param>
+  /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
+  std::wstring createTemporaryFile(const std::wstring &path, const std::string &prefix) {
+    std::wstring fullPath;
+
+    {
+      std::wstring utf16NamePrefix = (
+        Nuclex::Support::Text::StringConverter::WideFromUtf8(prefix)
+      );
+
+      // Call GetTempFileName() to let Windows sort out a unique file name
+      fullPath.resize(MAX_PATH);
+      UINT result = ::GetTempFileNameW(
+        path.c_str(),
+        utf16NamePrefix.c_str(),
+        0, // let GetTempFileName() come up with a unique number
+        fullPath.data()
+      );
+      // MSDN documents ERROR_BUFFER_OVERFLOW (111) as a possible return value but
+      // that doesn't make any sense. Treating it as an error might introduce spurious
+      // failures (a 1:65535 chance). Taking 111 out of the range of possible results
+      // would be so weird that I feel safer assuming the docs are wrong.
+      // (we're providing the maximum buffer size, though, so no overflow should ever happen)
+      if(result == 0) {
+        DWORD errorCode = ::GetLastError();
+
+        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not acquire a unique temporary file name", errorCode
+        );
+      }
+
+      // Truncate the MAX_PATH-sized string back to the actual number of characters
+      std::string::size_type zeroTerminator = fullPath.find(L'\0');
+      if(zeroTerminator == std::wstring::npos) {
+        fullPath.resize(zeroTerminator);
+      }
+    }
+
+    return fullPath;
+  }
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
   /// <summary>Builds the full template string that's passed to ::mkstemp()</summary>
@@ -112,7 +179,40 @@ namespace Nuclex { namespace Support {
   TemporaryFileScope::TemporaryFileScope(const std::string &namePrefix /* = u8"tmp" */) :
     path(),
     privateImplementationData {0} {
-#if !defined(NUCLEX_SUPPORT_WINDOWS)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+    static_assert(
+      (sizeof(this->privateImplementationData) >= sizeof(HANDLE)) &&
+      u8"File handlefits in space provided for private implementation data"
+    );
+    *reinterpret_cast<HANDLE *>(this->privateImplementationData) = INVALID_HANDLE_VALUE;
+
+    std::wstring temporaryDirectory;
+    appendTempDirectory(temporaryDirectory);
+
+    std::wstring fullPath = createTemporaryFile(temporaryDirectory, namePrefix);
+
+    HANDLE fileHandle = ::CreateFileW(
+      fullPath.c_str(),
+      GENERIC_READ | GENERIC_WRITE, // desired access
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, // share mode
+      nullptr,
+      CREATE_ALWAYS, // creation disposition
+      FILE_ATTRIBUTE_NORMAL,
+      nullptr
+    );
+    if(unlikely(fileHandle == INVALID_HANDLE_VALUE)) {
+      DWORD errorCode = ::GetLastError();
+
+      std::string errorMessage(u8"Could not open temporary file '");
+      errorMessage.append(Text::StringConverter::Utf8FromWide(fullPath));
+      errorMessage.append(u8"' for writing");
+
+      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
+
+    *reinterpret_cast<HANDLE *>(this->privateImplementationData) = fileHandle;
+    this->path = Text::StringConverter::Utf8FromWide(fullPath);
+#else
     static_assert(
       (sizeof(this->privateImplementationData) >= sizeof(int)) &&
       u8"File descriptor fits in space provided for private implementation data"
@@ -138,15 +238,28 @@ namespace Nuclex { namespace Support {
     // remember the full path for when the user queries it later
     *reinterpret_cast<int *>(this->privateImplementationData) = fileDescriptor;
     this->path.assign(pathTemplate.begin(), pathTemplate.end());
-#else
-    throw u8"Not implemented yet";
 #endif
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TemporaryFileScope::~TemporaryFileScope() {
-#if !defined(NUCLEX_SUPPORT_WINDOWS)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+    HANDLE fileHandle = *reinterpret_cast<HANDLE *>(this->privateImplementationData);
+
+    if(likely(fileHandle != INVALID_HANDLE_VALUE)) {
+      BOOL result = ::CloseHandle(fileHandle);
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result != FALSE) && u8"Handle of temporary file is closed successfully");
+    }
+
+    if(likely(!this->path.empty())) {
+      std::wstring utf16Path = Text::StringConverter::WideFromUtf8(this->path);
+      BOOL result = ::DeleteFileW(utf16Path.c_str());
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result != FALSE) && u8"Temporary file is successfully deleted after use");
+    }
+#else
     int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
 
     // Close the file so we don't leak handles
@@ -164,8 +277,6 @@ namespace Nuclex { namespace Support {
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result != -1) && u8"Temporary file is deleted successfully");
     }
-#else
-    throw u8"Not implemented yet";
 #endif
   }
 
@@ -174,6 +285,15 @@ namespace Nuclex { namespace Support {
   void TemporaryFileScope::SetFileContents(
     const std::uint8_t *contents, std::size_t byteCount
   ) {
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+    HANDLE fileHandle = *reinterpret_cast<HANDLE *>(this->privateImplementationData);
+    assert((fileHandle != INVALID_HANDLE_VALUE) && u8"File is opened and accessible");
+
+    Platform::WindowsFileApi::Seek(fileHandle, 0, FILE_BEGIN);
+    Platform::WindowsFileApi::Write(fileHandle, contents, byteCount);
+    Platform::WindowsFileApi::SetLengthToFileCursor(fileHandle);
+    Platform::WindowsFileApi::FlushFileBuffers(fileHandle);
+#else
     int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
     assert((fileDescriptor != 0) && u8"File is opened and accessible");
 
@@ -181,6 +301,7 @@ namespace Nuclex { namespace Support {
     Platform::LinuxFileApi::Write(fileDescriptor, contents, byteCount);
     Platform::LinuxFileApi::SetLength(fileDescriptor, byteCount);
     Platform::LinuxFileApi::Flush(fileDescriptor);
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //

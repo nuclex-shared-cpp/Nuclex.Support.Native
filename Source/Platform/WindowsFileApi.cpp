@@ -123,6 +123,25 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
+  std::size_t WindowsFileApi::Seek(HANDLE fileHandle, std::ptrdiff_t offset, DWORD anchor) {
+    LARGE_INTEGER distanceToMove;
+    distanceToMove.QuadPart = offset;
+    LARGE_INTEGER newFilePointer;
+
+    BOOL result = ::SetFilePointerEx(
+      fileHandle, distanceToMove, &newFilePointer, anchor
+    );
+    if(unlikely(result == FALSE)) {
+      DWORD errorCode = ::GetLastError();
+      std::string errorMessage(u8"Could not move file cursor");
+      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
+
+    return static_cast<std::size_t>(newFilePointer.QuadPart);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   std::size_t WindowsFileApi::Read(HANDLE fileHandle, void *buffer, std::size_t count) {
     DWORD desiredCount = static_cast<DWORD>(count);
     DWORD actualCount = 0;
@@ -153,6 +172,17 @@ namespace Nuclex { namespace Support { namespace Platform {
     }
 
     return static_cast<std::size_t>(actualCount);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsFileApi::SetLengthToFileCursor(HANDLE fileHandle) {
+    BOOL result = ::SetEndOfFile(fileHandle);
+    if(unlikely(result == FALSE)) {
+      DWORD errorCode = ::GetLastError();
+      std::string errorMessage(u8"Could not truncate/pad file to file cursor position");
+      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

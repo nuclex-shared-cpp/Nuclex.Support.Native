@@ -258,6 +258,8 @@
     <ClInclude Include="Include\Nuclex\Support\Config.h" />
     <ClInclude Include="Include\Nuclex\Support\Optional.h" />
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h" />
+    <ClInclude Include="Include\Nuclex\Support\TemporaryDirectoryScope.h" />
+    <ClInclude Include="Include\Nuclex\Support\TemporaryFileScope.h" />
     <ClInclude Include="Include\Nuclex\Support\Variant.h" />
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
   </ItemGroup>
@@ -317,6 +319,8 @@
     <ClCompile Include="Source\Settings\MemorySettingsStore.cpp" />
     <ClCompile Include="Source\Settings\RegistrySettingsStore.cpp" />
     <ClCompile Include="Source\Settings\SettingsStore.cpp" />
+    <ClCompile Include="Source\TemporaryDirectoryScope.cpp" />
+    <ClCompile Include="Source\TemporaryFileScope.cpp" />
     <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp" />
     <ClInclude Include="Source\Text\Dragon4\Dragon4.h" />
     <ClInclude Include="Source\Text\Dragon4\Math.h" />
@@ -428,6 +432,8 @@
     <ClCompile Include="Tests\BitTricksTest.cpp" />
     <ClCompile Include="Tests\OptionalTests.cpp" />
     <ClCompile Include="Tests\ScopeGuardTest.cpp" />
+    <ClCompile Include="Tests\TemporaryDirectoryScopeTest.cpp" />
+    <ClCompile Include="Tests\TemporaryFileScopeTest.cpp" />
     <ClCompile Include="Tests\VariantTests.cpp" />
   </ItemGroup>
   <ItemGroup>

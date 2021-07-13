@@ -252,6 +252,8 @@
     <ClInclude Include="Include\Nuclex\Support\Config.h" />
     <ClInclude Include="Include\Nuclex\Support\Optional.h" />
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h" />
+    <ClInclude Include="Include\Nuclex\Support\TemporaryDirectoryScope.h" />
+    <ClInclude Include="Include\Nuclex\Support\TemporaryFileScope.h" />
     <ClInclude Include="Include\Nuclex\Support\Variant.h" />
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
   </ItemGroup>
@@ -370,6 +372,8 @@
     <ClCompile Include="Source\Config.cpp" />
     <ClCompile Include="Source\Optional.cpp" />
     <ClCompile Include="Source\ScopeGuard.cpp" />
+    <ClCompile Include="Source\TemporaryDirectoryScope.cpp" />
+    <ClCompile Include="Source\TemporaryFileScope.cpp" />
     <ClCompile Include="Source\Variant.cpp" />
     <ClCompile Include="Source\VariantType.cpp" />
   </ItemGroup>

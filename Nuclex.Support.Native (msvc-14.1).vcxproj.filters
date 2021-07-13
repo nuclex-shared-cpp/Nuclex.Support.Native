@@ -266,6 +266,12 @@
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\TemporaryDirectoryScope.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\TemporaryFileScope.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Variant.h">
       <Filter>Include</Filter>
     </ClInclude>
@@ -620,6 +626,12 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\ScopeGuard.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TemporaryDirectoryScope.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TemporaryFileScope.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\Variant.cpp">

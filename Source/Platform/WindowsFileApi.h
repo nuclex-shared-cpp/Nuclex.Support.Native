@@ -57,6 +57,13 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <returns>The handle of the opened file</returns>
     public: static HANDLE OpenFileForWriting(const std::string &path);
 
+    /// <summary>Moves the file cursor to a different position</summary>
+    /// <param name="fileHandle">Handle of the file whose file cursor to move</param>
+    /// <param name="offset">Offset to move the file cursor relative to the anchor</param>
+    /// <param name="anchor">Anchor relative to which the file cursor will be placed</param>
+    /// <returns>The new absolute position of the file cursor from the file start</returns>
+    public: static std::size_t Seek(HANDLE fileHandle, std::ptrdiff_t offset, DWORD anchor);
+
     /// <summary>Reads data from the specified file</summary>
     /// <param name="fileHandle">Handle of the file from which data will be read</param>
     /// <param name="buffer">Buffer into which the data will be put</param>
@@ -70,6 +77,10 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <param name="count">Number of bytes that will be written into the file</param>
     /// <returns>The number of bytes that were actually written</returns>
     public: static std::size_t Write(HANDLE fileHandle, const void *buffer, std::size_t count);
+
+    /// <summary>Truncates or pads the file to the current file cursor position</summary>
+    /// <param name="fileHandle">Handle of the file whose length will be set</param>
+    public: static void SetLengthToFileCursor(HANDLE fileHandle);
 
     /// <summary>Ensures changes to the specified file have been written to disk</summary>
     /// <param name="fileHandle">Handle of the file that will be flushed</param>

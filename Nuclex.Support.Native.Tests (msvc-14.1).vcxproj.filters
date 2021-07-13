@@ -296,6 +296,12 @@
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\TemporaryDirectoryScope.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\TemporaryFileScope.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Variant.h">
       <Filter>Include</Filter>
     </ClInclude>
@@ -646,6 +652,12 @@
     <ClCompile Include="Source\ScopeGuard.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\TemporaryDirectoryScope.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TemporaryFileScope.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Variant.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -796,6 +808,12 @@
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="Tests\ScopeGuardTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TemporaryDirectoryScopeTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TemporaryFileScopeTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="Tests\VariantTests.cpp">
