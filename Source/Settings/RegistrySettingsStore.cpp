@@ -28,7 +28,7 @@ License along with this library
 #include "Nuclex/Support/Text/StringMatcher.h"
 #include "Nuclex/Support/Text/StringConverter.h"
 
-#include "../Helpers/WindowsRegistryApi.h"
+#include "../Platform/WindowsRegistryApi.h"
 
 #include <cassert> // for assert()
 
@@ -99,7 +99,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       // If no slashes are in the path, it may still be a valid registry hive...
       std::string::size_type firstSlashIndex = findNextSlash(registryPath);
       if(firstSlashIndex == std::string::npos) {
-        ::HKEY hiveKeyHandle = Helpers::WindowsRegistryApi::GetHiveFromString(
+        ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
           registryPath, registryPath.length()
         );
         result = ::RegOpenKeyExW(
@@ -109,7 +109,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           reinterpret_cast<::HKEY *>(&this->settingsKeyHandle)
         );
       } else { // Slashes present, separate the registry hive from the rest
-        ::HKEY hiveKeyHandle = Helpers::WindowsRegistryApi::GetHiveFromString(
+        ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
           registryPath, firstSlashIndex
         );
 
@@ -161,7 +161,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     // Check if the key was opened successfully
     if(result != ERROR_SUCCESS) {
       this->settingsKeyHandle = 0; // RegOpenKeyExW() may write INVALID_HANDLE_VALUe here
-      Helpers::WindowsApi::ThrowExceptionForSystemError(
+      Platform::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not open registry key", result
       );
     }
@@ -185,7 +185,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       return std::vector<std::string>(); // Non-existent key accessed in read-only mode
     }
 
-    return Helpers::WindowsRegistryApi::GetAllSubKeyNames(
+    return Platform::WindowsRegistryApi::GetAllSubKeyNames(
       *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle)
     );
   }
@@ -199,7 +199,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       return std::vector<std::string>(); // Non-existent key accessed in read-only mode
     }
 
-    return Helpers::WindowsRegistryApi::GetAllValueNames(
+    return Platform::WindowsRegistryApi::GetAllValueNames(
       *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle)
     );
   }

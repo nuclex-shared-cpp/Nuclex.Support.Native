@@ -51,9 +51,6 @@
     <Filter Include="Source\Events">
       <UniqueIdentifier>{e3f61b78-199d-4daf-9335-3bfce32621d4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Helpers">
-      <UniqueIdentifier>{41337d1c-187d-4d7b-8eea-9eb521d00b08}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Services">
       <UniqueIdentifier>{8776ca34-6ac1-43ca-9e2f-723d4bc5843b}</UniqueIdentifier>
     </Filter>
@@ -80,6 +77,9 @@
     </Filter>
     <Filter Include="Source\Threading">
       <UniqueIdentifier>{c3c71559-2291-4f45-8938-c3cf232c87c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Platform">
+      <UniqueIdentifier>{41337d1c-187d-4d7b-8eea-9eb521d00b08}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -343,74 +343,74 @@
     <ClCompile Include="Source\Events\Event.cpp">
       <Filter>Source\Events</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\PosixApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\PosixApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\PosixApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\PosixApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Helpers\LinuxFileApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\LinuxFileApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\LinuxFileApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\LinuxFileApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\PosixApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\PosixApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\PosixApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\PosixApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\PosixFileApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\PosixFileApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\PosixFileApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\PosixFileApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\PosixPathApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\PosixPathApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\PosixPathApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\PosixPathApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\PosixProcessApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\PosixProcessApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\PosixProcessApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\PosixProcessApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\PosixTimeApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\PosixTimeApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\PosixTimeApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\PosixTimeApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\WindowsApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\WindowsApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\WindowsApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\WindowsApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\WindowsFileApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\WindowsFileApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\WindowsFileApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\WindowsFileApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\WindowsPathApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\WindowsPathApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\WindowsPathApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\WindowsPathApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Helpers\WindowsProcessApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\WindowsProcessApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Helpers\WindowsRegistryApi.cpp">
-      <Filter>Source\Helpers</Filter>
+    <ClCompile Include="Source\Platform\WindowsRegistryApi.cpp">
+      <Filter>Source\Platform</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Helpers\WindowsRegistryApi.h">
-      <Filter>Source\Helpers</Filter>
+    <ClInclude Include="Source\Platform\WindowsRegistryApi.h">
+      <Filter>Source\Platform</Filter>
     </ClInclude>
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
       <Filter>Source\Services</Filter>

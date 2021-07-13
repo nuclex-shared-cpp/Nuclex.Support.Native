@@ -28,11 +28,11 @@ License along with this library
 #include "IniDocumentModel.h"
 
 #if defined(NUCLEX_SUPPORT_LINUX)
-#include "../Helpers/LinuxFileApi.h"
+#include "../Platform/LinuxFileApi.h"
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
-#include "../Helpers/WindowsFileApi.h"
+#include "../Platform/WindowsFileApi.h"
 #else
-#include "../Helpers/PosixFileApi.h"
+#include "../Platform/PosixFileApi.h"
 #endif
 
 #include <memory> // for std::unique_ptr
@@ -78,12 +78,12 @@ namespace Nuclex { namespace Support { namespace Settings {
 
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Helpers::LinuxFileApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::LinuxFileApi::Close(fileDescriptor); };
+      int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;; offset += 4096) {
-        std::size_t readByteCount = Helpers::LinuxFileApi::Read(
+        std::size_t readByteCount = Platform::LinuxFileApi::Read(
           fileDescriptor, contents.data() + offset, 4096
         );
         if(readByteCount < 4096) {
@@ -96,12 +96,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      ::HANDLE fileHandle = Helpers::WindowsFileApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::WindowsFileApi::CloseFile(fileHandle); };
+      ::HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;; offset += 4096) {
-        std::size_t readByteCount = Helpers::WindowsFileApi::Read(
+        std::size_t readByteCount = Platform::WindowsFileApi::Read(
           fileHandle, contents.data() + offset, 4096
         );
         if(readByteCount < 4096) {
@@ -114,12 +114,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 #else
     {
-      ::FILE *file = Helpers::PosixFileApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::PosixFileApi::Close(file); };
+      ::FILE *file = Platform::PosixFileApi::OpenFileForReading(iniFilePath);
+      ON_SCOPE_EXIT { Platform::PosixFileApi::Close(file); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;; offset += 4096) {
-        std::size_t readByteCount = Helpers::PosixFileApi::Read(
+        std::size_t readByteCount = Platform::PosixFileApi::Read(
           file, contents.data() + offset, 4096
         );
         if(readByteCount < 4096) {
@@ -154,8 +154,8 @@ namespace Nuclex { namespace Support { namespace Settings {
   void IniSettingsStore::Save(const std::string &iniFilePath) const {
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Helpers::LinuxFileApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::LinuxFileApi::Close(fileDescriptor); };
+      int fileDescriptor = Platform::LinuxFileApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
 
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(
@@ -163,19 +163,19 @@ namespace Nuclex { namespace Support { namespace Settings {
         )->Serialize(
           &fileDescriptor,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
-            Helpers::LinuxFileApi::Write(
+            Platform::LinuxFileApi::Write(
               *reinterpret_cast<int *>(context), buffer, byteCount
             );
           }
         );
       }
 
-      Helpers::LinuxFileApi::Flush(fileDescriptor);
+      Platform::LinuxFileApi::Flush(fileDescriptor);
     }
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      ::HANDLE fileHandle = Helpers::WindowsFileApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::WindowsFileApi::CloseFile(fileHandle); };
+      ::HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
 
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(
@@ -183,19 +183,19 @@ namespace Nuclex { namespace Support { namespace Settings {
         )->Serialize(
           &fileHandle,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
-            Helpers::WindowsFileApi::Write(
+            Platform::WindowsFileApi::Write(
               *reinterpret_cast<::HANDLE *>(context), buffer, byteCount
             );
           }
         );
       }
 
-      Helpers::WindowsFileApi::FlushFileBuffers(fileHandle);
+      Platform::WindowsFileApi::FlushFileBuffers(fileHandle);
     }
 #else
     {
-      ::FILE *file = Helpers::PosixFileApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Helpers::PosixFileApi::Close(file); };
+      ::FILE *file = Platform::PosixFileApi::OpenFileForWriting(iniFilePath);
+      ON_SCOPE_EXIT { Platform::PosixFileApi::Close(file); };
 
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(
@@ -203,14 +203,14 @@ namespace Nuclex { namespace Support { namespace Settings {
         )->Serialize(
           file,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
-            Helpers::PosixFileApi::Write(
+            Platform::PosixFileApi::Write(
               reinterpret_cast<::FILE *>(context), buffer, byteCount
             );
           }
         );
       }
 
-      Helpers::PosixFileApi::Flush(file);
+      Platform::PosixFileApi::Flush(file);
     }
 #endif
   }
