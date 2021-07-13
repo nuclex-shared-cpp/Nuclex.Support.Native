@@ -206,7 +206,7 @@ namespace Nuclex { namespace Support { namespace Platform {
           if(result == FALSE) {
             DWORD lastErrorCode = ::GetLastError();
             // ERROR_INVALID_THREAD_ID happens if the thread never called PeekMessage()
-            // That's not an error, it simply means threads is not the message pump thread.
+            // That's not an error, it simply means it's not the message pump thread.
             if(lastErrorCode != ERROR_INVALID_THREAD_ID) {
               Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
                 u8"Could not post quit message to child process thread", lastErrorCode

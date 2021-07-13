@@ -65,7 +65,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// </remarks>
   class RollingLogger : public Logger {
 
-    /// <summary>initialized a new rolling logger</summary>
+    /// <summary>Initializes a new rolling logger</summary>
     /// <param name="historyLineCount">Number of lines the logger will keep</param>
     /// <param name="lineSizeHint">Length the logger expects most lines to stay under</param>
     public: NUCLEX_SUPPORT_API RollingLogger(

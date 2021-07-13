@@ -18,8 +18,8 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_HELPERS_WINDOWSPROCESSAPI_H
-#define NUCLEX_SUPPORT_HELPERS_WINDOWSPROCESSAPI_H
+#ifndef NUCLEX_SUPPORT_PLATFORM_WINDOWSPROCESSAPI_H
+#define NUCLEX_SUPPORT_PLATFORM_WINDOWSPROCESSAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -210,4 +210,4 @@ namespace Nuclex { namespace Support { namespace Platform {
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_HELPERS_WINDOWSPROCESSAPI_H
+#endif // NUCLEX_SUPPORT_PLATFORM_WINDOWSPROCESSAPI_H

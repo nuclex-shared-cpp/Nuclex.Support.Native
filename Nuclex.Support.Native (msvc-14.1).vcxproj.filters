@@ -272,9 +272,6 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Heleprs\WindowsProcessApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Collection.cpp">
@@ -406,6 +403,9 @@
     <ClCompile Include="Source\Platform\WindowsProcessApi.cpp">
       <Filter>Source\Platform</Filter>
     </ClCompile>
+    <ClInclude Include="Source\Platform\WindowsProcessApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Platform\WindowsRegistryApi.cpp">
       <Filter>Source\Platform</Filter>
     </ClCompile>

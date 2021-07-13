@@ -18,8 +18,8 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_HELPERS_POSIXPATHAPI_H
-#define NUCLEX_SUPPORT_HELPERS_POSIXPATHAPI_H
+#ifndef NUCLEX_SUPPORT_PLATFORM_POSIXPATHAPI_H
+#define NUCLEX_SUPPORT_PLATFORM_POSIXPATHAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -31,7 +31,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Wraps the Posix file API</summary>
+  /// <summary>Wraps or reimplements the Posix path API</summary>
   class PosixPathApi {
 
     /// <summary>Checks if the specified path is a relative path</summary>
@@ -61,4 +61,4 @@ namespace Nuclex { namespace Support { namespace Platform {
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_HELPERS_POSIXPATHAPI_H
+#endif // NUCLEX_SUPPORT_PLATFORM_POSIXPATHAPI_H

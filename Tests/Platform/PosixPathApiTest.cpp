@@ -31,7 +31,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(PosixFileApiTest, DetectsIfPathIsRelative) {
+  TEST(PosixPathApiTest, DetectsIfPathIsRelative) {
     EXPECT_TRUE(PosixPathApi::IsPathRelative(u8"relative/path"));
     EXPECT_TRUE(PosixPathApi::IsPathRelative(u8"~file"));
     EXPECT_FALSE(PosixPathApi::IsPathRelative(u8"/absolute/path"));
@@ -40,7 +40,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(PosixFileApiTest, CanAppendPath) {
+  TEST(PosixPathApiTest, CanAppendPath) {
     std::string testPath = u8"/home";
 
     PosixPathApi::AppendPath(testPath, u8"nobody");
@@ -53,7 +53,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(PosixFileApiTest, CanRemoveFilenameFromPath) {
+  TEST(PosixPathApiTest, CanRemoveFilenameFromPath) {
     std::string testPath = u8"/home/nobody/random-file";
     PosixPathApi::RemoveFileFromPath(testPath);
     EXPECT_EQ(testPath, u8"/home/nobody/");
@@ -61,7 +61,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(PosixFileApiTest, CanCheckIfFileExists) {
+  TEST(PosixPathApiTest, CanCheckIfFileExists) {
     EXPECT_TRUE(PosixPathApi::DoesFileExist(u8"/proc/version"));
 
     EXPECT_FALSE(PosixPathApi::DoesFileExist(u8"/testing/this/does/not/exist"));

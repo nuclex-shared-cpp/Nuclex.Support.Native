@@ -18,8 +18,8 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_HELPERS_WINDOWSAPI_H
-#define NUCLEX_SUPPORT_HELPERS_WINDOWSAPI_H
+#ifndef NUCLEX_SUPPORT_PLATFORM_WINDOWSAPI_H
+#define NUCLEX_SUPPORT_PLATFORM_WINDOWSAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -33,9 +33,9 @@ License along with this library
 #include <Windows.h>
 
 // These symbols are redefined globally when you include the Windows header. Needless
-// to say that we don't want that, because it would export our Container::CreateFile()
-// method as Container::CreateFileW() internally and cause linker errors for the caller
-// who doesn't include Windows.h and calls the method as Container::CreateFile().
+// to say that we don't want that, because it would result in those names chaotically
+// changing between implementation and public header - and even in the application using
+// this library depending on whether the user included Windows.h somewhere.
 #undef CreateFile
 #undef DeleteFile
 #undef MoveFile
@@ -131,4 +131,4 @@ namespace Nuclex { namespace Support { namespace Platform {
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_HELPERS_WINDOWSAPI_H
+#endif // NUCLEX_SUPPORT_PLATFORM_WINDOWSAPI_H

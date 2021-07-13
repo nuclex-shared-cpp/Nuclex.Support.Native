@@ -58,55 +58,63 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Checks whether the specified character is a whitespace</summary>
-    /// <param name="utf8SingleByteCharacter">
+    /// <param name="unicodeCharacter">
     ///   Character that will be checked for being a whitespace
     /// </param>
     /// <returns>True if the character was a whitespace, false otherwise</returns>
     public: NUCLEX_SUPPORT_API static constexpr bool IsWhitepace(
-      char32_t utf8Character
+      char32_t unicodeCharacter
     );
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline constexpr bool ParserHelper::IsWhitepace(std::uint8_t utf8SingleByteCharacter) {
+  inline constexpr bool ParserHelper::IsWhitepace(std::uint8_t utf8Byte) {
     return (
-      (utf8SingleByteCharacter == std::uint8_t(0x09)) || // tab
-      (utf8SingleByteCharacter == std::uint8_t(0x0a)) || // line feed
-      (utf8SingleByteCharacter == std::uint8_t(0x0b)) || // line tabulation
-      (utf8SingleByteCharacter == std::uint8_t(0x0c)) || // form feed
-      (utf8SingleByteCharacter == std::uint8_t(0x0d)) || // carriage return
-      (utf8SingleByteCharacter == std::uint8_t(0x20))    // space
+      (
+        (utf8Byte >= std::uint8_t(0x09)) && // (see below)
+        (utf8Byte < std::uint8_t(0x0e))
+      ) ||
+      (utf8Byte == std::uint8_t(0x20)) // space
     );
+    // (utf8Byte == std::uint8_t(0x09)) || // tab
+    // (utf8Byte == std::uint8_t(0x0a)) || // line feed
+    // (utf8Byte == std::uint8_t(0x0b)) || // line tabulation
+    // (utf8Byte == std::uint8_t(0x0c)) || // form feed
+    // (utf8Byte == std::uint8_t(0x0d)) || // carriage return
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline constexpr bool ParserHelper::IsWhitepace(char32_t utf8Character) {
-    switch(utf8Character & char32_t(0xff00)) {
+  inline constexpr bool ParserHelper::IsWhitepace(char32_t unicodeCharacter) {
+    switch(unicodeCharacter & char32_t(0xffffff00)) {
       case char32_t(0x0000): {
         return (
-          (utf8Character == char32_t(0x0009)) || // tab
-          (utf8Character == char32_t(0x000a)) || // line feed
-          (utf8Character == char32_t(0x000b)) || // line tabulation
-          (utf8Character == char32_t(0x000c)) || // form feed
-          (utf8Character == char32_t(0x000d)) || // carriage return
-          (utf8Character == char32_t(0x0020)) || // space
-          (utf8Character == char32_t(0x0085)) || // next line
-          (utf8Character == char32_t(0x00A0))    // no-break space
+          (
+            (unicodeCharacter >= char32_t(0x0009)) && // (see below)
+            (unicodeCharacter < char32_t(0x000e))
+          ) ||
+          (unicodeCharacter == char32_t(0x0020)) || // space
+          (unicodeCharacter == char32_t(0x0085)) || // next line
+          (unicodeCharacter == char32_t(0x00A0))    // no-break space
         );
+        // (unicodeCharacter == char32_t(0x0009)) || // tab
+        // (unicodeCharacter == char32_t(0x000a)) || // line feed
+        // (unicodeCharacter == char32_t(0x000b)) || // line tabulation
+        // (unicodeCharacter == char32_t(0x000c)) || // form feed
+        // (unicodeCharacter == char32_t(0x000d)) || // carriage return
       }
       case char32_t(0x1600): {
-        return (utf8Character == char32_t(0x1680)); // ogham space mark
+        return (unicodeCharacter == char32_t(0x1680)); // ogham space mark
       }
       case char32_t(0x2000): {
         return (
-          (utf8Character < char32_t(0x200a)) || // (see below)
-          (utf8Character == char32_t(0x2028)) || // line separator
-          (utf8Character == char32_t(0x2029)) || // paragraph separator
-          (utf8Character == char32_t(0x202f)) || // narrow no-break space
-          (utf8Character == char32_t(0x205f))    // medium mathematical space
+          (unicodeCharacter < char32_t(0x200b)) || // (see below)
+          (unicodeCharacter == char32_t(0x2028)) || // line separator
+          (unicodeCharacter == char32_t(0x2029)) || // paragraph separator
+          (unicodeCharacter == char32_t(0x202f)) || // narrow no-break space
+          (unicodeCharacter == char32_t(0x205f))    // medium mathematical space
         );
         // (utf8Character == char32_t(0x2000)) || // en quad
         // (utf8Character == char32_t(0x2001)) || // em quad
@@ -121,7 +129,7 @@ namespace Nuclex { namespace Support { namespace Text {
         // (utf8Character == char32_t(0x200a))    // hair space
       }
       case char32_t(0x3000): {
-        return (utf8Character == char32_t(0x3000)); // ideographic space  
+        return (unicodeCharacter == char32_t(0x3000)); // ideographic space  
       }
       default: {
         return false;

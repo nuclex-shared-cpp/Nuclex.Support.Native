@@ -18,8 +18,8 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_HELPERS_LINUXFILEAPI_H
-#define NUCLEX_SUPPORT_HELPERS_LINUXFILEAPI_H
+#ifndef NUCLEX_SUPPORT_PLATFORM_LINUXFILEAPI_H
+#define NUCLEX_SUPPORT_PLATFORM_LINUXFILEAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -99,4 +99,4 @@ namespace Nuclex { namespace Support { namespace Platform {
 
 #endif // defined(NUCLEX_SUPPORT_LINUX)
 
-#endif // NUCLEX_SUPPORT_HELPERS_LINUXFILEAPI_H
+#endif // NUCLEX_SUPPORT_PLATFORM_LINUXFILEAPI_H
