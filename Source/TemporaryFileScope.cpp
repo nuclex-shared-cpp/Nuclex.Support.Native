@@ -27,9 +27,11 @@ License along with this library
 #include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
 #include "Platform/WindowsApi.h" // for WindowsApi
 #include "Platform/WindowsFileApi.h" // for WindowsFileApi
+#include "Platform/WindowsPathApi.h" // for WindowsPathApi
 #else
-#include "Platform/LinuxFileApi.h" // for LinuxApi
 #include "Platform/PosixApi.h" // for PosixApi
+#include "Platform/LinuxFileApi.h" // for LinuxFileApi
+#include "Platform/LinuxPathApi.h" // for LinuxPathApi
 
 #include <unistd.h> // for ::write(), ::close(), ::unlink()
 #include <cstdlib> // for ::getenv(), ::mkdtemp()
@@ -41,130 +43,35 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WINDOWS)
-  /// <summary>Appends the user's/system's preferred temp directory to a path</summary>
-  /// <param name="path">Path vector the temp directory will be appended to</param>
-  void appendTempDirectory(std::wstring &path) {
-
-    // Ask for the current users or for the system's temporary directory
-    path.resize(MAX_PATH + 1);
-    DWORD result = ::GetTempPathW(MAX_PATH + 1, path.data());
-    if(unlikely(result == 0)) {
-      DWORD errorCode = ::GetLastError();
-
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-        u8"Could not obtain path to temp directory", errorCode
-      );
-    }
-
-    // Append the temporary directory to the provided string
-    path.resize(result);
-
-  }
-#endif // defined(NUCLEX_SUPPORT_WINDOWS)
-  // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WINDOWS)
-  /// <summary>Appends the user's/system's preferred temp directory to a path</summary>
-  /// <param name="path">Path vector the temp directory will be appended to</param>
-  void appendTempDirectory(std::vector<char> &path) {
-
-    // Obtain the most likely system temp directory
-    const char *tempDirectory = ::getenv(u8"TMPDIR");
-    if(tempDirectory == nullptr) {
-      tempDirectory = ::getenv(u8"TMP");
-      if(tempDirectory == nullptr) {
-        tempDirectory = ::getenv(u8"TEMP");
-        if(tempDirectory == nullptr) {
-          // This is safe (part of the file system standard and Linux standard base),
-          // but we wanted to honor any possible user preferences first.
-          tempDirectory = u8"/tmp";
-        }
-      }
-    }
-
-    // Append the temporary directory to the path vector
-    while(*tempDirectory != 0) {
-      path.push_back(*tempDirectory);
-      ++tempDirectory;
-    }
-
-  }
-#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
-  // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WINDOWS)
-  /// <summary>Creates a temporary file with a unique name on Windows systems</summary>
-  /// <param name="path">Directory in which the temporary file will be created</param>
-  /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
-  std::wstring createTemporaryFile(const std::wstring &path, const std::string &prefix) {
-    std::wstring fullPath;
-
-    {
-      std::wstring utf16NamePrefix = (
-        Nuclex::Support::Text::StringConverter::WideFromUtf8(prefix)
-      );
-
-      // Call GetTempFileName() to let Windows sort out a unique file name
-      fullPath.resize(MAX_PATH);
-      UINT result = ::GetTempFileNameW(
-        path.c_str(),
-        utf16NamePrefix.c_str(),
-        0, // let GetTempFileName() come up with a unique number
-        fullPath.data()
-      );
-      // MSDN documents ERROR_BUFFER_OVERFLOW (111) as a possible return value but
-      // that doesn't make any sense. Treating it as an error might introduce spurious
-      // failures (a 1:65535 chance). Taking 111 out of the range of possible results
-      // would be so weird that I feel safer assuming the docs are wrong.
-      // (we're providing the maximum buffer size, though, so no overflow should ever happen)
-      if(result == 0) {
-        DWORD errorCode = ::GetLastError();
-
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not acquire a unique temporary file name", errorCode
-        );
-      }
-
-      // Truncate the MAX_PATH-sized string back to the actual number of characters
-      std::string::size_type zeroTerminator = fullPath.find(L'\0');
-      if(zeroTerminator == std::wstring::npos) {
-        fullPath.resize(zeroTerminator);
-      }
-    }
-
-    return fullPath;
-  }
-#endif // defined(NUCLEX_SUPPORT_WINDOWS)
-  // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
   /// <summary>Builds the full template string that's passed to ::mkstemp()</summary>
   /// <param name="path">Path vector the template will be stored in</param>
   /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
-  void buildTemplateForMksTemp(std::vector<char> &path, const std::string &prefix) {
-      path.reserve(256); // PATH_MAX would be a bit too bloaty usually...
+  void buildTemplateForMksTemp(std::string &path, const std::string &prefix) {
+    path.reserve(256); // PATH_MAX would be a bit too bloaty usually...
 
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
     //   path: "/tmp/"
     {
-      appendTempDirectory(path);
-      {
-        std::string::size_type length = path.size();
-        if(path[length -1] != '/') {
-          path.push_back('/');
-        }
+      Nuclex::Support::Platform::LinuxPathApi::GetTemporaryDirectory(path);
+
+      std::string::size_type length = path.size();
+      if(path[length -1] != '/') {
+        path.push_back('/');
       }
     }
 
     // Append the user-specified prefix, if any
     //   path: "/tmp/myapp"
     if(!prefix.empty()) {
-      path.insert(path.end(), prefix.begin(), prefix.end());
+      path.append(prefix);
     }
 
     // Append the mandatory placeholder characters
     //   path: "/tmp/myappXXXXXX"
     {
       static const std::string placeholder(u8"XXXXXX", 6);
-      path.insert(path.end(), placeholder.begin(), placeholder.end());
+      path.append(placeholder);
     }
   }
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
@@ -186,11 +93,7 @@ namespace Nuclex { namespace Support {
     );
     *reinterpret_cast<HANDLE *>(this->privateImplementationData) = INVALID_HANDLE_VALUE;
 
-    std::wstring temporaryDirectory;
-    appendTempDirectory(temporaryDirectory);
-
-    std::wstring fullPath = createTemporaryFile(temporaryDirectory, namePrefix);
-
+    std::wstring fullPath = Platform::WindowsPathApi::CreateTemporaryFile(namePrefix);
     HANDLE fileHandle = ::CreateFileW(
       fullPath.c_str(),
       GENERIC_READ | GENERIC_WRITE, // desired access
@@ -202,6 +105,11 @@ namespace Nuclex { namespace Support {
     );
     if(unlikely(fileHandle == INVALID_HANDLE_VALUE)) {
       DWORD errorCode = ::GetLastError();
+
+      // Something went wrong, kill the temporary file again before throwing the exception
+      BOOL result = ::DeleteFileW(fullPath.c_str());
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result != FALSE) && u8"Temporary file is successfully deleted in error handler");
 
       std::string errorMessage(u8"Could not open temporary file '");
       errorMessage.append(Text::StringConverter::Utf8FromWide(fullPath));
@@ -219,7 +127,7 @@ namespace Nuclex { namespace Support {
     );
 
     // Build the path template including the system's temporary directory
-    std::vector<char> pathTemplate;
+    std::string pathTemplate;
     buildTemplateForMksTemp(pathTemplate, namePrefix);
 
     // Select and open a unique temporary filename
@@ -228,7 +136,7 @@ namespace Nuclex { namespace Support {
       int errorNumber = errno;
 
       std::string errorMessage(u8"Could not create temporary file '");
-      errorMessage.append(pathTemplate.data(), pathTemplate.size());
+      errorMessage.append(pathTemplate);
       errorMessage.append(u8"'");
 
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
@@ -237,7 +145,7 @@ namespace Nuclex { namespace Support {
     // Store the file handle in the private implementation data block and
     // remember the full path for when the user queries it later
     *reinterpret_cast<int *>(this->privateImplementationData) = fileDescriptor;
-    this->path.assign(pathTemplate.begin(), pathTemplate.end());
+    this->path.assign(pathTemplate);
 #endif
   }
 

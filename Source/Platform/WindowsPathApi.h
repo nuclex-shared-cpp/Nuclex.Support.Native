@@ -70,6 +70,21 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// </param>
     public: static void GetWindowsDirectory(std::wstring &target);
 
+    /// <summary>Determines the path of the user's temporary directory</summary>
+    /// <param name="target">
+    ///   String in which the full path of the temporary directory will be placed
+    /// </param>
+    public: static void GetTemporaryDirectory(std::wstring &target);
+
+    /// <summary>Creates a temporary file with a unique name on Windows systems</summary>
+    /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
+    /// <returns>The full path to the newly created temporary file</returns>
+    public: static std::wstring CreateTemporaryFile(const std::string &prefix);
+
+    /// <summary>Creates a new directory in the specified location</summary>
+    /// <param name="path">Path in which the new directory will be created</param>
+    public: static void CreateDirectory(const std::wstring &path);
+
 #if defined(NUCLEX_SUPPORT_EMULATE_SHLWAPI)
     /// <summary>Removes the filename from a full path</summary>
     /// <param name="pszPath">Path from which the filename will be removed</param>

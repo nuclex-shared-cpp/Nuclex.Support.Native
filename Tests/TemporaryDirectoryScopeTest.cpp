@@ -24,12 +24,12 @@ License along with this library
 #include "Nuclex/Support/TemporaryDirectoryScope.h"
 #include <gtest/gtest.h>
 
-#if !defined(NUCLEX_SUPPORT_WINDOWS)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+#include "../Source/Platform/WindowsApi.h" // for WindowsApi
+#else
 #include <unistd.h> // for ::access()
 #include <sys/stat.h> // for ::stat()
 #include <sys/types.h> // for S_ISDIR
-#else
-#include "../Source/Platform/WindowsApi.h"
 #endif
 
 namespace Nuclex { namespace Support {
@@ -73,9 +73,12 @@ namespace Nuclex { namespace Support {
 
       path = scope.GetPath();
       if(path.length() > 0) {
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
         if(path[path.length() - 1] == '/') {
           path.erase(path.begin() + (path.length() - 1));
         }
+#else
+#endif
       }
     }
     
@@ -96,11 +99,13 @@ namespace Nuclex { namespace Support {
     std::string firstFile = scope.PlaceFile(u8"first", std::string(u8"First file."));
     std::string secondFile = scope.PlaceFile(u8"second", std::string(u8"Second file."));
 
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
     int result = ::access(firstFile.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 
     result = ::access(secondFile.c_str(), R_OK);
     EXPECT_EQ(result, 0);
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -114,11 +119,13 @@ namespace Nuclex { namespace Support {
     std::string firstFile = scope.PlaceFile(u8"first", firstContents);
     std::string secondFile = scope.PlaceFile(u8"second", secondContents);
 
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
     int result = ::access(firstFile.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 
     result = ::access(secondFile.c_str(), R_OK);
     EXPECT_EQ(result, 0);
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -132,11 +139,13 @@ namespace Nuclex { namespace Support {
       secondFilePath = scope.PlaceFile(u8"b.txt", std::string(u8"Second file."));
     }
 
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
     int result = ::access(firstFilePath.c_str(), R_OK);
     EXPECT_LT(result, 0); // should be -1 for failure
 
     result = ::access(secondFilePath.c_str(), R_OK);
     EXPECT_LT(result, 0); // should be -1 for failure
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //

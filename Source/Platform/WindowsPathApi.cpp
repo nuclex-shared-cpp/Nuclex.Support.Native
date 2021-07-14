@@ -115,7 +115,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         return false;
       }
 
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Platform::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not check process exit code", lastErrorCode
       );
     }
@@ -132,7 +132,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     target.resize(MAX_PATH);
 
     UINT result = ::GetSystemDirectoryW(target.data(), MAX_PATH);
-    if(result == 0) {
+    if(unlikely(result == 0)) {
       DWORD errorCode = ::GetLastError();
       Platform::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not get Windows system directory", errorCode
@@ -148,7 +148,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     target.resize(MAX_PATH);
 
     UINT result = ::GetWindowsDirectoryW(target.data(), MAX_PATH);
-    if(result == 0) {
+    if(unlikely(result == 0)) {
       DWORD errorCode = ::GetLastError();
       Platform::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not get Windows directory", errorCode
@@ -156,6 +156,83 @@ namespace Nuclex { namespace Support { namespace Platform {
     }
 
     target.resize(result);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsPathApi::GetTemporaryDirectory(std::wstring &target) {
+    target.resize(MAX_PATH + 1);
+
+    // Ask for the current user's or for the system's temporary directory
+    DWORD result = ::GetTempPathW(MAX_PATH + 1, target.data());
+    if(unlikely(result == 0)) {
+      DWORD errorCode = ::GetLastError();
+      Platform::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not obtain path to temp directory", errorCode
+      );
+    }
+
+    target.resize(result);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::wstring WindowsPathApi::CreateTemporaryFile(const std::string &prefix) {
+    std::wstring fullPath;
+    {
+      fullPath.resize(MAX_PATH);
+
+      // Call GetTempFileName() to let Windows sort out a unique file name
+      {
+        std::wstring temporaryDirectory;
+        Nuclex::Support::Platform::WindowsPathApi::GetTemporaryDirectory(temporaryDirectory);
+
+        std::wstring utf16NamePrefix = (
+          Nuclex::Support::Text::StringConverter::WideFromUtf8(prefix)
+        );
+        UINT result = ::GetTempFileNameW(
+          temporaryDirectory.c_str(),
+          utf16NamePrefix.c_str(),
+          0, // let GetTempFileName() come up with a unique number
+          fullPath.data()
+        );
+
+        // MSDN documents ERROR_BUFFER_OVERFLOW (111) as a possible return value but
+        // that doesn't make any sense. Treating it as an error might introduce spurious
+        // failures (a 1:65535 chance). Taking 111 out of the range of possible results
+        // would be so weird that I feel safer assuming the docs are wrong.
+        // (we're providing the maximum buffer size, though, so no overflow should ever happen)
+        if(result == 0) {
+          DWORD errorCode = ::GetLastError();
+          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not acquire a unique temporary file name", errorCode
+          );
+        }
+      }
+
+      // Truncate the MAX_PATH-sized string back to the actual number of characters
+      std::string::size_type zeroTerminator = fullPath.find(L'\0');
+      if(zeroTerminator != std::wstring::npos) {
+        fullPath.resize(zeroTerminator);
+      }
+    }
+
+    return fullPath;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsPathApi::CreateDirectory(const std::wstring &path) {
+    BOOL result = ::CreateDirectoryW(path.c_str(), nullptr);
+    if(unlikely(result == FALSE)) {
+      DWORD errorCode = ::GetLastError();
+
+      std::string errorMessage(u8"Could not create directory '");
+      errorMessage.append(Text::StringConverter::Utf8FromWide(path));
+      errorMessage.append(u8"'");
+
+      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -360,7 +360,7 @@ namespace {
     const std::uint32_t mixFactor = 0x5bd1e995;
     const int mixShift = 24;
 
-    std::uint32_t hash = seed ^ (length * mixFactor);;
+    std::uint32_t hash = seed ^ (length * mixFactor);
 
     while(length >= 4) {
       std::uint32_t data32 = *reinterpret_cast<const std::uint32_t *>(data);

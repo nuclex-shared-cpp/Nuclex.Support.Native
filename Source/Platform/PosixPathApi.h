@@ -53,6 +53,12 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <returns>True if the path exists and is a file, false otherwise</returns>
     public: static bool DoesFileExist(const std::string &path);
 
+    /// <summary>Determines the path of the user's temporary directory</summary>
+    /// <param name="target">
+    ///   String in which the full path of the temporary directory will be placed
+    /// </param>
+    public: static void GetTemporaryDirectory(std::string &path);
+
   };
 
   // ------------------------------------------------------------------------------------------- //

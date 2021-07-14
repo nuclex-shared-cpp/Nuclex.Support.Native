@@ -37,6 +37,38 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
+  /// <summary>Builds the template string that's passed to ::mkstemp()/::mkdtemp()</summary>
+  /// <param name="path">Path vector the template will be stored in</param>
+  /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
+  void buildTemplateForMkTemp(std::string &path, const std::string &prefix) {
+    path.reserve(256); // PATH_MAX would be a bit too bloaty usually...
+
+    // Obtain the system's temporary directory (usually /tmp, can be overridden)
+    //   path: "/tmp/"
+    {
+      Nuclex::Support::Platform::LinuxPathApi::GetTemporaryDirectory(path);
+
+      std::string::size_type length = path.size();
+      if(path[length - 1] != '/') {
+        path.push_back('/');
+      }
+    }
+
+    // Append the user-specified prefix, if any
+    //   path: "/tmp/myapp"
+    if(!prefix.empty()) {
+      path.append(prefix);
+    }
+
+    // Append the mandatory placeholder characters
+    //   path: "/tmp/myappXXXXXX"
+    {
+      static const std::string placeholder(u8"XXXXXX", 6);
+      path.append(placeholder);
+    }
+  }
+#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -74,6 +106,29 @@ namespace Nuclex { namespace Support { namespace Platform {
       std::string errorMessage(u8"Could not open file '");
       errorMessage.append(path);
       errorMessage.append(u8"' for writing");
+
+      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return fileDescriptor;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  int LinuxFileApi::CreateTemporaryFile(const std::string &prefix) {
+    std::string pathTemplate;
+    pathTemplate.reserve(256);
+
+    buildTemplateForMkTemp(pathTemplate, namePrefix);
+
+    // Select and open a unique temporary filename
+    int fileDescriptor = ::mkstemp(pathTemplate.data());
+    if(unlikely(fileDescriptor == -1)) {
+      int errorNumber = errno;
+
+      std::string errorMessage(u8"Could not create temporary file '");
+      errorMessage.append(pathTemplate.c_str(), pathTemplate.length());
+      errorMessage.append(u8"'");
 
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
