@@ -38,14 +38,14 @@ namespace Nuclex { namespace Support {
 
   TEST(TemporaryFileScopeTest, HasDefaultConstructor) {
     EXPECT_NO_THROW(
-      TemporaryFileScope scope;
+      TemporaryFileScope scope(u8"tst");
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(TemporaryFileScopeTest, CreatesTemporaryFile) {
-    TemporaryFileScope scope;
+    TemporaryFileScope scope(u8"tst");
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     std::wstring utf16Path = Text::StringConverter::WideFromUtf8(scope.GetPath());
@@ -62,7 +62,7 @@ namespace Nuclex { namespace Support {
   TEST(TemporaryFileScopeTest, TemporaryFileIsDeletedOnDestruction) {
     std::string path;
     {
-      TemporaryFileScope scope;
+      TemporaryFileScope scope(u8"tst");
       path = scope.GetPath();
     }
     
@@ -79,7 +79,7 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(TemporaryFileScopeTest, CanWriteStringToTemporaryFile) {
-    TemporaryFileScope scope;
+    TemporaryFileScope scope(u8"tst");
 
     scope.SetFileContents(std::string(u8"Hello World"));
 
@@ -102,7 +102,7 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(TemporaryFileScopeTest, CanWriteVectorToTemporaryFile) {
-    TemporaryFileScope scope;
+    TemporaryFileScope scope(u8"tst");
 
     std::vector<std::uint8_t> contents = { 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9 };
     scope.SetFileContents(contents);
@@ -126,7 +126,7 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(TemporaryFileScopeTest, WritingTwiceCanTruncateTemporaryFile) {
-    TemporaryFileScope scope;
+    TemporaryFileScope scope(u8"tst");
 
     scope.SetFileContents(std::string(u8"This is a long string that's written to the file"));
     scope.SetFileContents(std::string(u8"This one is short"));

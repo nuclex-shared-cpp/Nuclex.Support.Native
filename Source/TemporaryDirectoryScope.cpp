@@ -98,6 +98,88 @@ namespace {
   }
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+  /// <summary>Recursively deletes the specified directory and all its contents</summary>
+  /// <param name="path">Absolute path of the directory that will be deleted</param>
+  /// <remarks>
+  ///   The path must not be terminated with a path separator.
+  /// </remarks>
+  void deleteDirectoryWithContents(const std::wstring &path) {
+    static const std::wstring allFilesMask(L"\\*");
+
+    ::WIN32_FIND_DATAW findData;
+
+    // First, delete the contents of the directory, recursively for subdirectories
+    std::wstring searchMask = path + allFilesMask;
+    HANDLE searchHandle = ::FindFirstFileExW(
+      searchMask.c_str(), FindExInfoBasic, &findData, FindExSearchNameMatch, nullptr, 0
+    );
+    if(searchHandle == INVALID_HANDLE_VALUE) {
+      DWORD lastError = ::GetLastError();
+      if(lastError != ERROR_FILE_NOT_FOUND) { // or ERROR_NO_MORE_FILES, ERROR_NOT_FOUND?
+        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not start directory enumeration", lastError
+        );
+      }
+    }
+
+    // Did this directory have any contents? If so, delete them first
+    if(searchHandle != INVALID_HANDLE_VALUE) {
+      ON_SCOPE_EXIT {
+        BOOL result = ::FindClose(searchHandle);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+        assert((result != FALSE) && u8"Search handle is closed successfully");
+      };
+      for(;;) {
+
+        // Do not process the obligatory '.' and '..' directories
+        if(findData.cFileName[0] != '.') {
+          bool isDirectory = (
+            ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) ||
+            ((findData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0)
+          );
+
+          // Subdirectories need to be handled by deleting their contents first
+          std::wstring filePath = path + L'\\' + findData.cFileName;
+          if(isDirectory) {
+            deleteDirectoryWithContents(filePath);
+          } else {
+            BOOL result = ::DeleteFileW(filePath.c_str());
+            if(result == FALSE) {
+              DWORD lastError = ::GetLastError();
+              Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+                u8"Could not delete temporary file", lastError
+              );
+            }
+          }
+        }
+
+        // Advance to the next file in the directory
+        BOOL result = ::FindNextFileW(searchHandle, &findData);
+        if(result == FALSE) {
+          DWORD lastError = ::GetLastError();
+          if(lastError != ERROR_NO_MORE_FILES) {
+            Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+              u8"Error during directory enumeration", lastError
+            );
+          }
+          break; // All directory contents enumerated and deleted
+        }
+
+      } // for
+    }
+
+    // The directory is empty, we can now safely remove it
+    BOOL result = ::RemoveDirectoryW(path.c_str());
+    if(result == FALSE) {
+      DWORD lastError = ::GetLastError();
+      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not remove nested temporary directory", lastError
+      );
+    }
+  }
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
+  // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
@@ -111,6 +193,8 @@ namespace Nuclex { namespace Support {
     path(),
     privateImplementationData {0} {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
+
+    // Ask Windows to create a unique temporary file for us
     std::wstring filePath = Platform::WindowsPathApi::CreateTemporaryFile(namePrefix);
     auto temporaryFileDeleter = ON_SCOPE_EXIT_TRANSACTION {
       BOOL result = ::DeleteFileW(filePath.c_str());
@@ -118,12 +202,14 @@ namespace Nuclex { namespace Support {
       assert((result != FALSE) && u8"Temporary file is deleted successfull in error handler");
     };
 
+    // Leave the file in place and add a '.dir' to the end for the temporary directory
     std::wstring directoryPath;
     directoryPath.reserve(filePath.length() + 5);
     directoryPath.assign(filePath);
     static const std::wstring suffix(L".dir", 4);
     directoryPath.append(suffix);
-    
+
+    // Create the temporary directory    
     BOOL result = ::CreateDirectoryW(directoryPath.c_str(), nullptr);
     if(unlikely(result == FALSE)) {
       DWORD errorCode = ::GetLastError();
@@ -135,15 +221,13 @@ namespace Nuclex { namespace Support {
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
+    // Everything worked out, remember the path and disarm the scope guard
     temporaryFileDeleter.Commit();
     this->path.assign(Text::StringConverter::Utf8FromWide(directoryPath));
 
 #else
-    static_assert(
-      (sizeof(this->privateImplementationData) >= sizeof(int)) &&
-      u8"File descriptor fits in space provided for private implementation data"
-    );
 
+    // Build a template string in the system's temp directory to call ::mkdtemp()
     std::string pathTemplate;
     buildTemplateForMkdTemp(pathTemplate, namePrefix);
 
@@ -169,7 +253,16 @@ namespace Nuclex { namespace Support {
 
   TemporaryDirectoryScope::~TemporaryDirectoryScope() {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    // TODO: Delete the folder and everything in it and the temporary file
+    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(this->path);
+    deleteDirectoryWithContents(utf16Path);
+
+    std::wstring::size_type length = utf16Path.length();
+    if(length > 4) {
+      utf16Path.resize(length - 4);
+      BOOL result = ::DeleteFileW(utf16Path.c_str());
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+      assert((result != FALSE) && u8"Temporary directory scope file is deleted successfully");
+    }
 #else
     int result = ::nftw(this->path.c_str(), removeFileOrDirectoryCallback, 64, FTW_DEPTH | FTW_PHYS);
     if(unlikely(result != 0)) {
