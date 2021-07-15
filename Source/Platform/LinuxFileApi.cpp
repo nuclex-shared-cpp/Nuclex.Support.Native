@@ -26,6 +26,7 @@ License along with this library
 #if defined(NUCLEX_SUPPORT_LINUX)
 
 #include "PosixApi.h" // Linux uses Posix error handling
+#include "PosixPathApi.h" // Path manipulation stuff for ::mk*temp()
 
 #include <linux/limits.h> // for PATH_MAX
 #include <fcntl.h> // ::open() and flags
@@ -47,7 +48,7 @@ namespace {
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
     //   path: "/tmp/"
     {
-      Nuclex::Support::Platform::LinuxPathApi::GetTemporaryDirectory(path);
+      Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
 
       std::string::size_type length = path.size();
       if(path[length - 1] != '/') {
@@ -119,7 +120,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     std::string pathTemplate;
     pathTemplate.reserve(256);
 
-    buildTemplateForMkTemp(pathTemplate, namePrefix);
+    buildTemplateForMkTemp(pathTemplate, prefix);
 
     // Select and open a unique temporary filename
     int fileDescriptor = ::mkstemp(pathTemplate.data());

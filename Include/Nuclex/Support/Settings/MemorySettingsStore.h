@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Settings/SettingsStore.h"
-#include "Nuclex/Support/Variant.h"
+#include "Nuclex/Support/Variant.h" // we use Variants to store settings in memory
 
 #include <unordered_map> // for std::unordered_map
 

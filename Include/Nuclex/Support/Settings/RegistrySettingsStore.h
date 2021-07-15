@@ -26,6 +26,7 @@ License along with this library
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/Settings/SettingsStore.h"
+
 #include <cstdint> // for std::intptr_t
 
 namespace Nuclex { namespace Support { namespace Settings {

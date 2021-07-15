@@ -21,7 +21,7 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTMAP_H
 #define NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTMAP_H
 
-#include "../Config.h"
+#include "Nuclex/Support/Config.h"
 
 namespace Nuclex { namespace Support { namespace Collections {
 

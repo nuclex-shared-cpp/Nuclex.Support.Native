@@ -24,14 +24,14 @@ License along with this library
 #include "Nuclex/Support/TemporaryFileScope.h"
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
-#include "Platform/WindowsApi.h" // for WindowsApi
-#include "Platform/WindowsFileApi.h" // for WindowsFileApi
-#include "Platform/WindowsPathApi.h" // for WindowsPathApi
+#include "Nuclex/Support/Text/StringConverter.h" // Conversion between UTF-8 and wide char
+#include "Platform/WindowsApi.h" // Minimalist Windows.h and error handling helpers
+#include "Platform/WindowsPathApi.h" // Basic path manipulation required to join directories
+#include "Platform/WindowsFileApi.h" // Opening files and reading/writing them
 #else
-#include "Platform/PosixApi.h" // for PosixApi
-#include "Platform/LinuxFileApi.h" // for LinuxFileApi
-#include "Platform/LinuxPathApi.h" // for LinuxPathApi
+#include "Platform/PosixApi.h" // Posix error handling
+#include "Platform/PosixPathApi.h" // Basic posix path manipulation for temp directory access
+#include "Platform/LinuxFileApi.h" // Opening files and reading/writing them
 
 #include <unistd.h> // for ::write(), ::close(), ::unlink()
 #include <cstdlib> // for ::getenv(), ::mkdtemp()
@@ -53,7 +53,7 @@ namespace {
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
     //   path: "/tmp/"
     {
-      Nuclex::Support::Platform::LinuxPathApi::GetTemporaryDirectory(path);
+      Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
 
       std::string::size_type length = path.size();
       if(path[length -1] != '/') {

@@ -21,12 +21,12 @@ License along with this library
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_VARIEGATOR_H
 #define NUCLEX_SUPPORT_COLLECTIONS_VARIEGATOR_H
 
-#include <cstddef>
-#include <random>
+#include <cstddef> // for std::size_t
+#include <random> // for std::default_random_engine, std::uniform_int_distribution
 
-#include <vector>
-#include <unordered_set>
-#include <unordered_map>
+#include <vector> // for std::vector
+#include <unordered_set> // for std::unordered_set
+#include <unordered_map> // for std::unordered_map
 
 namespace Nuclex { namespace Support { namespace Collections {
 

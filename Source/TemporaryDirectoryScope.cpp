@@ -25,13 +25,13 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 #include "Platform/WindowsApi.h" // for WindowsApi
-#include "Platform/WindowsFileApi.h" // for WindowsFileApi
 #include "Platform/WindowsPathApi.h" // for WindowsPathApi
+#include "Platform/WindowsFileApi.h" // for WindowsFileApi
 #include "Nuclex/Support/Text//StringConverter.h"
 #else
 #include "Platform/PosixApi.h" // for PosixApi
+#include "Platform/PosixPathApi.h" // for PosixPathApi
 #include "Platform/LinuxFileApi.h" // for LinuxFileApi
-#include "Platform/LinuxPathApi.h" // for LinuxPathApi
 
 #include <ftw.h> // for struct ::ftw
 #include <sys/stat.h> // for struct ::stat
@@ -57,7 +57,7 @@ namespace {
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
     //   path: "/tmp/"
     {
-      Nuclex::Support::Platform::LinuxPathApi::GetTemporaryDirectory(path);
+      Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
 
       std::string::size_type length = path.size();
       if(path[length -1] != '/') {

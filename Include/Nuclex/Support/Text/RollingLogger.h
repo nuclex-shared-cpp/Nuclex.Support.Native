@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Text/Logger.h"
-#include "Nuclex/Support/Text/LexicalAppend.h"
+#include "Nuclex/Support/Text/LexicalAppend.h" // used by templated Append() method
 
 #include <vector> // for std::vector
 
