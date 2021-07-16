@@ -164,6 +164,37 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(TemporaryDirectoryScopeTest, CanReadFilesIntoStrings) {
+    TemporaryDirectoryScope scope(u8"tst");
+
+    scope.PlaceFile(u8"first", std::string(u8"First file."));
+    scope.PlaceFile(u8"second", std::string(u8"Second file."));
+
+    std::string contents1, contents2;
+    scope.ReadFile(u8"second", contents2);
+    scope.ReadFile(u8"first", contents1);
+
+    ASSERT_EQ(contents1, std::string(u8"First file."));
+    ASSERT_EQ(contents2, std::string(u8"Second file."));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(TemporaryDirectoryScopeTest, CanReadFilesIntoVectors) {
+    TemporaryDirectoryScope scope(u8"tst");
+
+    std::vector<std::uint8_t> contents = { 0x42, 0x43, 0x44, 0x45, 0x46, 0x47 };
+    scope.PlaceFile(u8"this-is-a-test-file", contents);
+    std::vector<std::uint8_t> readBack = scope.ReadFile(u8"this-is-a-test-file");
+
+    ASSERT_EQ(contents.size(), readBack.size());
+    for(std::size_t index = 0; index < contents.size(); ++index) {
+      EXPECT_EQ(contents[index], readBack[index]);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(TemporaryDirectoryScopeTest, FilesGetDeletedWithTemporaryDirectory) {
     std::string firstFilePath, secondFilePath;
     {

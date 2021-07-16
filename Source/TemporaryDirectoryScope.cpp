@@ -326,4 +326,126 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
+  void TemporaryDirectoryScope::ReadFile(
+    const std::string &name, std::vector<std::uint8_t> &contents
+  ) const {
+    std::string fullPath = this->path;
+    {
+      if(fullPath.length() > 0) {
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+        char lastCharacter = fullPath[fullPath.length() - 1];
+        if((lastCharacter != '\\') && (lastCharacter != '/')) {
+          fullPath.push_back('\\');
+        }
+#else
+        if(fullPath[fullPath.length() - 1] != '/') {
+          fullPath.push_back('/');
+        }
+#endif
+      }
+      fullPath.append(name);
+    }
+
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+    {
+      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(fullPath);
+      ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
+
+      contents.resize(4096);
+      for(std::size_t offset = 0;; offset += 4096) {
+        std::size_t readByteCount = Platform::WindowsFileApi::Read(
+          fileHandle, contents.data() + offset, 4096
+        );
+        if(readByteCount < 4096) {
+          contents.resize(contents.size() - 4096 + readByteCount);
+          break;
+        } else {
+          contents.resize(contents.size() + readByteCount);
+        }
+      }
+    }
+#else
+    {
+      int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(fullPath);
+      ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
+
+      contents.resize(4096);
+      for(std::size_t offset = 0;; offset += 4096) {
+        std::size_t readByteCount = Platform::LinuxFileApi::Read(
+          fileDescriptor, contents.data() + offset, 4096
+        );
+        if(readByteCount < 4096) {
+          contents.resize(contents.size() - 4096 + readByteCount);
+          break;
+        } else {
+          contents.resize(contents.size() + readByteCount);
+        }
+      }
+    }
+#endif
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void TemporaryDirectoryScope::ReadFile(const std::string &name, std::string &contents) const {
+    std::string fullPath = this->path;
+    {
+      if(fullPath.length() > 0) {
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+        char lastCharacter = fullPath[fullPath.length() - 1];
+        if((lastCharacter != '\\') && (lastCharacter != '/')) {
+          fullPath.push_back('\\');
+        }
+#else
+        if(fullPath[fullPath.length() - 1] != '/') {
+          fullPath.push_back('/');
+        }
+#endif
+      }
+      fullPath.append(name);
+    }
+
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+    {
+      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(fullPath);
+      ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
+
+      contents.resize(4096);
+      for(std::size_t offset = 0;; offset += 4096) {
+        std::uint8_t *data = reinterpret_cast<std::uint8_t *>(contents.data());
+        std::size_t readByteCount = Platform::WindowsFileApi::Read(
+          fileHandle, data + offset, 4096
+        );
+        if(readByteCount < 4096) {
+          contents.resize(contents.size() - 4096 + readByteCount);
+          break;
+        } else {
+          contents.resize(contents.size() + readByteCount);
+        }
+      }
+    }
+#else
+    {
+      int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(fullPath);
+      ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
+
+      contents.resize(4096);
+      for(std::size_t offset = 0;; offset += 4096) {
+        std::uint8_t *data = reinterpret_cast<std::uint8_t *>(contents.data());
+        std::size_t readByteCount = Platform::LinuxFileApi::Read(
+          fileDescriptor, data + offset, 4096
+        );
+        if(readByteCount < 4096) {
+          contents.resize(contents.size() - 4096 + readByteCount);
+          break;
+        } else {
+          contents.resize(contents.size() + readByteCount);
+        }
+      }
+    }
+#endif
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }} // namespace Nuclex::Support

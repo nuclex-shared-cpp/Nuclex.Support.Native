@@ -85,6 +85,29 @@ namespace Nuclex { namespace Support {
       const std::string &name, const std::uint8_t *contents, std::size_t byteCount
     );
 
+    /// <summary>Reads the whole contents of a file in the temporary directory</summary>
+    /// <param name="name">Name of the file that will be read</param>
+    /// <returns>A vector containing all of the file's contents</returns>
+    public: NUCLEX_SUPPORT_API std::vector<std::uint8_t> ReadFile(
+      const std::string &name
+    ) const {
+      std::vector<std::uint8_t> contents;
+      ReadFile(name, contents);
+      return contents;
+    }
+    
+    /// <summary>Reads the whole contents of a file in the temporary directory</summary>
+    /// <param name="name">Name of the file that will be read</param>
+    /// <param name="contents">A vector to which the file's contents will be appended</param>
+    public: NUCLEX_SUPPORT_API void ReadFile(
+      const std::string &name, std::vector<std::uint8_t> &contents
+    ) const;
+
+    /// <summary>Reads the whole contents of a file in the temporary directory</summary>
+    /// <param name="name">Name of the file that will be read</param>
+    /// <param name="contents">A string to which the file's contents will be appended</param>
+    public: NUCLEX_SUPPORT_API void ReadFile(const std::string &name, std::string &contents) const;
+
     /// <summary>The full path to the temporary file</summary>
     private: std::string path;
     /// <summary>Memory used to store the open directory handle</summary>
