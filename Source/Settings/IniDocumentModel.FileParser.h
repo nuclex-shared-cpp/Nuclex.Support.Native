@@ -59,6 +59,18 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// </param>
     public: void ParseInto(IniDocumentModel *documentModel);
 
+    /// <summary>Whether the parsed document used CR-LF line breaks (Windows type)</summary>
+    /// <returns>True if the parsed document has Windows line breaks</returns>
+    public: bool UsesCarriageReturns() const { return (this->windowsLineBreaks > 0); }
+
+    /// <summary>Whether the parsed document had blank lines between properties</summary>
+    /// <returns>True if the properties were padded with blank lines</returns>
+    public: bool UsesBlankLines() const { return (this->blankLines > 0); }
+
+    /// <summary>Whether the parsed document has spaces around the equals sign</summary>
+    /// <returns>True if the parsed document used spaces around the equals sign</returns>
+    public: bool UsesSpacesAroundAssignment() const { return (this->paddedAssignments > 0); }
+
     /// <summary>Parses a comment, must be called on the comment start character</summary>
     private: void parseComment();
 
@@ -141,6 +153,13 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: bool equalsSignFound;
     /// <summary>Whether we encountered something that breaks the current line</summary>
     private: bool lineIsMalformed;
+
+    /// <summary>Heuristic - if positive, document uses Windows line breaks</summary>
+    private: int windowsLineBreaks;
+    /// <summary>Heuristic - if positive, document has blank lines between properties</summary>
+    private: int blankLines;
+    /// <summary>Heuristic - if positive, document puts spaces around assignment</summary>
+    private: int paddedAssignments;
 
   };
 

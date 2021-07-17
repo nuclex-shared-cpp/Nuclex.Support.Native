@@ -100,7 +100,10 @@ namespace Nuclex { namespace Support { namespace Settings {
     valueEnd(nullptr),
     sectionFound(false),
     equalsSignFound(false),
-    lineIsMalformed(false) {}
+    lineIsMalformed(false),
+    windowsLineBreaks(0),
+    blankLines(0),
+    paddedAssignments(0) {}
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -110,6 +113,14 @@ namespace Nuclex { namespace Support { namespace Settings {
     // Reset the parser, just in case someone re-uses an instance
     resetState();
     this->currentSection = nullptr;
+
+    // These are only to collect heuristics on the loaded .ini file's formatting
+    // They are not used for the parser state.
+    bool previousWasCR = false;
+    bool previousWasSpace = false;
+    bool encounteredNonBlankCharacter = false;
+    bool previousLineWasEmpty = false;
+    //bool previousWasEqualsSign = false;
 
     // Go through the entire file contents byte-by-byte and select the correct parse
     // mode for the elements we encounter. All of these characters are in the ASCII range,
@@ -129,6 +140,15 @@ namespace Nuclex { namespace Support { namespace Settings {
           if(equalsSignFound) {
             parseMalformedLine();
           } else {
+            if(this->parsePosition > this->lineStart) {
+              previousWasSpace = Text::ParserHelper::IsWhitespace(*(this->parsePosition - 1));
+            }
+            if(previousWasSpace) {
+              ++this->paddedAssignments;
+            } else {
+              --this->paddedAssignments;
+            }
+
             this->equalsSignFound = true;
             ++this->parsePosition;
           }
@@ -137,13 +157,31 @@ namespace Nuclex { namespace Support { namespace Settings {
 
         // Line break, submits the current line to the document model
         case '\n': {
+          if(previousWasCR) {
+            ++this->windowsLineBreaks;
+          } else {
+            --this->windowsLineBreaks;
+          }
           submitLine();
+
+          // Update heuristics
+          if(previousLineWasEmpty) {
+            ++this->blankLines;
+          } else {
+            --this->blankLines;
+          }
+          previousLineWasEmpty = !encounteredNonBlankCharacter;
+          encounteredNonBlankCharacter = false;
           break;
         }
 
         // Other character, parse as section name, property name or property value
         default: {
-          if(Text::ParserHelper::IsWhitespace(std::uint8_t(current))) {
+          previousWasCR = (current == '\r');
+          previousWasSpace = Text::ParserHelper::IsWhitespace(std::uint8_t(current));
+          encounteredNonBlankCharacter |= (!previousWasSpace);
+
+          if(previousWasSpace) {
             ++this->parsePosition; // skip over it
           } else if(equalsSignFound) {
             parseValue();

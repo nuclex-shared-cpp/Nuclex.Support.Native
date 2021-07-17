@@ -395,7 +395,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     std::vector<std::uint8_t> fileContents = dom.Serialize();
 
     std::string fileContentsAsString(fileContents.begin(), fileContents.end());
-    EXPECT_TRUE(fileContentsAsString.find(u8"Normal = Crazy\n") != std::string::npos);
+    EXPECT_TRUE(fileContentsAsString.find(u8"Normal=Crazy\n") != std::string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -84,7 +84,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     usesCrLf(false) {
 #endif
     parseFileContents(fileContents, byteCount);
-    // TODO: Determine spaces, padding and cr-lf from file contents
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -503,6 +502,10 @@ namespace Nuclex { namespace Support { namespace Settings {
   ) {
     FileParser parser(fileContents, byteCount);
     parser.ParseInto(this);
+
+    this->usesCrLf = parser.UsesCarriageReturns();
+    this->hasSpacesAroundAssignment = parser.UsesSpacesAroundAssignment();
+    this->usesPaddingLines = parser.UsesBlankLines();
   }
 
   // ------------------------------------------------------------------------------------------- //
