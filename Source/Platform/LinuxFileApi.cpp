@@ -116,29 +116,6 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  int LinuxFileApi::CreateTemporaryFile(const std::string &prefix) {
-    std::string pathTemplate;
-    pathTemplate.reserve(256);
-
-    buildTemplateForMkTemp(pathTemplate, prefix);
-
-    // Select and open a unique temporary filename
-    int fileDescriptor = ::mkstemp(pathTemplate.data());
-    if(unlikely(fileDescriptor == -1)) {
-      int errorNumber = errno;
-
-      std::string errorMessage(u8"Could not create temporary file '");
-      errorMessage.append(pathTemplate.c_str(), pathTemplate.length());
-      errorMessage.append(u8"'");
-
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
-    }
-
-    return fileDescriptor;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   std::size_t LinuxFileApi::Seek(int fileDescriptor, ::off_t offset, int anchor) {
     ::off_t absolutePosition = ::lseek(fileDescriptor, offset, anchor);
     if(absolutePosition == -1) {

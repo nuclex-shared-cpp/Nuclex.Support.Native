@@ -78,6 +78,7 @@ namespace Nuclex { namespace Support { namespace Text {
       ) ||
       (utf8Byte == std::uint8_t(0x20)) // space
     );
+    // Covered via range:
     // (utf8Byte == std::uint8_t(0x09)) || // tab
     // (utf8Byte == std::uint8_t(0x0a)) || // line feed
     // (utf8Byte == std::uint8_t(0x0b)) || // line tabulation
@@ -99,6 +100,7 @@ namespace Nuclex { namespace Support { namespace Text {
           (unicodeCharacter == char32_t(0x0085)) || // next line
           (unicodeCharacter == char32_t(0x00A0))    // no-break space
         );
+        // Covered via range:
         // (unicodeCharacter == char32_t(0x0009)) || // tab
         // (unicodeCharacter == char32_t(0x000a)) || // line feed
         // (unicodeCharacter == char32_t(0x000b)) || // line tabulation
@@ -116,6 +118,7 @@ namespace Nuclex { namespace Support { namespace Text {
           (unicodeCharacter == char32_t(0x202f)) || // narrow no-break space
           (unicodeCharacter == char32_t(0x205f))    // medium mathematical space
         );
+        // Covered via range:
         // (utf8Character == char32_t(0x2000)) || // en quad
         // (utf8Character == char32_t(0x2001)) || // em quad
         // (utf8Character == char32_t(0x2002)) || // en space

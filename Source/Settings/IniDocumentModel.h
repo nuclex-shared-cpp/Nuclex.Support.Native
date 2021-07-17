@@ -196,6 +196,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     // Internal helper that parses an existing .ini file into the document model
     private: class FileParser;
+    private: class LineBuilder;
 
     /// <summary>Retrieves or creates the section with the specified name</summary>
     /// <param name="sectionName">Name of the section that will be retrieved or created</param>
@@ -224,6 +225,13 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// </param>
     private: void parseFileContents(
       const std::uint8_t *fileContents, std::size_t byteCount
+    );
+
+    /// <summary>Changes the value stored in an existing line</summary>
+    /// <param name="existingPropertyLine">Existing line containing the old value</param>
+    /// <param name="newValue">New property value that will be stored in the line</param>
+    private: static void updateExistingPropertyLine(
+      PropertyLine *existingPropertyLine, const std::string &newValue
     );
 
     /// <summary>Checks whether the specified property's value has quotes around it</summary>

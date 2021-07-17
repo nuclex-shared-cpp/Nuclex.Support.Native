@@ -31,7 +31,7 @@ namespace Nuclex { namespace Support { namespace Errors {
 
   /// <summary>Indicates that a task or process has been canceled</summary>
   /// <remarks>
-  ///   This is often used together with std::future as the exception that assigned to
+  ///   This is often used together with std::future as the exception that's assigned to
   ///   the std::future when its normal result is no longer going to arrive (for example,
   ///   because the thread performing the work is shutting down).
   /// </remarks>

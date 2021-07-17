@@ -271,32 +271,11 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
     } else { // A property line already exists
       PropertyLine *existingPropertyLine = propertyIterator->second;
-      //std::string::size_type requiredLength = propertyValue.length();
-      if(existingPropertyLine->ValueLength >= propertyValue.length()) { // Has enough space?
-        
-        // TODO: Add quotes if needed and not present
-
-        // Copy the new value over the existing property value
-        std::uint8_t *writeStart = (
-          existingPropertyLine->Contents + existingPropertyLine->ValueStartIndex
-        );
-        std::copy_n(propertyValue.c_str(), propertyValue.length(), writeStart);
-/*
-        std::size_t trailerStartIndex = 
-        std::size_t removedByteCount = existingPropertyLine->ValueLength - propertyValue.length();
-        std::copy_n(
-          writeStart + existingPropertyLine->ValueLength,
-          (
-              existingPropertyLine->Length -
-              existingPropertyLine->ValueStartIndex -
-              existingPropertyLine->ValueLength
-          ),
-          writeStart + propertyValue.length()
-        );
-        existingPropertyLine->Length = 
-*/
+      if(existingPropertyLine->ValueStartIndex == 0) {
+        throw u8"Not implemented yet";
+        //createPropertyLine(propertyName, propertyValue);
       } else {
-        // Property already exists
+        updateExistingPropertyLine(existingPropertyLine, propertyValue);
       }
     }
   }
@@ -498,6 +477,55 @@ namespace Nuclex { namespace Support { namespace Settings {
   ) {
     FileParser parser(fileContents, byteCount);
     parser.ParseInto(this);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void IniDocumentModel::updateExistingPropertyLine(
+    PropertyLine *line, const std::string &newValue
+  ) {
+    bool newValueRequiresQuotes = requiresQuotes(newValue);
+    bool existingValueHasQuotes = hasQuotes(line);
+    bool addsQuotes = newValueRequiresQuotes && !existingValueHasQuotes;
+
+    std::string::size_type requiredLength = newValue.length();
+    if(addsQuotes) {
+      requiredLength += 2;
+    }
+    if(line->ValueLength >= requiredLength) { // Has enough space?
+
+      // Number of bytes from the end of the value to the end of the line
+      std::string::size_type remainderStartIndex = line->ValueStartIndex + line->ValueLength;
+      std::string::size_type remainderLength = line->Length - remainderStartIndex;
+
+      // Write the new property value over the old one (and add quotes if required)
+      std::uint8_t *writeStart = (line->Contents + line->ValueStartIndex);
+      {
+        if(addsQuotes) {
+          *writeStart = '"';
+          ++writeStart;
+          ++line->ValueStartIndex;
+        }
+
+        std::copy_n(newValue.c_str(), newValue.length(), writeStart);
+        writeStart += newValue.length();
+
+        if(addsQuotes) {
+          *writeStart = '"';
+          ++writeStart;
+        }
+      }
+
+      std::copy_n(
+        line->Contents + remainderStartIndex,
+        remainderLength,
+        writeStart
+      );
+      writeStart += remainderLength;
+
+      line->ValueLength = newValue.length();
+      line->Length = writeStart - line->Contents;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
