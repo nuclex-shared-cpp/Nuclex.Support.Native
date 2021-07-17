@@ -174,10 +174,16 @@ namespace Nuclex { namespace Support { namespace Threading {
       EXPECT_EQ(TestTask::ConstructorCallCount, previousConstructorCallCount + 2);
       //EXPECT_EQ(TestTask::DestructorCallCount, previousDestructorCallCount);
 
-      // CHECK: This test failed spuriously once
+      // CHECK: This test fails spuriously once in a blue moon.
       // There isn't even any threading or tricky stuff involved here,
       // except that the dequeue is done from the highly complex moodycamel queue...
       EXPECT_NE(anotherTask, originalTask); 
+
+      // To get a hold of the spurious test failure. Maybe PayloadSize is uninitialized?
+      if(anotherTask == originalTask) {
+        EXPECT_TRUE(originalTask->PayloadSize == 12345);
+        EXPECT_TRUE(anotherTask->PayloadSize == 12345);
+      }
 
       taskPool.DeleteTask(anotherTask);
     }
