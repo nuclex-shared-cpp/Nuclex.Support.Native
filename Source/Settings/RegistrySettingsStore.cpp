@@ -25,6 +25,7 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include "Nuclex/Support/ScopeGuard.h"
 #include "Nuclex/Support/Text/StringMatcher.h"
 #include "Nuclex/Support/Text/StringConverter.h"
 
@@ -72,6 +73,149 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Opens a subkey below the specified parent registry key</summary>
+  /// <param name="parentKeyHandle">Handle of the parent registry key</param>
+  /// <param name="subKeyName">Name of the subkey that will be opened</param>
+  /// <param name="writable">Whether the key will be opened with write permissions</param>
+  /// <returns>
+  ///   The handle of the opened registry subkey or a null pointer if the key doesn't exist
+  /// </returns>
+  ::HKEY openExistingSubKey(
+    ::HKEY parentKeyHandle, const std::wstring &subKeyName, bool writable = false
+  ) {
+    ::HKEY subKeyHandle;
+    {
+      // Flags to tell the "security accounts manager" the access level we need
+      ::REGSAM desiredAccessLevel = KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS;
+      if(writable) {
+        desiredAccessLevel |= (KEY_SET_VALUE | KEY_CREATE_SUB_KEY);
+      }
+
+      // Attempts to open the key. This does not create a key.
+      LSTATUS result = ::RegOpenKeyExW(
+        parentKeyHandle,
+        subKeyName.empty() ? nullptr : subKeyName.c_str(),
+        0, // options
+        desiredAccessLevel,
+        &subKeyHandle
+      );
+      if(unlikely(result != ERROR_SUCCESS)) {
+        if(result == ERROR_FILE_NOT_FOUND) {
+          return ::HKEY(nullptr);
+        } else {
+          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not open registry subkey for reading", result
+          );
+        }
+      }
+    }
+
+    return subKeyHandle;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Opens or creates a subkey below the specified parent registry key</summary>
+  /// <param name="parentKeyHandle">Handle of the parent registry key</param>
+  /// <param name="subKeyName">Name of the subkey that will be opened or created</param>
+  /// <returns>The handle of the opened or created registry subkey</returns>
+  ::HKEY openOrCreateSubKey(::HKEY parentKeyHandle, const std::wstring &subKeyName) {
+    ::HKEY openedSubKey;
+    {
+      ::LSTATUS result = ::RegCreateKeyExW(
+        parentKeyHandle,
+        subKeyName.c_str(),
+        0, // reserved
+        nullptr, // class ("user-defined type of this key" - no clue)
+        REG_OPTION_NON_VOLATILE,
+        KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS | KEY_SET_VALUE | KEY_CREATE_SUB_KEY,
+        nullptr, // security attributes
+        &openedSubKey,
+        nullptr // disposition - tells whether new key was created - we don't care
+      );
+      if(result != ERROR_SUCCESS) {
+        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not open or create registry subkey for read/write access", result
+        );
+      }
+    }
+
+    return openedSubKey;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Checks if the data type of a registry value is supported by this class</summary>
+  /// <param name="valueType">Registry value type returned by the registry API</param>
+  /// <returns>True if this library understands the specified value type</returns>
+  bool isValueTypeSupported(::DWORD valueType) {
+    return (
+      (valueType == REG_DWORD) ||
+      (valueType == REG_DWORD_LITTLE_ENDIAN) ||
+      (valueType == REG_DWORD_BIG_ENDIAN) ||
+      (valueType == REG_QWORD) ||
+      (valueType == REG_QWORD_LITTLE_ENDIAN) ||
+      (valueType == REG_SZ)
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TValue>
+  TValue readKeyValue(::HKEY keyHandle, const std::string &valueName) {
+    BYTE stackValue[8];
+
+    DWORD valueType;
+    DWORD valueSize;
+    BYTE *value;
+    {
+      std::wstring propertyNameUtf16 = Text::StringConverter::WideFromUtf8(propertyName);
+
+      ::LSTATUS result = ::RegQueryValueExW(
+        thisSettingsKeyHandle,
+        propertyNameUtf16.c_str(),
+        nullptr,
+        &valueType,
+        value,
+        &valueSize
+      );
+      if(status == ERROR_MORE_DATA) {
+        std::vector<std::uint8_t> longValue;
+        longValue.resize(valueSize);
+
+        result = ::RegQueryValueExW(
+          thisSettingsKeyHandle,
+          propertyNameUtf16.c_str(),
+          nullptr,
+          &valueType,
+          value,
+          &valueSize
+        );
+      } else if(status != ERROR_SUCCESS) {
+        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not query registry value", result
+        );
+      }
+    }
+
+    switch(valueType) {
+      case REG_DWORD: {
+        return TValue(*reinterpret_cast<::DWORD *>(value));
+      }
+      case REG_QWORD: {
+        return TValue(reinterpret_cast<::LARGE_INTEGER *>(value)->QuadPart);
+      }
+      case REG_SZ: {
+
+      }
+    }
+
+    //return TValue()
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Settings {
@@ -91,22 +235,14 @@ namespace Nuclex { namespace Support { namespace Settings {
     // Attempt to open the requested key
     ::LSTATUS result;
     {
-      // Figure out the security flags for the access level requested by the caller
-      ::REGSAM securityAccessMethods = (readOnly) ?
-        (KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE) :
-        (KEY_CREATE_SUB_KEY | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE | KEY_SET_VALUE);
-
       // If no slashes are in the path, it may still be a valid registry hive...
       std::string::size_type firstSlashIndex = findNextSlash(registryPath);
       if(firstSlashIndex == std::string::npos) {
         ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
           registryPath, registryPath.length()
         );
-        result = ::RegOpenKeyExW(
-          hiveKeyHandle, nullptr,
-          0,
-          securityAccessMethods,
-          reinterpret_cast<::HKEY *>(&this->settingsKeyHandle)
+        *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = openExistingSubKey(
+          hiveKeyHandle, std::wstring(), !readOnly
         );
       } else { // Slashes present, separate the registry hive from the rest
         ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
@@ -133,44 +269,22 @@ namespace Nuclex { namespace Support { namespace Settings {
         //   and we can't very well do that if we don't have a registry to write to.
         //
         if(readOnly) {
-          result = ::RegOpenKeyExW(
-            hiveKeyHandle, subkey.c_str(),
-            0,
-            securityAccessMethods,
-            reinterpret_cast<::HKEY *>(&this->settingsKeyHandle)
+          *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
+            openExistingSubKey(hiveKeyHandle, subkey)
           );
-          if(result == ERROR_FILE_NOT_FOUND) {
-            this->settingsKeyHandle = 0; // RegOpenKeyExW() may write INVALID_HANDLE_VALUe here
-            result = ERROR_SUCCESS;
-          }
         } else {
-          result = ::RegCreateKeyExW(
-            hiveKeyHandle, subkey.c_str(),
-            0,
-            nullptr,
-            REG_OPTION_NON_VOLATILE,
-            securityAccessMethods,
-            nullptr,
-            reinterpret_cast<::HKEY *>(&this->settingsKeyHandle),
-            nullptr
+          *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
+            openOrCreateSubKey(hiveKeyHandle, subkey)
           );
         } // if read-only
       } // if slashes present
     } // LSTATUS scope
-
-    // Check if the key was opened successfully
-    if(result != ERROR_SUCCESS) {
-      this->settingsKeyHandle = 0; // RegOpenKeyExW() may write INVALID_HANDLE_VALUe here
-      Platform::WindowsApi::ThrowExceptionForSystemError(
-        u8"Could not open registry key", result
-      );
-    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   RegistrySettingsStore::~RegistrySettingsStore() {
-    ::HKEY &thisSettingsKeyHandle = *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle);
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle);
     if(thisSettingsKeyHandle != nullptr) {
       ::LSTATUS result = ::RegCloseKey(thisSettingsKeyHandle);
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -223,19 +337,36 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<bool> RegistrySettingsStore::RetrieveBooleanProperty(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    if(this->settingsKeyHandle == 0) {
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
       return std::optional<bool>();
     }
-
-
 /*
-    //DWORD 
-    ::RegQueryValueExW(
-      this->settingsKeyHandle
-    )
+    if(categoryName.empty()) {
+      DWORD valueType;
+
+      std::wstring propertyNameUtf16 = Text::StringConverter::WideFromUtf8(propertyName);
+      ::RegQueryValueExW(
+        thisSettingsKeyHandle,
+        propertyNameUtf16.c_str(),
+        nullptr,
+        &valueType,
+
+
+      );
+      // Query directly
+    } else {
+      ::HKEY subKeyHandle = openSubKeyForReading(thisSettingsKeyHandle, categoryName);
+      ON_SCOPE_EXIT {
+        LSTATUS result = ::RegCloseKey(subKeyHandle);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+        assert((result == ERROR_SUCCESS) && u8"Registry subkey is successfully closed");
+      };
+
+      // Query from subkey
+    }
 */
     return std::optional<bool>();
-
   }
 
   // ------------------------------------------------------------------------------------------- //
