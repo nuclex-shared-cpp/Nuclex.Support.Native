@@ -370,7 +370,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IniDocumentModelTest, PropertyValueCanBeChanged) {
+  TEST(IniDocumentModelTest, PropertyValueCanBeChangedToShorter) {
     IniDocumentModel dom(
       reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
       sizeof(VanillaIniFile) - 1
@@ -381,6 +381,21 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     std::string fileContentsAsString(fileContents.begin(), fileContents.end());
     EXPECT_TRUE(fileContentsAsString.find(u8"Normal=2\n") != std::string::npos);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniDocumentModelTest, PropertyValueCanBeChangedToLonger) {
+    IniDocumentModel dom(
+      reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
+      sizeof(VanillaIniFile) - 1
+    );
+    dom.SetPropertyValue(u8"ImportantStuff", u8"Normal", u8"Crazy");
+
+    std::vector<std::uint8_t> fileContents = dom.Serialize();
+
+    std::string fileContentsAsString(fileContents.begin(), fileContents.end());
+    EXPECT_TRUE(fileContentsAsString.find(u8"Normal = Crazy\n") != std::string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //

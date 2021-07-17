@@ -230,8 +230,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Changes the value stored in an existing line</summary>
     /// <param name="existingPropertyLine">Existing line containing the old value</param>
     /// <param name="newValue">New property value that will be stored in the line</param>
+    /// <param name="addQuotes">Whether quotes will be added around the property line</param>
     private: static void updateExistingPropertyLine(
-      PropertyLine *existingPropertyLine, const std::string &newValue
+      PropertyLine *existingPropertyLine, const std::string &newValue, bool addQuotes
     );
 
     /// <summary>Checks whether the specified property's value has quotes around it</summary>
@@ -257,6 +258,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <returns>The memory address of the newly allocated type</returns>
     private: template<typename T>
     T *allocate(std::size_t extraByteCount = 0);
+
+    private: template<typename TLine>
+    void freeLine(TLine *line);
 
     /// <summary>Map from property name to the lines containing a property</summary>
     private: typedef IndexedSection::PropertyMap PropertyMap;

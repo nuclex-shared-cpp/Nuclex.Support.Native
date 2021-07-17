@@ -77,8 +77,14 @@ namespace Nuclex { namespace Support { namespace Settings {
     firstLine(nullptr),
     sections(),
     hasSpacesAroundAssignment(true),
-    usesPaddingLines(false) {
+    usesPaddingLines(false),
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+    usesCrLf(true) {
+#else
+    usesCrLf(false) {
+#endif
     parseFileContents(fileContents, byteCount);
+    // TODO: Determine spaces, padding and cr-lf from file contents
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -272,10 +278,30 @@ namespace Nuclex { namespace Support { namespace Settings {
     } else { // A property line already exists
       PropertyLine *existingPropertyLine = propertyIterator->second;
       if(existingPropertyLine->ValueStartIndex == 0) {
-        throw u8"Not implemented yet";
-        //createPropertyLine(propertyName, propertyValue);
+        PropertyLine *newPropertyLine = createPropertyLine(propertyName, propertyValue);
+        newPropertyLine->Previous = existingPropertyLine->Previous;
+        newPropertyLine->Next = existingPropertyLine->Next;
+        existingPropertyLine->Previous->Next = newPropertyLine;
+        existingPropertyLine->Next->Previous = newPropertyLine;
+        propertyIterator->second = newPropertyLine;
+        freeLine(existingPropertyLine);
       } else {
-        updateExistingPropertyLine(existingPropertyLine, propertyValue);
+        bool addsQuotes = requiresQuotes(propertyValue) && !hasQuotes(existingPropertyLine);
+        std::string::size_type requiredLength = propertyValue.length();
+        if(addsQuotes) {
+          requiredLength += 2;
+        }
+        if(existingPropertyLine->ValueLength >= requiredLength) { // Has enough space?
+          updateExistingPropertyLine(existingPropertyLine, propertyValue, addsQuotes);
+        } else {
+          PropertyLine *newPropertyLine = createPropertyLine(propertyName, propertyValue);
+          newPropertyLine->Previous = existingPropertyLine->Previous;
+          newPropertyLine->Next = existingPropertyLine->Next;
+          existingPropertyLine->Previous->Next = newPropertyLine;
+          existingPropertyLine->Next->Previous = newPropertyLine;
+          propertyIterator->second = newPropertyLine;
+          freeLine(existingPropertyLine);
+        }
       }
     }
   }
@@ -482,50 +508,41 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void IniDocumentModel::updateExistingPropertyLine(
-    PropertyLine *line, const std::string &newValue
+    PropertyLine *line, const std::string &newValue, bool addQuotes
   ) {
-    bool newValueRequiresQuotes = requiresQuotes(newValue);
-    bool existingValueHasQuotes = hasQuotes(line);
-    bool addsQuotes = newValueRequiresQuotes && !existingValueHasQuotes;
 
-    std::string::size_type requiredLength = newValue.length();
-    if(addsQuotes) {
-      requiredLength += 2;
-    }
-    if(line->ValueLength >= requiredLength) { // Has enough space?
+    // Number of bytes from the end of the value to the end of the line
+    std::string::size_type remainderStartIndex = line->ValueStartIndex + line->ValueLength;
+    std::string::size_type remainderLength = line->Length - remainderStartIndex;
 
-      // Number of bytes from the end of the value to the end of the line
-      std::string::size_type remainderStartIndex = line->ValueStartIndex + line->ValueLength;
-      std::string::size_type remainderLength = line->Length - remainderStartIndex;
-
-      // Write the new property value over the old one (and add quotes if required)
-      std::uint8_t *writeStart = (line->Contents + line->ValueStartIndex);
-      {
-        if(addsQuotes) {
-          *writeStart = '"';
-          ++writeStart;
-          ++line->ValueStartIndex;
-        }
-
-        std::copy_n(newValue.c_str(), newValue.length(), writeStart);
-        writeStart += newValue.length();
-
-        if(addsQuotes) {
-          *writeStart = '"';
-          ++writeStart;
-        }
+    // Write the new property value over the old one (and add quotes if required)
+    std::uint8_t *writeStart = (line->Contents + line->ValueStartIndex);
+    {
+      if(addQuotes) {
+        *writeStart = '"';
+        ++writeStart;
+        ++line->ValueStartIndex;
       }
 
-      std::copy_n(
-        line->Contents + remainderStartIndex,
-        remainderLength,
-        writeStart
-      );
-      writeStart += remainderLength;
+      std::copy_n(newValue.c_str(), newValue.length(), writeStart);
+      writeStart += newValue.length();
 
-      line->ValueLength = newValue.length();
-      line->Length = writeStart - line->Contents;
+      if(addQuotes) {
+        *writeStart = '"';
+        ++writeStart;
+      }
     }
+
+    std::copy_n(
+      line->Contents + remainderStartIndex,
+      remainderLength,
+      writeStart
+    );
+    writeStart += remainderLength;
+
+    line->ValueLength = newValue.length();
+    line->Length = writeStart - line->Contents;
+
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -607,6 +624,24 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     return reinterpret_cast<T *>(bytes);
 
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TLine>
+  void IniDocumentModel::freeLine(TLine *line) {
+    static_assert(std::is_base_of<Line, TLine>::value && u8"TLine inherits from Line");
+
+    std::uint8_t *bytes = reinterpret_cast<std::uint8_t *>(line);
+    std::unordered_set<std::uint8_t *>::iterator iterator = (
+      this->createdLinesMemory.find(bytes)
+    );
+    if(iterator == this->createdLinesMemory.end()) {
+      // Do nothing, line was chunk-allocated and is tracked in loadedLinesMemory
+    } else {
+      this->createdLinesMemory.erase(iterator);
+      delete[] bytes;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
