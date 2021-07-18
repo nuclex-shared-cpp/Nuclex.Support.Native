@@ -74,22 +74,6 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Checks if the data type of a registry value is supported by this class</summary>
-  /// <param name="valueType">Registry value type returned by the registry API</param>
-  /// <returns>True if this library understands the specified value type</returns>
-  bool isValueTypeSupported(::DWORD valueType) {
-    return (
-      (valueType == REG_DWORD) ||
-      (valueType == REG_DWORD_LITTLE_ENDIAN) ||
-      (valueType == REG_DWORD_BIG_ENDIAN) ||
-      (valueType == REG_QWORD) ||
-      (valueType == REG_QWORD_LITTLE_ENDIAN) ||
-      (valueType == REG_SZ)
-    );
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Interprets a registry value as the type requested by the caller</summary>
   /// <typeparam name="TValue">Type as which the value will be interpreted</typeparam>
   /// <param name="valueBytes">Buffer that contains the value</param>
@@ -244,7 +228,7 @@ namespace {
       // Otherwise, we treat even ERROR_MORE_DATA as an error
       if(sizeHint >= 17) {
         if(result == ERROR_MORE_DATA) {
-          sizeHint = valueSize;
+          sizeHint = 0;
           continue;
         }
       }
@@ -573,7 +557,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   void RegistrySettingsStore::StoreInt64Property(
     const std::string &categoryName, const std::string &propertyName, std::int64_t value
   ) {
-    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settivalueSizengsKeyHandle);
     if(thisSettingsKeyHandle == nullptr) {
       throw std::runtime_error(u8"Registry settings store was not opened as writable");
     }
