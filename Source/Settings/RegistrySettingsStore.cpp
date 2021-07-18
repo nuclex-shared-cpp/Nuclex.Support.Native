@@ -28,6 +28,7 @@ License along with this library
 #include "Nuclex/Support/ScopeGuard.h"
 #include "Nuclex/Support/Text/StringMatcher.h"
 #include "Nuclex/Support/Text/StringConverter.h"
+#include "Nuclex/Support/Text/LexicalCast.h"
 
 #include "../Platform/WindowsRegistryApi.h"
 
@@ -73,78 +74,6 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Opens a subkey below the specified parent registry key</summary>
-  /// <param name="parentKeyHandle">Handle of the parent registry key</param>
-  /// <param name="subKeyName">Name of the subkey that will be opened</param>
-  /// <param name="writable">Whether the key will be opened with write permissions</param>
-  /// <returns>
-  ///   The handle of the opened registry subkey or a null pointer if the key doesn't exist
-  /// </returns>
-  ::HKEY openExistingSubKey(
-    ::HKEY parentKeyHandle, const std::wstring &subKeyName, bool writable = false
-  ) {
-    ::HKEY subKeyHandle;
-    {
-      // Flags to tell the "security accounts manager" the access level we need
-      ::REGSAM desiredAccessLevel = KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS;
-      if(writable) {
-        desiredAccessLevel |= (KEY_SET_VALUE | KEY_CREATE_SUB_KEY);
-      }
-
-      // Attempts to open the key. This does not create a key.
-      LSTATUS result = ::RegOpenKeyExW(
-        parentKeyHandle,
-        subKeyName.empty() ? nullptr : subKeyName.c_str(),
-        0, // options
-        desiredAccessLevel,
-        &subKeyHandle
-      );
-      if(unlikely(result != ERROR_SUCCESS)) {
-        if(result == ERROR_FILE_NOT_FOUND) {
-          return ::HKEY(nullptr);
-        } else {
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-            u8"Could not open registry subkey for reading", result
-          );
-        }
-      }
-    }
-
-    return subKeyHandle;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Opens or creates a subkey below the specified parent registry key</summary>
-  /// <param name="parentKeyHandle">Handle of the parent registry key</param>
-  /// <param name="subKeyName">Name of the subkey that will be opened or created</param>
-  /// <returns>The handle of the opened or created registry subkey</returns>
-  ::HKEY openOrCreateSubKey(::HKEY parentKeyHandle, const std::wstring &subKeyName) {
-    ::HKEY openedSubKey;
-    {
-      ::LSTATUS result = ::RegCreateKeyExW(
-        parentKeyHandle,
-        subKeyName.c_str(),
-        0, // reserved
-        nullptr, // class ("user-defined type of this key" - no clue)
-        REG_OPTION_NON_VOLATILE,
-        KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS | KEY_SET_VALUE | KEY_CREATE_SUB_KEY,
-        nullptr, // security attributes
-        &openedSubKey,
-        nullptr // disposition - tells whether new key was created - we don't care
-      );
-      if(result != ERROR_SUCCESS) {
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not open or create registry subkey for read/write access", result
-        );
-      }
-    }
-
-    return openedSubKey;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Checks if the data type of a registry value is supported by this class</summary>
   /// <param name="valueType">Registry value type returned by the registry API</param>
   /// <returns>True if this library understands the specified value type</returns>
@@ -161,57 +90,240 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Interprets a registry value as the type requested by the caller</summary>
+  /// <typeparam name="TValue">Type as which the value will be interpreted</typeparam>
+  /// <param name="valueBytes">Buffer that contains the value</param>
+  /// <param name="valueSize">Size of the value in bytes</param>
+  /// <param name="valueType">Type of the value</param>
+  /// <returns>The value interpreted as the requested type</returns>
   template<typename TValue>
-  TValue readKeyValue(::HKEY keyHandle, const std::string &valueName) {
-    BYTE stackValue[8];
-
-    DWORD valueType;
-    DWORD valueSize;
-    BYTE *value;
-    {
-      std::wstring propertyNameUtf16 = Text::StringConverter::WideFromUtf8(propertyName);
-
-      ::LSTATUS result = ::RegQueryValueExW(
-        thisSettingsKeyHandle,
-        propertyNameUtf16.c_str(),
-        nullptr,
-        &valueType,
-        value,
-        &valueSize
-      );
-      if(status == ERROR_MORE_DATA) {
-        std::vector<std::uint8_t> longValue;
-        longValue.resize(valueSize);
-
-        result = ::RegQueryValueExW(
-          thisSettingsKeyHandle,
-          propertyNameUtf16.c_str(),
-          nullptr,
-          &valueType,
-          value,
-          &valueSize
-        );
-      } else if(status != ERROR_SUCCESS) {
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-          u8"Could not query registry value", result
-        );
-      }
-    }
-
+  std::optional<TValue> interpretValue(
+    const BYTE *valueBytes, std::size_t valueSize, ::DWORD valueType
+  ) {
+    // Due to the specializations on the other types, we know TValue is either int32 or int64
     switch(valueType) {
       case REG_DWORD: {
-        return TValue(*reinterpret_cast<::DWORD *>(value));
+        if constexpr(std::is_signed<TValue>::value) {
+          return static_cast<TValue>(*reinterpret_cast<const std::int32_t *>(valueBytes));
+        } else {
+          return static_cast<TValue>(*reinterpret_cast<const std::uint32_t *>(valueBytes));
+        }
       }
       case REG_QWORD: {
-        return TValue(reinterpret_cast<::LARGE_INTEGER *>(value)->QuadPart);
+        if constexpr(std::is_signed<TValue>::value) {
+          return static_cast<TValue>(*reinterpret_cast<const std::int64_t *>(valueBytes));
+        } else {
+          return static_cast<TValue>(*reinterpret_cast<const std::uint64_t *>(valueBytes));
+        }
       }
       case REG_SZ: {
+        return Nuclex::Support::Text::lexical_cast<TValue>(
+          std::string(reinterpret_cast<const char *>(valueBytes), valueSize)
+        );
+      }
+      default: {
+        throw std::runtime_error(u8"Read registry value had a type we don't support");
+      }
+    }
+  }
 
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Interprets a registry value as a boolean</summary>
+  /// <param name="valueBytes">Buffer that contains the value</param>
+  /// <param name="valueSize">Size of the value in bytes</param>
+  /// <param name="valueType">Type of the value</param>
+  /// <returns>The value interpreted as a boolean</returns>
+  template<>
+  std::optional<bool> interpretValue(
+    const BYTE *valueBytes, std::size_t valueSize, ::DWORD valueType
+  ) {
+    switch(valueType) {
+      case REG_DWORD: {
+        return (*reinterpret_cast<const std::uint32_t *>(valueBytes) != 0);
+      }
+      case REG_QWORD: {
+        return (*reinterpret_cast<const std::uint64_t *>(valueBytes) != 0);
+      }
+      case REG_SZ: {
+        return Nuclex::Support::Text::lexical_cast<bool>(
+          std::string(reinterpret_cast<const char *>(valueBytes), valueSize)
+        );
+      }
+      default: {
+        throw std::runtime_error(u8"Read registry value had a type we don't support");
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Interprets a registry value as a string</summary>
+  /// <param name="valueBytes">Buffer that contains the value</param>
+  /// <param name="valueSize">Size of the value in bytes</param>
+  /// <param name="valueType">Type of the value</param>
+  /// <returns>The value interpreted as a string</returns>
+  template<>
+  std::optional<std::string> interpretValue(
+    const BYTE *valueBytes, std::size_t valueSize, ::DWORD valueType
+  ) {
+    switch(valueType) {
+      case REG_DWORD: {
+        return Nuclex::Support::Text::lexical_cast<std::string>(
+          *reinterpret_cast<const std::uint32_t *>(valueBytes)
+        );
+      }
+      case REG_QWORD: {
+        return Nuclex::Support::Text::lexical_cast<std::string>(
+          *reinterpret_cast<const std::uint64_t *>(valueBytes)
+        );
+      }
+      case REG_SZ: {
+        return std::string(reinterpret_cast<const char *>(valueBytes), valueSize);
+      }
+      default: {
+        throw std::runtime_error(u8"Read registry value had a type we don't support");
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Retrieves a value stored under a registry key</summary>
+  /// <typeparam name="TValue">Type of value that will be read</typeparam>
+  /// <param name="keyHandle">Handle of the registry key in which the value is stored</param>
+  /// <param name="valueName">Name of the value in the registry</param>
+  /// <param name="sizeHint">Expected size of the value, useful for strings</param>
+  /// <returns>The registry value, if it was present</returns>
+  template<typename TValue>
+  std::optional<TValue> queryValue(
+    ::HKEY keyHandle, const std::string &valueName, std::size_t sizeHint = 16
+  ) {
+    std::wstring utf16 = Nuclex::Support::Text::StringConverter::WideFromUtf8(valueName);
+
+    ::DWORD valueType;
+    ::DWORD valueSize = sizeHint;
+
+    // First, try to use a stack-allocated memory buffer
+    if(sizeHint < 17) {
+      ::BYTE stackValue[16];
+      ::LSTATUS result = ::RegQueryValueExW(
+        keyHandle,
+        utf16.c_str(), // UTF-16 value name
+        nullptr,
+        &valueType,
+        stackValue,
+        &valueSize
+      );
+      if(result == ERROR_SUCCESS) {
+        return interpretValue<TValue>(stackValue, valueSize, valueType);
+      } else if(result != ERROR_MORE_DATA) {
+        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not query value stored in registry key", result
+        );
       }
     }
 
-    //return TValue()
+    // Either the caller hinted at a learger size or the value turned out to be larger
+    // Try a heap-allocated buffer with the hinted or known size.
+    for(;;) {
+      std::unique_ptr<std::uint8_t[]> heapValue(new std::uint8_t[valueSize]);
+      ::LSTATUS result = ::RegQueryValueExW(
+        keyHandle,
+        utf16.c_str(), // UTF-16 value name
+        nullptr,
+        &valueType,
+        heapValue.get(),
+        &valueSize
+      );
+      if(result == ERROR_SUCCESS) {
+        return interpretValue<TValue>(heapValue.get(), valueSize, valueType);
+      }
 
+      // If this was our first attempt, retry with the now known size.
+      // Otherwise, we treat even ERROR_MORE_DATA as an error
+      if(sizeHint >= 17) {
+        if(result == ERROR_MORE_DATA) {
+          sizeHint = valueSize;
+          continue;
+        }
+      }
+      
+      // This point is reached if the ::RegQueryValueExW() method call called two times
+      // already, the second time with a bfufer using its self-provided value size.
+      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+        u8"Could not query value stored in registry key", result
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Retrieves a value stored under a registry key</summary>
+  /// <typeparam name="TValue">Type of value that will be read</typeparam>
+  /// <param name="settingsKeyHandle">Handle of the settings root key</param>
+  /// <param name="categoryName">Name of the category in which the value is stored</param>
+  /// <param name="properyName">Name of the value in the registry</param>
+  /// <returns>The registry value, if it was present</returns>
+  template<typename TValue>
+  std::optional<TValue> retrieveValue(
+    ::HKEY settingsKeyHandle, const std::string &categoryName,
+    const std::string &propertyName
+  ) {
+    if(categoryName.empty()) {
+      return queryValue<TValue>(settingsKeyHandle, propertyName);
+    } else {
+      ::HKEY subKeyHandle = Nuclex::Support::Platform::WindowsRegistryApi::OpenExistingSubKey(
+        settingsKeyHandle, categoryName
+      );
+      ON_SCOPE_EXIT{
+        ::LRESULT result = ::RegCloseKey(subKeyHandle);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+        assert((result == ERROR_SUCCESS) && u8"Registry subkey is closed successfully");
+      };
+      if(subKeyHandle == ::HKEY(nullptr)) {
+        return std::optional<TValue>();
+      } else {
+        return queryValue<TValue>(settingsKeyHandle, propertyName);
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Stores a value stored in a registry key</summary>
+  /// <typeparam name="TValue">Type of value that will be stores</typeparam>
+  /// <param name="settingsKeyHandle">Handle of the settings root key</param>
+  /// <param name="categoryName">Name of the category in which the value will be stored</param>
+  /// <param name="propertyName">Name of the value in the registry</param>
+  /// <param name="propertyValue">Value that will be stored in the registry</param>
+  /// <returns>The registry value, if it was present</returns>
+  template<typename TValue>
+  void storeValue(
+    ::HKEY settingsKeyHandle, const std::string &categoryName,
+    const std::string &propertyName, const TValue &propertyValue
+  ) {
+/*
+    if(categoryName.empty()) {
+      return queryValue<bool>(settingsKeyHandle, propertyName);
+    } else {
+      ::HKEY subKeyHandle = Platform::WindowsRegistryApi::OpenExistingSubKey(
+        settingsKeyHandle, categoryName
+      );
+      ON_SCOPE_EXIT{
+        ::LRESULT result = ::RegCloseKey(subKeyHandle);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
+        assert((result == ERROR_SUCCESS) && u8"Registry subkey is closed successfully");
+      };
+      if(subKeyHandle == ::HKEY(nullptr)) {
+        return std::optional<bool>();
+      } else {
+        return queryValue<TValue>(thisSettingsKeyHandle, propertyName);
+      }
+    }
+
+    return std::optional<TValue>();
+*/
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -229,56 +341,50 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   RegistrySettingsStore::RegistrySettingsStore(
-    const std::string &registryPath, bool readOnly /* = false */
+    const std::string &registryPath, bool writable /* = true */
   ) : settingsKeyHandle(0) {
       
-    // Attempt to open the requested key
-    ::LSTATUS result;
-    {
-      // If no slashes are in the path, it may still be a valid registry hive...
-      std::string::size_type firstSlashIndex = findNextSlash(registryPath);
-      if(firstSlashIndex == std::string::npos) {
-        ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
-          registryPath, registryPath.length()
-        );
-        *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = openExistingSubKey(
-          hiveKeyHandle, std::wstring(), !readOnly
-        );
-      } else { // Slashes present, separate the registry hive from the rest
-        ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
-          registryPath, firstSlashIndex
-        );
+    // If no slashes are in the path, it may still be a valid registry hive...
+    std::string::size_type firstSlashIndex = findNextSlash(registryPath);
+    if(firstSlashIndex == std::string::npos) {
+      ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
+        registryPath, registryPath.length()
+      );
+      *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
+        Platform::WindowsRegistryApi::OpenExistingSubKey(
+          hiveKeyHandle, std::string(), !writable
+        )
+      );
+    } else { // Slashes present, separate the registry hive from the rest
+      ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
+        registryPath, firstSlashIndex
+      );
 
-        // We need an UTF-16 string containing the subkey to open, also using only
-        // backward slashes (unlike Windows' file system API, the registry API isn't lax)
-        std::wstring subkey;
-        {
-          std::string subkeyUtf8 = registryPath.substr(firstSlashIndex + 1);
-          makeAllSlashesBackward(subkeyUtf8);
-          subkey = Text::StringConverter::WideFromUtf8(subkeyUtf8);
-        }
+      // We need a string containing the name of the subkey to open, also using only
+      // backward slashes (unlike Windows' file system API, the registry API isn't lax)
+      std::string subkeyName = registryPath.substr(firstSlashIndex + 1);
+      makeAllSlashesBackward(subkeyName);
 
-        // If the key doesn't exist, we do one of two things:
-        //
-        // - in read-only mode, we act as if an empty key existed. This is consistent with
-        //   the behavior of the Retrieve() method and allows applications to start without
-        //   their registry keys present, using default settings.
-        //
-        // - in writable mode, we try to create a new key. This is the correct behavior here
-        //   because the caller expects us to hold onto any settings written to the registry
-        //   and we can't very well do that if we don't have a registry to write to.
-        //
-        if(readOnly) {
-          *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
-            openExistingSubKey(hiveKeyHandle, subkey)
-          );
-        } else {
-          *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
-            openOrCreateSubKey(hiveKeyHandle, subkey)
-          );
-        } // if read-only
-      } // if slashes present
-    } // LSTATUS scope
+      // If the key doesn't exist, we do one of two things:
+      //
+      // - in read-only mode, we act as if an empty key existed. This is consistent with
+      //   the behavior of the Retrieve() method and allows applications to start without
+      //   their registry keys present, using default settings.
+      //
+      // - in writable mode, we try to create a new key. This is the correct behavior here
+      //   because the caller expects us to hold onto any settings written to the registry
+      //   and we can't very well do that if we don't have a registry to write to.
+      //
+      if(writable) {
+        *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
+          Platform::WindowsRegistryApi::OpenOrCreateSubKey(hiveKeyHandle, subkeyName)
+        );
+      } else {
+        *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
+          Platform::WindowsRegistryApi::OpenExistingSubKey(hiveKeyHandle, subkeyName)
+        );
+      } // if open writable
+    } // if slashes present / not present
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -341,32 +447,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     if(thisSettingsKeyHandle == nullptr) {
       return std::optional<bool>();
     }
-/*
-    if(categoryName.empty()) {
-      DWORD valueType;
 
-      std::wstring propertyNameUtf16 = Text::StringConverter::WideFromUtf8(propertyName);
-      ::RegQueryValueExW(
-        thisSettingsKeyHandle,
-        propertyNameUtf16.c_str(),
-        nullptr,
-        &valueType,
-
-
-      );
-      // Query directly
-    } else {
-      ::HKEY subKeyHandle = openSubKeyForReading(thisSettingsKeyHandle, categoryName);
-      ON_SCOPE_EXIT {
-        LSTATUS result = ::RegCloseKey(subKeyHandle);
-        NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-        assert((result == ERROR_SUCCESS) && u8"Registry subkey is successfully closed");
-      };
-
-      // Query from subkey
-    }
-*/
-    return std::optional<bool>();
+    return retrieveValue<bool>(thisSettingsKeyHandle, categoryName, propertyName);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -374,7 +456,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::uint32_t> RegistrySettingsStore::RetrieveUInt32Property(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::uint32_t>();
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      return std::optional<std::uint32_t>();
+    }
+
+    return retrieveValue<std::uint32_t>(thisSettingsKeyHandle, categoryName, propertyName);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -382,7 +469,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::int32_t> RegistrySettingsStore::RetrieveInt32Property(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::int32_t>();
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      return std::optional<std::int32_t>();
+    }
+
+    return retrieveValue<std::int32_t>(thisSettingsKeyHandle, categoryName, propertyName);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -390,7 +482,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::uint64_t> RegistrySettingsStore::RetrieveUInt64Property(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::uint64_t>();
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      return std::optional<std::uint64_t>();
+    }
+
+    return retrieveValue<std::uint64_t>(thisSettingsKeyHandle, categoryName, propertyName);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -398,7 +495,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::int64_t> RegistrySettingsStore::RetrieveInt64Property(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::int64_t>();
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      return std::optional<std::int64_t>();
+    }
+
+    return retrieveValue<std::int64_t>(thisSettingsKeyHandle, categoryName, propertyName);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -406,7 +508,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   std::optional<std::string> RegistrySettingsStore::RetrieveStringProperty(
     const std::string &categoryName, const std::string &propertyName
   ) const {
-    return std::optional<std::string>();
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      return std::optional<std::string>();
+    }
+
+    return retrieveValue<std::string>(thisSettingsKeyHandle, categoryName, propertyName);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -414,6 +521,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   void RegistrySettingsStore::StoreBooleanProperty(
     const std::string &categoryName, const std::string &propertyName, bool value
   ) {
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      throw std::runtime_error(u8"Registry settings store was not opened as writable");
+    }
+
+    storeValue<bool>(thisSettingsKeyHandle, categoryName, propertyName, value);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -421,6 +534,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   void RegistrySettingsStore::StoreUInt32Property(
     const std::string &categoryName, const std::string &propertyName, std::uint32_t value
   ) {
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      throw std::runtime_error(u8"Registry settings store was not opened as writable");
+    }
+
+    storeValue<std::int32_t>(thisSettingsKeyHandle, categoryName, propertyName, value);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -428,6 +547,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   void RegistrySettingsStore::StoreInt32Property(
     const std::string &categoryName, const std::string &propertyName, std::int32_t value
   ) {
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      throw std::runtime_error(u8"Registry settings store was not opened as writable");
+    }
+
+    storeValue<std::int32_t>(thisSettingsKeyHandle, categoryName, propertyName, value);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -435,6 +560,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   void RegistrySettingsStore::StoreUInt64Property(
     const std::string &categoryName, const std::string &propertyName, std::uint64_t value
   ) {
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      throw std::runtime_error(u8"Registry settings store was not opened as writable");
+    }
+
+    storeValue<std::uint64_t>(thisSettingsKeyHandle, categoryName, propertyName, value);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -442,6 +573,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   void RegistrySettingsStore::StoreInt64Property(
     const std::string &categoryName, const std::string &propertyName, std::int64_t value
   ) {
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      throw std::runtime_error(u8"Registry settings store was not opened as writable");
+    }
+
+    storeValue<std::int64_t>(thisSettingsKeyHandle, categoryName, propertyName, value);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -449,6 +586,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   void RegistrySettingsStore::StoreStringProperty(
     const std::string &categoryName, const std::string &propertyName, const std::string &value
   ) {
+    ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
+    if(thisSettingsKeyHandle == nullptr) {
+      throw std::runtime_error(u8"Registry settings store was not opened as writable");
+    }
+
+    storeValue<std::string>(thisSettingsKeyHandle, categoryName, propertyName, value);
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -79,8 +79,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   Absolute path of the registry key that will be accessed. This must include
     ///   the registry hive in short or long form.
     /// </param>
-    /// <param name="readOnly">
-    ///   Whether the registry key should be opened for reading only
+    /// <param name="writable">
+    ///   Whether the registry key should be opened for writing (default).
     /// </param>
     /// <remarks>
     ///   <para>
@@ -91,15 +91,15 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///     Paths are encoded as UTF-8 with forward slashes.
     ///   </para>
     ///   <para>
-    ///     By using the <paramref name="readOnly" /> argument, access flags can be passed
+    ///     By using the <paramref name="writable" /> argument, access flags can be passed
     ///     to the Windows registry API that may allow reading from some keys that would
-    ///     otherwise require administrative privileges to access. If you use this parameter,
-    ///     it's a good idea to declare the registry settings store as const to hide all
-    ///     methods that aren't allowed on the read-only key anyway.
+    ///     otherwise require administrative privileges to access. If you set this parameter
+    ///     to 'false', it's a good idea to declare the registry settings store as const to
+    ///     hide all methods that aren't allowed on the read-only key anyway.
     ///   </para>
     /// </remarks>
     public: NUCLEX_SUPPORT_API RegistrySettingsStore(
-      const std::string &registryPath, bool readOnly = false
+      const std::string &registryPath, bool writable = true
     );
 
     /// <summary>Frees all resources owned by the .ini settings store</summary>

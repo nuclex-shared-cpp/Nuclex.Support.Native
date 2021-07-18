@@ -64,7 +64,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(RegistrySettingsStoreTest, CanAccessPrivilegedKeyReadOnly) {
-    const RegistrySettingsStore settings(u8"HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft", true);
+    const RegistrySettingsStore settings(u8"HKEY_LOCAL_MACHINE/SOFTWARE/Microsoft", false);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -75,7 +75,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     // method. If an error was thrown instead, it would make applications un-runnable unless
     // some useless, empty registry key was present rather than gracefully using defaults.
     EXPECT_NO_THROW(
-      const RegistrySettingsStore settings(u8"HKEY_LOCAL_MACHINE/Lalala123ThisDoesntExist", true);
+      const RegistrySettingsStore settings(
+        u8"HKEY_LOCAL_MACHINE/Lalala123ThisDoesntExist", false
+      );
     );
   }
 
@@ -96,7 +98,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(RegistrySettingsStoreTest, CanEnumerateCategories) {
-    const RegistrySettingsStore settings(u8"hklm/SOFTWARE/Microsoft", true);
+    const RegistrySettingsStore settings(u8"hklm/SOFTWARE/Microsoft", false);
 
     std::vector<std::string> categories = settings.GetAllCategories();
     EXPECT_GE(categories.size(), 10U);
@@ -105,7 +107,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(RegistrySettingsStoreTest, CanEnumerateProperties) {
-    const RegistrySettingsStore settings(u8"HKLM/SYSTEM/CurrentControlSet/Control", true);
+    const RegistrySettingsStore settings(u8"HKLM/SYSTEM/CurrentControlSet/Control", false);
 
     std::vector<std::string> properties = settings.GetAllProperties();
     EXPECT_GE(properties.size(), 5U);
