@@ -22,6 +22,8 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Settings/IniSettingsStore.h"
+#include "Nuclex/Support/TemporaryFileScope.h"
+#include "Nuclex/Support/TemporaryDirectoryScope.h"
 
 #include <gtest/gtest.h>
 
@@ -80,7 +82,38 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniSettingsStoreTest, FileCanBeLoadedFromHardDrive) {
     IniSettingsStore settings;
-    //settings.Load(u8"C:\\Windows\\System.ini");
+    {
+      TemporaryFileScope testIniFile(u8"ini");
+      testIniFile.SetFileContents(ExampleIniFile);
+
+      settings.Load(testIniFile.GetPath());
+    }
+
+    std::optional<std::uint32_t> testValue = settings.Retrieve<std::uint32_t>(
+      u8"Integers", u8"Tiny"
+    );
+    EXPECT_TRUE(testValue.has_value());
+    EXPECT_EQ(testValue.value_or(0), 42U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniSettingsStoreTest, FileCanBeWrittenToHardDrive) {
+    IniSettingsStore settings;
+    settings.Store<bool>(std::string(), u8"FirstValue", true);
+    settings.Store<std::uint32_t>(u8"MyCategory", u8"SecondValue", 12345);
+
+    std::string savedFileContents;
+    {
+      TemporaryDirectoryScope testDirectory(u8"ini");
+      settings.Save(testDirectory.GetPath(u8"test.ini"));
+
+      testDirectory.ReadFile(u8"test.ini", savedFileContents);
+    }
+
+    EXPECT_NE(savedFileContents.find(u8"FirstValue"), std::string::npos);
+    EXPECT_NE(savedFileContents.find(u8"SecondValue"), std::string::npos);
+    EXPECT_NE(savedFileContents.find(u8"[MyCategory]"), std::string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -211,6 +244,75 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(IniSettingsStoreTest, CategoriesCanBeEnumerated) {
+    IniSettingsStore settings;
+    settings.Load(
+      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      sizeof(ExampleIniFile) - 1
+    );
+
+    std::vector<std::string> categories = settings.GetAllCategories();
+    EXPECT_EQ(categories.size(), 3U); // default, integers, strings
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniSettingsStoreTest, PropertiesCanBeEnumerated) {
+    IniSettingsStore settings;
+    settings.Load(
+      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      sizeof(ExampleIniFile) - 1
+    );
+
+    std::vector<std::string> rootProperties = settings.GetAllProperties();
+    EXPECT_EQ(rootProperties.size(), 4U);
+
+    std::vector<std::string> stringProperties = settings.GetAllProperties(u8"Strings");
+    EXPECT_EQ(stringProperties.size(), 2U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniSettingsStoreTest, PropertiesInDefaultCategoryCanBeDeleted) {
+    IniSettingsStore settings;
+
+    bool wasDeleted = settings.DeleteProperty(std::string(), u8"DoesNotExist");
+    EXPECT_FALSE(wasDeleted);
+
+    settings.Load(
+      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      sizeof(ExampleIniFile) - 1
+    );
+
+    wasDeleted = settings.DeleteProperty(std::string(), u8"NumericBoolean");
+    EXPECT_TRUE(wasDeleted);
+
+    std::vector<std::string> rootProperties = settings.GetAllProperties();
+    EXPECT_EQ(rootProperties.size(), 3U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniSettingsStoreTest, DefaultCategoryCanBeDeleted) {
+    IniSettingsStore settings;
+
+    bool wasDeleted = settings.DeleteCategory(std::string());
+    EXPECT_FALSE(wasDeleted);
+
+    settings.Load(
+      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      sizeof(ExampleIniFile) - 1
+    );
+
+    wasDeleted = settings.DeleteCategory(std::string());
+    EXPECT_TRUE(wasDeleted);
+
+    std::vector<std::string> rootProperties = settings.GetAllProperties();
+    EXPECT_EQ(rootProperties.size(), 0U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+/*
   TEST(IniSettingsStoreTest, CanChangeBooleans) {
     IniSettingsStore settings;
     settings.Load(
@@ -219,9 +321,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     );
 
     settings.Store<std::uint32_t>(std::string(), u8"TrueFalseBoolean", false);
+
+    //settings.Retrieve<
     //ASSERT_TRUE(integer.has_value());
     //EXPECT_EQ(integer.value(), 42U);
   }
+*/
 
   // ------------------------------------------------------------------------------------------- //
 

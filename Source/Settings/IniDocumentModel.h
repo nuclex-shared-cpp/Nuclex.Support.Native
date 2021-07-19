@@ -121,6 +121,11 @@ namespace Nuclex { namespace Support { namespace Settings {
       const std::string &propertyName
     );
 
+    /// <summary>Deletes an entire section from the document if it exists</summary>
+    /// <param name="sectionName">Name of the section that will be deleted</param>
+    /// <returns>True if the section existed and was deleted, false otherwise</returns>
+    public: bool DeleteSection(const std::string &sectionName);
+
     #pragma region struct Line
 
     /// <summary>An arbitrary line from an .ini file</summary>

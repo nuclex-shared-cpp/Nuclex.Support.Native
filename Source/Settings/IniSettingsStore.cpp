@@ -257,12 +257,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     if(this->privateImplementationData == nullptr) {
       return false;
     } else {
-      throw u8"Not implemented yet";
-      /*
       return reinterpret_cast<IniDocumentModel *>(
         this->privateImplementationData
       )->DeleteSection(categoryName);
-      */
     }
   }
 
@@ -274,12 +271,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     if(this->privateImplementationData == nullptr) {
       return false;
     } else {
-      throw u8"Not implemented yet";
-      /*
       return reinterpret_cast<IniDocumentModel *>(
         this->privateImplementationData
       )->DeleteProperty(categoryName, propertyName);
-      */
     }
   }
 

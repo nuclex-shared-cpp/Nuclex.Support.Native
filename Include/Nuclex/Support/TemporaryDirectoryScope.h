@@ -54,6 +54,19 @@ namespace Nuclex { namespace Support {
     /// <returns>The absolute path of the temporary directory as an UTF-8 string</returns>
     public: NUCLEX_SUPPORT_API const std::string &GetPath() const { return this->path; }
 
+    /// <summary>Returns the absolute path to a file in the temporary directory</summary>
+    /// <param name="filename">
+    ///   Name of the file for which the absolute path will be returned
+    /// </param>
+    /// <returns>
+    ///   The absolute path of a file with the specified name as an UTF-8 string
+    /// </returns>
+    /// <remarks>
+    ///   This method does not create a file. It is inteded to be used when you need to
+    ///   obtain an absolute path to pass to some external library that writes a file.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API std::string GetPath(const std::string &filename) const;
+
     /// <summary>Places a file with the specified contents in the temporary directory</summary>
     /// <param name="name">Name of the file that will be created</param>
     /// <param name="text">String whose contents will be written into the file</param>

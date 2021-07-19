@@ -31,6 +31,9 @@ License along with this library
 #include <algorithm> // for std::copy_n()
 #include <cassert> // for assert()
 
+// TODO: This file has become too long.
+//       Split the line formatting code into a separate line builder/manager class
+
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
@@ -311,9 +314,125 @@ namespace Nuclex { namespace Support { namespace Settings {
     const std::string &sectionName,
     const std::string &propertyName
   ) {
-    (void)sectionName;
-    (void)propertyName;
-    throw u8"Not implemented yet";
+    SectionMap::iterator sectionIterator = this->sections.find(sectionName);
+    if(sectionIterator == this->sections.end()) {
+      return false;
+    }
+
+    PropertyMap &properties = sectionIterator->second->Properties;
+    PropertyMap::iterator propertyIterator = properties.find(propertyName);
+    if(propertyIterator == properties.end()) {
+      return false;
+    }
+
+    PropertyLine *lineToRemove = propertyIterator->second;
+    properties.erase(propertyIterator);
+
+    // Unlink the line from the linked list representation of the .ini file
+    lineToRemove->Previous->Next = lineToRemove->Next;
+    lineToRemove->Next->Previous = lineToRemove->Previous;
+
+    // If the removed line was the last in the section, move the last line
+    // link in the section up by one (or clear it, if it was the only line)
+    if(sectionIterator->second->LastLine == lineToRemove) {
+      sectionIterator->second->LastLine = lineToRemove->Previous;
+      if(sectionIterator->second->LastLine == lineToRemove) {
+        sectionIterator->second->LastLine = nullptr;
+      }
+    }
+
+    // If the removed line was the first line in the document, link the next
+    // line as the first line (or clear it, if this line was the only line)
+    if(this->firstLine == lineToRemove) {
+      this->firstLine = lineToRemove->Next;
+      if(this->firstLine == lineToRemove) {
+        this->firstLine = nullptr;
+      }
+    }
+
+    freeLine(lineToRemove);
+
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool IniDocumentModel::DeleteSection(const std::string &sectionName) {
+    SectionMap::iterator sectionIterator = this->sections.find(sectionName);
+    if(sectionIterator == this->sections.end()) {
+      return false;
+    }
+
+    // Build a temporary set holding the pointers of all section-declaring lines.
+    // We need this because the linked list of lines does not tag or separate section
+    // declarations in any way. This is an intentional decision; building this set
+    // is very fast and we have to iterate over the section's lines anyway to free them.
+    std::unordered_set<Line *> sectionLines;
+    {
+      for(
+        SectionMap::iterator sectionIterator = this->sections.begin();
+        sectionIterator != this->sections.end();
+        ++sectionIterator
+      ) {
+        sectionLines.insert(sectionIterator->second->DeclarationLine);
+      }
+    }
+
+    // Eliminate all lines belonging to the section, including the section declaration.
+    // This should go from the section declaration up to either the next section
+    // declaration or the end of the file.
+    {
+      Line *startLine = sectionIterator->second->DeclarationLine;
+      if(startLine == nullptr) { // If this is the default section
+        startLine = this->firstLine;
+      }
+
+      // Section still may have no lines at all
+      if(startLine != nullptr) {
+        Line *end = startLine->Next;
+        while(end != startLine) {
+          if(sectionLines.find(end) != sectionLines.end()) {
+            break;
+          }
+          if(end == this->firstLine) {
+            break;
+          }
+          end = end->Next;
+        }
+
+        // Link the line befoe the section declaration and the first line
+        // after the section is over. If this is the only section, we may
+        // build a loop, of course...
+        startLine->Previous->Next = end;
+        end->Previous = startLine->Previous;
+
+        while(startLine != end) {
+          Line *next = startLine->Next;
+          if(startLine == this->firstLine) {
+            this->firstLine = next;
+          }
+
+          freeLine(startLine);
+          startLine = next;
+        }
+      }
+    }
+
+    std::uint8_t *sectionMemory = reinterpret_cast<std::uint8_t *>(sectionIterator->second);
+    {
+      if(sectionIterator->first.empty()) {
+        sectionIterator->second->Properties.clear();
+      } else {
+        this->sections.erase(sectionIterator);
+      }
+    }
+
+    std::size_t removedElementCount = this->createdLinesMemory.erase(sectionMemory);
+    if(removedElementCount > 0) {
+      delete[] sectionMemory;
+    }
+
+    return true;
   }
 
   // ------------------------------------------------------------------------------------------- //

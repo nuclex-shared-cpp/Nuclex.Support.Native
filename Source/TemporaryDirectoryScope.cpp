@@ -279,6 +279,29 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
+  std::string TemporaryDirectoryScope::GetPath(const std::string &filename) const {
+    std::string fullPath = this->path;
+    {
+      if(fullPath.length() > 0) {
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+        char lastCharacter = fullPath[fullPath.length() - 1];
+        if((lastCharacter != '\\') && (lastCharacter != '/')) {
+          fullPath.push_back('\\');
+        }
+#else
+        if(fullPath[fullPath.length() - 1] != '/') {
+          fullPath.push_back('/');
+        }
+#endif
+      }
+      fullPath.append(filename);
+    }
+
+    return fullPath;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   std::string TemporaryDirectoryScope::PlaceFile(
     const std::string &name, const std::uint8_t *contents, std::size_t byteCount
   ) {
