@@ -224,8 +224,9 @@ namespace Nuclex { namespace Support { namespace Platform {
 
     // Collect a list of all subkeys below the root settings key
     std::vector<std::string> results;
-    results.reserve(subKeyCount);
-    {
+    if(subKeyCount > 0) {
+      results.reserve(subKeyCount);
+
       std::vector<WCHAR> keyName(longestSubKeyLength, 0);
       DWORD keyNameLength = longestSubKeyLength;
 
@@ -301,8 +302,9 @@ namespace Nuclex { namespace Support { namespace Platform {
 
     // Collect a list of all subkeys below the root settings key
     std::vector<std::string> results;
-    results.reserve(valueCount);
-    {
+    if(valueCount > 0) {
+      results.reserve(valueCount);
+
       std::vector<WCHAR> valueName(longestValueNameLength, 0);
       DWORD valueNameLength = longestValueNameLength;
 
@@ -359,7 +361,7 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   ::HKEY WindowsRegistryApi::OpenExistingSubKey(
-    ::HKEY parentKeyHandle, const std::string &subKeyName, bool writable /* = false */
+    ::HKEY parentKeyHandle, const std::string &subKeyName, bool writable /* = true */
   ) {
     ::HKEY subKeyHandle;
     {

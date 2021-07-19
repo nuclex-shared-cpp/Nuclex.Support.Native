@@ -76,7 +76,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   The handle of the opened registry subkey or a null pointer if the key doesn't exist
     /// </returns>
     public: static ::HKEY OpenExistingSubKey(
-      ::HKEY parentKeyHandle, const std::string &subKeyName, bool writable = false
+      ::HKEY parentKeyHandle, const std::string &subKeyName, bool writable = true
     );
 
     /// <summary>Opens or creates a subkey below the specified parent registry key</summary>
