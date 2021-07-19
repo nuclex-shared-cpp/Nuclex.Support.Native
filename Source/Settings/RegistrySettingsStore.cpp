@@ -286,6 +286,12 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Sets a registry value under the specified parent key</summary>
+  /// <typeparam name="TValue">Type of value that will be stored in the registry</typeparam>
+  /// <param name="parentKeyHandle">Key under which the value will be stored</param>
+  /// <param name="propertNameUtf16">UTF-16 encoded name of the value</param>
+  /// <param name="propertyValue">Value that will be stored</param>
+  /// <returns>The result returned from the <see cref="RegSetValueExW" /> method</returns>
   template<typename TValue>
   ::LSTATUS setValue(
     ::HKEY parentKeyHandle,
@@ -313,6 +319,12 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Sets a registry value under the specified parent key to a boolean</summary>
+  /// <typeparam name="TValue">Type of value that will be stored in the registry</typeparam>
+  /// <param name="parentKeyHandle">Key under which the value will be stored</param>
+  /// <param name="propertNameUtf16">UTF-16 encoded name of the value</param>
+  /// <param name="propertyValue">Boolean that will be stored</param>
+  /// <returns>The result returned from the <see cref="RegSetValueExW" /> method</returns>
   template<>
   ::LSTATUS setValue(
     ::HKEY parentKeyHandle,
@@ -331,6 +343,12 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Sets a registry value under the specified parent key to a string</summary>
+  /// <typeparam name="TValue">Type of value that will be stored in the registry</typeparam>
+  /// <param name="parentKeyHandle">Key under which the value will be stored</param>
+  /// <param name="propertNameUtf16">UTF-16 encoded name of the value</param>
+  /// <param name="propertyValue">String that will be stored</param>
+  /// <returns>The result returned from the <see cref="RegSetValueExW" /> method</returns>
   template<>
   ::LSTATUS setValue(
     ::HKEY parentKeyHandle,

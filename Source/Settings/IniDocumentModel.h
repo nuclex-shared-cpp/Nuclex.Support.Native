@@ -201,7 +201,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     // Internal helper that parses an existing .ini file into the document model
     private: class FileParser;
-    private: class LineBuilder;
+    //private: class LineBuilder;
 
     /// <summary>Retrieves or creates the section with the specified name</summary>
     /// <param name="sectionName">Name of the section that will be retrieved or created</param>
@@ -259,11 +259,19 @@ namespace Nuclex { namespace Support { namespace Settings {
     TLine *allocateLine(const std::uint8_t *contents, std::size_t byteCount);
 
     /// <summary>Allocates memory for the specified type</summary>
+    /// <typeparam name="T">Type for which memory will be allocated</typeparam>
     /// <param name="extraByteCount">Extra bytes to make available after the type</param>
     /// <returns>The memory address of the newly allocated type</returns>
+    /// <remarks>
+    ///   An uninitialized instance is returned. No constructors will be called.
+    ///   This is for internal use and should only ever be used with POD types.
+    /// </remarks>
     private: template<typename T>
     T *allocate(std::size_t extraByteCount = 0);
 
+    /// <summary>Frees the memory allocated for a line type</summary>
+    /// <typeparam name="TLine">Type of line whose memory will be freed</typeparam>
+    /// <param name="line">The line instance that will be freed</param>
     private: template<typename TLine>
     void freeLine(TLine *line);
 

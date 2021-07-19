@@ -338,22 +338,5 @@ namespace Nuclex { namespace Support { namespace Settings {
   }
 
   // ------------------------------------------------------------------------------------------- //
-/*
-  TEST(IniSettingsStoreTest, CanChangeBooleans) {
-    IniSettingsStore settings;
-    settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
-      sizeof(ExampleIniFile) - 1
-    );
-
-    settings.Store<std::uint32_t>(std::string(), u8"TrueFalseBoolean", false);
-
-    //settings.Retrieve<
-    //ASSERT_TRUE(integer.has_value());
-    //EXPECT_EQ(integer.value(), 42U);
-  }
-*/
-
-  // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Settings
