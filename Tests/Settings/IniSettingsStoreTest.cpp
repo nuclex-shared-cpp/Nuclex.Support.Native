@@ -309,6 +309,32 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     std::vector<std::string> rootProperties = settings.GetAllProperties();
     EXPECT_EQ(rootProperties.size(), 0U);
+
+    std::vector<std::string> integerProperties = settings.GetAllProperties(u8"Integers");
+    EXPECT_EQ(integerProperties.size(), 4U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniSettingsStoreTest, NamedCategoryCanBeDeleted) {
+    IniSettingsStore settings;
+
+    bool wasDeleted = settings.DeleteCategory(u8"Integers");
+    EXPECT_FALSE(wasDeleted);
+
+    settings.Load(
+      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      sizeof(ExampleIniFile) - 1
+    );
+
+    wasDeleted = settings.DeleteCategory(u8"Integers");
+    EXPECT_TRUE(wasDeleted);
+
+    std::vector<std::string> rootProperties = settings.GetAllProperties();
+    EXPECT_EQ(rootProperties.size(), 4U);
+
+    std::vector<std::string> integerProperties = settings.GetAllProperties(u8"Integers");
+    EXPECT_EQ(integerProperties.size(), 0U);
   }
 
   // ------------------------------------------------------------------------------------------- //

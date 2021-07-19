@@ -418,20 +418,27 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
     }
 
-    std::uint8_t *sectionMemory = reinterpret_cast<std::uint8_t *>(sectionIterator->second);
+    // Either empty the section (if it is the default section) or completely
+    // remove the section and free its memory (if it was individually allocated)
     {
-      if(sectionIterator->first.empty()) {
+      if(sectionIterator->first.empty()) { // Is this the nameless default section?
         sectionIterator->second->Properties.clear();
-      } else {
+        // Setting these to nullptr will make SetPropertyValue() insert a new
+        // line at the top of the file when a property is added to this section.
+        sectionIterator->second->DeclarationLine = nullptr;
+        sectionIterator->second->LastLine = nullptr;
+      } else { // No, this is an explicit section
         this->sections.erase(sectionIterator);
+
+        std::uint8_t *sectionMemory = reinterpret_cast<std::uint8_t *>(sectionIterator->second);
+        std::size_t removedElementCount = this->createdLinesMemory.erase(sectionMemory);
+        if(removedElementCount > 0) {
+          delete[] sectionMemory;
+        }
       }
     }
 
-    std::size_t removedElementCount = this->createdLinesMemory.erase(sectionMemory);
-    if(removedElementCount > 0) {
-      delete[] sectionMemory;
-    }
-
+    // We deleted something! Yay!
     return true;
   }
 
