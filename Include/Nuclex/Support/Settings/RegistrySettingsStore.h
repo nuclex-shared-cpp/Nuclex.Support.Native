@@ -69,7 +69,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   application's settings from the registry. It is also used by unit tests to
     ///   ensure no garbage from previous tests is left to interfere with testing.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API bool DeleteKey(const std::string &registryPath);
+    public: NUCLEX_SUPPORT_API static bool DeleteKey(const std::string &registryPath);
 
     /// <summary>
     ///   Initializes a new registry settings store with settings storing under
