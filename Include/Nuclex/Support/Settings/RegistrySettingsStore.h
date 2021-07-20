@@ -58,6 +58,26 @@ namespace Nuclex { namespace Support { namespace Settings {
   ///     also notice that even on Windows 10 systems, the registry is amazingly slow and
   ///     seemingly harmless operations may take several milliseconds to complete.
   ///   </para>
+  ///   <example>
+  ///     <code>
+  ///       void test() {
+  ///         RegistrySettingsStore settings(u8&quot;HKCU/MyCompany/MyGame&quot;);
+  ///
+  ///         // Retrieve() returns std::optional&lt;T&gt;, so you can either
+  ///         // check if the value was present with .has_value() and .value() or
+  ///         // directly provide a default via .value_or() as shown below
+  ///
+  ///         int resolutionX = settings.Retrieve&lt;std::uint32_t&gt;(
+  ///           u8&quot;Video&quot;, u8&quot;ResolutionX&quot;).value_or(1920)
+  ///         );
+  ///         int resolutionY = settings.Retrieve&lt;std::uint32_t&g;(
+  ///           u8&quot;Video&quot;, u8&quot;ResolutionY&quot;).value_or(1080)
+  ///         );
+  ///
+  ///         settings.Store&lt;bool&gt;(std::string(), u8&quot;FirstLaunch&quot;, false);
+  ///       }
+  ///     </code>
+  ///   </example>
   /// </remarks>
   class RegistrySettingsStore : public SettingsStore {
 

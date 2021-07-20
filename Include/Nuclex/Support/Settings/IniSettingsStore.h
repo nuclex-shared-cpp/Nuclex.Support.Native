@@ -45,10 +45,32 @@ namespace Nuclex { namespace Support { namespace Settings {
   ///   </para>
   ///   <para>
   ///     Do notice that this implementation does not automatically update the file on disk
-  ///     upon every write. You will have to call <see cref="Save" /> upon completing your
+  ///     when values change. You will have to call <see cref="Save" /> upon completing your
   ///     changes or before exiting the application. To aid you in deciding whether this is
   ///     necessary, the <see cref="HasChangedSinceLoading" /> method is provided.
   ///   </para>
+  ///   <example>
+  ///     <code>
+  ///       void test() {
+  ///         IniSettingsStore settings(u8&quot;GameSettings.ini&quot;);
+  ///
+  ///         // Retrieve() returns std::optional&lt;T&gt;, so you can either
+  ///         // check if the value was present with .has_value() and .value() or
+  ///         // directly provide a default via .value_or() as shown below
+  ///
+  ///         int resolutionX = settings.Retrieve&lt;std::uint32_t&gt;(
+  ///           u8&quot;Video&quot;, u8&quot;ResolutionX&quot;).value_or(1920)
+  ///         );
+  ///         int resolutionY = settings.Retrieve&lt;std::uint32_t&g;(
+  ///           u8&quot;Video&quot;, u8&quot;ResolutionY&quot;).value_or(1080)
+  ///         );
+  ///
+  ///         settings.Store&lt;bool&gt;(std::string(), u8&quot;FirstLaunch&quot;, false);
+  ///
+  ///         settings.Save(u8&quot;GameSettings.ini&quot;);
+  ///       }
+  ///     </code>
+  ///   </example>
   /// </remarks>
   class IniSettingsStore : public SettingsStore {
 
