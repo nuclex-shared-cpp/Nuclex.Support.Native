@@ -34,7 +34,6 @@ License along with this library
 
 #include <cassert> // for assert()
 #include <atomic> // for std;:atomic
-#include <mutex> // for std;:mutex
 
 #include <VersionHelpers.h> // for ::IsWindowsVistaOrGreater()
 
