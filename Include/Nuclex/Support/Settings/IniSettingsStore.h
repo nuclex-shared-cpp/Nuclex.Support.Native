@@ -52,25 +52,34 @@ namespace Nuclex { namespace Support { namespace Settings {
   ///   <example>
   ///     <code>
   ///       void test() {
-  ///         IniSettingsStore settings(u8&quot;GameSettings.ini&quot;);
+  ///         IniSettingsStore settings(u8"GameSettings.ini");
   ///
   ///         // Retrieve() returns std::optional&lt;T&gt;, so you can either
   ///         // check if the value was present with .has_value() and .value() or
   ///         // directly provide a default via .value_or() as shown below
   ///
-  ///         int resolutionX = settings.Retrieve&lt;std::uint32_t&gt;(
-  ///           u8&quot;Video&quot;, u8&quot;ResolutionX&quot;).value_or(1920)
+  ///         std::uint32_t resolutionX = settings.Retrieve&lt;std::uint32_t&gt;(
+  ///           u8"Video", u8"ResolutionX").value_or(1920)
   ///         );
-  ///         int resolutionY = settings.Retrieve&lt;std::uint32_t&g;(
-  ///           u8&quot;Video&quot;, u8&quot;ResolutionY&quot;).value_or(1080)
+  ///         std::uint32_t resolutionY = settings.Retrieve&lt;std::uint32_t&gt;(
+  ///           u8"Video", u8"ResolutionY").value_or(1080)
   ///         );
   ///
-  ///         settings.Store&lt;bool&gt;(std::string(), u8&quot;FirstLaunch&quot;, false);
+  ///         settings.Store&lt;bool&gt;(std::string(), u8"FirstLaunch", false);
   ///
-  ///         settings.Save(u8&quot;GameSettings.ini&quot;);
+  ///         settings.Save(u8"GameSettings.ini");
   ///       }
   ///     </code>
   ///   </example>
+  ///   <para>
+  ///     Figuring out the path in which the look for/store an .ini file is not
+  ///     covered by this class. One options is to use the Nuclex.Support.Storage
+  ///     library to determine the paths to your application's executable directory,
+  ///     data directory or user settings directory. Another option would be to use
+  ///     the <see cref="Nuclex.Support.Threading.Process.GetExecutableDirectory" />
+  ///     method, but not that storing .ini files in your application directory is
+  ///     not a good idea for cross-platform development.
+  ///   </para>
   /// </remarks>
   class IniSettingsStore : public SettingsStore {
 

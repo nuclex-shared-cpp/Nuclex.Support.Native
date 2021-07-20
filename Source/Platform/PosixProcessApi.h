@@ -70,7 +70,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
     /// <summary>File numbers for each end of the pipe</summary>
     private: int ends[2];
-   
+
   };
 
   // ------------------------------------------------------------------------------------------- //
@@ -94,6 +94,10 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   sufficient rights). Only use this as a last resort.
     /// </remarks>
     public: static void KillProcess(::pid_t processId);
+
+    /// <summary>Determines the path of the running executable</summary>
+    /// <param name="target">Target string to store the executable path in</param>
+    public: static void GetOwnExecutablePath(std::string &target);
 
     /// <summary>Locates an executable by emulating the search of ::LoadLibrary()</summary>
     /// <param name="target">Target string to store the executable path in</param>

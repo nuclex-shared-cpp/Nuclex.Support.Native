@@ -44,7 +44,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///     which can encode any unicode character in a fixed length (most UTF-8 libraries,
   ///     such as Nemanja Trifunovic's &quot;utfcpp&quot; library let you iterate through
   ///     an UTF-8 string by returning individual characters as UTF-32).
-  ///   </para>>
+  ///   </para>
   /// </remarks>
   class ParserHelper {
 
@@ -132,7 +132,7 @@ namespace Nuclex { namespace Support { namespace Text {
         // (utf8Character == char32_t(0x200a))    // hair space
       }
       case char32_t(0x3000): {
-        return (unicodeCharacter == char32_t(0x3000)); // ideographic space  
+        return (unicodeCharacter == char32_t(0x3000)); // ideographic space
       }
       default: {
         return false;

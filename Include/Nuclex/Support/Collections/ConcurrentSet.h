@@ -84,7 +84,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       ++count;
     }
 
-    /// <summary>Removes the specified 
+    /// <summary>Removes the specified
     public: bool Remove(const TElement &element) {
       this->threadCount.fetch_add(1, std::memory_order_acquire);
 
@@ -95,7 +95,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         }
       }
       // Uh-oh. I don't have the slightest clue how I could safely delete the node
-      // 
+      //
       // 1. Increment thread count
       // 2. Find element to remove
       // 3. Replace previous node's next pointer (CAS loop)

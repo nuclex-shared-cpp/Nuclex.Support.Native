@@ -189,9 +189,7 @@ namespace Nuclex { namespace Support {
 
   TemporaryDirectoryScope::TemporaryDirectoryScope(
     const std::string &namePrefix /* = u8"tmp" */
-  ) :
-    path(),
-    privateImplementationData {0} {
+  ) : path() {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
     // Ask Windows to create a unique temporary file for us
@@ -209,7 +207,7 @@ namespace Nuclex { namespace Support {
     static const std::wstring suffix(L".dir", 4);
     directoryPath.append(suffix);
 
-    // Create the temporary directory    
+    // Create the temporary directory
     BOOL result = ::CreateDirectoryW(directoryPath.c_str(), nullptr);
     if(unlikely(result == FALSE)) {
       DWORD errorCode = ::GetLastError();

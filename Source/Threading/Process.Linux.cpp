@@ -235,9 +235,17 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>File number of the reading end of the stdout pipe</summary>
     public: int StdoutFileNumber;
     /// <summary>File numebr of the reading end of the stderr pipe</summary>
-    public: int StderrFileNumber; 
+    public: int StderrFileNumber;
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string Process::GetExecutableDirectory() {
+    std::string result;
+    Platform::PosixProcessApi::GetOwnExecutablePath(result);
+    return result;
+  }
 
   // ------------------------------------------------------------------------------------------- //
 

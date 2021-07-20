@@ -61,23 +61,30 @@ namespace Nuclex { namespace Support { namespace Settings {
   ///   <example>
   ///     <code>
   ///       void test() {
-  ///         RegistrySettingsStore settings(u8&quot;HKCU/MyCompany/MyGame&quot;);
+  ///         RegistrySettingsStore settings(u8"HKCU/MyCompany/MyGame");
   ///
   ///         // Retrieve() returns std::optional&lt;T&gt;, so you can either
   ///         // check if the value was present with .has_value() and .value() or
   ///         // directly provide a default via .value_or() as shown below
   ///
-  ///         int resolutionX = settings.Retrieve&lt;std::uint32_t&gt;(
-  ///           u8&quot;Video&quot;, u8&quot;ResolutionX&quot;).value_or(1920)
+  ///         std::uint32_t resolutionX = settings.Retrieve&lt;std::uint32_t&gt;(
+  ///           u8"Video", u8"ResolutionX").value_or(1920)
   ///         );
-  ///         int resolutionY = settings.Retrieve&lt;std::uint32_t&g;(
-  ///           u8&quot;Video&quot;, u8&quot;ResolutionY&quot;).value_or(1080)
+  ///         std::uint32_t resolutionY = settings.Retrieve&lt;std::uint32_t&gt;(
+  ///           u8"Video", u8"ResolutionY").value_or(1080)
   ///         );
   ///
-  ///         settings.Store&lt;bool&gt;(std::string(), u8&quot;FirstLaunch&quot;, false);
+  ///         settings.Store&lt;bool&gt;(std::string(), u8"FirstLaunch", false);
   ///       }
   ///     </code>
   ///   </example>
+  ///   <para>
+  ///     In place of &quot;HKCU&quot;, you can also use the other registry hives or
+  ///     their shortcuts, for example &quot;HKEY_LOCAL_MACHINE&quot; or
+  ///     &quot;HKLM&quot;. Do note that write access to &quot;HKLM&quot; requires
+  ///     administative privileges. For normal application settings,
+  ///     &quot;HKEY_CURRENT_USER&quot; aka &quot;HKCU&quot; is the intended place.
+  ///   </para>
   /// </remarks>
   class RegistrySettingsStore : public SettingsStore {
 
@@ -105,9 +112,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <remarks>
     ///   <para>
     ///     Any registry path must begin with the hive, for example:
-    ///     &quot;HKCU/HKEY_CURRENT_USER/SOFTWARE/MyCompany/MyApplication&quot; or,
+    ///     "HKCU/HKEY_CURRENT_USER/SOFTWARE/MyCompany/MyApplication" or,
     ///     another example using the long form registry hive,
-    ///     &quot;HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Services/MyService&quot;.
+    ///     "HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Services/MyService".
     ///     Paths are encoded as UTF-8 with forward slashes.
     ///   </para>
     ///   <para>

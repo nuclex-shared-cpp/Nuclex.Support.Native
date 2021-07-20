@@ -33,11 +33,36 @@ namespace Nuclex { namespace Support {
 
   /// <summary>Creates a directory that is deleted when the scope is destroyed</summary>
   /// <remarks>
-  ///   This is very useful for unit tests or if you're dealing with a poorly designed
-  ///   library that can only read resources from the file system rather than providing
-  ///   an abstract IO interface. When the scope is destroyed, it deletes all files inside
-  ///   the created temporary directory, include those places in there by means other than
-  ///   the <see cref="PlaceFile" /> method.
+  ///   <para>
+  ///     This is very useful for unit tests or if you're dealing with a poorly designed
+  ///     library that can only read resources from the file system rather than providing
+  ///     an abstract IO interface.
+  ///   </para>
+  ///   <para>
+  ///     When the scope is destroyed, it deletes <strong>all</strong> files inside
+  ///     the created temporary directory, include those placed in there by means other
+  ///     than the <see cref="PlaceFile" /> method.
+  ///   </para>
+  ///   <example>
+  ///     <code>
+  ///       void test() {
+  ///         TemporaryDirectoryScope tempDir(u8"abc"); // custom directory name prefix
+  ///
+  ///         // GetPath() can provide you with the absolute path to a file inside
+  ///         // the temporary directory (it does not create the requested file itself)
+  ///         save_current_settings(tempDir.GetPath(u8"settings.bin"));
+  ///
+  ///         // Settings can be loaded into an std::string or std::vector using different
+  ///         // overloads provided by the temporary directory scope.
+  ///         std::vector<std::uint8_t> savedSettings = tempDir.ReadFile(u8"settings.bin");
+  ///
+  ///         // Similarly, you can also place your own file in the temporary directory
+  ///         tempDir.PlaceFile(u8"message.txt", u8"Hello World");
+  ///
+  ///         // The temporary directory and all files in it are deleted here
+  ///       }
+  ///     </code>
+  ///   </example>
   /// </remarks>
   class TemporaryDirectoryScope {
 
@@ -108,7 +133,7 @@ namespace Nuclex { namespace Support {
       ReadFile(name, contents);
       return contents;
     }
-    
+
     /// <summary>Reads the whole contents of a file in the temporary directory</summary>
     /// <param name="name">Name of the file that will be read</param>
     /// <param name="contents">A vector to which the file's contents will be appended</param>
@@ -123,8 +148,6 @@ namespace Nuclex { namespace Support {
 
     /// <summary>The full path to the temporary file</summary>
     private: std::string path;
-    /// <summary>Memory used to store the open directory handle</summary>
-    private: std::uint8_t privateImplementationData[sizeof(std::uintptr_t)];
 
   };
 

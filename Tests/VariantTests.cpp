@@ -105,7 +105,7 @@ namespace Nuclex { namespace Support {
 
   TEST(VariantTest, BooleanVariantCanBeConvertedToDifferentTypes) {
     Variant trueVariant(true), falseVariant(false);
-    
+
     EXPECT_EQ(false, falseVariant.ToBoolean());
     EXPECT_EQ(true, trueVariant.ToBoolean());
     EXPECT_EQ(std::uint8_t(0), falseVariant.ToUint8());
@@ -416,7 +416,7 @@ namespace Nuclex { namespace Support {
     EXPECT_FALSE(Variant(std::wstring(L"Hello World")).IsNumber());
 #if defined(NUCLEX_SUPPORT_VARIANT_WITH_STDANY_CONSTRUCTOR)
     EXPECT_FALSE(Variant(std::any(12345)).IsNumber());
-#endif    
+#endif
     EXPECT_FALSE(Variant(nullptr).IsNumber());
   }
 

@@ -243,7 +243,7 @@ namespace {
           continue;
         }
       }
-      
+
       // This point is reached if the ::RegQueryValueExW() method call called two times
       // already, the second time with a bfufer using its self-provided value size.
       Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
@@ -460,7 +460,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   RegistrySettingsStore::RegistrySettingsStore(
     const std::string &registryPath, bool writable /* = true */
   ) : settingsKeyHandle(0) {
-      
+
     // If no slashes are in the path, it may still be a valid registry hive...
     std::string::size_type firstSlashIndex = findNextSlash(registryPath);
     if(firstSlashIndex == std::string::npos) {

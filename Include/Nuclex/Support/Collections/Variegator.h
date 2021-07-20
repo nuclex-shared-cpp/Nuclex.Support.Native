@@ -214,7 +214,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         default: {
           std::uniform_int_distribution<std::size_t> distributor(0, candidates.size() - 1);
           std::size_t index = distributor(this->randomNumberGenerator);
-          
+
           std::unordered_set<TValue>::const_iterator iterator = candidates.begin();
           while(index > 0) {
             ++iterator;

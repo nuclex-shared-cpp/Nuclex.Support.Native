@@ -527,7 +527,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         Text::ParserHelper::IsWhitespace(std::uint8_t(propertyValue[propertyValue.length() - 1]))
       );
     }
-    
+
     // Generate a new property declaration line
     PropertyLine *newPropertyLine = allocateLine<PropertyLine>(
       nullptr,

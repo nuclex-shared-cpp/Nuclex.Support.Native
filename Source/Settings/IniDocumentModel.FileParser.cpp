@@ -533,7 +533,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
     }
 
-    // Update the currentSection attribute to 
+    // Update the currentSection attribute to
     SectionMap::iterator sectionIterator = this->target->sections.find(sectionName);
     if(sectionIterator == this->target->sections.end()) {
       IndexedSection *newSection = allocateChunked<IndexedSection>(0);
@@ -599,7 +599,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
       std::copy_n(contents, byteCount, newLine->Contents);
     }
-    
+
     return newLine;
   }
 
@@ -626,7 +626,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
       // Calculate the offset within the chunk at which the new instance would start.
       // Since the chunk itself is already aligned (__STDCPP_DEFAULT_NEW_ALIGNMENT__),
-      // we don't have to even look at the memory address itself. 
+      // we don't have to even look at the memory address itself.
       std::size_t occupiedByteCount = AllocationChunkSize - this->remainingChunkByteCount;
       {
         std::size_t misalignment = occupiedByteCount % alignof(T);

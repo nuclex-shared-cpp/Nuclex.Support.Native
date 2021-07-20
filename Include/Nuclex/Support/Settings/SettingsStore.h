@@ -57,6 +57,30 @@ namespace Nuclex { namespace Support { namespace Settings {
   ///     So if you need to access properties stored at this level, simply pass an empty
   ///     string as the category name.
   ///   </para>
+  ///   <example>
+  ///     <code>
+  ///       void applySettings(const SettingsStore &settings);
+  ///
+  ///       int main() {
+  ///         {
+  ///           const IniSettingsStore settings(u8"appsettings.ini");
+  ///           applySettings(settings);
+  ///         }
+  ///
+  ///         doAwesomeThing();
+  ///       }
+  ///
+  ///       // By using the base class, this method doesn't care whether it's
+  ///       // reading properties from the registry, an .ini file or being handed
+  ///       // a MemorySettingStore as a mock from some unit test.
+  ///       void applySettings(const SettingsStore &settings) {
+  ///         int theMagicNumber = (
+  ///           settings.Retrieve&lt;int&gt;(std::string(), u8"MagicNumber").value_or(0)
+  ///         );
+  ///         setMagicNumber(theMagicNumber);
+  ///       }
+  ///     </code>
+  ///   </example>
   /// </remarks>
   class SettingsStore {
 

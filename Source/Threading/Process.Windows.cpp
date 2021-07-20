@@ -91,9 +91,17 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>File number of the reading end of the stdout pipe</summary>
     public: HANDLE StdoutHandle;
     /// <summary>File numebr of the reading end of the stderr pipe</summary>
-    public: HANDLE StderrHandle; 
+    public: HANDLE StderrHandle;
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string Process::GetExecutableDirectory() {
+    std::string result;
+    Platform::WindowsProcessApi::GetOwnExecutablePath(result);
+    return result;
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -464,7 +472,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           DWORD lastErrorCode = ::GetLastError();
           if(lastErrorCode == ERROR_BROKEN_PIPE) {
             continue; // Process has terminated its end of the pipe, this is okay.
-          } else if(pipeIndex == 0) {            
+          } else if(pipeIndex == 0) {
             Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
               u8"Failed to check pipe buffer for stdout", lastErrorCode
             );

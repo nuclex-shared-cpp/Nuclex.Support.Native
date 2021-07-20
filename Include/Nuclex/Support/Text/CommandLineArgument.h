@@ -48,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     (typically used for commands or to specify file names) do not have initiators.
     ///   </para>
     ///   <para>
-    ///     
+    ///
     ///   </para>
     /// </remarks>
     public: NUCLEX_SUPPORT_API virtual std::string GetInitiator() const = 0;
@@ -57,7 +57,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <returns>The name of the command line argument</returns>
     /// <remarks>
     ///   Name of the argument, if it was passed as an option. Loose arguments (such as
-    ///   a filename or simple command) do not have names. 
+    ///   a filename or simple command) do not have names.
     /// </remarks>
     public: NUCLEX_SUPPORT_API virtual std::string GetName() const = 0;
 

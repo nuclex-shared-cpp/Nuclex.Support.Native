@@ -38,7 +38,7 @@ License along with this library
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
-#if !defined(NUCLEX_SUPPORT_WINDOWS)
+#if 0 // If temporary file/directory methods are moved to this file
   /// <summary>Builds the template string that's passed to ::mkstemp()/::mkdtemp()</summary>
   /// <param name="path">Path vector the template will be stored in</param>
   /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
@@ -69,7 +69,7 @@ namespace {
       path.append(placeholder);
     }
   }
-#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
+#endif // 0
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace

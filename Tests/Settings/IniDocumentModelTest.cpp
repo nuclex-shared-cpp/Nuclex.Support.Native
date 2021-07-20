@@ -269,19 +269,19 @@ namespace Nuclex { namespace Support { namespace Settings {
     );
 
     EXPECT_FALSE(
-      dom.GetPropertyValue(std::string(), u8"ThisLineIsMeaningless").has_value() 
+      dom.GetPropertyValue(std::string(), u8"ThisLineIsMeaningless").has_value()
     );
     EXPECT_FALSE(
-      dom.GetPropertyValue(std::string(), u8"]BadLine1").has_value() 
+      dom.GetPropertyValue(std::string(), u8"]BadLine1").has_value()
     );
     EXPECT_FALSE(
-      dom.GetPropertyValue(std::string(), u8"BadLine1").has_value() 
+      dom.GetPropertyValue(std::string(), u8"BadLine1").has_value()
     );
     EXPECT_FALSE(
-      dom.GetPropertyValue(std::string(), u8"BadLine2").has_value() 
+      dom.GetPropertyValue(std::string(), u8"BadLine2").has_value()
     );
     EXPECT_FALSE(
-      dom.GetPropertyValue(std::string(), u8"\"BadLine2").has_value() 
+      dom.GetPropertyValue(std::string(), u8"\"BadLine2").has_value()
     );
   }
 

@@ -34,7 +34,7 @@ namespace Nuclex { namespace Support { namespace Text {
     EXPECT_TRUE(ParserHelper::IsWhitespace(std::uint8_t('\t')));
     EXPECT_TRUE(ParserHelper::IsWhitespace(std::uint8_t('\r')));
     EXPECT_TRUE(ParserHelper::IsWhitespace(std::uint8_t('\n')));
-    
+
     EXPECT_FALSE(ParserHelper::IsWhitespace(std::uint8_t('a')));
     EXPECT_FALSE(ParserHelper::IsWhitespace(std::uint8_t('?')));
     EXPECT_FALSE(ParserHelper::IsWhitespace(std::uint8_t('\'')));

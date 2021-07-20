@@ -158,7 +158,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   void WindowsProcessApi::RequestProcessToTerminate(HANDLE processHandle) {
 
-    // Obtain the process ID, we need it to filter the thread list obtained below 
+    // Obtain the process ID, we need it to filter the thread list obtained below
     DWORD processId = ::GetProcessId(processHandle);
     if(processId == 0) {
       DWORD lastErrorCode = ::GetLastError();
@@ -295,6 +295,13 @@ namespace Nuclex { namespace Support { namespace Platform {
     }
 
     return exitCode;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsProcessApi::GetOwnExecutablePath(std::string &target) {
+    getModuleFilename(target);
+    WindowsPathApi::RemoveFileFromPath(target);
   }
 
   // ------------------------------------------------------------------------------------------- //

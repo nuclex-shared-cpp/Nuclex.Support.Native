@@ -62,7 +62,7 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t TestTask::ConstructorCallCount = 0;
-  
+
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t TestTask::DestructorCallCount = 0;
@@ -175,7 +175,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       //EXPECT_EQ(TestTask::DestructorCallCount, previousDestructorCallCount);
 
       // Originally, I tested like this:
-      // EXPECT_NE(anotherTask, originalTask); 
+      // EXPECT_NE(anotherTask, originalTask);
       //
       // but GetNewTask() calls free upon encountering the 16 byte payload task,
       // and the C++ memory allocator then can allocate the 32 byte payload task
@@ -245,7 +245,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       taskPool.DeleteTask(anotherTask);
     }
   }
-    
+
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading

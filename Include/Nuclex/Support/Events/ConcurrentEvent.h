@@ -80,10 +80,10 @@ namespace Nuclex { namespace Support { namespace Events {
     //
     // - Opportunistic mutex?
     // - At decrement, try_lock() and if succeeds, process free list
-    // - 
+    // -
     //
     // Crazy 1:
-    // 
+    //
     // - First built-in subscriber's 'Next' link is the free list
     // - Second built-in subscriber's 'Next' link is the additional subscriber list
 

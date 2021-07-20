@@ -35,7 +35,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   /// <summary>Directional pipe that can be used for inter-process communication</summary>
   class Pipe {
-  
+
     /// <summary>Opens a new directional pipe</summary>
     /// <param name="securityAttributes">
     ///   Security attributes controlling whether the pipe is inherited to child processes
@@ -77,7 +77,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   Index 0 is the readable end of the pipe, 1 is the writable end
     /// </remarks>
     private: HANDLE ends[2];
-  
+
   };
 
   // ------------------------------------------------------------------------------------------- //
@@ -134,6 +134,10 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   The exit code of the process or STILL_ACTIVE if the process has not exited yet
     /// </returns>
     public: static DWORD GetProcessExitCode(HANDLE processHandle);
+
+    /// <summary>Determines the path of the running executable</summary>
+    /// <param name="target">Target string to store the executable path in</param>
+    public: static void GetOwnExecutablePath(std::string &target);
 
     /// <summary>Locates an executable by emulating the search of ::LoadLibrary()</summary>
     /// <param name="target">Target string to store the executable path in</param>
