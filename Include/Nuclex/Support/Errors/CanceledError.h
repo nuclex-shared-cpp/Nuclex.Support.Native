@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#include <stdexcept> // for std::runtime_error
+#include <future> // for std::future_error
 
 namespace Nuclex { namespace Support { namespace Errors {
 
@@ -35,17 +35,32 @@ namespace Nuclex { namespace Support { namespace Errors {
   ///   the std::future when its normal result is no longer going to arrive (for example,
   ///   because the thread performing the work is shutting down).
   /// </remarks>
-  class CanceledError : public std::runtime_error {
+  class CanceledError : public std::future_error {
 
     /// <summary>Initializes a cancellation-indicating error</summary>
     /// <param name="message">Message that describes the error</param>
     public: explicit CanceledError(const std::string &message) :
-      std::runtime_error(message) {}
+      std::future_error(std::future_errc::broken_promise),
+      message(message) {}
 
     /// <summary>Initializes a cancellation-indicating error</summary>
     /// <param name="message">Message that describes the error</param>
     public: explicit CanceledError(const char *message) :
-      std::runtime_error(message) {}
+      std::future_error(std::future_errc::broken_promise),
+      message(message) {}
+
+    /// <summary>Retrieves an error message describing the cancellation reason</summary>
+    /// <returns>A message describing te reason for the cancellation</returns>>
+    public: virtual const char *what() const noexcept override {
+      if(this->message.empty()) {
+        return std::future_error::what();
+      } else {
+        return this->message.c_str();
+      }
+    }
+
+    /// <summary>Error message describing the reason for the cancellation</summary>
+    private: std::string message;
 
   };
 
