@@ -41,7 +41,7 @@ namespace Nuclex { namespace Support {
   ///   If you are targeting C++17 or later, there is no need to use this class.
   /// </remarks>
   template<typename TValue>
-  class Optional {
+  class NUCLEX_SUPPORT_TYPE Optional {
 
     /// <summary>An <see cref="Optional" /> instance that is empty</summary>
     public: NUCLEX_SUPPORT_API const static Optional Empty;

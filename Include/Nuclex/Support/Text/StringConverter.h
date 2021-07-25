@@ -66,7 +66,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///     use WideCharFromUtf8() - it will select UTF-16 or UTF-32 to match wchar_t.
   ///   </para>
   /// </remarks>
-  class StringConverter {
+  class NUCLEX_SUPPORT_TYPE StringConverter {
 
     /// <summary>Counts the number of UTF-8 characters in a string</summary>
     /// <param name="from">UTF-8 string whose characters will be counted</param>

@@ -35,23 +35,23 @@ namespace Nuclex { namespace Support { namespace Errors {
   ///   the std::future when its normal result is no longer going to arrive (for example,
   ///   because the thread performing the work is shutting down).
   /// </remarks>
-  class CanceledError : public std::future_error {
+  class NUCLEX_SUPPORT_TYPE CanceledError : public std::future_error {
 
     /// <summary>Initializes a cancellation-indicating error</summary>
     /// <param name="message">Message that describes the error</param>
-    public: explicit CanceledError(const std::string &message) :
+    public: NUCLEX_SUPPORT_API explicit CanceledError(const std::string &message) :
       std::future_error(std::future_errc::broken_promise),
       message(message) {}
 
     /// <summary>Initializes a cancellation-indicating error</summary>
     /// <param name="message">Message that describes the error</param>
-    public: explicit CanceledError(const char *message) :
+    public: NUCLEX_SUPPORT_API explicit CanceledError(const char *message) :
       std::future_error(std::future_errc::broken_promise),
       message(message) {}
 
     /// <summary>Retrieves an error message describing the cancellation reason</summary>
     /// <returns>A message describing te reason for the cancellation</returns>>
-    public: virtual const char *what() const noexcept override {
+    public: NUCLEX_SUPPORT_API virtual const char *what() const noexcept override {
       if(this->message.empty()) {
         return std::future_error::what();
       } else {

@@ -31,7 +31,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Compares strings using different matching algorithms</summary>
-  class StringMatcher {
+  class NUCLEX_SUPPORT_TYPE StringMatcher {
 
     /// <summary>Compares two UTF-8 strings for equality, optionally ignoring case</summary>
     /// <param name="left">String that will be compared on the left side</param>

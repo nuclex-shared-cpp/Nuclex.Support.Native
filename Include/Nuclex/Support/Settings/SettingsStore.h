@@ -82,7 +82,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   ///     </code>
   ///   </example>
   /// </remarks>
-  class SettingsStore {
+  class NUCLEX_SUPPORT_TYPE SettingsStore {
 
     /// <summary>Frees all resources owned by the settings store</summary>
     public: NUCLEX_SUPPORT_API virtual ~SettingsStore() = default;

@@ -46,7 +46,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///     an UTF-8 string by returning individual characters as UTF-32).
   ///   </para>
   /// </remarks>
-  class ParserHelper {
+  class NUCLEX_SUPPORT_TYPE ParserHelper {
 
     /// <summary>Checks whether the specified character is a whitespace</summary>
     /// <param name="utf8Byte">
