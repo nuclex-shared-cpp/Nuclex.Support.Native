@@ -23,10 +23,8 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#include <string> // for std::string
-#include <optional> // for std::optional
-#include <cstdint> // for std::uint32_t, std::int32_t, std::uint64_t, std::int64_t
-#include <stdexcept> // for std;:runtime_error
+#include <cstddef> // for std::size_t
+//#include <stdexcept> // for std::runtime_error
 #include <cassert> // for assert()
 
 namespace Nuclex { namespace Support { namespace Text {
@@ -82,7 +80,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   be an std::u8string using this character type to unambiguously indicate that
     ///   the contents of the string are supposed to be UTF-8 encoded.
     /// </remarks>
-    public: typedef std::uint8_t char8_t;
+    public: typedef unsigned char char8_t;
 
     /// <summary>The symbol used to indicate a code point is invalid or corrupted</summary>
     public: static const constexpr char32_t ReplacementCodePoint = char32_t(0xFFFD);
@@ -480,7 +478,7 @@ namespace Nuclex { namespace Support { namespace Text {
   inline std::size_t UnicodeHelper::EncodeToUtf16(char32_t codePoint, char16_t *&target) {
     if(codePoint < 65536) {
       assert(
-        (codePoint < 0xDC00) || (codePoint >= 0xE000) &&
+        ((codePoint < 0xDC00) || (codePoint >= 0xE000)) &&
         u8"Unicode code point has to be outside surrogate range (0xDC00-0xDFFF)"
       );
       *target = static_cast<char16_t>(codePoint);
