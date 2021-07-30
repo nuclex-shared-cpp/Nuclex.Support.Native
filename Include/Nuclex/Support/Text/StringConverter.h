@@ -71,7 +71,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <summary>Counts the number of UTF-8 characters in a string</summary>
     /// <param name="from">UTF-8 string whose characters will be counted</param>
     /// <returns>The number of UTF-8 characters the string is holding</returns>
-    public: NUCLEX_SUPPORT_API static std::string::size_type CountUtf8Characters(
+    public: NUCLEX_SUPPORT_API static std::string::size_type CountUtf8Letters(
       const std::string &from
     );
 

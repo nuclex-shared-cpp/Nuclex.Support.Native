@@ -41,7 +41,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string::size_type StringConverter::CountUtf8Characters(const std::string &from) {
+  std::string::size_type StringConverter::CountUtf8Letters(const std::string &from) {
     const my_char8_t *current = reinterpret_cast<const my_char8_t *>(from.c_str());
     const my_char8_t *end = current + from.length();
 
