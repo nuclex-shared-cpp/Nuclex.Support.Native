@@ -38,139 +38,7 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Selects the appropriate conversion for the compiler's wchar_t</summary>
-  template<std::size_t WCharWidth>
-  struct StringConverterCharWidthHelper {
-
-    /// <summary>Converts a UTF-8 string into a wide (UTF-16 or UTF-32) string</summary>
-    /// <param name="utf8String">UTF-8 string that will be converted</param>
-    /// <returns>A wide version of the provided UTF-8 string</returns>
-    /// <remarks>
-    ///   Assumes std::wstring has to carry either UTF-16 or UTF-32 based on the size of
-    ///   the compiler's wchar_t, thereby matching the default encoding used by your compiler
-    ///   and the defaults of any wide-character APIs on your platform.
-    /// </remarks>
-    inline static std::wstring WideFromUtf8(const std::string &from) = delete;
-
-    /// <summary>Converts a wide (UTF-16 or UTF-32) string into a UTF-8 string</summary>
-    /// <param name="wideString">Wide string that will be converted</param>
-    /// <returns>A UTF-8 version of the provided wide string</returns>
-    /// <remarks>
-    ///   Assumes the std::wstring is carrying either UTF-16 or UTF-32 based on the size of
-    ///   the compiler's wchar_t, thereby matching the default encoding used by your compiler
-    ///   when you write L&quot;Hello&quot; in your code.
-    /// </remarks>
-    inline static std::string Utf8FromWide(const std::wstring &from) = delete;
-
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Provides conversion methods between UTF-8 and UTF-16</summary>
-  template<>
-  struct StringConverterCharWidthHelper<sizeof(char16_t)> {
-
-    /// <summary>Converts a UTF-8 string into a UTF-16 string</summary>
-    /// <param name="utf8String">UTF-8 string that will be converted</param>
-    /// <returns>A wide version of the provided UTF-8 string</returns>
-    inline static std::wstring WideFromUtf8(const std::string &utf8String) {
-      if(utf8String.empty()) {
-        return std::wstring();
-      }
-
-      // We guess that we need as many UTF-16 characters as we needed UTF-8 characters
-      // based on the assumption that most text will only use ascii characters.
-      std::vector<wchar_t> utf16Characters;
-      utf16Characters.reserve(utf8String.length());
-
-      // Do the conversion. If the vector was too short, it will be grown in factors
-      // of 2 usually (depending on the standard library implementation)
-      utf8::utf8to16(utf8String.begin(), utf8String.end(), std::back_inserter(utf16Characters));
-
-      return std::wstring(&utf16Characters[0], utf16Characters.size());
-    }
-
-    /// <summary>Converts a UTF-16 string into a UTF-8 string</summary>
-    /// <param name="wideString">UTF-16 string that will be converted</param>
-    /// <returns>A UTF-8 version of the provided UTF-16 string</returns>
-    inline static std::string Utf8FromWide(const std::wstring &utf16String) {
-      if(utf16String.empty()) {
-        return std::string();
-      }
-
-      // We guess that we need as many UTF-8 characters as we needed UTF-16 characters
-      // based on the assumption that most text will only use ascii characters.
-      std::vector<char> utf8Characters;
-      utf8Characters.reserve(utf16String.length());
-
-      // Do the conversion. If the vector was too short, it will be grown in factors
-      // of 2 usually (depending on the standard library implementation)
-      utf8::utf16to8(
-        utf16String.begin(), utf16String.end(), std::back_inserter(utf8Characters)
-      );
-
-      return std::string(&utf8Characters[0], utf8Characters.size());
-    }
-
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Provides conversion methods between UTF-8 and UTF-32</summary>
-  template<>
-  struct StringConverterCharWidthHelper<sizeof(char32_t)> {
-
-    /// <summary>Converts a UTF-8 string into a UTF-32 string</summary>
-    /// <param name="utf8String">UTF-8 string that will be converted</param>
-    /// <returns>A UTF-32 version of the provided UTF-8 string</returns>
-    inline static std::wstring WideFromUtf8(const std::string &utf8String) {
-      if(utf8String.empty()) {
-        return std::wstring();
-      }
-
-      // We guess that we need as many UTF-32 characters as we needed UTF-8 characters
-      // based on the assumption that most text will only use ascii characters.
-      std::vector<char32_t> utf32Characters;
-      utf32Characters.reserve(utf8String.length());
-
-      // Do the conversion. If the vector was too short, it will be grown in factors
-      // of 2 usually (depending on the standard library implementation)
-      utf8::utf8to32(utf8String.begin(), utf8String.end(), std::back_inserter(utf32Characters));
-
-      // This reinterpret_cast() avoids warnings on platforms with 16 bit wide chars
-      // (where it is never executed) and does nothing on platforms with 32 bit wide chars.
-      const wchar_t *first = reinterpret_cast<const wchar_t *>(&utf32Characters[0]);
-      return std::wstring(first, utf32Characters.size());
-    }
-
-    /// <summary>Converts a UTF-32 string into a UTF-8 string</summary>
-    /// <param name="wideString">UTF-32 string that will be converted</param>
-    /// <returns>A UTF-8 version of the provided UTF-32 string</returns>
-    inline static std::string Utf8FromWide(const std::wstring &utf32String) {
-      if(utf32String.empty()) {
-        return std::string();
-      }
-
-      // We guess that we need as many UTF-8 characters as we needed UTF-32 characters
-      // based on the assumption that most text will only use ascii characters.
-      std::vector<char> utf8Characters;
-      utf8Characters.reserve(utf32String.length());
-
-      // Do the conversion. If the vector was too short, it will be grown in factors
-      // of 2 usually (depending on the standard library implementation)
-      utf8::utf32to8(
-        utf32String.begin(), utf32String.end(), std::back_inserter(utf8Characters)
-      );
-
-      return std::string(&utf8Characters[0], utf8Characters.size());
-    }
-
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
 } // anonymous namespace
-
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -197,13 +65,100 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   std::wstring StringConverter::WideFromUtf8(const std::string &utf8String) {
-    return StringConverterCharWidthHelper<sizeof(wchar_t)>::WideFromUtf8(utf8String);
+    std::wstring result;
+    {
+      const my_char8_t *read = reinterpret_cast<const my_char8_t *>(utf8String.c_str());
+      const my_char8_t *readEnd = read + utf8String.length();
+
+      // Let's assume 1 UTF-8 characters maps to 1 UTF-16 character. For ASCII strings,
+      // this will be an exact fit, for asian languages, it's probably twice what we need.
+      // In any case, it will never come up short, so we don't have to worry about running
+      // out of space when writing transcoded UTF characters into the string.
+      result.resize(utf8String.length());
+
+      // Variant for 16 bit wchar_t as established by Windows compilers
+      if constexpr(sizeof(wchar_t) == sizeof(char16_t)) {
+        char16_t *write = reinterpret_cast<char16_t *>(result.data());
+
+        while(read < readEnd) {
+          char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
+          UnicodeHelper::WriteCodePoint(codePoint, write);
+        }
+
+        result.resize(write - reinterpret_cast<char16_t *>(result.data()));
+      } else { // Variant for 32 bit wchar_t used everywhere except Windows
+        char32_t *write = reinterpret_cast<char32_t *>(result.data());
+
+        while(read < readEnd) {
+          *write = UnicodeHelper::ReadCodePoint(read, readEnd);
+          ++write;
+        }
+
+        result.resize(write - reinterpret_cast<char32_t *>(result.data()));
+      }
+    }
+
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   std::string StringConverter::Utf8FromWide(const std::wstring &wideString) {
-    return StringConverterCharWidthHelper<sizeof(wchar_t)>::Utf8FromWide(wideString);
+    std::string result;
+    {
+      // Let's assume 1 UTF-16/UTF-32 character maps to 2 UTF-16 characters. For ASCII
+      // strings, we'll allocate twice as much as we need, for international string it will
+      // be exactly right, old egyptians and celts may need another allocation along the way.
+      result.resize(wideString.length() * 2);
+
+      my_char8_t *write = reinterpret_cast<my_char8_t *>(result.data());
+      my_char8_t *writeEnd = write + result.length();
+
+      // Variant for 16 bit wchar_t as established by Windows compilers
+      if constexpr(sizeof(wchar_t) == sizeof(char16_t)) {
+        const char16_t *read = reinterpret_cast<const char16_t *>(wideString.c_str());
+        const char16_t *readEnd = read + wideString.length();
+
+        while(read < readEnd) {
+          char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
+          UnicodeHelper::WriteCodePoint(codePoint, write);
+
+          if(unlikely(write + 4 >= writeEnd)) {
+            std::string::size_type writeIndex = (
+              write - reinterpret_cast<my_char8_t *>(result.data())
+            );
+            result.resize(result.size() * 2 + 4);
+            write = reinterpret_cast<my_char8_t *>(result.data());
+            writeEnd = write + result.length();
+            write += writeIndex;
+          }
+        }
+
+        result.resize(write - reinterpret_cast<my_char8_t *>(result.data()));
+      } else { // Variant for 32 bit wchar_t used everywhere except Windows
+        const char32_t *read = reinterpret_cast<const char32_t *>(wideString.c_str());
+        const char32_t *readEnd = read + wideString.length();
+
+        while(read < readEnd) {
+          UnicodeHelper::WriteCodePoint(*read, write);
+          ++read;
+
+          if(unlikely(write + 4 >= writeEnd)) {
+            std::string::size_type writeIndex = (
+              write - reinterpret_cast<my_char8_t *>(result.data())
+            );
+            result.resize(result.size() * 2 + 4);
+            write = reinterpret_cast<my_char8_t *>(result.data());
+            writeEnd = write + result.length();
+            write += writeIndex;
+          }
+        }
+
+        result.resize(write - reinterpret_cast<my_char8_t *>(result.data()));
+      }
+    }
+
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
