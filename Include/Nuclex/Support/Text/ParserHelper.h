@@ -24,6 +24,8 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 
 #include <string> // for std::string
+#include <optional> // for std::optional
+#include <cstdint> // for std::uint32_t, std::int32_t, std::uint64_t, std::int64_t
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -58,14 +60,41 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Checks whether the specified character is a whitespace</summary>
-    /// <param name="unicodeCharacter">
-    ///   Character that will be checked for being a whitespace
+    /// <param name="codepoint">
+    ///   Unicode code point that will be checked for being a whitespace
     /// </param>
     /// <returns>True if the character was a whitespace, false otherwise</returns>
     public: NUCLEX_SUPPORT_API static constexpr bool IsWhitespace(
-      char32_t unicodeCharacter
+      char32_t codepoint
     );
 
+    /// <summary>
+    ///   Moves <paramref cref="start" /> ahead until the first non-whitespace UTF-8
+    ///   character or until hitting <paramref cref="end" />
+    /// </summary>
+    /// <param name="start">Start pointer from which on whitespace will be skipped</param>
+    /// <param name="end">End pointer that may not be overrun</param>
+    public: NUCLEX_SUPPORT_API static void SkipWhitespace(
+      const std::uint8_t *&start, const std::uint8_t *end
+    );
+
+#if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
+    /// <summary>Attempts to parse the specified numeric type from the provided text</summary>
+    /// <typeparam name="TScalar">
+    ///   Type that will be parsed from the text. Must be either a 32 bit integer,
+    ///   64 bit integer, float or double. Other types are not supported.
+    /// </typeparam>
+    /// <param name="start">
+    ///   Pointer to the start of the textual data. Will be updated to the next byte
+    ///   after the numeric type if parsing succeeds.
+    /// </param>
+    /// <param name="end">Byte at which the text ends</param>
+    /// <returns>The parsed numeric type or an empty std::optional instance</returns>
+    public: template<typename TScalar>
+    inline static std::optional<TScalar> ParseNumber(
+      const std::uint8_t *&start, const std::uint8_t *end
+    );
+#endif
   };
 
   // ------------------------------------------------------------------------------------------- //
@@ -139,6 +168,59 @@ namespace Nuclex { namespace Support { namespace Text {
       }
     }
   }
+
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
+
+  template<typename TScalar>
+  inline std::optional<TScalar> ParserHelper::ParseNumber(
+    const std::uint8_t *&start, const std::uint8_t *end
+  ) {
+    static_assert(
+      (
+        std::is_same<TScalar, std::uint32_t>::value ||
+        std::is_same<TScalar, std::int32_t>::value ||
+        std::is_same<TScalar, std::uint64_t>::value ||
+        std::is_same<TScalar, std::int64_t>::value ||
+        std::is_same<TScalar, float>::value ||
+        std::is_same<TScalar, double>::value
+      ) &&
+      u8"Only 32/64 bit unsigned/signed integers, floats and doubles are supported"
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  NUCLEX_SUPPORT_API std::optional<std::uint32_t> ParserHelper::ParseNumber(
+    const std::uint8_t *&start, const std::uint8_t *end
+  );
+
+  template<>
+  NUCLEX_SUPPORT_API std::optional<std::int32_t> ParserHelper::ParseNumber(
+    const std::uint8_t *&start, const std::uint8_t *end
+  );
+
+  template<>
+  NUCLEX_SUPPORT_API std::optional<std::uint64_t> ParserHelper::ParseNumber(
+    const std::uint8_t *&start, const std::uint8_t *end
+  );
+
+  template<>
+  NUCLEX_SUPPORT_API std::optional<std::int64_t> ParserHelper::ParseNumber(
+    const std::uint8_t *&start, const std::uint8_t *end
+  );
+
+  template<>
+  NUCLEX_SUPPORT_API std::optional<float> ParserHelper::ParseNumber(
+    const std::uint8_t *&start, const std::uint8_t *end
+  );
+
+  template<>
+  NUCLEX_SUPPORT_API std::optional<double> ParserHelper::ParseNumber(
+    const std::uint8_t *&start, const std::uint8_t *end
+  );
+#endif // defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
 
   // ------------------------------------------------------------------------------------------- //
 

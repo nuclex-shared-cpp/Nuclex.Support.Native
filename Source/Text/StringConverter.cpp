@@ -23,12 +23,18 @@ License along with this library
 
 #include "Nuclex/Support/Text/StringConverter.h"
 
-#include "Utf8/checked.h"
-#include "Utf8Fold/Utf8Fold.h"
+#include "Utf8/checked.h" // remove this
+#include "Nuclex/Support/Text/UnicodeHelper.h" // UTF encoding and decoding
+#include "Utf8Fold/Utf8Fold.h" // UTF-8 case folding (allows case insensiive comparison)
 
 #include <vector>
 
 namespace {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Invidual UTF-8 character type (will be standard in C++20)</summary>
+  typedef unsigned char my_char8_t;
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -165,25 +171,27 @@ namespace {
 
 } // anonymous namespace
 
+
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
   std::string::size_type StringConverter::CountUtf8Characters(const std::string &from) {
-    std::string::size_type length = 0;
+    const my_char8_t *current = reinterpret_cast<const my_char8_t *>(from.c_str());
+    const my_char8_t *end = current + from.length();
 
-    std::string::const_iterator current = from.begin();
-    std::string::const_iterator end = from.end();
-    while(current != end) { // needed, utf8 library reads into end and throws exception on \0...
-      std::uint32_t codePoint = utf8::next(current, end);
-      if(codePoint == 0) {
-        break;
+    std::string::size_type count = 0;
+    while(current < end) {
+      std::size_t sequenceLength = UnicodeHelper::GetSequenceLength(*current);
+      if(sequenceLength == std::size_t(-1)) {
+        throw std::invalid_argument(u8"String contains invalid UTF-8");
       }
 
-      ++length;
+      ++count;
+      current += sequenceLength;
     }
 
-    return length;
+    return count;
   }
 
   // ------------------------------------------------------------------------------------------- //
