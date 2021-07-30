@@ -145,67 +145,37 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Reads a code point from a variable-length UTF-8 sequence</summary>
-    /// <param name="leadCharacter">
-    ///   Address of the UTF-8 lead character. You have to make sure it is followed
-    ///   by at least <paramref name="sequenceLength" /> more characters.
+    /// <param name="current">
+    ///   Address of the UTF-8 lead character, will be updated to the next lead
+    ///   character if the read succeeds.
     /// </param>
-    /// <param name="sequenceLength">Length fo the sequence in characters</param>
+    /// <param name="end">Character at which the UTF-8 string ends</param>
     /// <returns>The unicode code point index, identical to UTF-32.</returns>
     /// <remarks>
-    ///   No checking is performed and the length you specify is trusted blindly.
-    ///   If you specify an impossible length, char32_t(-1) is returned.
-    /// </remarks>
+    ///   If the end is reached or if the character is incomplete or invalid, this method
+    ///   returns char32_t(-1) to indicate failure. You should check the position of your
+    ///   read pointer before calling to distinguish between a normal end of the string and
+    ///   bad UTF-8 data.
+    /// </returns>
     public: NUCLEX_SUPPORT_API static char32_t ReadCodePoint(
-      const char8_t *leadCharacter, std::size_t sequenceLength // length is checked by YOU!
+      const char8_t *&current, const char8_t *end
     );
 
     /// <summary>Reads a code point from a variable-length UTF-16 sequence</summary>
-    /// <param name="leadCharacter">
-    ///   Address of the UTF-16 lead character. You have to make sure it is followed
-    ///   by at least <paramref name="sequenceLength" /> more characters.
+    /// <param name="current">
+    ///   Address of the UTF-16 lead character, will be updated to the next lead
+    ///   character if the read succeeds.
     /// </param>
-    /// <param name="sequenceLength">Length fo the sequence in characters</param>
+    /// <param name="end">Character at which the UTF-16 string ends</param>
     /// <returns>The unicode code point index, identical to UTF-32.</returns>
     /// <remarks>
-    ///   No checking is performed and the length you specify is trusted blindly.
-    ///   If you specify an impossible length, char32_t(-1) is returned.
-    /// </remarks>
+    ///   If the end is reached or if the character is incomplete or invalid, this method
+    ///   returns char32_t(-1) to indicate failure. You should check the position of your
+    ///   read pointer before calling to distinguish between a normal end of the string and
+    ///   bad UTF-16 data.
+    /// </returns>
     public: NUCLEX_SUPPORT_API static char32_t ReadCodePoint(
-      const char16_t *leadCharacter, std::size_t sequenceLength // length is checked by YOU!
-    );
-
-    /// <summary>Reads a code point from a variable-length UTF-8 sequence</summary>
-    /// <param name="leadCharacter">
-    ///   Address of the UTF-8 lead character. You have to make sure it is followed
-    ///   by at least <paramref name="sequenceLength" /> more characters.
-    /// </param>
-    /// <param name="sequenceLength">Length fo the sequence in characters</param>
-    /// <returns>The unicode code point index, identical to UTF-32.</returns>
-    /// <remarks>
-    ///   The length you specify is trusted blindly and the lead character goes
-    ///   unchecked because both are verified through <see cref="GetSequenceLength" />.
-    ///   All additional characters in the sequence are checked and if any of them
-    ///   is invalid, char32_t(-1) is returned instead.
-    /// </returns>
-    public: NUCLEX_SUPPORT_API static char32_t ReadCodePointChecked(
-      const char8_t *leadCharacter, std::size_t sequenceLength // length is checked by YOU!
-    );
-
-    /// <summary>Reads a code point from a variable-length UTF-16 sequence</summary>
-    /// <param name="leadCharacter">
-    ///   Address of the UTF-16 lead character. You have to make sure it is followed
-    ///   by at least <paramref name="sequenceLength" /> more characters.
-    /// </param>
-    /// <param name="sequenceLength">Length fo the sequence in characters</param>
-    /// <returns>The unicode code point index, identical to UTF-32.</returns>
-    /// <remarks>
-    ///   The length you specify is trusted blindly and the lead character goes
-    ///   unchecked because both are verified through <see cref="GetSequenceLength" />.
-    ///   All additional characters in the sequence are checked and if any of them
-    ///   is invalid, char32_t(-1) is returned instead.
-    /// </returns>
-    public: NUCLEX_SUPPORT_API static char32_t ReadCodePointChecked(
-      const char16_t *leadCharacter, std::size_t sequenceLength // length is checked by YOU!
+      const char16_t *&current, const char16_t *end
     );
 
     /// <summary>Encodes the specified code point into UTF-8 characters</summary>
@@ -218,7 +188,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   The number of characters that have been encoded or std::size_t(-1) if
     ///   you specified an invalid code point.
     /// </returns>
-    public: NUCLEX_SUPPORT_API static std::size_t EncodeToUtf8(
+    public: NUCLEX_SUPPORT_API static std::size_t WriteCodePoint(
       char32_t codePoint, char8_t *&target
     );
 
@@ -232,19 +202,22 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   The number of characters that have been encoded or std::size_t(-1) if
     ///   you specified an invalid code point.
     /// </returns>
-    public: NUCLEX_SUPPORT_API static std::size_t EncodeToUtf16(
+    public: NUCLEX_SUPPORT_API static std::size_t WriteCodePoint(
       char32_t codePoint, char16_t *&target
     );
-
-    // transcode to utf-16
-    // transcode to utf-8
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
   inline constexpr bool UnicodeHelper::IsValidCodePoint(char32_t codePoint) {
-    return (codePoint < 1114111);
+    return (
+      (codePoint < 0xD800) ||
+      (
+        (codePoint >= 0xE000) &&
+        (codePoint < 1114111)
+      )
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -296,9 +269,9 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   inline constexpr std::size_t UnicodeHelper::CountUtf16Characters(char32_t codePoint) {
-    if(codePoint < 65536) {
+    if(codePoint < 0xD800) {
       return 1;
-    } else if(codePoint < 1114111) {
+    } else if((codePoint >= 0xE000) && (codePoint < 1114111)) {
       return 2;
     } else {
       return std::size_t(-1);
@@ -307,139 +280,103 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline char32_t UnicodeHelper::ReadCodePoint(
-    const char8_t *leadCharacter, std::size_t sequenceLength // length is checked by YOU!
-  ) {
-    switch(sequenceLength) {
-      case 1: { return static_cast<char32_t>(*leadCharacter); }
-      case 2: {
-        return (
-          (static_cast<char32_t>(leadCharacter[0] & 0x1F) << 6) |
-          (static_cast<char32_t>(leadCharacter[1] & 0x3F))
-        );
-      }
-      case 3: {
-        return (
-          (static_cast<char32_t>(leadCharacter[0] & 0x0F) << 12) |
-          (static_cast<char32_t>(leadCharacter[1] & 0x3F) << 6) |
-          (static_cast<char32_t>(leadCharacter[2] & 0x3F))
-        );
-      }
-      case 4: {
-        return (
-          (static_cast<char32_t>(leadCharacter[0] & 0x07) << 18) |
-          (static_cast<char32_t>(leadCharacter[1] & 0x3F) << 12) |
-          (static_cast<char32_t>(leadCharacter[2] & 0x3F) << 6) |
-          (static_cast<char32_t>(leadCharacter[3] & 0x3F))
-        );
-      }
-      default: { return char32_t(-1); }
-    }
-  }
+  inline char32_t UnicodeHelper::ReadCodePoint(const char8_t *&current, const char8_t *end) {
+    assert((current < end) && u8"At least one byte of input must be available");
 
-  // ------------------------------------------------------------------------------------------- //
-
-  inline char32_t UnicodeHelper::ReadCodePoint(
-    const char16_t *leadCharacter, std::size_t sequenceLength // length is checked by YOU!
-  ) {
-    switch(sequenceLength) {
-      case 1: {
-        return static_cast<char32_t>(*leadCharacter);
-      }
-      case 2: {
-        return (
-          (static_cast<char32_t>(leadCharacter[0] & 0x03FF) << 10) |
-          (static_cast<char32_t>(leadCharacter[1] & 0x03FF))
-        );
-      }
-      default: {
-        return char32_t(-1);
-      }
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  inline char32_t UnicodeHelper::ReadCodePointChecked(
-    const char8_t *leadCharacter, std::size_t sequenceLength // length is checked by YOU!
-  ) {
-    switch(sequenceLength) {
-      case 1: { return static_cast<char32_t>(*leadCharacter); }
-      case 2: {
-        if((leadCharacter[1] & 0xC0) == 0x80) {
+    char8_t leadCharacter = *current;
+    if(leadCharacter < 128) {
+      ++current;
+      return static_cast<char32_t>(leadCharacter);
+    } else if((leadCharacter & 0xE0) == 0xC0) {
+      if(current + 1 < end) {
+        char8_t secondCharacter = *(current + 1);
+        if((secondCharacter & 0xC0) == 0x80) {
+          current += 2;
           return (
-            (static_cast<char32_t>(leadCharacter[0] & 0x1F) << 6) |
-            (static_cast<char32_t>(leadCharacter[1] & 0x3F))
+            (static_cast<char32_t>(leadCharacter & 0x1F) << 6) |
+            (static_cast<char32_t>(secondCharacter & 0x3F))
           );
         }
-        break;
       }
-      case 3: {
+    } else if((leadCharacter & 0xF0) == 0xE0) {
+      if(current + 2 < end) {
+        char8_t secondCharacter = *(current + 1);
+        char8_t thirdCharacter = *(current + 2);
         bool allCharactersValid = (
-          (static_cast<char8_t>(leadCharacter[1] & 0xC0) == 0x80) &&
-          (static_cast<char8_t>(leadCharacter[2] & 0xC0) == 0x80)
+          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80)
         );
         if(allCharactersValid) {
+          current += 3;
           return (
-            (static_cast<char32_t>(leadCharacter[0] & 0x0F) << 12) |
-            (static_cast<char32_t>(leadCharacter[1] & 0x3F) << 6) |
-            (static_cast<char32_t>(leadCharacter[2] & 0x3F))
+            (static_cast<char32_t>(leadCharacter & 0x0F) << 12) |
+            (static_cast<char32_t>(secondCharacter & 0x3F) << 6) |
+            (static_cast<char32_t>(thirdCharacter & 0x3F))
           );
         }
-        break;
       }
-      case 4: {
+    } else if((leadCharacter & 0xF8) == 0xF0) {
+      if(current + 3 < end) {
+        char8_t secondCharacter = *(current + 1);
+        char8_t thirdCharacter = *(current + 2);
+        char8_t fourthCharacter = *(current + 3);
         bool allCharactersValid = (
-          (static_cast<char8_t>(leadCharacter[1] & 0xC0) == 0x80) &&
-          (static_cast<char8_t>(leadCharacter[2] & 0xC0) == 0x80) &&
-          (static_cast<char8_t>(leadCharacter[3] & 0xC0) == 0x80)
+          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(fourthCharacter & 0xC0) == 0x80)
         );
         if(allCharactersValid) {
+          current += 4;
           return (
-            (static_cast<char32_t>(leadCharacter[0] & 0x07) << 18) |
-            (static_cast<char32_t>(leadCharacter[1] & 0x3F) << 12) |
-            (static_cast<char32_t>(leadCharacter[2] & 0x3F) << 6) |
-            (static_cast<char32_t>(leadCharacter[3] & 0x3F))
+            (static_cast<char32_t>(leadCharacter & 0x07) << 18) |
+            (static_cast<char32_t>(secondCharacter & 0x3F) << 12) |
+            (static_cast<char32_t>(thirdCharacter & 0x3F) << 6) |
+            (static_cast<char32_t>(fourthCharacter & 0x3F))
           );
         }
-        break;
       }
     }
 
-    // Invalid length specified or invalid character encountered
+    // Invalid character encountered oder ran out of input
     return char32_t(-1);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline char32_t UnicodeHelper::ReadCodePointChecked(
-    const char16_t *leadCharacter, std::size_t sequenceLength // length is checked by YOU!
-  ) {
-    switch(sequenceLength) {
-      case 1: {
-        if((*leadCharacter < 0xD800) || (*leadCharacter >= 0x0E00)) {
-          return static_cast<char32_t>(*leadCharacter);
-        }
-      }
-      case 2: {
+  inline char32_t UnicodeHelper::ReadCodePoint(const char16_t *&current, const char16_t *end) {
+    assert((current < end) && u8"At least one byte of input must be available");
+
+    char16_t leadCharacter = *current;
+    if(leadCharacter < char16_t(0xD800)) {
+      ++current;
+      return static_cast<char32_t>(leadCharacter);
+    } else if(leadCharacter >= char16_t(0xE000)) {
+      ++current;
+      return static_cast<char32_t>(leadCharacter);
+    } else if(leadCharacter < char16_t(0xDC00)) {
+      if(current + 1 < end) {
+        char16_t trailCharacter = *(current + 1);
         bool allCharactersValid = (
-          (static_cast<char16_t>(leadCharacter[0] & 0xFC00) == 0xD800) &&
-          (static_cast<char16_t>(leadCharacter[1] & 0xFC00) == 0xDC00)
+          (static_cast<char16_t>(leadCharacter & 0xFC00) == 0xD800) &&
+          (static_cast<char16_t>(trailCharacter & 0xFC00) == 0xDC00)
         );
         if(allCharactersValid) {
-          return (
-            (static_cast<char32_t>(leadCharacter[0] & 0x03FF) << 10) |
-            (static_cast<char32_t>(leadCharacter[1] & 0x03FF))
+          current += 2;
+          return char32_t(65536) + (
+            (static_cast<char32_t>(leadCharacter & 0x03FF) << 10) |
+            (static_cast<char32_t>(trailCharacter & 0x03FF))
           );
         }
       }
     }
+
+    // Invalid character encountered oder ran out of input
     return char32_t(-1);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline std::size_t UnicodeHelper::EncodeToUtf8(char32_t codePoint, char8_t *&target) {
+  inline std::size_t UnicodeHelper::WriteCodePoint(char32_t codePoint, char8_t *&target) {
     if(codePoint < 128) {
       *target = static_cast<char8_t>(codePoint);
       ++target;
@@ -475,7 +412,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline std::size_t UnicodeHelper::EncodeToUtf16(char32_t codePoint, char16_t *&target) {
+  inline std::size_t UnicodeHelper::WriteCodePoint(char32_t codePoint, char16_t *&target) {
     if(codePoint < 65536) {
       assert(
         ((codePoint < 0xDC00) || (codePoint >= 0xE000)) &&
@@ -485,21 +422,16 @@ namespace Nuclex { namespace Support { namespace Text {
       ++target;
       return 1;
     } else if(codePoint < 1114111) {
-      *target = 0xD800 | static_cast<char16_t>(codePoint >> 10);
-      ++target;
-      *target = 0xDC00 | static_cast<char16_t>(codePoint & 0x03FF);
-      ++target;
+      codePoint -= char32_t(65536);
+      *(target) = 0xD800 | static_cast<char16_t>(codePoint >> 10);
+      *(target + 1) = 0xDC00 | static_cast<char16_t>(codePoint & 0x03FF);
+      target += 2;
+      return 2;
     } else {
       return std::size_t(-1);
     }
   }
 
-  // ------------------------------------------------------------------------------------------- //
-/*
-  inline std::size_t UnicodeHelper::TranscodeToUtf8(char32_t codePoint, char16_t *&target) {
-    return std::size_t(-1);
-  }
-*/
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Text
