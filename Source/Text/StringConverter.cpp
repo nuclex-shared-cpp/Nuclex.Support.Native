@@ -23,11 +23,8 @@ License along with this library
 
 #include "Nuclex/Support/Text/StringConverter.h"
 
-#include "Utf8/checked.h" // remove this
 #include "Nuclex/Support/Text/UnicodeHelper.h" // UTF encoding and decoding
 #include "Utf8Fold/Utf8Fold.h" // UTF-8 case folding (allows case insensiive comparison)
-
-#include <vector>
 
 namespace {
 
@@ -127,7 +124,7 @@ namespace Nuclex { namespace Support { namespace Text {
             std::string::size_type writeIndex = (
               write - reinterpret_cast<my_char8_t *>(result.data())
             );
-            result.resize(result.size() * 2 + 4);
+            result.resize(result.size() * 2);
             write = reinterpret_cast<my_char8_t *>(result.data());
             writeEnd = write + result.length();
             write += writeIndex;
@@ -147,7 +144,7 @@ namespace Nuclex { namespace Support { namespace Text {
             std::string::size_type writeIndex = (
               write - reinterpret_cast<my_char8_t *>(result.data())
             );
-            result.resize(result.size() * 2 + 4);
+            result.resize(result.size() * 2);
             write = reinterpret_cast<my_char8_t *>(result.data());
             writeEnd = write + result.length();
             write += writeIndex;
@@ -164,81 +161,127 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   std::u16string StringConverter::Utf16FromUtf8(const std::string &utf8String) {
-    if(utf8String.empty()) {
-      return std::u16string();
+    std::u16string result;
+    {
+      // Let's assume 1 UTF-8 characters maps to 1 UTF-16 character. For ASCII strings,
+      // this will be an exact fit, for asian languages, it's probably twice what we need.
+      // In any case, it will never come up short, so we don't have to worry about running
+      // out of space when writing transcoded UTF characters into the string.
+      result.resize(utf8String.length());
+
+      const my_char8_t *read = reinterpret_cast<const my_char8_t *>(utf8String.c_str());
+      const my_char8_t *readEnd = read + utf8String.length();
+
+      char16_t *write = result.data();
+      while(read < readEnd) {
+        char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
+        UnicodeHelper::WriteCodePoint(codePoint, write);
+      }
+
+      result.resize(write - result.data());
     }
 
-    // We guess that we need as many UTF-16 characters as we needed UTF-8 characters
-    // based on the assumption that most text will only use ascii characters.
-    std::vector<char16_t> utf16Characters;
-    utf16Characters.reserve(utf8String.length());
-
-    // Do the conversion. If the vector was too short, it will be grown in factors
-    // of 2 usually (depending on the standard library implementation)
-    utf8::utf8to16(utf8String.begin(), utf8String.end(), std::back_inserter(utf16Characters));
-
-    return std::u16string(&utf16Characters[0], utf16Characters.size());
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   std::string StringConverter::Utf8FromUtf16(const std::u16string &utf16String) {
-    if(utf16String.empty()) {
-      return std::string();
+    std::string result;
+    {
+      // Let's assume 1 UTF-16/UTF-32 character maps to 2 UTF-16 characters. For ASCII
+      // strings, we'll allocate twice as much as we need, for international string it will
+      // be exactly right, old egyptians and celts may need another allocation along the way.
+      result.resize(utf16String.length() * 2);
+
+      my_char8_t *write = reinterpret_cast<my_char8_t *>(result.data());
+      my_char8_t *writeEnd = write + result.length();
+
+      const char16_t *read = utf16String.c_str();
+      const char16_t *readEnd = read + utf16String.length();
+
+      while(read < readEnd) {
+        char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
+        UnicodeHelper::WriteCodePoint(codePoint, write);
+
+        if(unlikely(write + 4 >= writeEnd)) {
+          std::string::size_type writeIndex = (
+            write - reinterpret_cast<my_char8_t *>(result.data())
+          );
+          result.resize(result.size() * 2);
+          write = reinterpret_cast<my_char8_t *>(result.data());
+          writeEnd = write + result.length();
+          write += writeIndex;
+        }
+      }
+
+      result.resize(write - reinterpret_cast<my_char8_t *>(result.data()));
     }
 
-    // We guess that we need as many UTF-8 characters as we needed UTF-16 characters
-    // based on the assumption that most text will only use ascii characters.
-    std::vector<char> utf8Characters;
-    utf8Characters.reserve(utf16String.length());
-
-    // Do the conversion. If the vector was too short, it will be grown in factors
-    // of 2 usually (depending on the standard library implementation)
-    utf8::utf16to8(
-      utf16String.begin(), utf16String.end(), std::back_inserter(utf8Characters)
-    );
-
-    return std::string(&utf8Characters[0], utf8Characters.size());
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   std::u32string StringConverter::Utf32FromUtf8(const std::string &utf8String) {
-    if(utf8String.empty()) {
-      return std::u32string();
+    std::u32string result;
+    {
+      // Let's assume 1 UTF-8 characters maps to 1 UTF-16 character. For ASCII strings,
+      // this will be an exact fit, for asian languages, it's probably twice what we need.
+      // In any case, it will never come up short, so we don't have to worry about running
+      // out of space when writing transcoded UTF characters into the string.
+      result.resize(utf8String.length());
+
+      const my_char8_t *read = reinterpret_cast<const my_char8_t *>(utf8String.c_str());
+      const my_char8_t *readEnd = read + utf8String.length();
+
+      char32_t *write = result.data();
+      while(read < readEnd) {
+        *write = UnicodeHelper::ReadCodePoint(read, readEnd);
+        ++write;
+      }
+
+      result.resize(write - result.data());
     }
 
-    // We guess that we need as many UTF-32 characters as we needed UTF-8 characters
-    // based on the assumption that most text will only use ascii characters.
-    std::vector<char32_t> utf32Characters;
-    utf32Characters.reserve(utf8String.length());
-
-    // Do the conversion. If the vector was too short, it will be grown in factors
-    // of 2 usually (depending on the standard library implementation)
-    utf8::utf8to32(utf8String.begin(), utf8String.end(), std::back_inserter(utf32Characters));
-
-    return std::u32string(&utf32Characters[0], utf32Characters.size());
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   std::string StringConverter::Utf8FromUtf32(const std::u32string &utf32String) {
-    if(utf32String.empty()) {
-      return std::string();
+    std::string result;
+    {
+      // Let's assume 1 UTF-16/UTF-32 character maps to 2 UTF-16 characters. For ASCII
+      // strings, we'll allocate twice as much as we need, for international string it will
+      // be exactly right, old egyptians and celts may need another allocation along the way.
+      result.resize(utf32String.length() * 2);
+
+      my_char8_t *write = reinterpret_cast<my_char8_t *>(result.data());
+      my_char8_t *writeEnd = write + result.length();
+
+      const char32_t *read = utf32String.c_str();
+      const char32_t *readEnd = read + utf32String.length();
+
+      while(read < readEnd) {
+        UnicodeHelper::WriteCodePoint(*read, write);
+        ++read;
+
+        if(unlikely(write + 4 >= writeEnd)) {
+          std::string::size_type writeIndex = (
+            write - reinterpret_cast<my_char8_t *>(result.data())
+          );
+          result.resize(result.size() * 2);
+          write = reinterpret_cast<my_char8_t *>(result.data());
+          writeEnd = write + result.length();
+          write += writeIndex;
+        }
+      }
+
+      result.resize(write - reinterpret_cast<my_char8_t *>(result.data()));
     }
 
-    // We guess that we need as many UTF-8 characters as we needed UTF-32 characters
-    // based on the assumption that most text will only use ascii characters.
-    std::vector<char> utf8Characters;
-    utf8Characters.reserve(utf32String.length());
-
-    // Do the conversion. If the vector was too short, it will be grown in factors
-    // of 2 usually (depending on the standard library implementation)
-    utf8::utf32to8(
-      utf32String.begin(), utf32String.end(), std::back_inserter(utf8Characters)
-    );
-
-    return std::string(&utf8Characters[0], utf8Characters.size());
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
