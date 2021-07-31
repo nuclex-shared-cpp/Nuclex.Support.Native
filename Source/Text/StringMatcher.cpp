@@ -253,7 +253,9 @@ namespace {
           // We've got both another needle code point and another haystack code point,
           // so see if these two are still equal
           char32_t needleCodePoint = UnicodeHelper::ReadCodePoint(needle, needleEnd);
+          requireValidCodePoint(needleCodePoint);
           haystackCodePoint = UnicodeHelper::ReadCodePoint(haystackInner, haystackEnd);
+          requireValidCodePoint(haystackCodePoint);
           if constexpr(!CaseSensitive) {
             needleCodePoint = UnicodeHelper::ToFoldedLowercase(needleCodePoint);
             haystackCodePoint = UnicodeHelper::ToFoldedLowercase(haystackCodePoint);
@@ -266,10 +268,6 @@ namespace {
         // No match found. Reset the needle for the next scan.
         needle = needleFromSecondCodePoint;
       }
-
-      // Since no match was found, update the start pointer so we still have
-      // a pointer to the starting position when the needle starts matching.
-      haystackAtStart = haystack;
     } // while not end of haystack reached
 
     return nullptr;
