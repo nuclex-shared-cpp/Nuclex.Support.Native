@@ -487,7 +487,7 @@ namespace {
     }
   }
 #endif
-#endif defined(NUCLEX_SUPPORT_ENABLE_INTERNAL_TESTS)
+#endif // defined(NUCLEX_SUPPORT_ENABLE_INTERNAL_TESTS)
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace

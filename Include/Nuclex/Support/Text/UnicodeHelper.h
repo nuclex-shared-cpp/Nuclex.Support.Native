@@ -31,7 +31,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary></summary>
+  /// <summary>Helper methods for dealing with unicode and its different encodings</summary>
   /// <remarks>
   ///   <para>
   ///     Short overview of unicode: the &quot;unicode consortium&quot; has taken symbols from
@@ -66,7 +66,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///     the correct term to use would be &quot;characters&quot;. That's why in C++ the new
   ///     data types are <code>char8_t</code>, <code>char16_t</code> and <code>char32_t</code>.
   ///     So &quot;character&quot; has been defined to mean &quot;encoding unit&quot; and is
-  ///     not always enough to represent a code point / letter.
+  ///     not always enough to represent a full letter (aka code point).
   ///   </para>
   ///   <para>
   ///     A series of characters encoding a unicode code point is called a sequence.
@@ -210,7 +210,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="codePoint">
     ///   Unicode code point that will be converted to folded lowercase
     /// </param>
-    /// <returns>The character (if not uppercase) or its folded lowercase equivalent</returns>
+    /// <returns>The character or its folded lowercase equivalent</returns>
     /// <remarks>
     ///   <para>
     ///     Folded lowercase is a special variant of lowercase that will result in a string of
@@ -222,6 +222,11 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     a case-insensitive comparison. This makes case folding very useful for case
     ///     insensitive comparison logic and associative containers which can store
     ///     pre-case-folded strings for their indexes of they need to be case insensitive.
+    ///   </para>
+    ///   <para>
+    ///     Warning: really, don't use this for displayed strings. It may even replace
+    ///     lowercase characters with something weird in case their UTF-8-encoded code point
+    ///     would be longer than its uppercase variant.
     ///   </para>
     /// </remarks>
     public: NUCLEX_SUPPORT_API static char32_t ToFoldedLowercase(char32_t codePoint);

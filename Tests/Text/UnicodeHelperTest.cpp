@@ -341,4 +341,28 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(UnicodeHelperTest, CaseFoldingAllowsCaseInsensitiveComparison) {
+    EXPECT_EQ(
+      UnicodeHelper::ToFoldedLowercase(U'A'),
+      UnicodeHelper::ToFoldedLowercase(U'a')
+    );
+
+    EXPECT_EQ(
+      UnicodeHelper::ToFoldedLowercase(U'Ā'),
+      UnicodeHelper::ToFoldedLowercase(U'ā')
+    );
+
+    EXPECT_EQ(
+      UnicodeHelper::ToFoldedLowercase(U'Ω'),
+      UnicodeHelper::ToFoldedLowercase(U'ω')
+    );
+
+    EXPECT_EQ(
+      UnicodeHelper::ToFoldedLowercase(U'𑢰'),
+      UnicodeHelper::ToFoldedLowercase(U'𑣐')
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text
