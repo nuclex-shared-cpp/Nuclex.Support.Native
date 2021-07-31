@@ -22,15 +22,15 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Text/StringConverter.h"
-
 #include "Nuclex/Support/Text/UnicodeHelper.h" // UTF encoding and decoding
-#include "Utf8Fold/Utf8Fold.h" // UTF-8 case folding (allows case insensiive comparison)
+
+#include <stdexcept> // for std::invalid_argument
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Invidual UTF-8 character type (will be standard in C++20)</summary>
+  /// <summary>Invidual UTF-8 character type (until C++20 introduces char8_t)</summary>
   typedef unsigned char my_char8_t;
 
   // ------------------------------------------------------------------------------------------- //
@@ -287,7 +287,30 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   std::string StringConverter::FoldedLowercaseFromUtf8(const std::string &utf8String) {
-    return ToFoldedLowercase(utf8String);
+    std::string result;
+    {
+      const my_char8_t *current = reinterpret_cast<const my_char8_t *>(utf8String.c_str());
+      const my_char8_t *end;
+      {
+        std::string::size_type length = utf8String.length();
+        end = current + length;
+
+        result.resize(length);
+      }
+
+      my_char8_t *target = reinterpret_cast<my_char8_t *>(result.data());
+
+      while(current < end) {
+        char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
+        codePoint = UnicodeHelper::ToFoldedLowercase(codePoint);
+        UnicodeHelper::WriteCodePoint(codePoint, target);
+      }
+
+      // Remove the excess characters in case the string became shorter
+      result.resize(target - reinterpret_cast<my_char8_t *>(result.data()));
+    }
+
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //

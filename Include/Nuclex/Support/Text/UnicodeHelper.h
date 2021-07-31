@@ -206,6 +206,26 @@ namespace Nuclex { namespace Support { namespace Text {
       char32_t codePoint, char16_t *&target
     );
 
+    /// <summary>Converts the specified Unicode code point to folded lowercase</summary>
+    /// <param name="codePoint">
+    ///   Unicode code point that will be converted to folded lowercase
+    /// </param>
+    /// <returns>The character (if not uppercase) or its folded lowercase equivalent</returns>
+    /// <remarks>
+    ///   <para>
+    ///     Folded lowercase is a special variant of lowercase that will result in a string of
+    ///     equal or shorter length when encoded to UTF-8 or UTF-16. It is not intended for
+    ///     display and some mappings may lead to incorrect lowercase character for such.
+    ///   </para>
+    ///   <para>
+    ///     Comparing the case-folded translations of two strings will produce the result of
+    ///     a case-insensitive comparison. This makes case folding very useful for case
+    ///     insensitive comparison logic and associative containers which can store
+    ///     pre-case-folded strings for their indexes of they need to be case insensitive.
+    ///   </para>
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static char32_t ToFoldedLowercase(char32_t codePoint);
+
   };
 
   // ------------------------------------------------------------------------------------------- //
