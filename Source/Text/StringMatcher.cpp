@@ -82,6 +82,12 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Throws an exception of the code point is invalid</summary>
+  /// <param name="codePoint">Unicode code point that will be checked</param>
+  /// <remarks>
+  ///   This does a generic code point check, but since within this file the code point
+  ///   must be coming from an UTF-8 encoded string, we do complain about invalid UTF-8.
+  /// </remarks>
   void requireValidCodePoint(char32_t codePoint) {
     if(!Nuclex::Support::Text::UnicodeHelper::IsValidCodePoint(codePoint)) {
       throw std::invalid_argument(u8"Illegal UTF-8 character(s) encountered");
@@ -91,11 +97,12 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>C-style function that checks if a string matches a wild card</summary>
+  /// <typeparam name="CaseSensitive">Whether the comparison will be case-sensitive</typeparam>
   /// <param name="text">Text that will be checked against the wild card</param>
   /// <param name="wildcard">Wild card against which the text will be matched</param>
   /// <returns>True if the text matches the wild card, false otherwise</returns>
   template<bool CaseSensitive>
-  bool matchWildcardUtf8_2(
+  bool matchWildcardUtf8(
     const my_char8_t *text, const my_char8_t *textEnd,
     const my_char8_t *wildcard, const my_char8_t *wildcardEnd
   ) {
@@ -166,7 +173,7 @@ namespace {
     // Then retry the wildcard match skipping any number of characters from text
     // (the star can match anything from zero to all characters)
     while(text < textEnd) {
-      if(matchWildcardUtf8_2<CaseSensitive>(text, textEnd, wildcardAfterStar, wildcardEnd)) {
+      if(matchWildcardUtf8<CaseSensitive>(text, textEnd, wildcardAfterStar, wildcardEnd)) {
         return true;
       }
 
@@ -179,122 +186,6 @@ namespace {
     // No amount of skipping helped, there's no match
     return false;
 
-  }
-
-  /// <summary>C-style function that checks if a string matches a wild card</summary>
-  /// <param name="text">Text that will be checked against the wild card</param>
-  /// <param name="wildcard">Wild card against which the text will be matched</param>
-  /// <returns>True if the text matches the wild card, false otherwise</returns>
-  bool matchWildcardUtf8(const char *text, const char *wildcard) {
-    assert((text != nullptr) && u8"Text must not be a NULL pointer");
-
-    std::uint32_t wildcardCodepoint;
-    std::uint32_t textCodepoint;
-
-    // Compare text with wildcard 1:1
-    const char *textAtStart;
-    for(;;) {
-      wildcardCodepoint = utf8::unchecked::next(wildcard);
-      textAtStart = text;
-      textCodepoint = utf8::unchecked::next(text);
-
-      // If the wildcard contains a star, leave this loop and stark skipping
-      if(wildcardCodepoint == '*') {
-        break;
-      }
-
-      // If the end of the text was reached and the wildcard wasn't on a star,
-      // if we're also at the end of the wildcard it's a match
-      if(textCodepoint == 0) {
-        return (wildcardCodepoint == 0);
-      } else if(wildcardCodepoint == 0) { // End of wildcard but still have text?
-        return false;
-      }
-
-      // Otherwise, the text must match the wildcard character
-      if(wildcardCodepoint != '?') {
-        if(toFoldedLowercase(textCodepoint) != toFoldedLowercase(wildcardCodepoint)) {
-          return false;
-        }
-      }
-    }
-
-    // If we encountered a star, first skip any redundant stars directly following
-    const char *wildcardAfterStar;
-    do {
-      wildcardAfterStar = wildcard;
-      wildcardCodepoint = utf8::unchecked::next(wildcard);
-    } while(wildcardCodepoint == '*');
-
-    // Then retry the wildcard match skipping any number of characters from text
-    // (the star can match anything from zero to all characters)
-    do {
-      if(matchWildcardUtf8(textAtStart, wildcardAfterStar)) {
-        return true;
-      }
-
-      textCodepoint = utf8::unchecked::next(textAtStart);
-    } while(textCodepoint != 0);
-
-    // No amount of skipping helped, there's not match
-    return false;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>C-style function that checks if a string matches a wild card</summary>
-  /// <param name="text">Text that will be checked against the wild card</param>
-  /// <param name="wildcard">Wild card against which the text will be matched</param>
-  /// <returns>True if the text matches the wild card, false otherwise</returns>
-  bool matchWildcardUtf8CaseSensitive(const char *text, const char *wildcard) {
-    assert((text != nullptr) && u8"Text must not be a NULL pointer");
-
-    std::uint32_t wildcardCodepoint;
-    std::uint32_t textCodepoint;
-
-    // Compare text with wildcard 1:1
-    const char *textAtStart;
-    for(;;) {
-      wildcardCodepoint = utf8::unchecked::next(wildcard);
-      textAtStart = text;
-      textCodepoint = utf8::unchecked::next(text);
-
-      // If the wildcard contains a star, leave this loop and stark skipping
-      if(wildcardCodepoint == '*') {
-        break;
-      }
-
-      // If the end of the text was reached and the wildcard wasn't on a star,
-      // if we're also at the end of the wildcard it's a match
-      if(textCodepoint == 0) {
-        return (wildcardCodepoint == 0);
-      } else if(wildcardCodepoint == 0) { // End of wildcard but still have text?
-        return false;
-      }
-
-      // Otherwise, the text must match the wildcard character
-      if(wildcardCodepoint != '?') {
-        if(textCodepoint != wildcardCodepoint) {
-          return false;
-        }
-      }
-    }
-
-    const char *wildcardAfterStar;
-    do {
-      wildcardAfterStar = wildcard;
-      wildcardCodepoint = utf8::unchecked::next(wildcard);
-    } while(wildcardCodepoint == '*');
-
-    do {
-      if(matchWildcardUtf8CaseSensitive(textAtStart, wildcardAfterStar)) {
-        return true;
-      }
-
-      textCodepoint = utf8::unchecked::next(textAtStart);
-    } while(textCodepoint != 0);
-
-    return false;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -559,8 +450,6 @@ namespace Nuclex { namespace Support { namespace Text {
         return false;
       }
 
-      //typedef UnicodeHelper::char8_t my_char8_t;
-
       const my_char8_t *currentLeft = reinterpret_cast<const my_char8_t *>(left.c_str());
       const my_char8_t *leftEnd = currentLeft + left.length();
 
@@ -616,7 +505,6 @@ namespace Nuclex { namespace Support { namespace Text {
   bool StringMatcher::FitsWildcard(
     const std::string &text, const std::string &wildcard, bool caseSensitive /* = false */
   ) {
-#if defined(CRASH_AND_BURN)
     const my_char8_t *textStart = reinterpret_cast<const my_char8_t *>(text.c_str());
     const my_char8_t *textEnd = textStart + text.length();
 
@@ -624,17 +512,10 @@ namespace Nuclex { namespace Support { namespace Text {
     const my_char8_t *wildcardEnd = wildcardStart + wildcard.length();
 
     if(caseSensitive) {
-      return matchWildcardUtf8_2<true>(textStart, textEnd, wildcardStart, wildcardEnd);
+      return matchWildcardUtf8<true>(textStart, textEnd, wildcardStart, wildcardEnd);
     } else {
-      return matchWildcardUtf8_2<false>(textStart, textEnd, wildcardStart, wildcardEnd);
+      return matchWildcardUtf8<false>(textStart, textEnd, wildcardStart, wildcardEnd);
     }
-#else
-    if(caseSensitive) {
-      return matchWildcardUtf8CaseSensitive(text.c_str(), wildcard.c_str());
-    } else {
-      return matchWildcardUtf8(text.c_str(), wildcard.c_str());
-    }
-#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
