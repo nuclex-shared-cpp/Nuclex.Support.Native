@@ -24,10 +24,8 @@ License along with this library
 #include "Nuclex/Support/Text/StringMatcher.h"
 #include "Nuclex/Support/Text/UnicodeHelper.h"
 
-#include "Utf8/checked.h" // remove this
-#include "Utf8/unchecked.h" // remove this
-
 #include <vector> // for std::vector
+#include <stdexcept> // for std::invalid_argument
 #include <cassert> // for assert()
 
 namespace {
@@ -70,15 +68,6 @@ namespace {
 
   /// <summary>Invidual UTF-8 character type (until C++20 introduces char8_t)</summary>
   typedef unsigned char my_char8_t;
-
-  // ------------------------------------------------------------------------------------------- //
-
-  // Helper until I've completely removed the utf8cpp library from this file
-  std::uint32_t toFoldedLowercase(std::uint32_t codePoint) {
-    return static_cast<std::uint32_t>(
-      Nuclex::Support::Text::UnicodeHelper::ToFoldedLowercase(static_cast<char32_t>(codePoint))
-    );
-  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -517,29 +506,31 @@ namespace Nuclex { namespace Support { namespace Text {
     static const std::uint8_t aslrSeed = 0;
     std::size_t hash = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(&aslrSeed));
 
-    const char *characters = text.c_str();
-    for(;;) {
-      std::uint32_t codepoint = utf8::unchecked::next(characters);
-      if(codepoint == 0) {
-        return hash;
-      }
+    using Nuclex::Support::Text::UnicodeHelper;
 
-      codepoint = toFoldedLowercase(codepoint);
+    const my_char8_t *current = reinterpret_cast<const my_char8_t *>(text.c_str());
+    const my_char8_t *end = current + text.length();
+    while(current < end) {
+      char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
+      requireValidCodePoint(codePoint);
+      codePoint = UnicodeHelper::ToFoldedLowercase(codePoint);
 
       // We're abusing the Murmur hashing function a bit here. It's not intended for
       // incremental generation and this will likely decrease hashing quality...
       if constexpr(sizeof(std::size_t) >= 8) {
         hash = CalculateMurmur64(
-          reinterpret_cast<const std::uint8_t *>(&codepoint), 4,
+          reinterpret_cast<const std::uint8_t *>(&codePoint), 4,
           static_cast<std::uint32_t>(hash)
         );
       } else {
         hash = CalculateMurmur32(
-          reinterpret_cast<const std::uint8_t *>(&codepoint), 4,
+          reinterpret_cast<const std::uint8_t *>(&codePoint), 4,
           static_cast<std::uint32_t>(hash)
         );
       }
     }
+
+    return hash;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -547,21 +538,7 @@ namespace Nuclex { namespace Support { namespace Text {
   bool CaseInsensitiveUtf8EqualTo::operator()(
     const std::string &left, const std::string &right
   ) const noexcept {
-    const char *leftCharacters = left.c_str();
-    const char *rightCharacters = right.c_str();
-    for(;;) {
-      std::uint32_t leftCodepoint = utf8::unchecked::next(leftCharacters);
-      std::uint32_t rightCodepoint = utf8::unchecked::next(rightCharacters);
-      if(leftCodepoint == 0) {
-        return (rightCodepoint == 0);
-      } else if(rightCodepoint == 0) {
-        return false;
-      }
-
-      if(toFoldedLowercase(leftCodepoint) != toFoldedLowercase(rightCodepoint)) {
-        return false;
-      }
-    }
+    return StringMatcher::AreEqual(left, right, false);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -569,22 +546,36 @@ namespace Nuclex { namespace Support { namespace Text {
   bool CaseInsensitiveUtf8Less::operator()(
     const std::string &left, const std::string &right
   ) const noexcept {
-    const char *leftCharacters = left.c_str();
-    const char *rightCharacters = right.c_str();
+    using Nuclex::Support::Text::UnicodeHelper;
+
+    const my_char8_t *leftStart = reinterpret_cast<const my_char8_t *>(left.c_str());
+    const my_char8_t *leftEnd = leftStart + left.length();
+    const my_char8_t *rightStart = reinterpret_cast<const my_char8_t *>(right.c_str());
+    const my_char8_t *rightEnd = rightStart + right.length();
+
     for(;;) {
-      std::uint32_t leftCodepoint = utf8::unchecked::next(leftCharacters);
-      std::uint32_t rightCodepoint = utf8::unchecked::next(rightCharacters);
-      if(leftCodepoint == 0) {
-        return (rightCodepoint != 0); // true if left is shorter
-      } else if(rightCodepoint == 0) {
-        return false; // false because left is longer
+      if(leftStart >= leftEnd) {
+        if(rightStart >= rightEnd) {
+          return false; // false because both equal up to here
+        } else {
+          return true; // true because left is shorter
+        }
+      }
+      if(rightStart >= rightEnd) {
+        return false; // false because left is long
       }
 
-      leftCodepoint = toFoldedLowercase(leftCodepoint);
-      rightCodepoint = toFoldedLowercase(rightCodepoint);
-      if(leftCodepoint < rightCodepoint) {
+      char32_t leftCodePoint = UnicodeHelper::ReadCodePoint(leftStart, leftEnd);
+      requireValidCodePoint(leftCodePoint);
+      char32_t rightCodePoint = UnicodeHelper::ReadCodePoint(rightStart, rightEnd);
+      requireValidCodePoint(rightCodePoint);
+
+      leftCodePoint = UnicodeHelper::ToFoldedLowercase(leftCodePoint);
+      rightCodePoint = UnicodeHelper::ToFoldedLowercase(rightCodePoint);
+
+      if(leftCodePoint < rightCodePoint) {
         return true;
-      } else if(leftCodepoint > rightCodepoint) {
+      } else if(leftCodePoint > rightCodePoint) {
         return false;
       }
     }
