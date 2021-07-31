@@ -276,46 +276,40 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>C-style function that checks if a string starts with another string</summary>
+  /// <typeparam name="CaseSensitive">Whether the comparison will be case-sensitive</typeparam>
   /// <param name="haystack">Text whose beginning will be checked for the other string</param>
+  /// <param name="haystackEnd">Address one past the end of the haystack string</param>
   /// <param name="needle">Substring that will be searched for</param>
+  /// <param name="needleEnd">Address one past the end of the needle string</param>
   /// <returns>True if the 'haystack' string starts with the 'needle' string</returns>
-  bool checkStringStartsWithUtf8(const char *haystack, const char *needle) {
+  template<bool CaseSensitive>
+  bool checkStringStartsWithUtf8(
+    const my_char8_t *haystack, const my_char8_t *haystackEnd,
+    const my_char8_t *needle, const my_char8_t *needleEnd
+  ) {
+    using Nuclex::Support::Text::UnicodeHelper;
+    assert((haystack != nullptr) && u8"Haystack must not be a NULL pointer");
+    assert((needle != nullptr) && u8"Needle must not be a NULL pointer");
+
     for(;;) {
-      std::uint32_t needleCodepoint = utf8::unchecked::next(needle);
-      if(needleCodepoint == 0) {
-        return true;
+      if(needle  >= needleEnd) {
+        return true; // If the needle ends first (or is empty), we have a match
+      }
+      if(haystack >= haystackEnd) {
+        return false; // If the haystack ends first, the needle wasn't found
       }
 
-      std::uint32_t haystackCodepoint = utf8::unchecked::next(haystack);
-      if(haystackCodepoint == 0) {
-        return false;
+      // Fetch the next code points from both strings so we can compare them
+      char32_t haystackCodePoint = UnicodeHelper::ReadCodePoint(haystack, haystackEnd);
+      requireValidCodePoint(haystackCodePoint);
+      char32_t needleCodePoint = UnicodeHelper::ReadCodePoint(needle, needleEnd);
+      requireValidCodePoint(needleCodePoint);
+
+      if constexpr(!CaseSensitive) {
+        needleCodePoint = UnicodeHelper::ToFoldedLowercase(needleCodePoint);
+        haystackCodePoint = UnicodeHelper::ToFoldedLowercase(haystackCodePoint);
       }
-
-      if(toFoldedLowercase(needleCodepoint) != toFoldedLowercase(haystackCodepoint)) {
-        return false;
-      }
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>C-style function that checks if a string starts with another string</summary>
-  /// <param name="haystack">Text whose beginning will be checked for the other string</param>
-  /// <param name="needle">Substring that will be searched for</param>
-  /// <returns>True if the 'haystack' string starts with the 'needle' string</returns>
-  bool checkStringStartsWithUtf8CaseSensitive(const char *haystack, const char *needle) {
-    for(;;) {
-      std::uint32_t needleCodepoint = utf8::unchecked::next(needle);
-      if(needleCodepoint == 0) {
-        return true;
-      }
-
-      std::uint32_t haystackCodepoint = utf8::unchecked::next(haystack);
-      if(haystackCodepoint == 0) {
-        return false;
-      }
-
-      if(needleCodepoint != haystackCodepoint) {
+      if(needleCodePoint != haystackCodePoint) {
         return false;
       }
     }
@@ -482,11 +476,20 @@ namespace Nuclex { namespace Support { namespace Text {
   bool StringMatcher::StartsWith(
     const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
   ) {
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.c_str());
+    const my_char8_t *haystackEnd = haystackStart + haystack.length();
+
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.c_str());
+    const my_char8_t *needleEnd = needleStart + needle.length();
+
     if(caseSensitive) {
-      return checkStringStartsWithUtf8CaseSensitive(haystack.c_str(), needle.c_str());
+      return checkStringStartsWithUtf8<true>(
+        haystackStart, haystackEnd, needleStart, needleEnd
+      );
     } else {
-      //return (haystack.rfind(needle, 0) == 0);
-      return checkStringStartsWithUtf8(haystack.c_str(), needle.c_str());
+      return checkStringStartsWithUtf8<false>(
+        haystackStart, haystackEnd, needleStart, needleEnd
+      );
     }
   }
 
