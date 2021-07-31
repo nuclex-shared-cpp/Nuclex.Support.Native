@@ -68,6 +68,11 @@ namespace {
 #endif
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Invidual UTF-8 character type (until C++20 introduces char8_t)</summary>
+  typedef unsigned char my_char8_t;
+
+  // ------------------------------------------------------------------------------------------- //
+
   // Helper until I've completely removed the utf8cpp library from this file
   std::uint32_t toFoldedLowercase(std::uint32_t codePoint) {
     return static_cast<std::uint32_t>(
@@ -76,6 +81,105 @@ namespace {
   }
 
   // ------------------------------------------------------------------------------------------- //
+
+  void requireValidCodePoint(char32_t codePoint) {
+    if(!Nuclex::Support::Text::UnicodeHelper::IsValidCodePoint(codePoint)) {
+      throw std::invalid_argument(u8"Illegal UTF-8 character(s) encountered");
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>C-style function that checks if a string matches a wild card</summary>
+  /// <param name="text">Text that will be checked against the wild card</param>
+  /// <param name="wildcard">Wild card against which the text will be matched</param>
+  /// <returns>True if the text matches the wild card, false otherwise</returns>
+  template<bool CaseSensitive>
+  bool matchWildcardUtf8_2(
+    const my_char8_t *text, const my_char8_t *textEnd,
+    const my_char8_t *wildcard, const my_char8_t *wildcardEnd
+  ) {
+    using Nuclex::Support::Text::UnicodeHelper;
+    assert((text != nullptr) && u8"Text must not be a NULL pointer");
+    assert((wildcard != nullptr) && u8"Wildcard must not be a NULL pointer");
+
+    char32_t wildcardCodePoint;
+    for(;;) {
+
+      // If the end of the wildcard is reached, all letters of the input text
+      // must have been consumed (unless the wildcard ends with a star)
+      if(wildcard >= wildcardEnd) {
+        return (text >= textEnd); // All letters must have been consumed
+      }
+
+      // Try to obtain the next wild card letter. We do this before checking
+      // for the end of the text because wildcards can match zero letters, too.
+      char32_t wildcardCodePoint = UnicodeHelper::ReadCodePoint(wildcard, wildcardEnd);
+      requireValidCodePoint(wildcardCodePoint);
+      if(wildcardCodePoint == U'*') {
+        break; // Wildcard had a star, enter skip mode
+      }
+
+      // If text ends but wildcard has more letters to match
+      if(text >= textEnd) {
+        return false;
+      }
+
+      // We have both a valid wildcard letter and a letter from the text to compare
+      // against it, so lets compare one input letter against one wildcard letter
+      char32_t textCodePoint = UnicodeHelper::ReadCodePoint(text, textEnd);
+      requireValidCodePoint(textCodePoint);
+      if(wildcardCodePoint != U'?') {
+        if constexpr(CaseSensitive) {
+          if(textCodePoint != wildcardCodePoint) {
+            return false;
+          }
+        } else { // Case insensitive
+          textCodePoint = UnicodeHelper::ToFoldedLowercase(textCodePoint);
+          if(textCodePoint != UnicodeHelper::ToFoldedLowercase(wildcardCodePoint)) {
+            return false;
+          }
+        }
+      }
+
+    } // letterwise comparison loop
+
+    // If we encountered a star, first skip any redundant stars directly following
+    const my_char8_t *wildcardAfterStar = wildcard;
+    for(;;) {
+      if(wildcard >= wildcardEnd) {
+        return true; // If the wildcard ends with a star, any remaining text is okay!
+      }
+
+      // Read the next letter from the wildcard and see if it's a star, too
+      wildcardCodePoint = UnicodeHelper::ReadCodePoint(wildcard, wildcardEnd);
+      requireValidCodePoint(wildcardCodePoint);
+      if(wildcardCodePoint != U'*') {
+        break;
+      }
+
+      // Wildcard letter was indeed a star, so the current 'wildcard' pointer
+      // (already advanced to the next letter) is the earliest possible non-star
+      wildcardAfterStar = wildcard;
+    }
+
+    // Then retry the wildcard match skipping any number of characters from text
+    // (the star can match anything from zero to all characters)
+    while(text < textEnd) {
+      if(matchWildcardUtf8_2<CaseSensitive>(text, textEnd, wildcardAfterStar, wildcardEnd)) {
+        return true;
+      }
+
+      // This could just skip, but if we encounter an invalid character,
+      // we can't be sure of its length, so have to check and bail out in case.
+      char32_t textCodePoint = UnicodeHelper::ReadCodePoint(text, textEnd);
+      requireValidCodePoint(textCodePoint);
+    }
+
+    // No amount of skipping helped, there's no match
+    return false;
+
+  }
 
   /// <summary>C-style function that checks if a string matches a wild card</summary>
   /// <param name="text">Text that will be checked against the wild card</param>
@@ -455,7 +559,7 @@ namespace Nuclex { namespace Support { namespace Text {
         return false;
       }
 
-      typedef UnicodeHelper::char8_t my_char8_t;
+      //typedef UnicodeHelper::char8_t my_char8_t;
 
       const my_char8_t *currentLeft = reinterpret_cast<const my_char8_t *>(left.c_str());
       const my_char8_t *leftEnd = currentLeft + left.length();
@@ -512,11 +616,25 @@ namespace Nuclex { namespace Support { namespace Text {
   bool StringMatcher::FitsWildcard(
     const std::string &text, const std::string &wildcard, bool caseSensitive /* = false */
   ) {
+#if defined(CRASH_AND_BURN)
+    const my_char8_t *textStart = reinterpret_cast<const my_char8_t *>(text.c_str());
+    const my_char8_t *textEnd = textStart + text.length();
+
+    const my_char8_t *wildcardStart = reinterpret_cast<const my_char8_t *>(wildcard.c_str());
+    const my_char8_t *wildcardEnd = wildcardStart + wildcard.length();
+
+    if(caseSensitive) {
+      return matchWildcardUtf8_2<true>(textStart, textEnd, wildcardStart, wildcardEnd);
+    } else {
+      return matchWildcardUtf8_2<false>(textStart, textEnd, wildcardStart, wildcardEnd);
+    }
+#else
     if(caseSensitive) {
       return matchWildcardUtf8CaseSensitive(text.c_str(), wildcard.c_str());
     } else {
       return matchWildcardUtf8(text.c_str(), wildcard.c_str());
     }
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
