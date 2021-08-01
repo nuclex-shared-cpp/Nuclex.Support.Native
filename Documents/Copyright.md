@@ -16,7 +16,7 @@ You can:
 - Distribute binaries compiled from the unmodified source code.
 
 - Modify the source code of this library and keep the changes to yourself
-  as long as you also keep the compiled binaries to yourself.
+  so long as you also keep the compiled binaries to yourself.
 
 You can not:
 ------------
@@ -24,7 +24,7 @@ You can not:
 - Make changes to this library and then publish the compiled binaries
   without also sharing the changes you made to this library's source code.
 
-- Sue anyone for issues you have with this code. 
+- Sue anyone for issues you have with this code.
 
 - Pretend that you wrote this or use the names of any of this library's
   authors to promote your own work.
@@ -44,18 +44,16 @@ but is not required.
 Example Attribution Text
 ------------------------
 
-The Nuclex.Support.Native library is used for unicode conversion, enhanced
-multi-threading and general supporting code. It is written by Markus Ewald
-and licensed under the terms of the IBM Common Public License
+Uses supporting code from the Nuclex.Support.Native library, written by
+Markus Ewald and licensed under the terms of the IBM Common Public License
 (https://opensource.org/licenses/cpl1.0.php)
 
-This library also embeds additional libraries, belonging to their respective
-owners and used according to their respective licenses:
+Nuclex.Support.Native also embeds additional libraries, belonging to their
+respective owners and used according to their respective licenses:
 
   * The Dragon 4 floating point formatter under the ZLib license
   * The Erthink integer formatter unter the Apache 2.0 license
   * The Ryu floating point formatter under the Apache 2.0 license
-  * Unicode conversion library under the Boost Software license
   * Multi-threaded queues under the Boost Software license
 
 
@@ -94,17 +92,6 @@ Ryu String to Float Parser: Apache 2.0 License
 Code from the Ryu library is used to convert strings to floating point values
 independent of the system locale. It is written by Ulf Adams and licensed under
 the Apache 2.0 license (http://www.apache.org/licenses/LICENSE-2.0)
-
-If you distribute binaries compiled from this library, you do not have to
-do anything, but an acknowledgement of the original author would be nice.
-
-
-UTF-8, UTF-16, UTF-32 Converter: Boost Software License
--------------------------------------------------------
-
-Conversion between UTF-8 and UTF-16 is provided through the UTF-8 for C++
-library. It is written by Nemanja Trifunovic and licensed under the
-Boost Software License (https://www.boost.org/users/license.html)
 
 If you distribute binaries compiled from this library, you do not have to
 do anything, but an acknowledgement of the original author would be nice.
