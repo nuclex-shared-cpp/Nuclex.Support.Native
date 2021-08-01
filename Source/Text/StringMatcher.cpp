@@ -22,7 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Text/StringMatcher.h"
-#include "Nuclex/Support/Text/UnicodeHelper.h"
+#include "Nuclex/Support/Text/UnicodeHelper.h" // UTF encoding and decoding
 
 #include <vector> // for std::vector
 #include <stdexcept> // for std::invalid_argument
@@ -281,7 +281,7 @@ namespace {
     assert((needle != nullptr) && u8"Needle must not be a NULL pointer");
 
     for(;;) {
-      if(needle  >= needleEnd) {
+      if(needle >= needleEnd) {
         return true; // If the needle ends first (or is empty), we have a match
       }
       if(haystack >= haystackEnd) {
@@ -562,7 +562,7 @@ namespace Nuclex { namespace Support { namespace Text {
         }
       }
       if(rightStart >= rightEnd) {
-        return false; // false because left is long
+        return false; // false because left is longer
       }
 
       char32_t leftCodePoint = UnicodeHelper::ReadCodePoint(leftStart, leftEnd);
