@@ -241,6 +241,7 @@
     <ClInclude Include="Include\Nuclex\Support\Text\StatusObserver.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\UnicodeHelper.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Latch.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Gate.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Process.h" />
@@ -342,7 +343,6 @@
     <ClInclude Include="Source\Text\Ryu\ryu_generic_128.h" />
     <ClInclude Include="Source\Text\Ryu\ryu_parse.h" />
     <ClCompile Include="Source\Text\Ryu\s2d.c" />
-    <ClInclude Include="Source\Text\Utf8Fold\Utf8Fold.h" />
     <ClCompile Include="Source\Text\CommandLine.cpp" />
     <ClCompile Include="Source\Text\CommandLineArgument.cpp" />
     <ClCompile Include="Source\Text\LexicalAppend.cpp" />
@@ -352,6 +352,7 @@
     <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
+    <ClCompile Include="Source\Text\UnicodeHelper.cpp" />
     <ClCompile Include="Source\Threading\Latch.cpp" />
     <ClCompile Include="Source\Threading\Gate.cpp" />
     <ClCompile Include="Source\Threading\Process.Linux.cpp" />
