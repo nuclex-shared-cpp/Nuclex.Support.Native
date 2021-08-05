@@ -25,6 +25,8 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include <stdexcept> // for std::invalid_argument
+
 #include "Nuclex/Support/Text/UnicodeHelper.h" // for UTF-16 <-> UTF-8 conversion
 
 namespace {
