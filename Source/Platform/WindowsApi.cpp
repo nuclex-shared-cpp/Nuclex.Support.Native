@@ -165,12 +165,12 @@ namespace Nuclex { namespace Support { namespace Platform {
         const char16_t *end = current + errorMessageLength;
         UnicodeHelper::char8_t *write = reinterpret_cast<UnicodeHelper::char8_t *>(
           utf8ErrorMessage.data()
-      );
+        );
         while(current < end) {
           char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
           if(codePoint == char32_t(-1)) {
             break;
-    }
+          }
           UnicodeHelper::WriteCodePoint(codePoint, write);
         }
 

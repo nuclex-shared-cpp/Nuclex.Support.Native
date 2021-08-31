@@ -9,14 +9,16 @@ There are unit tests for the whole library, so everything is verifiably
 working on all platforms tested (Linux, Windows, Raspberry).
 
 **Text**
-* Locale-independent string/number conversion
-* Conversion between std::string and std::wstring
+* Iterate over, read and write UTF-8 and UTF-16
 * Case-insensitive UTF-8 string comparison
 * UTF-8 wildcard matching
+* Locale-independent string/number conversion
+* Conversion between std::string and std::wstring
 
 **Settings**
 * Retrieve and store application settings in the registry (Windows-only)
 * Retrieve and store application settings in .ini files
+* Retrieve and store application settings in memory
 
 **Threading**
 * Thread pool for micro tasks with std::future
@@ -114,6 +116,9 @@ StringIntegerMap ingredients;
 ingredients[u8"Rødløg"] = 2;
 int onionCount = ingredients.at(u8"RØDLØG"); // Different case, still a match
 ```
+
+Hashing uses the fast murmur32 (32 bit platforms) and
+murmur64 (on 64 bit platforms) algorithm for string hashing.
 
 
 Application Settings Storage
@@ -330,10 +335,10 @@ clock time.
 int main() {
   Semaphore sem(0);
 
-  // Let one current of future thread through
+  // Let one current or future thread through
   sem.Post();
 
-  // Wait until the semaphore is posed (incremented)
+  // Wait until the semaphore is posted (incremented)
   sem.WaitAndDecrement();
 }
 ```
@@ -342,8 +347,8 @@ int main() {
 Child Processes
 ---------------
 
-This class makes it easy to spawn child process and to capture the output they
-send to stdout and stderr.
+This class makes it easy to spawn child processes and to capture the output
+they send to stdout and stderr.
 
 Creating child processes correctly is a rather complicated task that differs
 a lot between Windows and Linux. This wrapper provides a sane, portable way to
