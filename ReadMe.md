@@ -1,9 +1,10 @@
 Nuclex.Support.Native
 =====================
 
-This library contains general-purpose supporting code with a focus
-on small but well-designed pieces you can use throughout other projects
-to make you life easier.
+This library aims to be your trusty toolbox of supporting code for
+problems that come up in any type project. It consists of carefully
+chosen and well-designed pieces that aid you in dealing with UTF-8
+strings, application settings storage, threading and initialization.
 
 There are unit tests for the whole library, so everything is verifiably
 working on all platforms tested (Linux, Windows, Raspberry).
@@ -69,7 +70,7 @@ in the Documents directory for more details.
 StringConverter & StringMatcher
 -------------------------------
 
-Useful helper methods for strings, such as conversion between UTF-8,
+Useful helper methods for unicode strings, such as conversion between UTF-8,
 UTF-16 and UTF-32. Can also convert between "wide char" strings and UTF-8.
 Wide chars are the bad side of unicode that Windows programmers have to deal
 with, often coming from `TEXT()` macros that expand to `L"my string"`,
@@ -148,11 +149,11 @@ std::optional<std::uint32_t> resolutionX = (
 
 // ...or provide a default value right away via .value_or():
 std::uint32_t resolutionY = (
-  settings.Retrieve<std::uint32_t>(u8"Video", u8"ResolutionX").value_or(1080)
+  settings.Retrieve<std::uint32_t>(u8"Video", u8"ResolutionY").value_or(1080)
 );
 
-// There's a shared base class for all implementations that you pass to
-// any methods dealing with settings:
+// There's a shared base class for all implementations, so you can write
+// methods that work on either of the three settings container types:
 SettingsStore &abstractSettings = settings;
 
 // Storing properties is just as simple and everything, including
