@@ -97,16 +97,19 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </param>
     /// <remarks>
     ///   <para>
-    ///     If the executable name doesn't contain a path (or is specified with a relative
-    ///     path), the path is interpreted as relative to the directory in which the calling
-    ///     application's executable resides.
+    ///     If the specified executable name doesn't contain a path (or is specified with
+    ///     a relative path), the path is interpreted as relative to the directory in which
+    ///     the running application's executable resides.
     ///   </para>
     ///   <para>
-    ///     SHould the executable not be found that way, the normal search rules of
-    ///     the underlying operating system apply, i.e. the PATH environment variable.
+    ///     Should the specified executable not be found that way, the normal search rules of
+    ///     the underlying operating system apply, i.e. the PATH environment variable is used
+    ///     in addition to any documented OS-specific search rules and ordering.
     ///   </para>
     ///   <para>
-    ///     The executable search will not take place if you specify an absolute path.
+    ///     The aforementioned executable search will not be attempted in the first place if
+    ///     you specify an absolute path, so for helper executables that ship with your
+    ///     application, specifying the full path is the fastest and safest approach.
     ///   </para>
     /// </remarks>
     public: NUCLEX_SUPPORT_API Process(const std::string &executablePath);
@@ -230,7 +233,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Useful? This would be easy to provide, but I'd rather expose such things
     // purely through the Nuclex.Storage.Native library.
-    //public: static std::string GetExecutablePath();
+    //public: static std::string SearchExternalExecutable(const std::string &executableName);
 
     /// <summary>Path to the executable this process instance is launching</summary>
     private: std::string executablePath;
