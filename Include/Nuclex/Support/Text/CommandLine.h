@@ -38,6 +38,9 @@ namespace Nuclex { namespace Support { namespace Text {
   /// </remarks>
   class CommandLine {
 
+    // Wraps an individual argument that has been passed on the command line
+    class Argument;
+
     /// <summary>Initializes a new, empty command line</summary>
     public: NUCLEX_SUPPORT_API CommandLine();
     /// <summary>Releases all resources owned by the command line</summary>
@@ -47,10 +50,16 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="parameterString">String containing the command line parameters</param>
     public: NUCLEX_SUPPORT_API CommandLine Parse(const std::string &parameterString);
 
+    //private: struct
+
+    private: std::string parameterString;
+
   };
 
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Text
+
+#include "Nuclex/Support/Text/CommandLineArgument.h"
 
 #endif // NUCLEX_SUPPORT_TEXT_COMMANDLINE_H

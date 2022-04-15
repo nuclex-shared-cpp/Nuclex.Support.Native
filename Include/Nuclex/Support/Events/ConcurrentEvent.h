@@ -38,7 +38,7 @@ namespace Nuclex { namespace Support { namespace Events {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Manages a list of subscribers that receive callbacks when the event fires</summary>
-  /// <typeparam name="TResult">Type that will be returned from the method</typeparam>
+  /// <typeparam name="TResult">Type of results the callbacks will return</typeparam>
   /// <typeparam name="TArguments">Types of the arguments accepted by the callback</typeparam>
   template<typename TResult, typename... TArguments>
   class ConcurrentEvent<TResult(TArguments...)> {
@@ -87,29 +87,128 @@ namespace Nuclex { namespace Support { namespace Events {
     // - First built-in subscriber's 'Next' link is the free list
     // - Second built-in subscriber's 'Next' link is the additional subscriber list
 
+    //
+    // -----------------------------------
+    //
+    // Possible:
+    //
+    //  Hybrid Mutex/Lock-Wait-Free Broadcast Queue
+    //
+    //  - Singly linked list of subscribers
+    //  - Counter that is incremented while firing
+    //
+    //  - Subscribe()/Unsubscribe() enter Mutex
+    //  - Clone complete subscriber list with desired modification
+    //  - Exchange subscriber list start node
+    //  - Leave Mutex
+    //
+    //  - When publisher sees counter go to 0, clean up exchanged (orphaned) lists
+    //    (tricky, should not enter mutex)
+    //
+    //  Possible improvement
+    //
+    //  - Like above, but Subscribe()/Unsubscribe() check counter
+    //  - If counter is zero at end of Subscribe()/Unsubscribe(), then no
+    //    broadcast is currently active and exchanged list can be deleted immediately
+    //
+    //  Another improvement
+    //
+    //  - If counter is not zero at decrement after Unsubscribe(), CAS-append to
+    //    opportunistic-free list
+    //  - Broadcast will check opportunistic-free list when decrement causes counter
+    //    to hit zero.
+    //
+    //  - PROBLEM: How to ensure that between counter hitting zero and CASing the free
+    //    list, the free list isn't modified by a concurrent Susbcribe()/Unsubscribe()?
+    //  - FIX?: Queue of queues where the broadcast list has its own counter and
+    //          Unsubscribe() appends it to a queue of queues to be opportunistically freed?
+    //
+    //  Alternative improvement
+    //
+    //  - Subscribe()/Unsubscribe() simply enter a busy spin when the counter is not zero.
+    //  - SHITTY: Who says an event can't spend seconds per broadcast receiver? Would then
+    //            block the Subscribe()/Unsubscribe() caller very long and cause 100% CPU.
+    //
+    //  Trick
+    //
+    //  - Is adding by prepending generally safe?
+    //    I see no circumstance in which that would become a problem, only removal,
+    //    so long as the notification order is arbitrary
+    //
+
+    /// <summary>Subscribes the specified free function to the event</summary>
+    /// <typeparam name="TMethod">Free function that will be subscribed</typeparam>
+    public: template<TResult(*TMethod)(TArguments...)>
+    void Subscribe() {
+      Subscribe(DelegateType::template Create<TMethod>());
+    }
+
+    /// <summary>Subscribes the specified object method to the event</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">Object method that will be subscribed to the event</typeparam>
+    /// <param name="instance">Instance on which the object method will be called</param>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...)>
+    void Subscribe(TClass *instance) {
+      Subscribe(DelegateType::template Create<TClass, TMethod>(instance));
+    }
+
+    /// <summary>Subscribes the specified const object method to the event</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">Object method that will be subscribed to the event</typeparam>
+    /// <param name="instance">Instance on which the object method will be called</param>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...) const>
+    void Subscribe(const TClass *instance) {
+      Subscribe(DelegateType::template Create<TClass, TMethod>(instance));
+    }
+
+    /// <summary>Subscribes the specified delegate to the event</summary>
+    /// <param name="delegate">Delegate that will be subscribed</param>
+    public: void Subscribe(const DelegateType &delegate) {
+      this->accessCount.fetch_add(1, std::memory_order::memory_order_release);
+      SubscriberQueue subscriberQueue = this->subscribers.load(
+        std::memory_order::memory_order_acquire
+      );
+
+      std::size_t requiredByteCount = sizeof(SubscriberQueue);
 
 
+    }
 
-    /// <summary>Information about subscribers if the list is moved to the heap</summary>
+    #pragma region struct Subscriber
+
+    /// <summary>Linked list node storing a subscriber callback for the event</summary>
     private: struct Subscriber {
 
       /// <summary>Delegate through which the subscriber will be called</summary>
       public: DelegateType Callback;
       /// <summary>Link to the next subscriber to the event</summary>
-      public: std::atomic<Subscriber *> Next;
+      public: Subscriber *Next;
 
     };
 
+    #pragma endregion // struct Subscriber
 
-    /// <summary>First subscriber in singly-linked list of subscribers</summary>
-    private: Subscriber *first;
-    /// <summary>Status of the built-in subscibrer slots</summary>
-    /// <remarks>
-    ///   0: free, 1: occupied, 2: released (will be freed when call count reaches 0)
-    /// </remarks>
-    private: std::atomic<std::uint_fast8_t> builtInStatus[BuiltInSubscriberCount];
-    private: Subscriber builtInSubscriber[BuiltInSubscriberCount];
+    #pragma region struct SubscriberQueue
 
+    /// <summary>Queue of subscribes with access counter for opportunistic free</summary>
+    private: struct SubscriberQueue {
+
+      /// <summary>First subscriber in the queue (in a singly linked list)</summary>
+      public: Subscriber *First;
+      /// <summary>Next queue if this queue is inthe opportunistic free set</summary>
+      public: std::atomic<SubscriberQueue *> Next;
+
+    };
+
+    #pragma endregion // struct SubscriberQueue
+
+    /// <summary>Number of active accessors to any subscriber list</summary>
+    private: std::atomic<std::size_t> accessCount;
+
+    /// <summary>Current subscribers to the event that will receive broadcasts</summary>
+    private: std::atomic<SubscriberQueue *> subscribers;
+    /// <summary>Older subscriber lists to deallocate when ceasing access</summary>
+    private: std::atomic<SubscriberQueue *> previousSubscribers;
 
 
   };

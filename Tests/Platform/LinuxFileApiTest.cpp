@@ -60,7 +60,8 @@ namespace Nuclex { namespace Support { namespace Platform {
       };
 
       std::uint8_t data[] = { 123 };
-      ::write(fileDescriptor, data, 1);
+      ::ssize_t writtenByteCount = ::write(fileDescriptor, data, 1);
+      ASSERT_EQ(writtenByteCount, 1);
     }
 
     struct ::stat fileStatus;

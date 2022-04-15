@@ -37,7 +37,7 @@ namespace Nuclex { namespace Support { namespace Events {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Manages a list of subscribers that receive callbacks when the event fires</summary>
-  /// <typeparam name="TResult">Type that will be returned from the method</typeparam>
+  /// <typeparam name="TResult">Type of results the callbacks will return</typeparam>
   /// <typeparam name="TArguments">Types of the arguments accepted by the callback</typeparam>
   /// <remarks>
   ///   <para>
@@ -93,6 +93,24 @@ namespace Nuclex { namespace Support { namespace Events {
   ///         test.Emit(123, u8"Hello");
   ///       }
   ///     </code>
+  ///   </para>
+  ///   <para>
+  ///     Cheat sheet
+  ///   </para>
+  ///   <para>
+  ///     🛈 Optimized for granular events (many event instances w/few subscribers)<br />
+  ///     🛈 Optimized for fast broadcast performance over subscribe/unsubscribe<br />
+  ///     🛈 No allocations up to <see cref="BuiltInSubscriberCount" /> subscribers<br />
+  ///     ⚫ Can optionally collect return values from all event callbacks<br />
+  ///     ⚫ New subscribers can be added freely even during event broadcast<br />
+  ///     ⚫ Subscribers can unsubscribe themselves even from within event callback<br />
+  ///     🛇 UNDEFINED BEHAVIOR on unsubscribing any other than self from within callback<br />
+  ///     ⚫ For single-threaded use (publishers and subscribers share a single thread)<br />
+  ///     🛇 UNDEFINED BEHAVIOR when accessed from multiple threads<br />
+  ///        -> Multi-threaded broadcast is okay if no subscribe/unsubscribe happens
+  ///        (i.e. subscribe phase, then threads run, threads end, then unsubscribe phase)<br />
+  ///     🛇 Lambda expressions can not be subscribers<br />
+  ///        (adds huge runtime costs, see std::function, would have no way to unsubscribe)<br />
   ///   </para>
   /// </remarks>
   template<typename TResult, typename... TArguments>
@@ -185,7 +203,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
       // Is the subscriber list currently on the stack?
       if(knownSubscriberCount <= BuiltInSubscriberCount) {
-        ProcessStackSubscribers:
+ProcessStackSubscribers:
         subscribers = reinterpret_cast<const DelegateType *>(this->stackMemory);
         while(index < knownSubscriberCount) {
           *results = subscribers[index](std::forward<TArguments>(arguments)...);
@@ -209,7 +227,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
       // The subscriber list is currently on the heap
       {
-        ProcessHeapSubscribers:
+ProcessHeapSubscribers:
         subscribers = reinterpret_cast<const DelegateType *>(this->heapMemory.Buffer);
         while(index < knownSubscriberCount) {
           *results = subscribers[index](std::forward<TArguments>(arguments)...);
@@ -244,7 +262,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
       // Is the subscriber list currently on the stack?
       if(knownSubscriberCount <= BuiltInSubscriberCount) {
-        ProcessStackSubscribers:
+ProcessStackSubscribers:
         subscribers = reinterpret_cast<const DelegateType *>(this->stackMemory);
         while(index < knownSubscriberCount) {
           subscribers[index](std::forward<TArguments>(arguments)...);
@@ -267,7 +285,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
       // The subscriber list is currently on the heap
       {
-        ProcessHeapSubscribers:
+ProcessHeapSubscribers:
         subscribers = reinterpret_cast<const DelegateType *>(this->heapMemory.Buffer);
         while(index < knownSubscriberCount) {
           subscribers[index](std::forward<TArguments>(arguments)...);

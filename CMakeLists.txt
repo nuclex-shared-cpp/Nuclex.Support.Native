@@ -32,11 +32,14 @@ endif()
 
 # -------------------------------------------------------------------------------------------------
 
-# All source files are in the Source/ directory.
-# All (public) headers are in the Include/ directory.
-# All unit test source file are in the Tests/ directory.
+# Project structure
 #
-# CMake documentation:
+#   ProjectName/
+#     Source/                   All source files, using deeper directories as needed
+#     Include/ProjectName/      All public headers, using deeper directories as needed
+#     Tests/                    All unit tests, using deeper directories as needed
+#
+# From CMake documentation:
 #   |  Note: We do not recommend using GLOB to collect a list of
 #   |  source files from your source tree. If no CMakeLists.txt file
 #   |  changes when a source is added or removed then the generated
@@ -46,12 +49,14 @@ endif()
 # I'm not going to manually maintain a list of source files. Rebuilds
 # where files are added, removed or renamed need to be from scratch.
 #
+
 file(
 	GLOB_RECURSE sourceFiles
 	CONFIGURE_DEPENDS
 	"Source/*.cpp"
 	"Source/*.c"
 )
+
 file(
 	GLOB_RECURSE headerFiles
 	CONFIGURE_DEPENDS

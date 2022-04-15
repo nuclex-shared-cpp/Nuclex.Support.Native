@@ -18,10 +18,11 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_TEXT_COMMANDLINE_H
-#define NUCLEX_SUPPORT_TEXT_COMMANDLINE_H
+#ifndef NUCLEX_SUPPORT_TEXT_COMMANDLINEARGUMENT_H
+#define NUCLEX_SUPPORT_TEXT_COMMANDLINEARGUMENT_H
 
 #include "Nuclex/Support/Config.h"
+#include "Nuclex/Support/Text/CommandLine.h"
 
 #include <string>
 
@@ -30,14 +31,16 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Single argument in a command line parameter string</summary>
-  class CommandLineArgument {
+  class CommandLine::Argument {
 
     /// <summary>Initializes a new, empty command line</summary>
-    public: NUCLEX_SUPPORT_API CommandLineArgument();
+    public: NUCLEX_SUPPORT_API Argument();
     /// <summary>Releases all resources owned by the command line</summary>
-    public: NUCLEX_SUPPORT_API virtual ~CommandLineArgument();
+    public: NUCLEX_SUPPORT_API ~Argument();
 
-    public: NUCLEX_SUPPORT_API virtual std::string GetRaw() const = 0;
+    /// <summary>Provides the whole argument as it was specified on the command line</summary>
+    /// <returns>The command line argument without any modifications</returns>
+    public: NUCLEX_SUPPORT_API std::string GetRaw() const;
 
     /// <summary>Retrieves the initiator characters of this argument</summary>
     /// <returns>The characters used to initiate the argument</returns>
@@ -69,10 +72,19 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <returns>The value specified on the command line</returns>
     public: NUCLEX_SUPPORT_API virtual std::string GetValue() const = 0;
 
+    private: std::string::size_type initiatorStartIndex;
+    private: std::string::size_type initiatorLength;
+    private: std::string::size_type nameStartIndex;
+    private: std::string::size_type nameLength;
+    private: std::string::size_type associatorStartIndex;
+    private: std::string::size_type associatorLength;
+    private: std::string::size_type valueStartIndex;
+    private: std::string::size_type valueLength;
+
   };
 
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Text
 
-#endif // NUCLEX_SUPPORT_TEXT_COMMANDLINE_H
+#endif // NUCLEX_SUPPORT_TEXT_COMMANDLINEARGUMENT_H

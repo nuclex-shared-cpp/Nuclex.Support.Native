@@ -35,8 +35,8 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <remarks>
   ///   <para>
   ///     For generic character classification, also see the cctype header in C++ which
-  ///     provides several methods to classify ASCII characters. Since all bytes in ASCII
-  ///     range remain unqiue in UTF-8 (all 2, 3 and 4 byte sequences have the highest bit
+  ///     provides several methods to classify ASCII characters. Since all bytes in the ASCII
+  ///     range remain unique in UTF-8 (all 2, 3 and 4 byte sequences have the highest bit
   ///     set), even if you feed each byte of an UTF-8 string to, say, ::isdigit(), it will
   ///     correctly identify all numbers.
   ///   </para>
@@ -63,6 +63,13 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   UTF-8 byte or single-byte character that will be checked for being a whitespace
     /// </param>
     /// <returns>True if the character was a whitespace, false otherwise</returns>
+    /// <remarks>
+    ///   This will obviously only cover whitespace variants in the ASCII range, but may
+    ///   be sufficient if you're parsing a structured format such as XML, JSON or .ini
+    ///   where either the specification limits the allowed whitespace variants outside of
+    ///   strings/data or in cases where you're providing the input files yourself rather
+    ///   than parsing data from the web or another application.
+    /// </remarks>
     public: NUCLEX_SUPPORT_API static constexpr bool IsWhitespace(
       char8_t utf8Character
     );

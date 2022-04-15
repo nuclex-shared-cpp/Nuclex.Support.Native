@@ -81,8 +81,8 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <remarks>
     ///   Wildcards refer to the simple placeholder symbols employed by many shells,
     ///   where a '?' acts as a stand-in for one UTF-8 character and a '*' acts as
-    ///   a stand-in for zero or more UTF-8 characters. For example &quot;*l?o&quot;
-    ///   would match &quot;Hello&quot; but not &quot;low&quot;.
+    ///   a stand-in for zero or more UTF-8 characters. For example &quot;*l?o*&quot;
+    ///   would match &quot;Hello&quot; and &quot;lion&quot; but not &quot;glow&quot;.
     /// </remarks>
     public: NUCLEX_SUPPORT_API static bool FitsWildcard(
       const std::string &text, const std::string &wildcard, bool caseSensitive = false

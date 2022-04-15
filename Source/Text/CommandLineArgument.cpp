@@ -27,11 +27,11 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  CommandLineArgument::CommandLineArgument() {}
+  CommandLine::Argument::Argument() {}
 
   // ------------------------------------------------------------------------------------------- //
 
-  CommandLineArgument::~CommandLineArgument() {}
+  CommandLine::Argument::~Argument() {}
 
   // ------------------------------------------------------------------------------------------- //
 
