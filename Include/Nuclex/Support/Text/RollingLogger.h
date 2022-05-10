@@ -198,7 +198,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="line">The full contents of the line</paran>
     /// <remarks>
     ///   You can override this method if you wish to live-print log lines to console
-    ///   window or terminal of some kind.
+    ///   windows or terminals of some kind.
     /// </remarks>
     protected: NUCLEX_SUPPORT_API virtual void OnLineAdded(const std::string &line) {
       (void)line;

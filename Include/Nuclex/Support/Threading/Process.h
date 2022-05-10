@@ -163,6 +163,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <returns>
     ///   True if the process exited within the allotted time, false if it is still running.
     /// </returns>
+    /// <remarks>
+    ///   If the process does exit (and this method returned 'true'), you still have to
+    ///   call <see cref="Join" /> to check the exit code of the process. The Join() method
+    ///   will return instantaneously in that case.
+    /// </remarks>
     public: NUCLEX_SUPPORT_API bool Wait(
       std::chrono::milliseconds patience = std::chrono::milliseconds(30000)
     ) const;
