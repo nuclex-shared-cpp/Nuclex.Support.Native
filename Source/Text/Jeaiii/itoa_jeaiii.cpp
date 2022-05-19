@@ -22,10 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <stdint.h>
+#include <cstdint> // for std::uint32_t, std::uint64_t
 
 // form a 4.32 fixed point number: t = u * 2^32 / 10^log10(u)
-// use as much precision as possible when needed (log10(u) >= 5) 
+// use as much precision as possible when needed (log10(u) >= 5)
 // so shift up then down afterwards by log10(u) * log2(10) ~= 53/16
 // need to round up before and or after in some cases
 // once we have the fixed point number we can read off the digit in the upper 32 bits
@@ -43,8 +43,8 @@ SOFTWARE.
 // 1 char at a time
 
 #define W(N, I) b[N] = char(I) + '0'
-#define A(N) t = (uint64_t(1) << (32 + N / 5 * N * 53 / 16)) / uint32_t(1e##N) + 1 - N / 9, t *= u, t >>= N / 5 * N * 53 / 16, t += N / 5 * 4, W(0, t >> 32)
-#define D(N) t = uint64_t(10) * uint32_t(t), W(N, t >> 32)
+#define A(N) t = (std::uint64_t(1) << (32 + N / 5 * N * 53 / 16)) / std::uint32_t(1e##N) + 1 - N / 9, t *= u, t >>= N / 5 * N * 53 / 16, t += N / 5 * 4, W(0, t >> 32)
+#define D(N) t = std::uint64_t(10) * std::uint32_t(t), W(N, t >> 32)
 
 #define L0 W(0, u)
 #define L1 A(1), D(1)
@@ -65,9 +65,9 @@ struct pair { char t, o; };
 static const pair s_pairs[] = { P('0'), P('1'), P('2'), P('3'), P('4'), P('5'), P('6'), P('7'), P('8'), P('9') };
 
 #define W(N, I) *(pair*)&b[N] = s_pairs[I]
-#define A(N) t = (uint64_t(1) << (32 + N / 5 * N * 53 / 16)) / uint32_t(1e##N) + 1 + N/6 - N/8, t *= u, t >>= N / 5 * N * 53 / 16, t += N / 6 * 4, W(0, t >> 32)
-#define S(N) b[N] = char(uint64_t(10) * uint32_t(t) >> 32) + '0'
-#define D(N) t = uint64_t(100) * uint32_t(t), W(N, t >> 32)
+#define A(N) t = (std::uint64_t(1) << (32 + N / 5 * N * 53 / 16)) / std::uint32_t(1e##N) + 1 + N/6 - N/8, t *= u, t >>= N / 5 * N * 53 / 16, t += N / 6 * 4, W(0, t >> 32)
+#define S(N) b[N] = char(std::uint64_t(10) * std::uint32_t(t) >> 32) + '0'
+#define D(N) t = std::uint64_t(100) * std::uint32_t(t), W(N, t >> 32)
 
 #define L0 b[0] = char(u) + '0'
 #define L1 W(0, u)
@@ -89,48 +89,41 @@ static const pair s_pairs[] = { P('0'), P('1'), P('2'), P('3'), P('4'), P('5'), 
 
 #define LG(F) (u<100 ? u<10 ? F(0) : F(1) : u<1000000 ? u<10000 ? u<1000 ? F(2) : F(3) : u<100000 ? F(4) : F(5) : u<100000000 ? u<10000000 ? F(6) : F(7) : u<1000000000 ? F(8) : F(9))
 
-char* u32toa_jeaiii(uint32_t u, char* b)
-{
-    uint64_t t;
-    return LG(LZ);
+char *u32toa_jeaiii(std::uint32_t u, char *b) {
+  std::uint64_t t;
+  return LG(LZ);
 }
 
-char* i32toa_jeaiii(int32_t i, char* b)
-{
-    uint32_t u = i < 0 ? *b++ = '-', 0 - uint32_t(i) : i;
-    uint64_t t;
-    return LG(LZ);
+char *i32toa_jeaiii(int32_t i, char *b) {
+  std::uint32_t u = i < 0 ? *b++ = '-', 0 - std::uint32_t(i) : i;
+  std::uint64_t t;
+  return LG(LZ);
 }
 
-char* u64toa_jeaiii(uint64_t n, char* b)
-{
-    uint32_t u;
-    uint64_t t;
+char *u64toa_jeaiii(std::uint64_t n, char *b) {
+  std::uint32_t u;
+  std::uint64_t t;
 
-    if (uint32_t(n >> 32) == 0)
-        return u = uint32_t(n), LG(LZ);
+  if(std::uint32_t(n >> 32) == 0)
+    return u = std::uint32_t(n), LG(LZ);
 
-    uint64_t a = n / 100000000;
+  std::uint64_t a = n / 100000000;
 
-    if (uint32_t(a >> 32) == 0)
-    {
-        u = uint32_t(a);
-        LG(LN);
-    }
-    else
-    {
-        u = uint32_t(a / 100000000);
-        LG(LN);
-        u = a % 100000000;
-        LN(7);
-    }
+  if(std::uint32_t(a >> 32) == 0) {
+    u = std::uint32_t(a);
+    LG(LN);
+  } else {
+    u = std::uint32_t(a / 100000000);
+    LG(LN);
+    u = a % 100000000;
+    LN(7);
+  }
 
-    u = n % 100000000;
-    return LZ(7);
+  u = n % 100000000;
+  return LZ(7);
 }
 
-char* i64toa_jeaiii(int64_t i, char* b)
-{
-    uint64_t n = i < 0 ? *b++ = '-', 0 - uint64_t(i) : i;
-    return u64toa_jeaiii(n, b);
+char *i64toa_jeaiii(std::int64_t i, char *b) {
+  std::uint64_t n = i < 0 ? *b++ = '-', 0 - std::uint64_t(i) : i;
+  return u64toa_jeaiii(n, b);
 }

@@ -27,18 +27,18 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
 
-#include <stdint.h>
-#include <type_traits>
-#include <cstring>
+#include <cstdint> // for std::uint32_t, std::uint64_t
+#include <type_traits> // for std::enable_if
+#include <cstring> // for std::memcpy()
 
 struct pair { char t, o; };
 #define P(T) { T, '0' }, { T, '1' }, { T, '2' }, { T, '3' }, { T, '4' }, { T, '5' }, { T, '6' }, { T, '7' }, { T, '8' }, { T, '9' }
 static const pair s_pairs[] = { P('0'), P('1'), P('2'), P('3'), P('4'), P('5'), P('6'), P('7'), P('8'), P('9') };
 
 #define W(N, I) *(pair*)&b[N] = s_pairs[I]
-#define A(N) t = (uint64_t(1) << (32 + N / 5 * N * 53 / 16)) / uint32_t(1e##N) + 1 + N/6 - N/8, t *= u, t >>= N / 5 * N * 53 / 16, t += N / 6 * 4, W(0, t >> 32)
-#define S(N) b[N] = char(uint64_t(10) * uint32_t(t) >> 32) + '0'
-#define D(N) t = uint64_t(100) * uint32_t(t), W(N, t >> 32)
+#define A(N) t = (std::uint64_t(1) << (32 + N / 5 * N * 53 / 16)) / std::uint32_t(1e##N) + 1 + N/6 - N/8, t *= u, t >>= N / 5 * N * 53 / 16, t += N / 6 * 4, W(0, t >> 32)
+#define S(N) b[N] = char(std::uint64_t(10) * std::uint32_t(t) >> 32) + '0'
+#define D(N) t = std::uint64_t(100) * std::uint32_t(t), W(N, t >> 32)
 
 #define C0 b[0] = char(u) + '0'
 #define C1 W(0, u)
@@ -69,60 +69,54 @@ static const pair s_pairs[] = { P('0'), P('1'), P('2'), P('3'), P('4'), P('5'), 
 template<class T> inline T terminate(char* b) { return b; }
 template<> inline void terminate<void>(char* b) { *b = 0; }
 
-template<class RESULT = char*, class T, std::enable_if_t<(sizeof(T) <= sizeof(uint32_t))>* = nullptr>
-inline RESULT int_to_chars_jeaiii(T i, char* b)
-{
-    uint64_t t;
-    uint32_t u = i < 0 ? *b++ = '-', 0u - uint32_t(int32_t(i)) : uint32_t(i);
-    return L09(LAST);
+template<class RESULT = char*, class T, std::enable_if_t<(sizeof(T) <= sizeof(std::uint32_t))>* = nullptr>
+inline RESULT int_to_chars_jeaiii(T i, char *b) {
+  std::uint64_t t;
+  std::uint32_t u = i < 0 ? *b++ = '-', 0u - std::uint32_t(std::int32_t(i)) : std::uint32_t(i);
+  return L09(LAST);
 }
 
-template<class RESULT = char*, class T, std::enable_if_t<(sizeof(T) == sizeof(uint64_t))>* = nullptr>
-inline RESULT int_to_chars_jeaiii(T i, char* b)
-{
-    uint64_t t;
-    uint64_t n = i < 0 ? *b++ = '-', 0u - uint64_t(i) : uint64_t(i);
-    uint32_t u = uint32_t(n);
+template<class RESULT = char*, class T, std::enable_if_t<(sizeof(T) == sizeof(std::uint64_t))>* = nullptr>
+inline RESULT int_to_chars_jeaiii(T i, char *b) {
+  std::uint64_t t;
+  std::uint64_t n = i < 0 ? *b++ = '-', 0u - std::uint64_t(i) : std::uint64_t(i);
+  std::uint32_t u = std::uint32_t(n);
 
-    if (u == n)
-        return L09(LAST);
+  if(u == n)
+    return L09(LAST);
 
-    uint64_t a = n / 100000000u;
-    u = uint32_t(a);
+  std::uint64_t a = n / 100000000u;
+  u = std::uint32_t(a);
 
-    if (u == a)
-    {
-        L09(PART);
-    }
-    else
-    {
-        u = uint32_t(a / 100000000u);
-        L03(PART);
-        u = a % 100000000u;
-        PART(7);
-    }
+  if(u == a) {
+    L09(PART);
+  } else {
+    u = std::uint32_t(a / 100000000u);
+    L03(PART);
+    u = a % 100000000u;
+    PART(7);
+  }
 
-    u = n % 100000000u;
-    return LAST(7);
+  u = n % 100000000u;
+  return LAST(7);
 }
 
 template<class RESULT, class ERROR, ERROR TOO_LARGE, class T>
-inline RESULT to_chars_from_int_jeaiii(char *first, char* last, T value)
-{
-    char temp[20];
-    auto count = last - first;
-    char* next = int_to_chars_jeaiii(value, count < 20 ? temp : first);
+inline RESULT to_chars_from_int_jeaiii(char *first, char *last, T value) {
+  char temp[20];
+  auto count = last - first;
+  char* next = int_to_chars_jeaiii(value, count < 20 ? temp : first);
 
-    // all integers fit in 20 chars
-    if (count < 20)
-    {
-        auto n = next - temp;
-        if (count < n)
-            return { last,  TOO_LARGE };
-        memcpy(first, temp, n);
-        next = first + n;
-    }
-    return { next, ERROR{} };
+  // all integers fit in 20 chars
+  if(count < 20) {
+    auto n = next - temp;
+    if(count < n)
+      return { last,  TOO_LARGE };
+    memcpy(first, temp, n);
+    next = first + n;
+  }
+
+  return { next, ERROR{} };
 }
 
 #define to_chars_from_int to_chars_from_int_jeaiii<std::to_chars_result, std::errc, std::errc::value_too_large>

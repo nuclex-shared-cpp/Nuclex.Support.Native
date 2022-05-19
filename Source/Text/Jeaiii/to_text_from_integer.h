@@ -24,30 +24,30 @@ SOFTWARE.
 */
 
 // converting an integer to text quickly: i.e. division is bad, only do it once, and even then, do it with multiplication
-// 
+//
 // 1. form a 7.32 bit fixed point numner: t = u * 2^32 / 10^log10(u)
 // 2. convert 2 digits at a time [00, 99] by lookup from the integer portion of the fixed point number (the upper 32 bits)
 // 3. multiply the fractional part (the lower 32 bits) by 100 and repeat until 1 or 0 digits left
 // 4. if 1 digit left mulptipy by 10 and convert it (add '0')
-// 
+//
 // N == log10(u)
 // finding N by binary search for a 32bit number N = [0, 9]
 // this is fast and selected such 1 & 2 digit numbers are faster (2 branches) than long numbers (4 branches) for the 10 cases
-//          
-//      /\____________
-//     /  \______     \______
-//    /\   \     \     \     \
-//   0  1  /\    /\    /\    /\
-//        2  3  4  5  6  7  8  9
+//
+//      /\____________              |
+//     /  \______     \______       |
+//    /\   \     \     \     \      |
+//   0  1  /\    /\    /\    /\     |
+//        2  3  4  5  6  7  8  9    |
 //
 // there are other possilities but this is a nice balance and beats out all the count leading zero methods of computing log10(u)
 // WHEN combined with actually converting the number to text (i.e. not tested in isolation without the random branch)
 
 // fully unrolled code is generated to convert numbers for each length with no further branching
 // there is a conditional trick for not branching on the final compare that reduces the cases from 10 to 5, but I could never make it faster
-// 
+//
 // math details
-// 
+//
 // if (log10(u) >= 5 we need extra precision so shift up and then down by log10(u) * log2(10) ~= N * 53 / 16
 // expressions like `N / 5` below are shorthand for `N >= 5 ? 1 : 0` and allow all compilers to generate these constants at compile time even when unoptimized
 // `N / 5 * N * 53 / 16` is read as: `N >= 5 ? N * 53 / 16 : 0`
@@ -125,8 +125,7 @@ namespace jeaiii {
   template<class T, class F> struct _cond<true, T, F> { using type = T; };
   template<bool B, class T, class F> using cond = typename _cond<B, T, F>::type;
 
-  template<class T> inline char* to_text_from_integer(char* b, T i)
-  {
+  template<class T> inline char *to_text_from_integer(char* b, T i) {
     u64 t = u64(i);
 
     if(i < T(0))
