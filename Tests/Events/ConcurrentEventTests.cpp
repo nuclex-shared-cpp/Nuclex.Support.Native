@@ -31,6 +31,7 @@ namespace Nuclex { namespace Support { namespace Events {
   TEST(ConcurrentEventTest, EventsCanBeCreated) {
     EXPECT_NO_THROW(
       ConcurrentEvent<void(int something)> test;
+      NUCLEX_SUPPORT_NDEBUG_UNUSED(test);
     );
   }
 

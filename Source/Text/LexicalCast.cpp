@@ -24,7 +24,11 @@ License along with this library
 #include "Nuclex/Support/Text/LexicalCast.h"
 
 #include "Dragon4/PrintFloat.h"
-#include "AmartinItoa/itoa_impl.h"
+#if defined(_MSC_VER)
+#include "Jeaiii/to_text_from_integer.h"
+#else
+#include "Jeaiii/to_text_from_integer.h"
+#endif
 #include "Ryu/ryu_parse.h"
 
 #include <limits> // for std::numeric_limits
@@ -78,6 +82,7 @@ License along with this library
 // Amartin https://github.com/miloyip/itoa-benchmark/blob/master/src/
 //   o Fastest ever, apparently
 //   o Handles signed and 64 bit integers
+//   x Doesn't compile w/MSVC missing uint128_t
 //
 
 // Goal: convert ascii strings to floating point values
@@ -146,7 +151,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::uint8_t &from) {
     char characters[4];
-    const char *end = ::itoa_fwd(from, characters);
+    const char *end = jeaiii::to_text_from_integer(characters, from);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -170,7 +175,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::int8_t &from) {
     char characters[5];
-    const char *end = ::itoa_fwd(from, characters);
+    const char *end = jeaiii::to_text_from_integer(characters, from);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -194,7 +199,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::uint16_t &from) {
     char characters[6];
-    const char *end = ::itoa_fwd(from, characters);
+    const char *end = jeaiii::to_text_from_integer(characters, from);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -218,7 +223,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::int16_t &from) {
     char characters[7];
-    const char *end = ::itoa_fwd(from, characters);
+    const char *end = jeaiii::to_text_from_integer(characters, from);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -242,7 +247,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::uint32_t &from) {
     char characters[11];
-    const char *end = ::itoa_fwd(from, characters);
+    const char *end = jeaiii::to_text_from_integer(characters, from);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -266,7 +271,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::int32_t &from) {
     char characters[12];
-    const char *end = ::itoa_fwd(from, characters);
+    const char *end = jeaiii::to_text_from_integer(characters, from);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -290,7 +295,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::uint64_t &from) {
     char characters[21];
-    const char *end = ::itoa_fwd(from, characters);
+    const char *end = jeaiii::to_text_from_integer(characters, from);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -314,7 +319,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::int64_t &from) {
     char characters[21];
-    const char *end = ::itoa_fwd(from, characters);
+    const char *end = jeaiii::to_text_from_integer(characters, from);
     return std::string(static_cast<const char *>(characters), end);
   }
 
