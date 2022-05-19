@@ -24,7 +24,7 @@ License along with this library
 #include "Nuclex/Support/Text/LexicalCast.h"
 
 #include "Dragon4/PrintFloat.h"
-#include "Erthink/erthink_u2a.h"
+#include "AmartinItoa/itoa_impl.h"
 #include "Ryu/ryu_parse.h"
 
 #include <limits> // for std::numeric_limits
@@ -68,6 +68,15 @@ License along with this library
 //
 // Erthink https://github.com/leo-yuriev/erthink
 //   o Faster
+//   o Handles signed and 64 bit integers
+//   x Author has become a Putin/Dugin fascist
+//
+// Jeaiii https://github.com/jeaiii/itoa
+//   o Fastest...est (better than Vitaut even)
+//   o Handles signed and 64 bit integers
+//
+// Amartin https://github.com/miloyip/itoa-benchmark/blob/master/src/
+//   o Fastest ever, apparently
 //   o Handles signed and 64 bit integers
 //
 
@@ -137,7 +146,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::uint8_t &from) {
     char characters[4];
-    const char *end = erthink::u2a(static_cast<std::uint32_t>(from), characters);
+    const char *end = ::itoa_fwd(from, characters);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -161,7 +170,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::int8_t &from) {
     char characters[5];
-    const char *end = erthink::i2a(static_cast<std::int32_t>(from), characters);
+    const char *end = ::itoa_fwd(from, characters);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -185,7 +194,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::uint16_t &from) {
     char characters[6];
-    const char *end = erthink::u2a(static_cast<std::uint32_t>(from), characters);
+    const char *end = ::itoa_fwd(from, characters);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -209,7 +218,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::int16_t &from) {
     char characters[7];
-    const char *end = erthink::i2a(static_cast<std::int32_t>(from), characters);
+    const char *end = ::itoa_fwd(from, characters);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -233,7 +242,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::uint32_t &from) {
     char characters[11];
-    const char *end = erthink::u2a(from, characters);
+    const char *end = ::itoa_fwd(from, characters);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -257,7 +266,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::int32_t &from) {
     char characters[12];
-    const char *end = erthink::i2a(from, characters);
+    const char *end = ::itoa_fwd(from, characters);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -281,7 +290,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::uint64_t &from) {
     char characters[21];
-    const char *end = erthink::u2a(from, characters);
+    const char *end = ::itoa_fwd(from, characters);
     return std::string(static_cast<const char *>(characters), end);
   }
 
@@ -305,7 +314,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> std::string lexical_cast<>(const std::int64_t &from) {
     char characters[21];
-    const char *end = erthink::i2a(from, characters);
+    const char *end = ::itoa_fwd(from, characters);
     return std::string(static_cast<const char *>(characters), end);
   }
 
