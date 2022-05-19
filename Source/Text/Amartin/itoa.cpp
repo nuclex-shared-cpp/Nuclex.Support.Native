@@ -22,6 +22,8 @@
 // SOFTWARE.
 //===----------------------------------------------------------------------===//
 
+#if !defined(_MSC_VER) // MSVC is lacking the __int128_t type
+
 #include "itoa.h"
 #include <utility>
 
@@ -36,3 +38,5 @@ namespace dec_
             return char('0' + ((i%2) ? ((i/2)%10) : ((i/2)/10)));
         }, std::make_index_sequence<200>{} );
 }
+
+#endif // !defined(_MSC_VER)

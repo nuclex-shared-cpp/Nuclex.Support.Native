@@ -22,6 +22,8 @@
 // SOFTWARE.
 //===----------------------------------------------------------------------===//
 
+#if !defined(_MSC_VER) // MSVC is lacking the __int128_t type
+
 #ifndef DEC_ITOA_IMPL_H
 #define DEC_ITOA_IMPL_H
 
@@ -261,3 +263,5 @@ template<typename I> char* itoa_rev (I i,char *p) {
 }
 
 #endif // DEC_ITOA_IMPL_H
+
+#endif // !defined(_MSC_VER)

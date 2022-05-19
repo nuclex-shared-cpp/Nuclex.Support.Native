@@ -22,17 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <cstdint>
-#include <cstddef>
+#include <stdint.h>
 
 struct pair { char t, o; };
 #define P(T) T, '0',  T, '1', T, '2', T, '3', T, '4', T, '5', T, '6', T, '7', T, '8', T, '9'
 static const pair s_pairs[] = { P('0'), P('1'), P('2'), P('3'), P('4'), P('5'), P('6'), P('7'), P('8'), P('9') };
 
 #define W(N, I) *(pair*)&b[N] = s_pairs[I]
-#define A(N) t = (std::uint64_t(1) << (32 + N / 5 * N * 53 / 16)) / std::uint32_t(1e##N) + 1 + N/6 - N/8, t *= u, t >>= N / 5 * N * 53 / 16, t += N / 6 * 4, W(0, t >> 32)
-#define S(N) b[N] = char(std::uint64_t(10) * std::uint32_t(t) >> 32) + '0'
-#define D(N) t = std::uint64_t(100) * std::uint32_t(t), W(N, t >> 32)
+#define A(N) t = (uint64_t(1) << (32 + N / 5 * N * 53 / 16)) / uint32_t(1e##N) + 1 + N/6 - N/8, t *= u, t >>= N / 5 * N * 53 / 16, t += N / 6 * 4, W(0, t >> 32)
+#define S(N) b[N] = char(uint64_t(10) * uint32_t(t) >> 32) + '0'
+#define D(N) t = uint64_t(100) * uint32_t(t), W(N, t >> 32)
 
 #define C0 b[0] = char(u) + '0'
 #define C1 W(0, u)
@@ -60,33 +59,33 @@ static const pair s_pairs[] = { P('0'), P('1'), P('2'), P('3'), P('4'), P('5'), 
 #define POS(N) (N < length ? C##N, N + 1 : N + 1)
 #define NEG(N) (N + 1 < length ? *b++ = '-', C##N, N + 2 : N + 2)
 
-std::size_t to_chars_jeaiii(char* b, std::size_t length, std::uint32_t u)
+size_t to_chars_jeaiii(char* b, size_t length, uint32_t u)
 {
-    std::uint64_t t;
+    uint64_t t;
     return L09(POS);
 }
 
-std::size_t to_chars_jeaiii(char* b, std::size_t length, std::int32_t i)
+size_t to_chars_jeaiii(char* b, size_t length, int32_t i)
 {
-    std::uint64_t t;
-    std::uint32_t u = i;
+    uint64_t t;
+    uint32_t u = i;
     return i < 0 ? u = 0 - u, L09(NEG) : L09(POS);
 }
 
-std::size_t to_chars_jeaiii(char* b, std::size_t length, std::uint64_t n)
+size_t to_chars_jeaiii(char* b, size_t length, uint64_t n)
 {
     size_t count;
-    std::uint32_t u = std::uint32_t(n);
-    std::uint64_t t;
+    uint32_t u = uint32_t(n);
+    uint64_t t;
 
     if (u == n)
         return L09(POS);
 
-    std::uint64_t a = n / 100000000;
+    uint64_t a = n / 100000000;
 
-    if (std::uint32_t(a) == a)
+    if (uint32_t(a) == a)
     {
-        u = std::uint32_t(a);
+        u = uint32_t(a);
         b += count = L09(POS);
         count += 8;
         if (count > length)
@@ -94,7 +93,7 @@ std::size_t to_chars_jeaiii(char* b, std::size_t length, std::uint64_t n)
     }
     else
     {
-        u = std::uint32_t(a / 100000000);
+        u = uint32_t(a / 100000000);
         b += count = L03(POS);
         count += 16;
         if (count > length)
@@ -110,9 +109,9 @@ std::size_t to_chars_jeaiii(char* b, std::size_t length, std::uint64_t n)
     return count;
 }
 
-std::size_t to_chars_jeaiii(char* b, std::size_t length, std::int64_t i)
+size_t to_chars_jeaiii(char* b, size_t length, int64_t i)
 {
     return i < 0
-        ? to_chars_jeaiii(b + 1, length > 0 ? b[0] = '-', length - 1 : 0, std::uint64_t(0) - std::uint64_t(i)) + 1
-        : to_chars_jeaiii(b, length, std::uint64_t(i));
+        ? to_chars_jeaiii(b + 1, length > 0 ? b[0] = '-', length - 1 : 0, uint64_t(0) - uint64_t(i)) + 1
+        : to_chars_jeaiii(b, length, uint64_t(i));
 }

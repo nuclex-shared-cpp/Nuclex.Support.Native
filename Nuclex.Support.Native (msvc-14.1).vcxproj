@@ -314,6 +314,9 @@
     <ClCompile Include="Source\Settings\MemorySettingsStore.cpp" />
     <ClCompile Include="Source\Settings\RegistrySettingsStore.cpp" />
     <ClCompile Include="Source\Settings\SettingsStore.cpp" />
+    <ClCompile Include="Source\Text\Amartin\itoa.cpp" />
+    <ClInclude Include="Source\Text\Amartin\itoa.h" />
+    <ClInclude Include="Source\Text\Amartin\itoa_impl.h" />
     <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp" />
     <ClInclude Include="Source\Text\Dragon4\Dragon4.h" />
     <ClInclude Include="Source\Text\Dragon4\Math.h" />
@@ -321,13 +324,11 @@
     <ClInclude Include="Source\Text\Dragon4\PrintFloat.h" />
     <ClInclude Include="Source\Text\Dragon4\Standard.h" />
     <ClCompile Include="Source\Text\Dragon4\Math.cpp" />
-    <ClInclude Include="Source\Text\Erthink\erthink.h" />
-    <ClInclude Include="Source\Text\Erthink\erthink_arch.h" />
-    <ClInclude Include="Source\Text\Erthink\erthink_defs.h" />
-    <ClInclude Include="Source\Text\Erthink\erthink_misc.h" />
-    <ClInclude Include="Source\Text\Erthink\erthink_u2a.h" />
+    <ClInclude Include="Source\Text\Jeaiii\int_to_chars_jeaiii.h" />
+    <ClCompile Include="Source\Text\Jeaiii\itoa_jeaiii.cpp" />
+    <ClCompile Include="Source\Text\Jeaiii\to_chars.cpp" />
+    <ClInclude Include="Source\Text\Jeaiii\to_text_from_integer.h" />
     <ClInclude Include="Source\Text\Ryu\common.h" />
-    <ClCompile Include="Source\Text\ParserHelper.cpp" />
     <ClCompile Include="Source\Text\Ryu\d2fixed.c" />
     <ClInclude Include="Source\Text\Ryu\d2fixed_full_table.h" />
     <ClCompile Include="Source\Text\Ryu\d2s.c" />
@@ -348,6 +349,7 @@
     <ClCompile Include="Source\Text\LexicalAppend.cpp" />
     <ClCompile Include="Source\Text\LexicalCast.cpp" />
     <ClCompile Include="Source\Text\Logger.cpp" />
+    <ClCompile Include="Source\Text\ParserHelper.cpp" />
     <ClCompile Include="Source\Text\RollingLogger.cpp" />
     <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
@@ -384,6 +386,7 @@
     <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf" />
     <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf" />
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
+    <None Include="ReadMe.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Nuclex.Support.Native.def" />

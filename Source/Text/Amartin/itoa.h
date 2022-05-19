@@ -22,6 +22,8 @@
 // SOFTWARE.
 //===----------------------------------------------------------------------===//
 
+#if !defined(_MSC_VER) // MSVC is lacking the __int128_t type
+
 #ifndef DEC_ITOA_CONVERT_H
 #define DEC_ITOA_CONVERT_H
 
@@ -38,3 +40,5 @@ template<typename I> char* itoa_fwd (I i,char *buffer);
 template<typename I> char* itoa_rev (I i,char *buffer);
 
 #endif // DEC_ITOA_CONVERT_H
+
+#endif // !defined(_MSC_VER)
