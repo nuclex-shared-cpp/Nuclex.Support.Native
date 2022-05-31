@@ -57,6 +57,11 @@ License along with this library
 //   o Alway outputs exact number
 //   o No control over exponential notation
 //
+// DragonBox https://github.com/jk-jeon/dragonbox
+//   o Always outputs exact number
+//   o Fastest formatter around as of 2022
+//   o Outputs two integers (value and exponent)
+//
 
 // Goal: print integral values accurately and fast
 //   https://stackoverflow.com/questions/7890194/
@@ -70,7 +75,7 @@ License along with this library
 // Vitaut https://github.com/fmtlib/fmt
 //   o Fastest
 //
-// Erthink https://github.com/leo-yuriev/erthink
+// Erthink https://github.com/leo-yuriev/erthink (defunct)
 //   o Faster
 //   o Handles signed and 64 bit integers
 //   x Author has become a Putin/Dugin fascist
@@ -79,7 +84,7 @@ License along with this library
 //   o Fastest...est (better than Vitaut even)
 //   o Handles signed and 64 bit integers
 //
-// Amartin https://github.com/miloyip/itoa-benchmark/blob/master/src/
+// Amartin https://github.com/amdn/itoa
 //   o Fastest ever, apparently
 //   o Handles signed and 64 bit integers
 //   x Doesn't compile w/MSVC missing uint128_t

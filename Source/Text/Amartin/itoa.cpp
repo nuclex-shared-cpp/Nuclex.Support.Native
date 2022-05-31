@@ -24,7 +24,7 @@
 
 #if !defined(_MSC_VER) // MSVC is lacking the __int128_t type
 
-#include "itoa.h"
+#include "./itoa.h"
 #include <utility>
 
 namespace dec_

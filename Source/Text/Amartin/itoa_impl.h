@@ -27,7 +27,8 @@
 #ifndef DEC_ITOA_IMPL_H
 #define DEC_ITOA_IMPL_H
 
-#include "itoa.h"
+#include "./itoa.h"
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -83,8 +84,10 @@ namespace dec_ {
         MulInv< uint8_t,   0,                  205U, 11 >,
         MulInv< uint16_t,  1,                41943U, 22 >,
         MulInv< uint32_t,  0,           3518437209U, 45 >,
-        MulInv< uint64_t,  0, 12379400392853802749U, 90 >,
-        MulInv< uint128_t, 0, 0, 0 >
+        MulInv< uint64_t,  0, 12379400392853802749U, 90 >
+#if !defined(_MSC_VER) // MSVC doesn't do 128 bit integers
+        ,MulInv< uint128_t, 0, 0, 0 >
+#endif
         >::U;
     template<int N> using U = typename MI<N>::type;
 

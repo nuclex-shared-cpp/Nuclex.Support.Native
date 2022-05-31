@@ -135,6 +135,13 @@ namespace Nuclex { namespace Support { namespace Events {
     //    I see no circumstance in which that would become a problem, only removal,
     //    so long as the notification order is arbitrary
     //
+    // -------------------------
+    //
+    // Switcheroo:
+    //
+    // Have a list of subscribers and another list that .
+    //
+    //
 
     /// <summary>Subscribes the specified free function to the event</summary>
     /// <typeparam name="TMethod">Free function that will be subscribed</typeparam>

@@ -143,7 +143,7 @@ namespace Nuclex { namespace Support {
     /// <returns>The next random number after the seed value</returns>
     /// <remarks>
     ///   This is a blazingly fast method of generating random numbers, but the entropy
-    ///   is not very high. It's useful if one need to generate kilobytes or megabytes of
+    ///   is not very high. It's useful if one needs to generate kilobytes or megabytes of
     ///   semi-random data. Don't even think about using this with cryptographic algorithms!
     /// </remarks>
     public: NUCLEX_SUPPORT_API static constexpr std::uint32_t XorShiftRandom(std::uint32_t seed);
@@ -153,7 +153,7 @@ namespace Nuclex { namespace Support {
     /// <returns>The next random number after the seed value</returns>
     /// <remarks>
     ///   This is a blazingly fast method of generating random numbers, but the entropy
-    ///   is not very high. It's useful if one need to generate kilobytes or megabytes of
+    ///   is not very high. It's useful if one needs to generate kilobytes or megabytes of
     ///   semi-random data. Don't even think about using this with cryptographic algorithms!
     /// </remarks>
     public: NUCLEX_SUPPORT_API static constexpr std::uint64_t XorShiftRandom(std::uint64_t seed);

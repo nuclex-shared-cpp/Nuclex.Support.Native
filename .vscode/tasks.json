@@ -4,17 +4,51 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build",
+      "label": "Build (CMake)",
       "group": {
         "kind": "build",
         "isDefault": true
       },
       "type": "shell",
-      "command": "scons",
+      "command": "cmake",
       "args": [
-        "-j16",
-        "DEBUG=1"
+        "--build", "obj/cmake-Debug",
+        "--config", "Debug",
+        "--parallel", "16"
       ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "Install (CMake)",
+      "dependsOn": [ "Build (CMake)" ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--install", "obj/cmake-Debug",
+        "--config", "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "Run Tests (CMake)",
+      "dependsOn": [ "Install (CMake)" ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "type": "shell",
+      "command": "bin/linux-gcc11.2-amd64-debug/NuclexSupportNativeTests",
+      "args": [ ],
       "options": {
         "cwd": "${workspaceFolder}"
       },

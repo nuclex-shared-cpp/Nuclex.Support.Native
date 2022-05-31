@@ -9,26 +9,29 @@ project(
 	DESCRIPTION "Utility functions and basic interface definitions"
 )
 
-# Contains compiler options, compiler tag for output directory, etc.
-include("../BuildSystem/cmake/cplusplus.cmake")
-
 set(BUILD_DOCS OFF CACHE BOOL "Whether to generate documentation via Doxygen")
 
 # -------------------------------------------------------------------------------------------------
 
-# Include threading library (on Linux/Posix pthreads must be linked)
-find_package(Threads REQUIRED)
+# Contains compiler options, compiler tag for output directory, etc.
+include("../BuildSystem/cmake/cplusplus.cmake")
 
-# Use CMake's own package for locating Doxygen on the system
-if(BUILD_DOCS)
-	find_package(Doxygen)
-endif()
+# The Unix build pipeline doesn't automatically include threading, so search for
+# the pthreads library in order to link against it later on.
+#   https://en.wikipedia.org/wiki/Pthreads
+find_package(Threads REQUIRED)
 
 # Add GoogleTest as a sub-project so we can link our unit test executable
 # Already included by Nuclex.Support.Native, CMake doesn't like a second inclusion...
 if(NOT (TARGET GoogleTest))
 	add_subdirectory(${PROJECT_SOURCE_DIR}/../ThirdParty/gtest ${CMAKE_BINARY_DIR}/gtest)
 endif()
+
+# Use CMake's own package for locating Doxygen on the system
+if(BUILD_DOCS)
+	find_package(Doxygen)
+endif()
+
 
 # -------------------------------------------------------------------------------------------------
 

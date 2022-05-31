@@ -114,20 +114,20 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline constexpr bool ParserHelper::IsWhitespace(std::uint8_t utf8Byte) {
+  inline constexpr bool ParserHelper::IsWhitespace(char8_t utf8Character) {
     return (
       (
-        (utf8Byte >= std::uint8_t(0x09)) && // (see below)
-        (utf8Byte < std::uint8_t(0x0e))
+        (utf8Character >= std::uint8_t(0x09)) && // (see below)
+        (utf8Character < std::uint8_t(0x0e))
       ) ||
-      (utf8Byte == std::uint8_t(0x20)) // space
+      (utf8Character == std::uint8_t(0x20)) // space
     );
     // Covered via range:
-    // (utf8Byte == std::uint8_t(0x09)) || // tab
-    // (utf8Byte == std::uint8_t(0x0a)) || // line feed
-    // (utf8Byte == std::uint8_t(0x0b)) || // line tabulation
-    // (utf8Byte == std::uint8_t(0x0c)) || // form feed
-    // (utf8Byte == std::uint8_t(0x0d)) || // carriage return
+    // (utf8Character == std::uint8_t(0x09)) || // tab
+    // (utf8Character == std::uint8_t(0x0a)) || // line feed
+    // (utf8Character == std::uint8_t(0x0b)) || // line tabulation
+    // (utf8Character == std::uint8_t(0x0c)) || // form feed
+    // (utf8Character == std::uint8_t(0x0d)) || // carriage return
   }
 
   // ------------------------------------------------------------------------------------------- //
