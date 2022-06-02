@@ -24,9 +24,10 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Events/Delegate.h"
 
-#include <atomic>
-#include <algorithm> // for std::copy_n()
-#include <vector> // for std::vector
+#include <cstdint> // for std::uint8_t
+#include <atomic> // for std::atomic
+#include <memory> // for std::shared_ptr
+#include <mutex> // for std::mutex
 
 namespace Nuclex { namespace Support { namespace Events {
 
@@ -139,9 +140,34 @@ namespace Nuclex { namespace Support { namespace Events {
     //
     // Switcheroo:
     //
-    // Have a list of subscribers and another list that .
+    // Even firing is still assumed to be much more frequent than subscribe/unsubscribe.
     //
+    // - Have a list of subscribers and another list that is used to add/remove stuff
+    //   Problem: how to switch out the broadcast and edit queue instances?
     //
+    // - It all comes back to needing an access counter for the broadcast queue.
+    //
+    // Alternative
+    //
+    // - Have an on-demand mutex only for editing and a shared_ptr to the list that
+    //   broadcast threads simply acquire (and the promise that the list is immutable)
+    //
+    //   struct BroadcastQueue {
+    //     Delegate *Subscribers;    // Plain array of subscribers? Singly linked list instead? Deque-like?
+    //     size_t SubscriberCount;   // Number of Subscribers in the list
+    //   };
+    //
+    //   // Will be reassigned if queue is edited
+    //   std::shared_ptr<BroadcastQueue> broadcastQueue;
+    //
+    //   // Problem: how to synchronize edits? What if I don't want a permanent mutex?
+    //   // Can I C-A-S a shared_ptr to a mutex?
+    //   std::atomic<std::shared_ptr<std::mutex>> editMutex;
+    //
+    //   // If it works, how costly is it to construct a mutex?
+    //   // If pthreads, it's just a bunch of ints. In Windows, is there a kernel mode switch?
+    //
+
 
     /// <summary>Subscribes the specified free function to the event</summary>
     /// <typeparam name="TMethod">Free function that will be subscribed</typeparam>
@@ -171,52 +197,78 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Subscribes the specified delegate to the event</summary>
     /// <param name="delegate">Delegate that will be subscribed</param>
     public: void Subscribe(const DelegateType &delegate) {
+      /*
       this->accessCount.fetch_add(1, std::memory_order::memory_order_release);
       SubscriberQueue subscriberQueue = this->subscribers.load(
         std::memory_order::memory_order_acquire
       );
 
       std::size_t requiredByteCount = sizeof(SubscriberQueue);
+      */
 
 
     }
 
-    #pragma region struct Subscriber
+    #pragma region struct BroadcastQueue
 
-    /// <summary>Linked list node storing a subscriber callback for the event</summary>
-    private: struct Subscriber {
+    /// <summary>Queue of subscribers to which the event will be broadcast</summary>
+    private: struct BroadcastQueue {
 
-      /// <summary>Delegate through which the subscriber will be called</summary>
-      public: DelegateType Callback;
-      /// <summary>Link to the next subscriber to the event</summary>
-      public: Subscriber *Next;
+      public: BroadcastQueue(std::size_t count) :
+        Subscribers(allocateUninitializedDelegates(count)),
+        SubscriberCount(count),
+        ReferenceCount(1) {}
+
+      public: ~BroadcastQueue() {
+        freeDelegatesWithoutDestructor(this->Subscribers);
+      }
+
+      BroadcastQueue(const BroadcastQueue &other) = delete;
+      BroadcastQueue(BroadcastQueue &&other) = delete;
+      void operator =(const BroadcastQueue &other) = delete;
+      void operator =(BroadcastQueue &&other) = delete;
+
+      private: static DelegateType *allocateUninitializedDelegates(std::size_t count) {
+        return reinterpret_cast<DelegateType *>(
+          new std::uint8_t *[sizeof(DelegateType[2]) * count / 2]
+        );
+      }
+
+      private: static void freeDelegatesWithoutDestructor(DelegateType *delegates) {
+        delete[] reinterpret_cast<std::uint8_t *>(delegates);
+      }
+
+      /// <summary>Plain array of all subscribers to which the event is broadcast</summary>
+      public: DelegateType *Subscribers;
+      /// <summary>Number of subscribers stored in the array</summary>
+      public: std::size_t SubscriberCount;
+      /// <summary>Number of references to this instance of the broadcast queue<</summary>
+      public: std::atomic<std::size_t> ReferenceCount;
 
     };
 
-    #pragma endregion // struct Subscriber
+    #pragma endregion // struct BroadcastQueue
 
-    #pragma region struct SubscriberQueue
+    #pragma region struct SharedMutex
 
-    /// <summary>Queue of subscribes with access counter for opportunistic free</summary>
-    private: struct SubscriberQueue {
+    /// <summary>Queue of subscribers to which the event will be broadcast</summary>
+    private: struct SharedMutex {
 
-      /// <summary>First subscriber in the queue (in a singly linked list)</summary>
-      public: Subscriber *First;
-      /// <summary>Next queue if this queue is inthe opportunistic free set</summary>
-      public: std::atomic<SubscriberQueue *> Next;
+      public: SharedMutex() = default;
+
+      /// <summary>Mutex that is shared between multiple owners</summary>
+      public: std::mutex Mutex;
+      /// <summary>Number of references to this instance of shared mutex<</summary>
+      public: std::atomic<std::size_t> ReferenceCount;
 
     };
 
-    #pragma endregion // struct SubscriberQueue
+    #pragma endregion // struct SharedMutex
 
-    /// <summary>Number of active accessors to any subscriber list</summary>
-    private: std::atomic<std::size_t> accessCount;
-
-    /// <summary>Current subscribers to the event that will receive broadcasts</summary>
-    private: std::atomic<SubscriberQueue *> subscribers;
-    /// <summary>Older subscriber lists to deallocate when ceasing access</summary>
-    private: std::atomic<SubscriberQueue *> previousSubscribers;
-
+    /// <summary>Stores the current subscribers to the event</summary>
+    public: std::atomic<BroadcastQueue *> subscribers;
+    /// <summary>Will be present while subscriptions/unsubscriptions happen</summary>
+    public: std::atomic<SharedMutex *> editMutex;
 
   };
 
@@ -224,4 +276,4 @@ namespace Nuclex { namespace Support { namespace Events {
 
 }}} // namespace Nuclex::Support::Events
 
-#endif // NUCLEX_SUPPORT_EVENTS_EVENT_H
+#endif // NUCLEX_SUPPORT_EVENTS_CONCURRENTEVENT_H
