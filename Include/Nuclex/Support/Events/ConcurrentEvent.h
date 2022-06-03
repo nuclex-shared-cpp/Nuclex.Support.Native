@@ -166,7 +166,10 @@ namespace Nuclex { namespace Support { namespace Events {
     //
     //   // If it works, how costly is it to construct a mutex?
     //   // If pthreads, it's just a bunch of ints. In Windows, is there a kernel mode switch?
-    //
+
+
+    public: ConcurrentEvent() {
+    }
 
 
     /// <summary>Subscribes the specified free function to the event</summary>
@@ -197,16 +200,41 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Subscribes the specified delegate to the event</summary>
     /// <param name="delegate">Delegate that will be subscribed</param>
     public: void Subscribe(const DelegateType &delegate) {
-      /*
-      this->accessCount.fetch_add(1, std::memory_order::memory_order_release);
-      SubscriberQueue subscriberQueue = this->subscribers.load(
-        std::memory_order::memory_order_acquire
+      std::shared_ptr<std::mutex> currentEditMutex = std::atomic_load_explicit(
+        &this->editMutex, std::memory_order::memory_order_consume // if() carries dependency
       );
+      while(!currentEditMutex) {
+        std::atomic_compare_exchange_strong(
+          &this->editMutex, // pointer that will be replaced
+          &currentEditMutex, // expected prior mutex, receives current on failure
+          std::make_shared<std::mutex>() // new mutex to assign if previous was empty
+        );
+      }
 
-      std::size_t requiredByteCount = sizeof(SubscriberQueue);
-      */
+      // At this point, we either grabbed the existing mutex or made our new mutex available
+      // for other threads attempting to edit the subscriber list.
+      //
+      // Since we C-A-S to kill the mutex only after all work is done,
+      // we sidestep a possible race condition where multiple mutexes may exist
 
+      // Build a new broadcast list with the new subscriber appended to the end
+      {
+        std::lock_guard<std::mutex> editMutexLock(currentEditMutex);
 
+        //assert(!!this->subscribers && u8"Subscriber queue is always present");
+        if(!this->subscribers) {
+          std::shared_ptr<BroadcastQueue> newQueue = std::make_shared<BroadcastQueue>(1);
+        } else {
+          const BroadcastQueue &currentQueue = *this->subscribers.get();
+
+          std::shared_ptr<BroadcastQueue> newQueue = std::make_shared<BroadcastQueue>(
+            currentQueue.SubscriberCount + 1
+          );
+          // TODO: Copy queue
+
+        }
+
+      }
     }
 
     #pragma region struct BroadcastQueue
@@ -216,8 +244,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
       public: BroadcastQueue(std::size_t count) :
         Subscribers(allocateUninitializedDelegates(count)),
-        SubscriberCount(count),
-        ReferenceCount(1) {}
+        SubscriberCount(count) {}
 
       public: ~BroadcastQueue() {
         freeDelegatesWithoutDestructor(this->Subscribers);
@@ -242,8 +269,6 @@ namespace Nuclex { namespace Support { namespace Events {
       public: DelegateType *Subscribers;
       /// <summary>Number of subscribers stored in the array</summary>
       public: std::size_t SubscriberCount;
-      /// <summary>Number of references to this instance of the broadcast queue<</summary>
-      public: std::atomic<std::size_t> ReferenceCount;
 
     };
 
@@ -254,7 +279,10 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Queue of subscribers to which the event will be broadcast</summary>
     private: struct SharedMutex {
 
-      public: SharedMutex() = default;
+      /// <summary>Initializes a new shared mutex</summary>
+      public: SharedMutex() :
+        Mutex(),
+        ReferenceCount(1) {}
 
       /// <summary>Mutex that is shared between multiple owners</summary>
       public: std::mutex Mutex;
@@ -266,9 +294,9 @@ namespace Nuclex { namespace Support { namespace Events {
     #pragma endregion // struct SharedMutex
 
     /// <summary>Stores the current subscribers to the event</summary>
-    public: std::atomic<BroadcastQueue *> subscribers;
+    public: /* atomic */ std::shared_ptr<const BroadcastQueue> subscribers;
     /// <summary>Will be present while subscriptions/unsubscriptions happen</summary>
-    public: std::atomic<SharedMutex *> editMutex;
+    public: /* atomic */ std::shared_ptr<std::mutex> editMutex;
 
   };
 
