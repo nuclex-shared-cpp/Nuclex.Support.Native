@@ -29,6 +29,7 @@ License along with this library
 #include <atomic> // for std::atomic
 #include <memory> // for std::shared_ptr
 #include <mutex> // for std::mutex
+#include <algorithm> // for std::copy_n()
 
 namespace Nuclex { namespace Support { namespace Events {
 
@@ -80,115 +81,6 @@ namespace Nuclex { namespace Support { namespace Events {
 
     #pragma endregion // struct SharedMutex
 
-
-
-    // Plan:
-    //
-    // - Counter
-    // - If counter after increment >= 2, check heap
-    // - 2 stack-alloc'd subscribers
-    // - (status: 0 free, 1 building, 2 subscribed) ?
-    // - Array or linked list of subscribes
-    //
-    // Reclamation:
-    //
-    // - Call counter?
-    // - At decrement, CAS with 0xff special value if it is 1
-    //   - If special value was applied, process free list
-    //   - Otherwise do normal decrement (may miss opportunities to free)
-    //
-    //
-    // Reclamation 2:
-    //
-    // - Opportunistic mutex?
-    // - At decrement, try_lock() and if succeeds, process free list
-    // -
-    //
-    // Crazy 1:
-    //
-    // - First built-in subscriber's 'Next' link is the free list
-    // - Second built-in subscriber's 'Next' link is the additional subscriber list
-
-    //
-    // -----------------------------------
-    //
-    // Possible:
-    //
-    //  Hybrid Mutex/Lock-Wait-Free Broadcast Queue
-    //
-    //  - Singly linked list of subscribers
-    //  - Counter that is incremented while firing
-    //
-    //  - Subscribe()/Unsubscribe() enter Mutex
-    //  - Clone complete subscriber list with desired modification
-    //  - Exchange subscriber list start node
-    //  - Leave Mutex
-    //
-    //  - When publisher sees counter go to 0, clean up exchanged (orphaned) lists
-    //    (tricky, should not enter mutex)
-    //
-    //  Possible improvement
-    //
-    //  - Like above, but Subscribe()/Unsubscribe() check counter
-    //  - If counter is zero at end of Subscribe()/Unsubscribe(), then no
-    //    broadcast is currently active and exchanged list can be deleted immediately
-    //
-    //  Another improvement
-    //
-    //  - If counter is not zero at decrement after Unsubscribe(), CAS-append to
-    //    opportunistic-free list
-    //  - Broadcast will check opportunistic-free list when decrement causes counter
-    //    to hit zero.
-    //
-    //  - PROBLEM: How to ensure that between counter hitting zero and CASing the free
-    //    list, the free list isn't modified by a concurrent Susbcribe()/Unsubscribe()?
-    //  - FIX?: Queue of queues where the broadcast list has its own counter and
-    //          Unsubscribe() appends it to a queue of queues to be opportunistically freed?
-    //
-    //  Alternative improvement
-    //
-    //  - Subscribe()/Unsubscribe() simply enter a busy spin when the counter is not zero.
-    //  - SHITTY: Who says an event can't spend seconds per broadcast receiver? Would then
-    //            block the Subscribe()/Unsubscribe() caller very long and cause 100% CPU.
-    //
-    //  Trick
-    //
-    //  - Is adding by prepending generally safe?
-    //    I see no circumstance in which that would become a problem, only removal,
-    //    so long as the notification order is arbitrary
-    //
-    // -------------------------
-    //
-    // Switcheroo:
-    //
-    // Even firing is still assumed to be much more frequent than subscribe/unsubscribe.
-    //
-    // - Have a list of subscribers and another list that is used to add/remove stuff
-    //   Problem: how to switch out the broadcast and edit queue instances?
-    //
-    // - It all comes back to needing an access counter for the broadcast queue.
-    //
-    // Alternative
-    //
-    // - Have an on-demand mutex only for editing and a shared_ptr to the list that
-    //   broadcast threads simply acquire (and the promise that the list is immutable)
-    //
-    //   struct BroadcastQueue {
-    //     Delegate *Subscribers;    // Plain array of subscribers? Singly linked list instead? Deque-like?
-    //     size_t SubscriberCount;   // Number of Subscribers in the list
-    //   };
-    //
-    //   // Will be reassigned if queue is edited
-    //   std::shared_ptr<BroadcastQueue> broadcastQueue;
-    //
-    //   // Problem: how to synchronize edits? What if I don't want a permanent mutex?
-    //   // Can I C-A-S a shared_ptr to a mutex?
-    //   std::atomic<std::shared_ptr<std::mutex>> editMutex;
-    //
-    //   // If it works, how costly is it to construct a mutex?
-    //   // If pthreads, it's just a bunch of ints. In Windows, is there a kernel mode switch?
-
-
     /// <summary>Initializes a new concurrent event</summary>
     public: ConcurrentEvent() = default;
 
@@ -225,10 +117,7 @@ namespace Nuclex { namespace Support { namespace Events {
         releaseMutex(currentEditMutex);
       };
       {
-        currentEditMutex->Mutex.lock();
-        ON_SCOPE_EXIT {
-          currentEditMutex->Mutex.unlock();
-        };
+        std::lock_guard<std::mutex> mutexLockScope(currentEditMutex->Mutex);
 
         // Build a new broadcast list with the new subscriber appended to the end
         {
@@ -255,30 +144,128 @@ namespace Nuclex { namespace Support { namespace Events {
       } // edit mutex lock scope
     }
 
+    /// <summary>Unsubscribes the specified free function from the event</summary>
+    /// <typeparam name="TMethod">
+    ///   Free function that will be unsubscribed from the event
+    /// </typeparam>
+    /// <returns>True if the object method was subscribed and has been unsubscribed</returns>
+    public: template<TResult(*TMethod)(TArguments...)>
+    bool Unsubscribe() {
+      return Unsubscribe(DelegateType::template Create<TMethod>());
+    }
+
+    /// <summary>Unsubscribes the specified object method from the event</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">
+    ///   Object method that will be unsubscribes from the event
+    /// </typeparam>
+    /// <param name="instance">Instance on which the object method was subscribed</param>
+    /// <returns>True if the object method was subscribed and has been unsubscribed</returns>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...)>
+    bool Unsubscribe(TClass *instance) {
+      return Unsubscribe(DelegateType::template Create<TClass, TMethod>(instance));
+    }
+
+    /// <summary>Unsubscribes the specified object method from the event</summary>
+    /// <typeparam name="TClass">Class the object method is a member of</typeparam>
+    /// <typeparam name="TMethod">
+    ///   Object method that will be unsubscribes from the event
+    /// </typeparam>
+    /// <param name="instance">Instance on which the object method was subscribed</param>
+    /// <returns>True if the object method was subscribed and has been unsubscribed</returns>
+    public: template<typename TClass, TResult(TClass::*TMethod)(TArguments...) const>
+    bool Unsubscribe(const TClass *instance) {
+      return Unsubscribe(DelegateType::template Create<TClass, TMethod>(instance));
+    }
+
+    /// <summary>Unsubscribes the specified delegate from the event</summary>
+    /// <param name="delegate">Delegate that will be unsubscribed</param>
+    /// <returns>True if the callback was found and unsubscribed, false otherwise</returns>
+    public: bool Unsubscribe(const DelegateType &delegate) {
+      std::shared_ptr<SharedMutex> currentEditMutex = acquireMutex();
+      ON_SCOPE_EXIT {
+        releaseMutex(currentEditMutex);
+      };
+      {
+        std::lock_guard<std::mutex> mutexLockScope(currentEditMutex->Mutex);
+        {
+          if(!this->subcribers) {
+            return false; // There were no subscribers...
+          }
+
+          std::size_t oldSubscriberCount = this->subscribers->SubscriberCount;
+          std::shared_ptr<BroadcastQueue> newQueue = std::make_shared<BroadcastQueue>(
+            oldSubscriberCount - 1
+          );
+
+          DelegateType *oldSubscribers = this->subscribers->Subscribers;
+          DelegateType *newSubscribers = newQueue->Subscribers;
+          while(oldSubscriberCount > 0) {
+            if(*oldSubscribers == delegate) {
+              ++oldSubscribers;
+              std::copy_n(oldSubscribers, oldSubscriberCount - 1, newSubscribers);
+
+              // This might be a little more efficient if I drop the const BroadcastQueue stuff.
+              // And isn't there an std::atomic_store for std::shared_ptr with move semantics?
+              std::atomic_store(&this->subscribers, std::shared_ptr<const BroadcastQueue>(newQueue));
+
+              return true;
+            }
+
+            *newSubscribers = *oldSubscribers;
+            ++oldSubscribers;
+            ++newSubscribers;
+            --oldSubscriberCount;
+          }
+
+          // We didn't find the subscriber that was to be unsubscribes, so we also didn't
+          // edit the subscriber list and there is not need to replace or change anything.
+          return false;
+
+        } // Queue replacement beauty scope
+      } // edit mutex lock scope
+    }
+
     #pragma region struct BroadcastQueue
 
     /// <summary>Queue of subscribers to which the event will be broadcast</summary>
     private: struct BroadcastQueue {
 
+      /// <summary>
+      ///   Initializes a new broadcast queue for the specified number of subscribers
+      /// </summary>
+      /// <param name="count">
+      ///   Number of subscribers the broadcast queue will be initialized for
+      /// </param>
       public: BroadcastQueue(std::size_t count) :
         Subscribers(allocateUninitializedDelegates(count)),
         SubscriberCount(count) {}
 
+      /// <summary>Frees all memory owned by the broadcast queue</summary>
       public: ~BroadcastQueue() {
+        // We do not call the destructors of the delegates here because we know they're
+        // trivially constructible. This is only the case because delegates do not support
+        // lambdas which would have to capture arbitrary types with possible destructors.
         freeDelegatesWithoutDestructor(this->Subscribers);
       }
 
+      // Ensure the queue isn't copied or moved with default semantics
       BroadcastQueue(const BroadcastQueue &other) = delete;
       BroadcastQueue(BroadcastQueue &&other) = delete;
       void operator =(const BroadcastQueue &other) = delete;
       void operator =(BroadcastQueue &&other) = delete;
 
+      /// <summary>Allocates an memory for delegates without calling their constructor</summary>
+      /// <param name="count">Number of delegates to allocate memory for</param>
+      /// <returns>A pointer to the first allocated delegate in the array</returns>
       private: static DelegateType *allocateUninitializedDelegates(std::size_t count) {
         return reinterpret_cast<DelegateType *>(
           new std::uint8_t *[sizeof(DelegateType[2]) * count / 2]
         );
       }
 
+      /// <summary>Frees an array of delegates without calling any destructors</summary>
+      /// <param name="delegates">Delegate array that will be freed</param>
       private: static void freeDelegatesWithoutDestructor(DelegateType *delegates) {
         delete[] reinterpret_cast<std::uint8_t *>(delegates);
       }
@@ -341,7 +328,8 @@ namespace Nuclex { namespace Support { namespace Events {
         if(likely(wasExchanged)) {
           return newEditMutex; // We got our new mutex in with 1 reference count held by us
         }
-      }
+
+      } // for(;;) checking loop for C-A-S until a mutex is in place
     }
 
     /// <summary>Releases the shared mutex again, potentially dropping it entirely</summary>
