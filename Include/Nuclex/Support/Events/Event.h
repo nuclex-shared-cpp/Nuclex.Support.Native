@@ -154,6 +154,8 @@ namespace Nuclex { namespace Support { namespace Events {
       }
     }
 
+    // TODO: Implement copy and move constructors + assignment operators
+
     /// <summary>Returns the current number of subscribers to the event</summary>
     /// <returns>The number of current subscribers</returns>
     public: std::size_t CountSubscribers() const {

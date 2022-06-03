@@ -31,6 +31,14 @@ License along with this library
 #include <mutex> // for std::mutex
 #include <algorithm> // for std::copy_n()
 
+// Optimization ideas:
+//
+// - low contention flag or policy
+//
+//   tries to C-A-S a new broadcast list into place without going the mutex route,
+//   flags event for high contention if C-A-S fail
+//
+
 namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
@@ -46,21 +54,22 @@ namespace Nuclex { namespace Support { namespace Events {
   template<typename TResult, typename... TArguments>
   class ConcurrentEvent<TResult(TArguments...)> {
 
-    /// <summary>Number of subscribers the event can subscribe withou allocating memory</summary>
-    /// <remarks>
-    ///   To reduce complexity, this value is baked in and not a template argument. It is
-    ///   the number of subscriber slots that are baked into the event, enabling it to handle
-    ///   a small number of subscribers without allocating heap memory. Each slot takes the size
-    ///   of a delegate, 64 bits on a 32 bit system or 128 bits on a 64 bit system.
-    /// </remarks>
-    private: const static std::size_t BuiltInSubscriberCount = 2;
-
     /// <summary>Type of value that will be returned by the delegate</summary>
     public: typedef TResult ResultType;
     /// <summary>Method signature for the callbacks notified through this event</summary>
     public: typedef TResult CallType(TArguments...);
     /// <summary>Type of delegate used to call the event's subscribers</summary>
     public: typedef Delegate<TResult(TArguments...)> DelegateType;
+
+    /// <summary>List of results returned by subscribers</summary>
+    /// <remarks>
+    ///   Having an std::vector&lt;void&gt; anywhere, even in a SFINAE-disabled method,
+    ///   will trigger deprecation compiler warnings on Microsoft compilers.
+    ///   Consider this type to be an alias for std::vector&lt;TResult&gt; and nothing else.
+    /// </remarks>
+    private: typedef std::vector<
+      typename std::conditional<std::is_void<TResult>::value, char, TResult>::type
+    > ResultVectorType;
 
     #pragma region struct SharedMutex
 
@@ -83,6 +92,66 @@ namespace Nuclex { namespace Support { namespace Events {
 
     /// <summary>Initializes a new concurrent event</summary>
     public: ConcurrentEvent() = default;
+    /// <summary>Frees all memory used by a concurrent event</summary>
+    public: ~ConcurrentEvent() = default;
+
+    // TODO: Implement copy and move constructors + assignment operators
+
+    /// <summary>Returns the current number of subscribers to the event</summary>
+    /// <returns>The number of current subscribers</returns>
+    public: std::size_t CountSubscribers() const {
+      std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
+        &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
+      );
+      if(likely(static_cast<bool>(currentQueue))) {
+        return currentQueue->SubscriberCount;
+      } else {
+        return 0;
+      }
+    }
+
+    /// <summary>Calls all subscribers of the event and collects their return values</summary>
+    /// <param name="arguments">Arguments that will be passed to the event</param>
+    /// <returns>An list of the values returned by the event subscribers</returns>
+    /// <remarks>
+    ///   This overload is enabled if the event signature returns anything other than 'void'.
+    ///   The returned value is an std::vector&lt;TResult&gt; in all cases.
+    /// </remarks>
+    public: template<typename T = TResult>
+    typename std::enable_if<
+      !std::is_void<T>::value, ResultVectorType
+    >::type operator()(TArguments&&... arguments) const {
+      ResultVectorType results; // ResultVectorType is an alias for std::vector<TResult>
+      //results.reserve(this->subscriberCount);
+      EmitAndCollect(std::back_inserter(results), std::forward<TArguments>(arguments)...);
+      return results;
+    }
+
+    /// <summary>Calls all subscribers of the event</summary>
+    /// <param name="arguments">Arguments that will be passed to the event</param>
+    /// <remarks>
+    ///   This overload is enabled if the event signature has the return type 'void'
+    /// </remarks>
+    public: template<typename T = TResult>
+    typename std::enable_if<
+      std::is_void<T>::value, void
+    >::type operator()(TArguments&&... arguments) const {
+      Emit(std::forward<TArguments>(arguments)...);
+    }
+
+    /// <summary>Calls all subscribers of the event and collects their return values</summary>
+    /// <param name="results">
+    ///   Output iterator into which the subscribers' return values will be written
+    /// </param>
+    /// <param name="arguments">Arguments that will be passed to the event</param>
+    public: template<typename TOutputIterator>
+    void EmitAndCollect(TOutputIterator results, TArguments&&... arguments) const {
+    }
+
+    /// <summary>Calls all subscribers of the event and discards their return values</summary>
+    /// <param name="arguments">Arguments that will be passed to the event</param>
+    public: void Emit(TArguments... arguments) const {
+    }
 
     /// <summary>Subscribes the specified free function to the event</summary>
     /// <typeparam name="TMethod">Free function that will be subscribed</typeparam>
@@ -125,14 +194,17 @@ namespace Nuclex { namespace Support { namespace Events {
 
           // We either have to create an entirely new list of subscribers or
           // clone an existing subscriber list while adding one entry to the end.
-          if(!this->subscribers) {
+          std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
+            &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
+          );
+          if(!currentQueue) {
             newQueue = std::make_shared<BroadcastQueue>(1);
             new(newQueue->Subscribers) DelegateType(delegate);
           } else { // Non-empty subscriber list present, create clone with extra entry
-            std::size_t currentSubscriberCount = this->subscribers->SubscriberCount;
+            std::size_t currentSubscriberCount = currentQueue->SubscriberCount;
             newQueue = std::make_shared<BroadcastQueue>(currentSubscriberCount + 1);
             for(std::size_t index = 0; index < currentSubscriberCount; ++index) {
-              new(newQueue->Subscribers + index) DelegateType(this->subscribers->Subscribers[index]);
+              new(newQueue->Subscribers + index) DelegateType(currentQueue->Subscribers[index]);
             }
             new(newQueue->Subscribers + currentSubscriberCount) DelegateType(delegate);
           }
@@ -189,16 +261,19 @@ namespace Nuclex { namespace Support { namespace Events {
       {
         std::lock_guard<std::mutex> mutexLockScope(currentEditMutex->Mutex);
         {
-          if(!this->subcribers) {
+          std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
+            &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
+          );
+          if(!currentQueue) {
             return false; // There were no subscribers...
           }
 
-          std::size_t oldSubscriberCount = this->subscribers->SubscriberCount;
+          std::size_t oldSubscriberCount = currentQueue->SubscriberCount;
           std::shared_ptr<BroadcastQueue> newQueue = std::make_shared<BroadcastQueue>(
             oldSubscriberCount - 1
           );
 
-          DelegateType *oldSubscribers = this->subscribers->Subscribers;
+          DelegateType *oldSubscribers = currentQueue->Subscribers;
           DelegateType *newSubscribers = newQueue->Subscribers;
           while(oldSubscriberCount > 0) {
             if(*oldSubscribers == delegate) {
