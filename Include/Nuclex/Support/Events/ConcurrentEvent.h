@@ -38,6 +38,15 @@ License along with this library
 //   tries to C-A-S a new broadcast list into place without going the mutex route,
 //   flags event for high contention if C-A-S fail
 //
+// - faster atomic shared_ptr stores
+//
+//   currently casts from std::shared_ptr<BroadcastQueue> to
+//   std::shared_ptr<const BroadcastQueue> (very likely refcount inc+dec op),
+//   then assigns to atomic member (another refcount inc+dep op). This could be
+//   a single assignment with move semantics
+//
+//   TODO: check generated machine code of the GCC, clang and MSVC
+//
 
 namespace Nuclex { namespace Support { namespace Events {
 
@@ -247,8 +256,6 @@ namespace Nuclex { namespace Support { namespace Events {
             new(newQueue->Subscribers + currentSubscriberCount) DelegateType(delegate);
           }
 
-          // This might be a little more efficient if I drop the const BroadcastQueue stuff.
-          // And isn't there an std::atomic_store for std::shared_ptr with move semantics?
           std::atomic_store(&this->subscribers, std::shared_ptr<const BroadcastQueue>(newQueue));
         } // Queue replacement beauty scope
       } // edit mutex lock scope
@@ -332,11 +339,7 @@ namespace Nuclex { namespace Support { namespace Events {
             if(*oldSubscribers == delegate) {
               ++oldSubscribers;
               std::copy_n(oldSubscribers, oldSubscriberCount - 1, newSubscribers);
-
-              // This might be a little more efficient if I drop the const BroadcastQueue stuff.
-              // And isn't there an std::atomic_store for std::shared_ptr with move semantics?
               std::atomic_store(&this->subscribers, std::shared_ptr<const BroadcastQueue>(newQueue));
-
               return true;
             }
 

@@ -248,7 +248,7 @@ namespace Nuclex { namespace Support { namespace Events {
   }
 
   // ------------------------------------------------------------------------------------------- //
-/*
+
   TEST(ConcurrentEventTest, SubscribersCanUnsubscribeInsideConcurrentEventCall) {
     const static std::size_t MockCount = 32;
 
@@ -295,9 +295,9 @@ namespace Nuclex { namespace Support { namespace Events {
       EXPECT_FALSE(wasUnsubscribed);
     }
   }
-*/
+
   // ------------------------------------------------------------------------------------------- //
-/*
+
   TEST(ConcurrentEventTest, SubscribersCanSubscribeInsideConcurrentEventCall) {
     const static std::size_t MockCount = 32;
 
@@ -331,7 +331,7 @@ namespace Nuclex { namespace Support { namespace Events {
           // Can be this or this + 1, even may or may not invoke subscribers that
           // are added during event firing in the same firing cycle.
           std::size_t expectedCallCount = (repetition - index) + repetition + 1;
-          EXPECT_GT(mocks[index].ReceivedNotificationCount, expectedCallCount);
+          EXPECT_GE(mocks[index].ReceivedNotificationCount, expectedCallCount);
           EXPECT_LE(mocks[index].ReceivedNotificationCount, expectedCallCount + 1);
         } else { // It's still subscribed
           EXPECT_EQ(mocks[index].ReceivedNotificationCount, repetition + 1);
@@ -340,7 +340,7 @@ namespace Nuclex { namespace Support { namespace Events {
     }
 
   }
-*/
+
   // ------------------------------------------------------------------------------------------- //
 
   TEST(ConcurrentEventTest, ValuesReturnedBySubscribersAreCollected) {
