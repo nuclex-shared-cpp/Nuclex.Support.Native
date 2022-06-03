@@ -248,7 +248,7 @@ namespace Nuclex { namespace Support { namespace Events {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
+/*
   TEST(ConcurrentEventTest, SubscribersCanUnsubscribeInsideConcurrentEventCall) {
     const static std::size_t MockCount = 32;
 
@@ -295,9 +295,9 @@ namespace Nuclex { namespace Support { namespace Events {
       EXPECT_FALSE(wasUnsubscribed);
     }
   }
-
+*/
   // ------------------------------------------------------------------------------------------- //
-
+/*
   TEST(ConcurrentEventTest, SubscribersCanSubscribeInsideConcurrentEventCall) {
     const static std::size_t MockCount = 32;
 
@@ -340,7 +340,7 @@ namespace Nuclex { namespace Support { namespace Events {
     }
 
   }
-
+*/
   // ------------------------------------------------------------------------------------------- //
 
   TEST(ConcurrentEventTest, ValuesReturnedBySubscribersAreCollected) {

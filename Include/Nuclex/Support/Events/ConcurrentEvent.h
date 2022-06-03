@@ -122,8 +122,21 @@ namespace Nuclex { namespace Support { namespace Events {
       !std::is_void<T>::value, ResultVectorType
     >::type operator()(TArguments&&... arguments) const {
       ResultVectorType results; // ResultVectorType is an alias for std::vector<TResult>
-      //results.reserve(this->subscriberCount);
-      EmitAndCollect(std::back_inserter(results), std::forward<TArguments>(arguments)...);
+
+      std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
+        &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
+      );
+      if(static_cast<bool>(currentQueue)) {
+        std::size_t subscriberCount = currentQueue->SubscriberCount;
+        results.reserve(subscriberCount);
+        for(std::size_t index = 0; index < subscriberCount; ++index) {
+          results.push_back(currentQueue->Subscribers[index](std::forward<TArguments>(arguments)...));
+          // We don't need to worry about queue edits within the callsbacks because
+          // it will result in a new broadcast queue being placed while we happily
+          // continue working with the copy in our std::shared_ptr.
+        }
+      }
+
       return results;
     }
 
@@ -146,11 +159,36 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <param name="arguments">Arguments that will be passed to the event</param>
     public: template<typename TOutputIterator>
     void EmitAndCollect(TOutputIterator results, TArguments&&... arguments) const {
+      std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
+        &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
+      );
+      if(static_cast<bool>(currentQueue)) {
+        std::size_t subscriberCount = currentQueue->SubscriberCount;
+        for(std::size_t index = 0; index < subscriberCount; ++index) {
+          *results = currentQueue->Subscribers[index](std::forward<TArguments>(arguments)...);
+          // We don't need to worry about queue edits within the callsbacks because
+          // it will result in a new broadcast queue being placed while we happily
+          // continue working with the copy in our std::shared_ptr.
+          ++results;
+        }
+      }
     }
 
     /// <summary>Calls all subscribers of the event and discards their return values</summary>
     /// <param name="arguments">Arguments that will be passed to the event</param>
     public: void Emit(TArguments... arguments) const {
+      std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
+        &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
+      );
+      if(static_cast<bool>(currentQueue)) {
+        std::size_t subscriberCount = currentQueue->SubscriberCount;
+        for(std::size_t index = 0; index < subscriberCount; ++index) {
+          currentQueue->Subscribers[index](std::forward<TArguments>(arguments)...);
+          // We don't need to worry about queue edits within the callsbacks because
+          // it will result in a new broadcast queue being placed while we happily
+          // continue working with the copy in our std::shared_ptr.
+        }
+      }
     }
 
     /// <summary>Subscribes the specified free function to the event</summary>
@@ -268,11 +306,26 @@ namespace Nuclex { namespace Support { namespace Events {
             return false; // There were no subscribers...
           }
 
+          // If there's only one subscriber left, it's either time to wipe out the broadcast
+          // queue or (if the delegate wasn't the one subscriber) do nothing.
           std::size_t oldSubscriberCount = currentQueue->SubscriberCount;
+          if(oldSubscriberCount == 1) {
+            if(likely(*currentQueue->Subscribers == delegate)) {
+              std::atomic_store(&this->subscribers, std::shared_ptr<const BroadcastQueue>());
+              return true;
+            } else {
+              return false;
+            }
+          }
+
+          // We're being optimistic, assuming that the delegate being unsubscribes is actually
+          // in the subscriber list. Create a new subscriber queue with one slot less space.
           std::shared_ptr<BroadcastQueue> newQueue = std::make_shared<BroadcastQueue>(
             oldSubscriberCount - 1
           );
 
+          // Now copy the subscribers over into the new queue until we find the subscriber
+          // that should be removed, then skip over it and blindly copy over the rest.
           DelegateType *oldSubscribers = currentQueue->Subscribers;
           DelegateType *newSubscribers = newQueue->Subscribers;
           while(oldSubscriberCount > 0) {
@@ -293,7 +346,7 @@ namespace Nuclex { namespace Support { namespace Events {
             --oldSubscriberCount;
           }
 
-          // We didn't find the subscriber that was to be unsubscribes, so we also didn't
+          // We didn't find the subscriber that was to be unsubscribed, so we also didn't
           // edit the subscriber list and there is not need to replace or change anything.
           return false;
 
