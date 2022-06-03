@@ -23,6 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Events/Delegate.h"
+#include "Nuclex/Support/ScopeGuard.h"
 
 #include <cstdint> // for std::uint8_t
 #include <atomic> // for std::atomic
@@ -59,6 +60,26 @@ namespace Nuclex { namespace Support { namespace Events {
     public: typedef TResult CallType(TArguments...);
     /// <summary>Type of delegate used to call the event's subscribers</summary>
     public: typedef Delegate<TResult(TArguments...)> DelegateType;
+
+    #pragma region struct SharedMutex
+
+    /// <summary>Queue of subscribers to which the event will be broadcast</summary>
+    private: struct SharedMutex {
+
+      /// <summary>Initializes a new shared mutex</summary>
+      public: SharedMutex() :
+        Mutex(),
+        ReferenceCount(1) {}
+
+      /// <summary>Mutex that is shared between multiple owners</summary>
+      public: std::mutex Mutex;
+      /// <summary>Number of references to this instance of shared mutex<</summary>
+      public: std::atomic<std::size_t> ReferenceCount;
+
+    };
+
+    #pragma endregion // struct SharedMutex
+
 
 
     // Plan:
@@ -168,9 +189,8 @@ namespace Nuclex { namespace Support { namespace Events {
     //   // If pthreads, it's just a bunch of ints. In Windows, is there a kernel mode switch?
 
 
-    public: ConcurrentEvent() {
-    }
-
+    /// <summary>Initializes a new concurrent event</summary>
+    public: ConcurrentEvent() = default;
 
     /// <summary>Subscribes the specified free function to the event</summary>
     /// <typeparam name="TMethod">Free function that will be subscribed</typeparam>
@@ -200,41 +220,39 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Subscribes the specified delegate to the event</summary>
     /// <param name="delegate">Delegate that will be subscribed</param>
     public: void Subscribe(const DelegateType &delegate) {
-      std::shared_ptr<std::mutex> currentEditMutex = std::atomic_load_explicit(
-        &this->editMutex, std::memory_order::memory_order_consume // if() carries dependency
-      );
-      while(!currentEditMutex) {
-        std::atomic_compare_exchange_strong(
-          &this->editMutex, // pointer that will be replaced
-          &currentEditMutex, // expected prior mutex, receives current on failure
-          std::make_shared<std::mutex>() // new mutex to assign if previous was empty
-        );
-      }
-
-      // At this point, we either grabbed the existing mutex or made our new mutex available
-      // for other threads attempting to edit the subscriber list.
-      //
-      // Since we C-A-S to kill the mutex only after all work is done,
-      // we sidestep a possible race condition where multiple mutexes may exist
-
-      // Build a new broadcast list with the new subscriber appended to the end
+      std::shared_ptr<SharedMutex> currentEditMutex = acquireMutex();
+      ON_SCOPE_EXIT {
+        releaseMutex(currentEditMutex);
+      };
       {
-        std::lock_guard<std::mutex> editMutexLock(currentEditMutex);
+        currentEditMutex->Mutex.lock();
+        ON_SCOPE_EXIT {
+          currentEditMutex->Mutex.unlock();
+        };
 
-        //assert(!!this->subscribers && u8"Subscriber queue is always present");
-        if(!this->subscribers) {
-          std::shared_ptr<BroadcastQueue> newQueue = std::make_shared<BroadcastQueue>(1);
-        } else {
-          const BroadcastQueue &currentQueue = *this->subscribers.get();
+        // Build a new broadcast list with the new subscriber appended to the end
+        {
+          std::shared_ptr<BroadcastQueue> newQueue;
 
-          std::shared_ptr<BroadcastQueue> newQueue = std::make_shared<BroadcastQueue>(
-            currentQueue.SubscriberCount + 1
-          );
-          // TODO: Copy queue
+          // We either have to create an entirely new list of subscribers or
+          // clone an existing subscriber list while adding one entry to the end.
+          if(!this->subscribers) {
+            newQueue = std::make_shared<BroadcastQueue>(1);
+            new(newQueue->Subscribers) DelegateType(delegate);
+          } else { // Non-empty subscriber list present, create clone with extra entry
+            std::size_t currentSubscriberCount = this->subscribers->SubscriberCount;
+            newQueue = std::make_shared<BroadcastQueue>(currentSubscriberCount + 1);
+            for(std::size_t index = 0; index < currentSubscriberCount; ++index) {
+              new(newQueue->Subscribers + index) DelegateType(this->subscribers->Subscribers[index]);
+            }
+            new(newQueue->Subscribers + currentSubscriberCount) DelegateType(delegate);
+          }
 
-        }
-
-      }
+          // This might be a little more efficient if I drop the const BroadcastQueue stuff.
+          // And isn't there an std::atomic_store for std::shared_ptr with move semantics?
+          std::atomic_store(&this->subscribers, std::shared_ptr<const BroadcastQueue>(newQueue));
+        } // Queue replacement beauty scope
+      } // edit mutex lock scope
     }
 
     #pragma region struct BroadcastQueue
@@ -274,29 +292,79 @@ namespace Nuclex { namespace Support { namespace Events {
 
     #pragma endregion // struct BroadcastQueue
 
-    #pragma region struct SharedMutex
+    /// <summary>Acquires the edit mutex held while editing the broadcast queue</summary>
+    /// <returns>The current edit mutex</returns>
+    /// <remarks>
+    ///   This goes through some hoops to ensure the mutex only exists while the broadcast
+    ///   queue is being edited, while also ensuring that if a mutex exist, only one exists
+    ///   and is shared by all threads competing to edit the broadcast queue.
+    /// </remarks>
+    private: std::shared_ptr<SharedMutex> acquireMutex() {
+      std::shared_ptr<SharedMutex> currentEditMutex = std::atomic_load_explicit(
+        &this->editMutex, std::memory_order::memory_order_consume // if() carries dependency
+      );
+      std::shared_ptr<SharedMutex> newEditMutex; // Leave as nullptr until we know we need it
+      for(;;) {
 
-    /// <summary>Queue of subscribers to which the event will be broadcast</summary>
-    private: struct SharedMutex {
+        // If we got a shared mutex instance, it may still be on the brink of being abandoned
+        // (once the reference counter goes to 0, it must not be revived to avoid a race)
+        if(unlikely(static_cast<bool>(currentEditMutex))) {
+          std::size_t knownReferenceCount = currentEditMutex->ReferenceCount.load(
+            std::memory_order::memory_order_consume
+          );
 
-      /// <summary>Initializes a new shared mutex</summary>
-      public: SharedMutex() :
-        Mutex(),
-        ReferenceCount(1) {}
+          // Was the mutex just now still occupied by another thread? If so, attempt to
+          // increment its reference count one further via a C-A-S operation.
+          while(likely(knownReferenceCount >= 1)) {
+            bool wasExchanged = currentEditMutex->ReferenceCount.compare_exchange_weak(
+              knownReferenceCount, knownReferenceCount + 1
+            );
+            if(likely(wasExchanged)) {
+              return currentEditMutex; // We managed to increment the reference count above 1
+            }
+          }
 
-      /// <summary>Mutex that is shared between multiple owners</summary>
-      public: std::mutex Mutex;
-      /// <summary>Number of references to this instance of shared mutex<</summary>
-      public: std::atomic<std::size_t> ReferenceCount;
+          // The shared mutex for which we got the reference count was about to be dropped
+          currentEditMutex.reset(); // Assume the other thread has already dropped it by now
+        }
 
-    };
+        // Either there was no existing mutex or it was about to be dropped,
+        // so attempt to insert our own, fresh mutex with a reference count of 1.
+        if(!newEditMutex) {
+          newEditMutex = std::make_shared<SharedMutex>();
+        }
+        bool wasExchanged = std::atomic_compare_exchange_strong(
+          &this->editMutex, // pointer that will be replaced
+          &currentEditMutex, // expected prior mutex, receives current on failure
+          newEditMutex // new mutex to assign if previous was empty
+        );
+        if(likely(wasExchanged)) {
+          return newEditMutex; // We got our new mutex in with 1 reference count held by us
+        }
+      }
+    }
 
-    #pragma endregion // struct SharedMutex
+    /// <summary>Releases the shared mutex again, potentially dropping it entirely</summary>
+    /// <param name="currentEditMutex">Shared mutex as returned by the acquire method</param>
+    private: void releaseMutex(const std::shared_ptr<SharedMutex> &currentEditMutex) {
+      std::size_t previousReferenceCount = currentEditMutex->ReferenceCount.fetch_sub(
+        1, std::memory_order::memory_order_seq_cst
+      );
+
+      // If we just decremented the reference counter to zero, drop the shared mutex.
+      // This would be a race condition for a naively implemented acquireMutex() method,
+      // but we sidestep this by making acquireMutex() C-A-S the reference count for
+      // the uptick operation and consider the whole whole shared mutex dead when seeing
+      // it at a reference count of zero.
+      if(likely(previousReferenceCount == 1)) {
+        std::atomic_store(&this->editMutex, std::shared_ptr<SharedMutex>());
+      }
+    }
 
     /// <summary>Stores the current subscribers to the event</summary>
     public: /* atomic */ std::shared_ptr<const BroadcastQueue> subscribers;
     /// <summary>Will be present while subscriptions/unsubscriptions happen</summary>
-    public: /* atomic */ std::shared_ptr<std::mutex> editMutex;
+    public: /* atomic */ std::shared_ptr<SharedMutex> editMutex;
 
   };
 

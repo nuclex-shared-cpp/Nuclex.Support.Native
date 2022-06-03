@@ -24,6 +24,22 @@ License along with this library
 #include "Nuclex/Support/Events/ConcurrentEvent.h"
 #include <gtest/gtest.h>
 
+namespace {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Free function used to test event subscriptions</summary>
+  void freeFunction(int) { }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Free function that returns an integral value for testing</summary>
+  int getSenseOfLife() { return 42; }
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // anonymous namespace
+
 namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
@@ -33,6 +49,22 @@ namespace Nuclex { namespace Support { namespace Events {
       ConcurrentEvent<void(int something)> test;
       NUCLEX_SUPPORT_NDEBUG_UNUSED(test);
     );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentEventTest, FreeFunctionsCanBeSubscribed) {
+    ConcurrentEvent<void(int something)> test;
+    test.Subscribe<freeFunction>();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentEventTest, EventCanHandleManySubscriptions) {
+    ConcurrentEvent<void(int something)> test;
+    for(std::size_t index = 0; index < 32; ++index) {
+      test.Subscribe<freeFunction>();
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
