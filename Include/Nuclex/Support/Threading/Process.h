@@ -29,7 +29,7 @@ License along with this library
 // remove this check and give it a try.
 #if defined(NUCLEX_SUPPORT_LINUX) || defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "Nuclex/Support/Events/Event.h" // TODO: need concurrent event
+#include "Nuclex/Support/Events/ConcurrentEvent.h"
 
 #include <chrono> // for std::chrono::milliseconds
 #include <vector> // for std::vector
@@ -83,11 +83,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: NUCLEX_SUPPORT_API static std::string GetExecutableDirectory();
 
     /// <summary>Event that is fired whenever the process writes to stdout</summary>
-    public: Nuclex::Support::Events::Event<
+    public: Nuclex::Support::Events::ConcurrentEvent<
       void(const char *, std::size_t)
     > StdOut;
     /// <summary>Event that is fired whenever the process writes to stderr</summary>
-    public: Nuclex::Support::Events::Event<
+    public: Nuclex::Support::Events::ConcurrentEvent<
       void(const char *, std::size_t)
     > StdErr;
 

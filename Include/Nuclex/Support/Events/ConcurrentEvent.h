@@ -38,6 +38,14 @@ License along with this library
 //   tries to C-A-S a new broadcast list into place without going the mutex route,
 //   flags event for high contention if C-A-S fail
 //
+// - always assume low contention
+//
+//   how often will a thread subscribe or unsubscribe in a row? that method is not
+//   going to be hammered.
+//
+//   Just have a single "occupied" flag and do a busy loop without any mutex,
+//   in other words, a DIY pure spinlock mutex.
+//
 // - faster atomic shared_ptr stores
 //
 //   currently casts from std::shared_ptr<BroadcastQueue> to
