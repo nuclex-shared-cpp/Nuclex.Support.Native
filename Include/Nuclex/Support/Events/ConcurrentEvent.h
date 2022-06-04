@@ -68,6 +68,62 @@ namespace Nuclex { namespace Support { namespace Events {
   /// <summary>Manages a list of subscribers that receive callbacks when the event fires</summary>
   /// <typeparam name="TResult">Type of results the callbacks will return</typeparam>
   /// <typeparam name="TArguments">Types of the arguments accepted by the callback</typeparam>
+  /// <remarks>
+  ///   <para>
+  ///     This is a special variant of the <see cref="Nuclex.Support.Events.Event" /> class,
+  ///     a very lean signal/slot implementation. Whereas the normal event attempts to achieve
+  ///     maximum performance and minimum resource use in a single-threaded scenario,
+  ///     the concurrent event attempts the same while allowing free-threaded use.
+  ///   </para>
+  ///   <para>
+  ///     Like the single-threaded event, it assumes granular events, meaning many individual
+  ///     notification publishers rather than one big multi-purpose notification. It also
+  ///     assumes that events typically have only a small number of subscribers and that firing
+  ///     will happen vastly more often than subscription/unsubscription.
+  ///   </para>
+  ///   <para>
+  ///     This concurrent event implementation can freely be used from any thread, including
+  ///     simultaneous firing, subscription and unsubscription witout any synchronization needed
+  ///     by the user of the event. Firing is guaranteed to be wait-free (not just lock-free),
+  ///     suitable even for real-time systems if your callbacks have a fixed cycle count.
+  ///   </para>
+  ///   <para>
+  ///     A concurrent event should be equivalent in size to 2 pointers. It does not allocate
+  ///     any memory upon construction or firing, but will always allocate memory when
+  ///     callbacks are subscribed or unsubscribed.
+  ///   </para>
+  ///   <para>
+  ///     Usage example:
+  ///   </para>
+  ///   <para>
+  ///     <code>
+  ///       int Dummy(int first, std::string second) { return 123; }
+  ///
+  ///       class Mock {
+  ///         public: int Dummy(int first, std::string second) { return 456; }
+  ///       };
+  ///
+  ///       int main() {
+  ///         typedef ConcurrentEvent&lt;int(int foo, std::string bar)&gt; FooBarEvent;
+  ///
+  ///         FooBarEvent test;
+  ///
+  ///         // Subscribe the dummy function
+  ///         test.Subscribe&lt;Dummy&gt;();
+  ///
+  ///         // Subscribe an object method
+  ///         Mock myMock;
+  ///         test.Subscribe&lt;Mock, &Mock::Dummy&gt;(&amp;myMock);
+  ///
+  ///         // Fire the event
+  ///         std::vector&lt;int&gt; returnedValues = test(123, u8"Hello");
+  ///
+  ///         // Fire the event again but don't collect returned values
+  ///         test.Emit(123, u8"Hello");
+  ///       }
+  ///     </code>
+  ///   </para>
+  /// </remarks>
   template<typename TResult, typename... TArguments>
   class ConcurrentEvent<TResult(TArguments...)> {
 
