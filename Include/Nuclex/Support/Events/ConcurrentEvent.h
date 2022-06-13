@@ -23,7 +23,6 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Events/Delegate.h"
-#include "Nuclex/Support/ScopeGuard.h"
 
 #include <cstddef> // for std::size_t
 #include <cstdint> // for std::uint8_t
