@@ -25,38 +25,16 @@ License along with this library
 #include "Nuclex/Support/Events/Delegate.h"
 #include "Nuclex/Support/ScopeGuard.h"
 
+#include <cstddef> // for std::size_t
 #include <cstdint> // for std::uint8_t
 #include <atomic> // for std::atomic
-#include <memory> // for std::shared_ptr
-#include <mutex> // for std::mutex
 #include <algorithm> // for std::copy_n()
-
-// Optimization ideas:
-//
-// - low contention flag or policy
-//
-//   tries to C-A-S a new broadcast list into place without going the mutex route,
-//   flags event for high contention if C-A-S fail
-//
-// - always assume low contention
-//
-//   how often will a thread subscribe or unsubscribe in a row? that method is not
-//   going to be hammered.
-//
-//   Just have a single "occupied" flag and do a busy loop without any mutex,
-//   in other words, a DIY pure spinlock mutex.
-//
-// - faster atomic shared_ptr stores
-//
-//   currently casts from std::shared_ptr<BroadcastQueue> to
-//   std::shared_ptr<const BroadcastQueue> (very likely refcount inc+dec op),
-//   then assigns to atomic member (another refcount inc+dep op). This could be
-//   a single assignment with move semantics
-//
-//   TODO: check generated machine code of the GCC, clang and MSVC
-//
+#include <memory> // for std::unique_ptr
 
 namespace Nuclex { namespace Support { namespace Events {
+
+  // ------------------------------------------------------------------------------------------- //
+
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -76,21 +54,24 @@ namespace Nuclex { namespace Support { namespace Events {
   ///     the concurrent event attempts the same while allowing free-threaded use.
   ///   </para>
   ///   <para>
-  ///     Like the single-threaded event, it assumes granular events, meaning many individual
-  ///     notification publishers rather than one big multi-purpose notification. It also
-  ///     assumes that events typically have only a small number of subscribers and that firing
-  ///     will happen vastly more often than subscription/unsubscription.
+  ///     Like the single-threaded event, it assumes granular use, meaning you create many
+  ///     individual events rather than one big multi-purpose notification. It also assumes that
+  ///     events typically have only a small number of subscribers and that firing will happen
+  ///     vastly more often than subscription/unsubscription.
   ///   </para>
   ///   <para>
-  ///     This concurrent event implementation can freely be used from any thread, including
-  ///     simultaneous firing, subscription and unsubscription witout any synchronization needed
-  ///     by the user of the event. Firing is guaranteed to be wait-free (not just lock-free),
-  ///     suitable even for real-time systems if your callbacks have a fixed cycle count.
+  ///     This concurrent event implementation can be freely used from any thread, including
+  ///     simultaneous firing, subscription and unsubscription without any synchronization on
+  ///     the side the user of the event. Depending on your platform and C++ standard library,
+  ///     firing could be wait-free, but likely will use a spinlock around a piece of code
+  ///     covering just a few CPU cyles (two instructions ideally).
   ///   </para>
   ///   <para>
-  ///     A concurrent event should be equivalent in size to 2 pointers. It does not allocate
-  ///     any memory upon construction or firing, but will always allocate memory when
-  ///     callbacks are subscribed or unsubscribed.
+  ///     A concurrent event should be equivalent in size to 1 shared_ptr on its own.
+  ///     It does not allocate any memory upon construction or firing, but will allocate
+  ///     a single memory block each time callbacks are subscribed or unsubscribed. Said memory
+  ///     block is the size of the std::shared_ptr reference count + two pointers + two more
+  ///     pointers per subscriber (typically 64 bytes + 16 bytes per subscriber).
   ///   </para>
   ///   <para>
   ///     Usage example:
@@ -144,24 +125,120 @@ namespace Nuclex { namespace Support { namespace Events {
       typename std::conditional<std::is_void<TResult>::value, char, TResult>::type
     > ResultVectorType;
 
-    #pragma region struct SharedMutex
+    #pragma region struct BroadcastQueue
 
     /// <summary>Queue of subscribers to which the event will be broadcast</summary>
-    private: struct SharedMutex {
+    private: struct BroadcastQueue {
 
-      /// <summary>Initializes a new shared mutex</summary>
-      public: SharedMutex() :
-        Mutex(),
-        ReferenceCount(1) {}
+      /// <summary>
+      ///   Initializes a new broadcast queue for the specified number of subscribers
+      /// </summary>
+      /// <param name="count">
+      ///   Number of subscribers the broadcast queue will be initialized for
+      /// </param>
+      /// <remarks>
+      ///   The reference count is initialized to one since it would be pointless to create
+      ///   an instance and then have to always run an extra increment operation.
+      /// </remarks>
+      public: BroadcastQueue(std::size_t count) :
+        SubscriberCount(count),
+        Subscribers(/* leave undefined! */) {}
 
-      /// <summary>Mutex that is shared between multiple owners</summary>
-      public: std::mutex Mutex;
-      /// <summary>Number of references to this instance of shared mutex<</summary>
-      public: std::atomic<std::size_t> ReferenceCount;
+      /// <summary>Frees all memory owned by the broadcast queue</summary>
+      public: ~BroadcastQueue() = default;
+
+      // Ensure the queue isn't copied or moved with default semantics
+      BroadcastQueue(const BroadcastQueue &other) = delete;
+      BroadcastQueue(BroadcastQueue &&other) = delete;
+      void operator =(const BroadcastQueue &other) = delete;
+      void operator =(BroadcastQueue &&other) = delete;
+
+      /// <summary>Number of subscribers stored in the array</summary>
+      public: std::size_t SubscriberCount;
+      /// <summary>Plain array of all subscribers to which the event is broadcast</summary>
+      public: DelegateType *Subscribers;
 
     };
 
-    #pragma endregion // struct SharedMutex
+    #pragma endregion // struct BroadcastQueue
+
+    #pragma region struct BroadcastQueueAllocator
+
+    /// <summary>Custom alloctor that allocates a broadcast queue and subscriber list</summary>
+    /// <typeparam name="TElement">
+    ///   Type of element that will be allocated together with a subscriber list
+    /// </typeparam>
+    /// <remarks>
+    ///   Normally, a non-templated implementation of this allocator would seem to suffice,
+    ///   but <code>std::allocate_shared()</code> implementations will very likely
+    ///   (via the type-changing copy constructor) allocate a type inherited from our
+    ///   <see cref="BroadcastQueue" /> that packages the reference counter of
+    ///   the <code>std::shared_ptr</code> together with the instance.
+    /// </remarks>
+    template<class TElement>
+    class BroadcastQueueAllocator {
+
+      /// <summary>Type of element the allocator is for, required by standard</summary>
+      public: typedef TElement value_type;
+
+      /// <summary>Initializes a new allocator using the specified appended list size</summary>
+      /// <param name="subscriberCount">Number of subscribers to allocate extra space for</param>
+      public: BroadcastQueueAllocator(std::size_t subscriberCount) :
+        subscriberCount(subscriberCount) {}
+
+      /// <summary>
+      ///   Creates this allocator as a clone of an allocator for a different type
+      /// </summary>
+      /// <typeparam name="TOther">Type the existing allocator is allocating for</typeparam>
+      /// <param name="other">Existing allocator whose attributes will be copied</param>
+      public: template<class TOther> BroadcastQueueAllocator(
+        const BroadcastQueueAllocator<TOther> &other
+      ) : subscriberCount(other.subscriberCount) {}
+
+      /// <summary>Allocates memory for the specified number of elements (must be 1)</summary>
+      /// <param name="count">Number of elements to allocato memory for (must be 1)</param>
+      /// <returns>The allocated (but not initialized) memory for the required type</returns>
+      public: TElement *allocate(std::size_t count) {
+        constexpr std::size_t subscriberStartOffset = (
+          sizeof(TElement) +
+          (
+            ((sizeof(TElement) % alignof(DelegateType *)) == 0) ?
+            0 : // size happened to fit needed alignment of subscriber list
+            (alignof(DelegateType *) - (sizeof(TElement) % alignof(TElement *)))
+          )
+        );
+
+        // Number of bytes needed to allocate the requested type and a susbcriber list
+        std::size_t requiredByteCount = (
+          subscriberStartOffset + // Broadcast queue and padding for aligned subscriber list
+          (sizeof(TElement[2]) * this->subscriberCount / 2) // Subscriber list
+        );
+
+        assert(count == 1);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(count);
+        return reinterpret_cast<TElement *>(new std::uint8_t[requiredByteCount]);
+      }
+
+      /// <summary>Frees memory for the specified element (count must be 1)</summary>
+      /// <param name="instance">Instance for which memory will be freed</param>
+      /// <param name="count">Number of instances that will be freed (must be 1)</param>
+      public: void deallocate(TElement *instance, std::size_t count) {
+        assert(count == 1);
+        NUCLEX_SUPPORT_NDEBUG_UNUSED(count);
+        delete[] reinterpret_cast<std::uint8_t *>(instance);
+      }
+
+      /// <summary>Number of subscribers for which extra space will be allocated</summary>
+      public: std::size_t subscriberCount;
+
+    };
+
+    // template <class T, class U>
+    // static bool operator==(const BroadcastQueueAllocator<T>&, const BroadcastQueueAllocator<U>&);
+    // template <class T, class U>
+    // static bool operator!=(const BroadcastQueueAllocator<T>&, const BroadcastQueueAllocator<U>&);
+
+    #pragma endregion // struct BroadcastQueueAllocator
 
     /// <summary>Initializes a new concurrent event</summary>
     public: ConcurrentEvent() = default;
@@ -174,7 +251,7 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <returns>The number of current subscribers</returns>
     public: std::size_t CountSubscribers() const {
       std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
-        &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
+        this->subscribers, std::memory_order::memory_order_consume // if carries dependency
       );
       if(likely(static_cast<bool>(currentQueue))) {
         return currentQueue->SubscriberCount;
@@ -292,37 +369,35 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <summary>Subscribes the specified delegate to the event</summary>
     /// <param name="delegate">Delegate that will be subscribed</param>
     public: void Subscribe(const DelegateType &delegate) {
-      std::shared_ptr<SharedMutex> currentEditMutex = acquireMutex();
-      ON_SCOPE_EXIT {
-        releaseMutex(currentEditMutex);
-      };
-      {
-        std::lock_guard<std::mutex> mutexLockScope(currentEditMutex->Mutex);
 
-        // Build a new broadcast list with the new subscriber appended to the end
-        {
-          std::shared_ptr<BroadcastQueue> newQueue;
+      // This is a C-A-S replacement attempt, so we may have to go through the whole opration
+      // multiple times. We expect this to be the case only very rarely, as contention should
+      // happen when events are fired, not by threads subscribing & unsubscribing rapidly.
+      for(;;) {
+        std::shared_ptr<const BroadcastQueue> newQueue;
 
-          // We either have to create an entirely new list of subscribers or
-          // clone an existing subscriber list while adding one entry to the end.
-          std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
-            &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
-          );
-          if(!currentQueue) {
-            newQueue = std::make_shared<BroadcastQueue>(1);
-            new(newQueue->Subscribers) DelegateType(delegate);
-          } else { // Non-empty subscriber list present, create clone with extra entry
-            std::size_t currentSubscriberCount = currentQueue->SubscriberCount;
-            newQueue = std::make_shared<BroadcastQueue>(currentSubscriberCount + 1);
-            for(std::size_t index = 0; index < currentSubscriberCount; ++index) {
-              new(newQueue->Subscribers + index) DelegateType(currentQueue->Subscribers[index]);
-            }
-            new(newQueue->Subscribers + currentSubscriberCount) DelegateType(delegate);
-          }
+        std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
+          &this->subscribers, std::memory_order::memory_order_consume // if carries dependency
+        );
+        if(currentQueue == nullptr) { // There was no previous subscriber list
+          newQueue = allocateBroadcastQueue(1);
+          new(newQueue->Subscribers) DelegateType(delegate);
+        } else { // Non-empty subscriber list present, create clone with an extra entry
+          std::size_t currentSubscriberCount = currentQueue->SubscriberCount;
+          newQueue = allocateBroadcastQueue(currentSubscriberCount + 1);
+          std::copy_n(currentQueue->Subscribers, currentSubscriberCount, newQueue->Subscribers);
+          new(newQueue->Subscribers + currentSubscriberCount) DelegateType(delegate);
+        }
 
-          std::atomic_store(&this->subscribers, std::shared_ptr<const BroadcastQueue>(newQueue));
-        } // Queue replacement beauty scope
-      } // edit mutex lock scope
+        // Try to replace the current (null pointer) queue with our new one
+        bool wasReplaced = std::atomic_compare_exchange_strong(
+          &this->subscribers, &currentQueue, newQueue
+        );
+        if(wasReplaced) {
+          break;
+        }
+      } // C-A-S loop
+
     }
 
     /// <summary>Unsubscribes the specified free function from the event</summary>
@@ -363,191 +438,91 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <param name="delegate">Delegate that will be unsubscribed</param>
     /// <returns>True if the callback was found and unsubscribed, false otherwise</returns>
     public: bool Unsubscribe(const DelegateType &delegate) {
-      std::shared_ptr<SharedMutex> currentEditMutex = acquireMutex();
-      ON_SCOPE_EXIT {
-        releaseMutex(currentEditMutex);
-      };
-      {
-        std::lock_guard<std::mutex> mutexLockScope(currentEditMutex->Mutex);
-        {
-          std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
-            &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
-          );
-          if(!currentQueue) {
-            return false; // There were no subscribers...
-          }
 
-          // If there's only one subscriber left, it's either time to wipe out the broadcast
-          // queue or (if the delegate wasn't the one subscriber) do nothing.
-          std::size_t oldSubscriberCount = currentQueue->SubscriberCount;
-          if(oldSubscriberCount == 1) {
-            if(likely(*currentQueue->Subscribers == delegate)) {
-              std::atomic_store(&this->subscribers, std::shared_ptr<const BroadcastQueue>());
-              return true;
-            } else {
-              return false;
-            }
-          }
-
-          // We're being optimistic, assuming that the delegate being unsubscribes is actually
-          // in the subscriber list. Create a new subscriber queue with one slot less space.
-          std::shared_ptr<BroadcastQueue> newQueue = std::make_shared<BroadcastQueue>(
-            oldSubscriberCount - 1
-          );
-
-          // Now copy the subscribers over into the new queue until we find the subscriber
-          // that should be removed, then skip over it and blindly copy over the rest.
-          DelegateType *oldSubscribers = currentQueue->Subscribers;
-          DelegateType *newSubscribers = newQueue->Subscribers;
-          while(oldSubscriberCount > 0) {
-            if(*oldSubscribers == delegate) {
-              ++oldSubscribers;
-              std::copy_n(oldSubscribers, oldSubscriberCount - 1, newSubscribers);
-              std::atomic_store(&this->subscribers, std::shared_ptr<const BroadcastQueue>(newQueue));
-              return true;
-            }
-
-            *newSubscribers = *oldSubscribers;
-            ++oldSubscribers;
-            ++newSubscribers;
-            --oldSubscriberCount;
-          }
-
-          // We didn't find the subscriber that was to be unsubscribed, so we also didn't
-          // edit the subscriber list and there is not need to replace or change anything.
-          return false;
-
-        } // Queue replacement beauty scope
-      } // edit mutex lock scope
-    }
-
-    #pragma region struct BroadcastQueue
-
-    /// <summary>Queue of subscribers to which the event will be broadcast</summary>
-    private: struct BroadcastQueue {
-
-      /// <summary>
-      ///   Initializes a new broadcast queue for the specified number of subscribers
-      /// </summary>
-      /// <param name="count">
-      ///   Number of subscribers the broadcast queue will be initialized for
-      /// </param>
-      public: BroadcastQueue(std::size_t count) :
-        Subscribers(allocateUninitializedDelegates(count)),
-        SubscriberCount(count) {}
-
-      /// <summary>Frees all memory owned by the broadcast queue</summary>
-      public: ~BroadcastQueue() {
-        // We do not call the destructors of the delegates here because we know they're
-        // trivially constructible. This is only the case because delegates do not support
-        // lambdas which would have to capture arbitrary types with possible destructors.
-        freeDelegatesWithoutDestructor(this->Subscribers);
-      }
-
-      // Ensure the queue isn't copied or moved with default semantics
-      BroadcastQueue(const BroadcastQueue &other) = delete;
-      BroadcastQueue(BroadcastQueue &&other) = delete;
-      void operator =(const BroadcastQueue &other) = delete;
-      void operator =(BroadcastQueue &&other) = delete;
-
-      /// <summary>Allocates an memory for delegates without calling their constructor</summary>
-      /// <param name="count">Number of delegates to allocate memory for</param>
-      /// <returns>A pointer to the first allocated delegate in the array</returns>
-      private: static DelegateType *allocateUninitializedDelegates(std::size_t count) {
-        return reinterpret_cast<DelegateType *>(
-          new std::uint8_t *[sizeof(DelegateType[2]) * count / 2]
-        );
-      }
-
-      /// <summary>Frees an array of delegates without calling any destructors</summary>
-      /// <param name="delegates">Delegate array that will be freed</param>
-      private: static void freeDelegatesWithoutDestructor(DelegateType *delegates) {
-        delete[] reinterpret_cast<std::uint8_t *>(delegates);
-      }
-
-      /// <summary>Plain array of all subscribers to which the event is broadcast</summary>
-      public: DelegateType *Subscribers;
-      /// <summary>Number of subscribers stored in the array</summary>
-      public: std::size_t SubscriberCount;
-
-    };
-
-    #pragma endregion // struct BroadcastQueue
-
-    /// <summary>Acquires the edit mutex held while editing the broadcast queue</summary>
-    /// <returns>The current edit mutex</returns>
-    /// <remarks>
-    ///   This goes through some hoops to ensure the mutex only exists while the broadcast
-    ///   queue is being edited, while also ensuring that if a mutex exist, only one exists
-    ///   and is shared by all threads competing to edit the broadcast queue.
-    /// </remarks>
-    private: std::shared_ptr<SharedMutex> acquireMutex() {
-      std::shared_ptr<SharedMutex> currentEditMutex = std::atomic_load_explicit(
-        &this->editMutex, std::memory_order::memory_order_consume // if() carries dependency
-      );
-      std::shared_ptr<SharedMutex> newEditMutex; // Leave as nullptr until we know we need it
+      // This is a C-A-S replacement attempt, so we may have to go through the whole opration
+      // multiple times. We expect this to be the case only very rarely, as contention should
+      // happen when events are fired, not by threads subscribing & unsubscribing rapidly.
       for(;;) {
 
-        // If we got a shared mutex instance, it may still be on the brink of being abandoned
-        // (once the reference counter goes to 0, it must not be revived to avoid a race)
-        if(unlikely(static_cast<bool>(currentEditMutex))) {
-          std::size_t knownReferenceCount = currentEditMutex->ReferenceCount.load(
-            std::memory_order::memory_order_consume
-          );
-
-          // Was the mutex just now still occupied by another thread? If so, attempt to
-          // increment its reference count one further via a C-A-S operation.
-          while(likely(knownReferenceCount >= 1)) {
-            bool wasExchanged = currentEditMutex->ReferenceCount.compare_exchange_weak(
-              knownReferenceCount, knownReferenceCount + 1
-            );
-            if(likely(wasExchanged)) {
-              return currentEditMutex; // We managed to increment the reference count above 1
-            }
-          }
-
-          // The shared mutex for which we got the reference count was about to be dropped
-          currentEditMutex.reset(); // Assume the other thread has already dropped it by now
-        }
-
-        // Either there was no existing mutex or it was about to be dropped,
-        // so attempt to insert our own, fresh mutex with a reference count of 1.
-        if(!newEditMutex) {
-          newEditMutex = std::make_shared<SharedMutex>();
-        }
-        bool wasExchanged = std::atomic_compare_exchange_strong(
-          &this->editMutex, // pointer that will be replaced
-          &currentEditMutex, // expected prior mutex, receives current on failure
-          newEditMutex // new mutex to assign if previous was empty
+        // Grab the current queue in order to create a modified clone of it
+        std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
+          &this->subscribers, std::memory_order::memory_order_consume // if carries dependency
         );
-        if(likely(wasExchanged)) {
-          return newEditMutex; // We got our new mutex in with 1 reference count held by us
+        if(unlikely(currentQueue == nullptr)) {
+          return false; // Nothing we can do, there were no subscribers at all...
         }
 
-      } // for(;;) checking loop for C-A-S until a mutex is in place
+        // Hunt for the delegate the caller wishes to unsubscribe
+        std::size_t currentSubscriberCount = currentQueue->SubscriberCount;
+        std::size_t index = 0;
+        for(;;) {
+          if(currentQueue->Subscribers[index] == delegate) {
+            std::shared_ptr<const BroadcastQueue> newQueue;
+            if(currentSubscriberCount > 1) {
+              --currentSubscriberCount;
+              newQueue = allocateBroadcastQueue(currentSubscriberCount);
+              std::copy_n(currentQueue->Subscribers, index, newQueue->Subscribers);
+              std::copy_n(
+                currentQueue->Subscribers + index + 1,
+                currentSubscriberCount - index,
+                newQueue->Subscribers + index
+              );
+            }
+
+            // Try to replace the current queue with our modified clone
+            bool wasReplaced = std::atomic_compare_exchange_strong(
+              &this->subscribers, &currentQueue, newQueue
+            );
+            if(wasReplaced) {
+              return true; // Edited version of broadcast queue is in place, we're done
+            } else {
+              break; // Someone else edited the broadcast queue, repeat outer C-A-S loop
+            }
+          } // if delegate matched
+
+          ++index;
+          if(index == currentSubscriberCount) {
+            return false; // Loop completed without finding the delegate
+          }
+        } // delegate search loop
+      } // C-A-S loop
     }
 
-    /// <summary>Releases the shared mutex again, potentially dropping it entirely</summary>
-    /// <param name="currentEditMutex">Shared mutex as returned by the acquire method</param>
-    private: void releaseMutex(const std::shared_ptr<SharedMutex> &currentEditMutex) {
-      std::size_t previousReferenceCount = currentEditMutex->ReferenceCount.fetch_sub(
-        1, std::memory_order::memory_order_seq_cst
+    /// <summary>
+    ///   Allocates a new broadcast queue for the specified number of subscribers
+    /// </summary>
+    /// <param name="subscriberCount">Number of subscribers the queue should hold</param>
+    /// <returns>A new broadcast queue with an uninitialized subscriber list</returns>
+    private: static std::shared_ptr<const BroadcastQueue> allocateBroadcastQueue(
+      std::size_t subscriberCount
+    ) {
+      constexpr std::size_t subscriberStartOffset = (
+        sizeof(BroadcastQueue) +
+        (
+          ((sizeof(BroadcastQueue) % alignof(DelegateType *)) == 0) ?
+          0 : // size happened to fit needed alignment of subscriber list
+          (alignof(DelegateType *) - (sizeof(BroadcastQueue) % alignof(BroadcastQueue *)))
+        )
       );
 
-      // If we just decremented the reference counter to zero, drop the shared mutex.
-      // This would be a race condition for a naively implemented acquireMutex() method,
-      // but we sidestep this by making acquireMutex() C-A-S the reference count for
-      // the uptick operation and consider the whole whole shared mutex dead when seeing
-      // it at a reference count of zero.
-      if(likely(previousReferenceCount == 1)) {
-        std::atomic_store(&this->editMutex, std::shared_ptr<SharedMutex>());
-      }
+      BroadcastQueueAllocator<BroadcastQueue> queueAllocator(subscriberCount);
+      std::shared_ptr<BroadcastQueue> newQueue = (
+        std::allocate_shared<BroadcastQueue>(queueAllocator, subscriberCount)
+      );
+
+      newQueue->Subscribers = reinterpret_cast<DelegateType *>(
+        reinterpret_cast<std::uint8_t *>(newQueue.get()) + subscriberStartOffset
+      );
+
+      return newQueue;
     }
 
     /// <summary>Stores the current subscribers to the event</summary>
+    /// <remarks>
+    ///   This shared_ptr is written to by potentially multiple threads, use atomic
+    ///   operations to access it!
+    /// </remarks>
     public: /* atomic */ std::shared_ptr<const BroadcastQueue> subscribers;
-    /// <summary>Will be present while subscriptions/unsubscriptions happen</summary>
-    public: /* atomic */ std::shared_ptr<SharedMutex> editMutex;
 
   };
 
