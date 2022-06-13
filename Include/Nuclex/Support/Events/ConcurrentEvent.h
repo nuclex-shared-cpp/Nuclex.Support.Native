@@ -30,11 +30,9 @@ License along with this library
 #include <atomic> // for std::atomic
 #include <algorithm> // for std::copy_n()
 #include <memory> // for std::unique_ptr
+#include <vector> // for std::vector
 
 namespace Nuclex { namespace Support { namespace Events {
-
-  // ------------------------------------------------------------------------------------------- //
-
 
   // ------------------------------------------------------------------------------------------- //
 
