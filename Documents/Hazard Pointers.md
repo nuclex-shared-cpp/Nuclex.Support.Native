@@ -130,7 +130,7 @@ the hazard pointer (`pHazard_`), a flag that tells whether the hazard pointer is
 (`active_`), and the obligatory pointer to the next node (`pNext_`).
 
 `HPRecType` offers two primitives: `Acquire` and `Release`. `HPRecType::Acquire` gives a thread
-a pointer to an `HPRecType`, call it `p`. From then on, that thread can set `p->pHazard_1 and rest
+a pointer to an `HPRecType`, call it `p`. From then on, that thread can set `p->pHazard_` and rest
 assured that all other threads will tread carefully around that pointer. When the thread does not
 use the hazard pointer anymore, it calls `HPRecType::Release(p)`.
 

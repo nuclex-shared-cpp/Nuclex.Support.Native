@@ -68,7 +68,7 @@ namespace Nuclex { namespace Support { namespace Events {
   ///     It does not allocate any memory upon construction or firing, but will allocate
   ///     a single memory block each time callbacks are subscribed or unsubscribed. Said memory
   ///     block is the size of the std::shared_ptr reference count + two pointers + two more
-  ///     pointers per subscriber (typically 64 bytes + 16 bytes per subscriber).
+  ///     pointers per subscriber (overall typically 64 bytes + 16 bytes per subscriber).
   ///   </para>
   ///   <para>
   ///     Usage example:
