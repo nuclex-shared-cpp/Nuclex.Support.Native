@@ -28,7 +28,7 @@ License along with this library
 #include <cstdint> // for std::uint8_t
 #include <atomic> // for std::atomic
 #include <algorithm> // for std::copy_n()
-#include <memory> // for std::unique_ptr
+#include <memory> // for std::shared_ptr
 #include <vector> // for std::vector
 
 namespace Nuclex { namespace Support { namespace Events {
@@ -201,7 +201,7 @@ namespace Nuclex { namespace Support { namespace Events {
           (
             ((sizeof(TElement) % alignof(DelegateType *)) == 0) ?
             0 : // size happened to fit needed alignment of subscriber list
-            (alignof(DelegateType *) - (sizeof(TElement) % alignof(TElement *)))
+            (alignof(DelegateType *) - (sizeof(TElement) % alignof(DelegateType *)))
           )
         );
 
@@ -273,7 +273,7 @@ namespace Nuclex { namespace Support { namespace Events {
       std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
         &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
       );
-      if(static_cast<bool>(currentQueue)) {
+      if(unlikely(static_cast<bool>(currentQueue))) {
         std::size_t subscriberCount = currentQueue->SubscriberCount;
         results.reserve(subscriberCount);
         for(std::size_t index = 0; index < subscriberCount; ++index) {
@@ -309,7 +309,7 @@ namespace Nuclex { namespace Support { namespace Events {
       std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
         &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
       );
-      if(static_cast<bool>(currentQueue)) {
+      if(unlikely(static_cast<bool>(currentQueue))) {
         std::size_t subscriberCount = currentQueue->SubscriberCount;
         for(std::size_t index = 0; index < subscriberCount; ++index) {
           *results = currentQueue->Subscribers[index](std::forward<TArguments>(arguments)...);
@@ -327,7 +327,7 @@ namespace Nuclex { namespace Support { namespace Events {
       std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
         &this->subscribers, std::memory_order::memory_order_consume // if() is dependency
       );
-      if(static_cast<bool>(currentQueue)) {
+      if(unlikely(static_cast<bool>(currentQueue))) {
         std::size_t subscriberCount = currentQueue->SubscriberCount;
         for(std::size_t index = 0; index < subscriberCount; ++index) {
           currentQueue->Subscribers[index](std::forward<TArguments>(arguments)...);
@@ -376,21 +376,21 @@ namespace Nuclex { namespace Support { namespace Events {
         std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
           &this->subscribers, std::memory_order::memory_order_consume // if carries dependency
         );
-        if(currentQueue == nullptr) { // There was no previous subscriber list
-          newQueue = allocateBroadcastQueue(1);
-          new(newQueue->Subscribers) DelegateType(delegate);
-        } else { // Non-empty subscriber list present, create clone with an extra entry
+        if(unlikely(static_cast<bool>(currentQueue))) { // Was there a previous subscriber list?
           std::size_t currentSubscriberCount = currentQueue->SubscriberCount;
           newQueue = allocateBroadcastQueue(currentSubscriberCount + 1);
           std::copy_n(currentQueue->Subscribers, currentSubscriberCount, newQueue->Subscribers);
           new(newQueue->Subscribers + currentSubscriberCount) DelegateType(delegate);
+        } else { // No subscriber list existed before
+          newQueue = allocateBroadcastQueue(1);
+          new(newQueue->Subscribers) DelegateType(delegate);
         }
 
         // Try to replace the current (null pointer) queue with our new one
         bool wasReplaced = std::atomic_compare_exchange_strong(
           &this->subscribers, &currentQueue, newQueue
         );
-        if(wasReplaced) {
+        if(likely(wasReplaced)) {
           break;
         }
       } // C-A-S loop
@@ -445,7 +445,7 @@ namespace Nuclex { namespace Support { namespace Events {
         std::shared_ptr<const BroadcastQueue> currentQueue = std::atomic_load_explicit(
           &this->subscribers, std::memory_order::memory_order_consume // if carries dependency
         );
-        if(unlikely(currentQueue == nullptr)) {
+        if(unlikely(!static_cast<bool>(currentQueue))) {
           return false; // Nothing we can do, there were no subscribers at all...
         }
 
@@ -453,9 +453,9 @@ namespace Nuclex { namespace Support { namespace Events {
         std::size_t currentSubscriberCount = currentQueue->SubscriberCount;
         std::size_t index = 0;
         for(;;) {
-          if(currentQueue->Subscribers[index] == delegate) {
+          if(unlikely(currentQueue->Subscribers[index] == delegate)) {
             std::shared_ptr<const BroadcastQueue> newQueue;
-            if(currentSubscriberCount > 1) {
+            if(unlikely(currentSubscriberCount > 1)) {
               --currentSubscriberCount;
               newQueue = allocateBroadcastQueue(currentSubscriberCount);
               std::copy_n(currentQueue->Subscribers, index, newQueue->Subscribers);
@@ -470,7 +470,7 @@ namespace Nuclex { namespace Support { namespace Events {
             bool wasReplaced = std::atomic_compare_exchange_strong(
               &this->subscribers, &currentQueue, newQueue
             );
-            if(wasReplaced) {
+            if(likely(wasReplaced)) {
               return true; // Edited version of broadcast queue is in place, we're done
             } else {
               break; // Someone else edited the broadcast queue, repeat outer C-A-S loop
@@ -478,11 +478,13 @@ namespace Nuclex { namespace Support { namespace Events {
           } // if delegate matched
 
           ++index;
-          if(index == currentSubscriberCount) {
+          if(likely(index == currentSubscriberCount)) {
             return false; // Loop completed without finding the delegate
           }
         } // delegate search loop
+
       } // C-A-S loop
+
     }
 
     /// <summary>
@@ -498,15 +500,13 @@ namespace Nuclex { namespace Support { namespace Events {
         (
           ((sizeof(BroadcastQueue) % alignof(DelegateType *)) == 0) ?
           0 : // size happened to fit needed alignment of subscriber list
-          (alignof(DelegateType *) - (sizeof(BroadcastQueue) % alignof(BroadcastQueue *)))
+          (alignof(DelegateType *) - (sizeof(BroadcastQueue) % alignof(DelegateType *)))
         )
       );
 
-      BroadcastQueueAllocator<BroadcastQueue> queueAllocator(subscriberCount);
-      std::shared_ptr<BroadcastQueue> newQueue = (
-        std::allocate_shared<BroadcastQueue>(queueAllocator, subscriberCount)
+      std::shared_ptr<BroadcastQueue> newQueue = std::allocate_shared<BroadcastQueue>(
+        BroadcastQueueAllocator<BroadcastQueue>(subscriberCount), subscriberCount
       );
-
       newQueue->Subscribers = reinterpret_cast<DelegateType *>(
         reinterpret_cast<std::uint8_t *>(newQueue.get()) + subscriberStartOffset
       );
