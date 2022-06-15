@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/Include/**",
-                "${workspaceFolder}/../ThirdParty/gtest/Include/**"
+                "${workspaceFolder}/../ThirdParty/gtest/build/googletest/include/**",
+                "${workspaceFolder}/../ThirdParty/celero/build/include/**"
             ],
             "defines": [
                 "NUCLEX_SUPPORT_EXECUTABLE",

@@ -4,7 +4,26 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Generate (CMake)",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-B", "obj/cmake-Debug",
+        "-DCMAKE_BUILD_TYPE=Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$gcc"
+    },
+
+    {
       "label": "Build (CMake)",
+      "dependsOn": [ "Generate (CMake)" ],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -48,6 +67,21 @@
       },
       "type": "shell",
       "command": "bin/linux-gcc11.2-amd64-debug/NuclexSupportNativeTests",
+      "args": [ ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "Run Benchmarks (CMake)",
+      "dependsOn": [ "Install (CMake)" ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "type": "shell",
+      "command": "bin/linux-gcc11.2-amd64-debug/NuclexSupportNativeBenchmark",
       "args": [ ],
       "options": {
         "cwd": "${workspaceFolder}"

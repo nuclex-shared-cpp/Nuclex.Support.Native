@@ -10,6 +10,8 @@ project(
 )
 
 set(BUILD_DOCS OFF CACHE BOOL "Whether to generate documentation via Doxygen")
+set(BUILD_UNIT_TESTS ON CACHE BOOL "Whether to build the unit test executable")
+set(BUILD_BENCHMARKS ON CACHE BOOL "Whether to build the benchmarks executable")
 
 # -------------------------------------------------------------------------------------------------
 
@@ -21,10 +23,22 @@ include("../BuildSystem/cmake/cplusplus.cmake")
 #   https://en.wikipedia.org/wiki/Pthreads
 find_package(Threads REQUIRED)
 
-# Add GoogleTest as a sub-project so we can link our unit test executable
-# Already included by Nuclex.Support.Native, CMake doesn't like a second inclusion...
-if(NOT (TARGET GoogleTest))
-	add_subdirectory(${PROJECT_SOURCE_DIR}/../ThirdParty/gtest ${CMAKE_BINARY_DIR}/gtest)
+if(BUILD_UNIT_TESTS)
+
+	# Add GoogleTest as a sub-project so we can link our unit test executable
+	if(NOT (TARGET GoogleTest))
+		add_subdirectory(${PROJECT_SOURCE_DIR}/../ThirdParty/gtest ${CMAKE_BINARY_DIR}/gtest)
+	endif()
+
+endif()
+
+if(BUILD_BENCHMARKS)
+
+	# Add Celero as a sub-project so we can link our benchmark executable
+	if(NOT (TARGET Celero))
+		add_subdirectory(${PROJECT_SOURCE_DIR}/../ThirdParty/celero ${CMAKE_BINARY_DIR}/celero)
+	endif()
+
 endif()
 
 # Use CMake's own package for locating Doxygen on the system
@@ -41,6 +55,7 @@ endif()
 #     Source/                   All source files, using deeper directories as needed
 #     Include/ProjectName/      All public headers, using deeper directories as needed
 #     Tests/                    All unit tests, using deeper directories as needed
+#     Benchmarks/               All benchmark files, using deeper directories as needed
 #
 # From CMake documentation:
 #   |  Note: We do not recommend using GLOB to collect a list of
@@ -70,6 +85,12 @@ file(
 	GLOB_RECURSE unittestFiles
 	CONFIGURE_DEPENDS
 	"Tests/*.cpp"
+)
+
+file(
+	GLOB_RECURSE benchmarkFiles
+	CONFIGURE_DEPENDS
+	"Benchmarks/*.cpp"
 )
 
 # -------------------------------------------------------------------------------------------------
@@ -116,58 +137,118 @@ endif()
 
 # -------------------------------------------------------------------------------------------------
 
-# Executable that runs the unit tests (main() supplied by Googletest)
-add_executable(NuclexSupportNativeTests)
+if(BUILD_UNIT_TESTS)
 
-# Enable compiler warnings only if this library is compiles on its own.
-# If it's used as a sub-project, the including project's developers aren't
-# interested in seeing warnings from a project they're not maintaining.
-if(${CMAKE_PROJECT_NAME} STREQUAL "NuclexSupportNative")
-	enable_target_compiler_warnings(NuclexSupportNativeTests)
-else()
-	disable_target_compiler_warnings(NuclexSupportNativeTests)
-endif()
+	# Executable that runs the unit tests (main() supplied by Googletest)
+	add_executable(NuclexSupportNativeTests)
 
-# Let the code know it's not being compiled into a shared library
-# (this disables visibility/exports, thus allowing the compiler detect
-# additional unused code and warn about it)
-target_compile_definitions(
-	NuclexSupportNativeTests
-	PRIVATE NUCLEX_SUPPORT_EXECUTABLE
-)
-#	PRIVATE NUCLEX_SUPPORT_ENABLE_BENCHMARKS
+	# Enable compiler warnings only if this library is compiles on its own.
+	# If it's used as a sub-project, the including project's developers aren't
+	# interested in seeing warnings from a project they're not maintaining.
+	if(${CMAKE_PROJECT_NAME} STREQUAL "NuclexSupportNative")
+		enable_target_compiler_warnings(NuclexSupportNativeTests)
+	else()
+		disable_target_compiler_warnings(NuclexSupportNativeTests)
+	endif()
 
-# Add directory with public headers to include path
-target_include_directories(
-	NuclexSupportNativeTests
-	PUBLIC "Include"
-)
-
-# Add public headers and sources (normal + unit tests) to compilation list
-# (headers, too, in case CMake is used to generate an IDE project)
-target_sources(
-	NuclexSupportNativeTests
-	PRIVATE ${headerFiles}
-	PRIVATE ${sourceFiles}
-	PRIVATE ${unittestFiles}
-)
-
-# Link GoogleTest and the main() function supplied by GoogleTest
-# Also link against PThreads
-target_link_libraries(
-	NuclexSupportNativeTests
-	PRIVATE GoogleTest::Static
-	PRIVATE GoogleTest::Main
-	PRIVATE Threads::Threads
-)
-
-# On Windows, we want the executable to be named Nuclex.Support.Native.Tests.exe
-if(WIN32)
-	set_target_properties(
+	# Let the code know it's not being compiled into a shared library
+	# (this disables visibility/exports, thus allowing the compiler detect
+	# additional unused code and warn about it)
+	target_compile_definitions(
 		NuclexSupportNativeTests
-		PROPERTIES OUTPUT_NAME "Nuclex.Support.Native.Tests"
+		PRIVATE NUCLEX_SUPPORT_EXECUTABLE
 	)
-endif()
+
+	# Add directory with public headers to include path
+	target_include_directories(
+		NuclexSupportNativeTests
+		PUBLIC "Include"
+	)
+
+	# Add public headers and sources (normal + unit tests) to compilation list
+	# (headers, too, in case CMake is used to generate an IDE project)
+	target_sources(
+		NuclexSupportNativeTests
+		PRIVATE ${headerFiles}
+		PRIVATE ${sourceFiles}
+		PRIVATE ${unittestFiles}
+	)
+
+	# Link GoogleTest and the main() function supplied by GoogleTest
+	# Also link against PThreads
+	target_link_libraries(
+		NuclexSupportNativeTests
+		PRIVATE GoogleTest::Static
+		PRIVATE GoogleTest::Main
+		PRIVATE Threads::Threads
+	)
+
+	# On Windows, we want the executable to be named Nuclex.Support.Native.Tests.exe
+	if(WIN32)
+		set_target_properties(
+			NuclexSupportNativeTests
+			PROPERTIES OUTPUT_NAME "Nuclex.Support.Native.Tests"
+		)
+	endif()
+
+endif() # if BUILD_UNIT_TESTS enabled
+
+# -------------------------------------------------------------------------------------------------
+
+if(BUILD_BENCHMARKS)
+
+	# Executable that runs the unit tests (main() supplied by Googletest)
+	add_executable(NuclexSupportNativeBenchmark)
+
+	# Enable compiler warnings only if this library is compiles on its own.
+	# If it's used as a sub-project, the including project's developers aren't
+	# interested in seeing warnings from a project they're not maintaining.
+	if(${CMAKE_PROJECT_NAME} STREQUAL "NuclexSupportNative")
+		enable_target_compiler_warnings(NuclexSupportNativeBenchmark)
+	else()
+		disable_target_compiler_warnings(NuclexSupportNativeBenchmark)
+	endif()
+
+	# Let the code know it's not being compiled into a shared library
+	# (this disables visibility/exports, thus allowing the compiler detect
+	# additional unused code and warn about it)
+	target_compile_definitions(
+		NuclexSupportNativeBenchmark
+		PRIVATE NUCLEX_SUPPORT_EXECUTABLE
+	)
+
+	# Add directory with public headers to include path
+	target_include_directories(
+		NuclexSupportNativeBenchmark
+		PUBLIC "Include"
+	)
+
+	# Add public headers and sources (normal + unit tests) to compilation list
+	# (headers, too, in case CMake is used to generate an IDE project)
+	target_sources(
+		NuclexSupportNativeBenchmark
+		PRIVATE ${headerFiles}
+		PRIVATE ${sourceFiles}
+		PRIVATE ${benchmarkFiles}
+	)
+
+	# Link GoogleTest and the main() function supplied by GoogleTest
+	# Also link against PThreads
+	target_link_libraries(
+		NuclexSupportNativeBenchmark
+		PRIVATE Celero
+		PRIVATE Threads::Threads
+	)
+
+	# On Windows, we want the executable to be named Nuclex.Support.Native.Tests.exe
+	if(WIN32)
+		set_target_properties(
+			NuclexSupportNativeBenchmark
+			PROPERTIES OUTPUT_NAME "Nuclex.Support.Native.Benchmark"
+		)
+	endif()
+
+endif() # if BUILD_BENCHMARKS enabled
 
 # -------------------------------------------------------------------------------------------------
 
@@ -190,13 +271,27 @@ install(
 install_debug_symbols(NuclexSupportNative)
 
 # Install unit tests in same location as shared library.
-install(
-	TARGETS NuclexSupportNativeTests
-	RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
-)
+if(BUILD_UNIT_TESTS)
+	install(
+		TARGETS NuclexSupportNativeTests
+		RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
+	)
 
-# Install .pdb files on Windows platforms for the unit tests, too.
-install_debug_symbols(NuclexSupportNativeTests)
+	# Install .pdb files on Windows platforms for the unit tests, too.
+	install_debug_symbols(NuclexSupportNativeTests)
+endif()
+
+# Install benchmarks in same location as shared library.
+if(BUILD_BENCHMARKS)
+	install(
+		TARGETS NuclexSupportNativeBenchmark
+		RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
+	)
+
+	# Install .pdb files on Windows platforms for the unit tests, too.
+	install_debug_symbols(NuclexSupportNativeBenchmark)
+endif()
+
 
 # -------------------------------------------------------------------------------------------------
 
