@@ -30,6 +30,7 @@ License along with this library
 #include <algorithm> // for std::copy_n()
 #include <memory> // for std::shared_ptr
 #include <vector> // for std::vector
+#include <vector> // for std::vector
 
 namespace Nuclex { namespace Support { namespace Events {
 

@@ -106,8 +106,8 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\ThirdParty\gtest\Include\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;CELERO_STATIC;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\ThirdParty\celero\build\include\</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -117,8 +117,8 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>gtest.lib;gtest_main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\ThirdParty\gtest\bin\windows-msvc14.1-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>celero.lib;lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ThirdParty\celero\bin\windows-msvc14.1-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -126,8 +126,8 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\ThirdParty\gtest\Include\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;CELERO_STATIC;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\ThirdParty\celero\build\include\</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -136,8 +136,8 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>gtest.lib;gtest_main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\ThirdParty\gtest\bin\windows-msvc14.1-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>celero.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ThirdParty\celero\bin\windows-msvc14.1-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -147,8 +147,8 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\ThirdParty\gtest\Include\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;CELERO_STATIC;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\ThirdParty\celero\build\include\</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
@@ -163,8 +163,8 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>gtest.lib;gtest_main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\ThirdParty\gtest\bin\windows-msvc14.1-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>celero.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ThirdParty\celero\bin\windows-msvc14.1-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
@@ -175,8 +175,8 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\ThirdParty\gtest\Include\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;CELERO_STATIC;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\ThirdParty\celero\build\include\</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
@@ -190,8 +190,8 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>gtest.lib;gtest_main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\ThirdParty\gtest\bin\windows-msvc14.1-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>celero.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ThirdParty\celero\bin\windows-msvc14.1-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
@@ -265,6 +265,9 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Benchmarks\BenchmarkMain.cpp" />
+    <ClCompile Include="Benchmarks\Events\EventBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\IntegerToStringBenchmark.cpp" />
     <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentCollection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
@@ -382,8 +385,6 @@
     <ClCompile Include="Source\ScopeGuard.cpp" />
     <ClCompile Include="Source\Variant.cpp" />
     <ClCompile Include="Source\VariantType.cpp" />
-  </ItemGroup>
-    <ClCompile Include="Benchmark\BenchmarkMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Documents\Copyright.md" />

@@ -56,11 +56,11 @@ namespace {
     // Build the integer backwards by successively dividing it by 10
     char *end = temp + sizeof(temp) - 1;
     while(integer >= 10) {
-      *end = u8'0' + (integer % 10);
+      *end = static_cast<char>(u8'0' + (integer % 10));
       integer /= 10;
       --end; // go backwards
     }
-    *end = u8'0' + integer;
+    *end = static_cast<char>(u8'0' + integer);
 
     // If the integer may be negative, and was negative, prepend a minus sign
     if constexpr(std::is_signed<TInteger>::value) {
