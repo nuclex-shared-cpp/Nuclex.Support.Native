@@ -34,13 +34,6 @@ License along with this library
 #include <vector> // for std::vector
 #include <vector> // for std::vector
 
-// Idea to avoid allocation per subscriber
-//
-// - Allocate in batches (4, 8, 16, 32, 64, ... delegates)
-// - When replacing the broadcast queue, assign the previous one to a 'ready' position
-// - To avoid doing 2 micro spinlocks, go back to manual reference counter + D-I-Y spinlock?
-//
-
 namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
@@ -290,13 +283,6 @@ namespace Nuclex { namespace Support { namespace Events {
     };
 
     #pragma endregion // struct BroadcastQueue
-
-    private: void releaseBroadcastQueue(BroadcastQueue *queue) {
-
-    }
-
-    private: void recycleBroadcastQueue(BroadcastQueue *queue) {
-    }
 
     /// <summary>
     ///   Allocates a new broadcast queue for the specified number of subscribers
