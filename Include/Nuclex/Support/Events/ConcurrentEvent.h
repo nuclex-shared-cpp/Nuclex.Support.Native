@@ -104,6 +104,20 @@ namespace Nuclex { namespace Support { namespace Events {
   ///       }
   ///     </code>
   ///   </para>
+  ///   <para>
+  ///     Cheat sheet
+  ///   </para>
+  ///   <para>
+  ///     🛈 Optimized for granular events (many event instances w/few subscribers)<br />
+  ///     🛈 Optimized for fast broadcast performance over subscribe/unsubscribe<br />
+  ///     🛈 Two allocations per power of two reached by the subscriber count<br />
+  ///     ⚫ Can optionally collect return values from all event callbacks<br />
+  ///     ⚫ New subscribers can be added freely even during event broadcast<br />
+  ///     ⚫ Subscribers can freely unsubscribe anyone from within event callback<br />
+  ///     ⚫ For free-threaded use (anything allowed, any number of times simultaneously)<br />
+  ///     🛇 Lambda expressions can not be subscribers<br />
+  ///        (adds huge runtime costs, see std::function, would have no way to unsubscribe)<br />
+  ///   </para>
   /// </remarks>
   template<typename TResult, typename... TArguments>
   class ConcurrentEvent<TResult(TArguments...)> {

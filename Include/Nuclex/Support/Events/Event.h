@@ -112,6 +112,10 @@ namespace Nuclex { namespace Support { namespace Events {
   ///     🛇 Lambda expressions can not be subscribers<br />
   ///        (adds huge runtime costs, see std::function, would have no way to unsubscribe)<br />
   ///   </para>
+  ///   <para>
+  ///     If these restrictions are too much, consider <see cref="ConcurrentEvent" />, in which
+  ///     basically anything goes for a small price in performance.
+  ///   </para>
   /// </remarks>
   template<typename TResult, typename... TArguments>
   class Event<TResult(TArguments...)> {

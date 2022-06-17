@@ -22,8 +22,10 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Config.h"
-#include "Nuclex/Support/Events/Event.h"
-#include "Nuclex/Support/Events/ConcurrentEvent.h"
+
+#if defined(HAVE_NANOSIGNAL)
+
+#include "./nano-signal-slot-2.0.1/nano_signal_slot.hpp"
 
 #include <celero/Celero.h>
 
@@ -53,16 +55,16 @@ namespace {
   class Event2Fixture : public celero::TestFixture {
 
 		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
-      this->testEvent.Subscribe<&doNothingCallback>();
-      this->testEvent.Subscribe<&doMoreNothingCallback>();
+      this->testEvent.connect<&doNothingCallback>();
+      this->testEvent.connect<&doMoreNothingCallback>();
     }
 
     public: void tearDown() override {
-      this->testEvent.Unsubscribe<&doMoreNothingCallback>();
-      this->testEvent.Unsubscribe<&doNothingCallback>();
+      this->testEvent.disconnect<&doMoreNothingCallback>();
+      this->testEvent.disconnect<&doNothingCallback>();
     }
 
-    protected: Nuclex::Support::Events::Event<void(int)> testEvent;
+    protected: Nano::Signal<void(int), Nano::ST_Policy> testEvent;
 
   };
 
@@ -72,55 +74,55 @@ namespace {
 
 		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
       for(std::size_t index = 0; index < 50; ++index) {
-        this->testEvent.Subscribe<&doNothingCallback>();
+        this->testEvent.connect<&doNothingCallback>();
       }
     }
 
     public: void tearDown() override {
       for(std::size_t index = 0; index < 50; ++index) {
-        this->testEvent.Unsubscribe<&doNothingCallback>();
+        this->testEvent.disconnect<&doNothingCallback>();
       }
     }
 
-    protected: Nuclex::Support::Events::Event<void(int)> testEvent;
+    protected: Nano::Signal<void(int), Nano::ST_Policy> testEvent;
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-  class ConcurrentEvent2Fixture : public celero::TestFixture {
+  class ThreadSafeEvent2Fixture : public celero::TestFixture {
 
 		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
-      this->testEvent.Subscribe<&doNothingCallback>();
-      this->testEvent.Subscribe<&doMoreNothingCallback>();
+      this->testEvent.connect<&doNothingCallback>();
+      this->testEvent.connect<&doMoreNothingCallback>();
     }
 
     public: void tearDown() override {
-      this->testEvent.Unsubscribe<&doMoreNothingCallback>();
-      this->testEvent.Unsubscribe<&doNothingCallback>();
+      this->testEvent.disconnect<&doMoreNothingCallback>();
+      this->testEvent.disconnect<&doNothingCallback>();
     }
 
-    protected: Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
+    protected: Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-  class ConcurrentEvent50Fixture : public celero::TestFixture {
+  class ThreadSafeEvent50Fixture : public celero::TestFixture {
 
 		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
       for(std::size_t index = 0; index < 50; ++index) {
-        this->testEvent.Subscribe<&doNothingCallback>();
+        this->testEvent.connect<&doNothingCallback>();
       }
     }
 
     public: void tearDown() override {
       for(std::size_t index = 0; index < 50; ++index) {
-        this->testEvent.Unsubscribe<&doNothingCallback>();
+        this->testEvent.disconnect<&doNothingCallback>();
       }
     }
 
-    protected: Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
+    protected: Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
 
   };
 
@@ -139,114 +141,116 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Subscribe2, NuclexEvent, 30, 100000) {
-    Nuclex::Support::Events::Event<void(int)> testEvent;
-    testEvent.Subscribe<&doNothingCallback>();
-    testEvent.Subscribe<&doMoreNothingCallback>();
+  BENCHMARK(Subscribe2, NanoSignal, 30, 100000) {
+    Nano::Signal<void(int), Nano::ST_Policy> testEvent;
+    testEvent.connect<&doNothingCallback>();
+    testEvent.connect<&doMoreNothingCallback>();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe2, NuclexConcurrentEvent, 30, 100000) {
-    Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
-    testEvent.Subscribe<&doNothingCallback>();
-    testEvent.Subscribe<&doMoreNothingCallback>();
+  BENCHMARK(Subscribe2, NanoThreadSafeSignal, 30, 100000) {
+    Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
+    testEvent.connect<&doNothingCallback>();
+    testEvent.connect<&doMoreNothingCallback>();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Subscribe50, NuclexEvent, 30, 100000) {
-    Nuclex::Support::Events::Event<void(int)> testEvent;
+  BENCHMARK(Subscribe50, NanoSignal, 30, 100000) {
+    Nano::Signal<void(int), Nano::ST_Policy> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
-      testEvent.Subscribe<&doNothingCallback>();
+      testEvent.connect<&doNothingCallback>();
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe50, NuclexConcurrentEvent, 30, 100000) {
-    Nuclex::Support::Events::Event<void(int)> testEvent;
+  BENCHMARK(Subscribe50, NanoThreadSafeSignal, 30, 100000) {
+    Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
-      testEvent.Subscribe<&doNothingCallback>();
+      testEvent.connect<&doNothingCallback>();
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Unsubscribe2, NuclexEvent, 30, 100000) {
-    Nuclex::Support::Events::Event<void(int)> testEvent;
-    testEvent.Subscribe<&doNothingCallback>();
-    testEvent.Subscribe<&doMoreNothingCallback>();
-    testEvent.Unsubscribe<&doMoreNothingCallback>();
-    testEvent.Unsubscribe<&doNothingCallback>();
+  BENCHMARK(Unsubscribe2, NanoSignal, 30, 100000) {
+    Nano::Signal<void(int), Nano::ST_Policy> testEvent;
+    testEvent.connect<&doNothingCallback>();
+    testEvent.connect<&doMoreNothingCallback>();
+    testEvent.disconnect<&doMoreNothingCallback>();
+    testEvent.disconnect<&doNothingCallback>();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe2, NuclexConcurrentEvent, 30, 100000) {
-    Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
-    testEvent.Subscribe<&doNothingCallback>();
-    testEvent.Subscribe<&doMoreNothingCallback>();
-    testEvent.Unsubscribe<&doMoreNothingCallback>();
-    testEvent.Unsubscribe<&doNothingCallback>();
+  BENCHMARK(Unsubscribe2, NanoThreadSafeSignal, 30, 100000) {
+    Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
+    testEvent.connect<&doNothingCallback>();
+    testEvent.connect<&doMoreNothingCallback>();
+    testEvent.disconnect<&doMoreNothingCallback>();
+    testEvent.disconnect<&doNothingCallback>();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Unsubscribe50, NuclexEvent, 30, 100000) {
-    Nuclex::Support::Events::Event<void(int)> testEvent;
+  BENCHMARK(Unsubscribe50, NanoSignal, 30, 100000) {
+    Nano::Signal<void(int), Nano::ST_Policy> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
-      testEvent.Subscribe<&doNothingCallback>();
+      testEvent.connect<&doNothingCallback>();
     }
     for(std::size_t index = 0; index < 50; ++index) {
-      testEvent.Unsubscribe<&doNothingCallback>();
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  BENCHMARK(Unsubscribe50, NuclexConcurrentEvent, 30, 100000) {
-    Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
-    for(std::size_t index = 0; index < 50; ++index) {
-      testEvent.Subscribe<&doNothingCallback>();
-    }
-    for(std::size_t index = 0; index < 50; ++index) {
-      testEvent.Unsubscribe<&doNothingCallback>();
+      testEvent.connect<&doNothingCallback>();
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE_F(Invoke2_x100, NuclexEvent, Event2Fixture, 30, 1000) {
+  BENCHMARK(Unsubscribe50, NanoThreadSafeSignal, 30, 100000) {
+    Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
+    for(std::size_t index = 0; index < 50; ++index) {
+      testEvent.connect<&doNothingCallback>();
+    }
+    for(std::size_t index = 0; index < 50; ++index) {
+      testEvent.connect<&doNothingCallback>();
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  BENCHMARK_F(Invoke2_x100, NanoSignal, Event2Fixture, 30, 1000) {
     for(std::size_t index = 0; index < 100; ++index) {
-      this->testEvent.Emit(index);
+      this->testEvent.fire(index);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke2_x100, NuclexConcurrentEvent, ConcurrentEvent2Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke2_x100, NanoThreadSafeSignal, ThreadSafeEvent2Fixture, 30, 1000) {
     for(std::size_t index = 0; index < 100; ++index) {
-      this->testEvent.Emit(index);
+      this->testEvent.fire(index);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE_F(Invoke50_x100, NuclexEvent, Event50Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke50_x100, NanoSignal, Event50Fixture, 30, 1000) {
     for(std::size_t index = 0; index < 100; ++index) {
-      this->testEvent.Emit(index);
+      this->testEvent.fire(index);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke50_x100, NuclexConcurrentEvent, ConcurrentEvent50Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke50_x100, NanoThreadSafeSignal, ThreadSafeEvent50Fixture, 30, 1000) {
     for(std::size_t index = 0; index < 100; ++index) {
-      this->testEvent.Emit(index);
+      this->testEvent.fire(index);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Events
+
+#endif // defined(HAVE_NANOSIGNAL)
