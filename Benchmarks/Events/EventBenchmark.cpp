@@ -50,78 +50,6 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  class NuclexEventFixture : public celero::TestFixture {
-    protected: Nuclex::Support::Events::Event<void(int)> testEvent;
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  class NuclexConcurrentEventFixture : public celero::TestFixture {
-    protected: Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  class NuclexEventUnsubscribe2Fixture : public celero::TestFixture {
-		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
-      this->testEvent.Subscribe<&doNothingCallback>();
-      this->testEvent.Subscribe<&doMoreNothingCallback>();
-    }
-    public: void Unsubscribe() {
-      this->testEvent.Unsubscribe<&doMoreNothingCallback>();
-      this->testEvent.Unsubscribe<&doNothingCallback>();
-    }
-    protected: Nuclex::Support::Events::Event<void(int)> testEvent;
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  class NuclexConcurrentEventUnsubscribe2Fixture : public celero::TestFixture {
-		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
-      this->testEvent.Subscribe<&doNothingCallback>();
-      this->testEvent.Subscribe<&doMoreNothingCallback>();
-    }
-    public: void Unsubscribe() {
-      this->testEvent.Unsubscribe<&doMoreNothingCallback>();
-      this->testEvent.Unsubscribe<&doNothingCallback>();
-    }
-    protected: Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  class NuclexEventUnsubscribe50Fixture : public celero::TestFixture {
-		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
-      for(std::size_t index = 0; index < 50; ++index) {
-        this->testEvent.Subscribe<&doNothingCallback>();
-      }
-    }
-    public: void Unsubscribe() {
-      for(std::size_t index = 0; index < 50; ++index) {
-        this->testEvent.Unsubscribe<&doNothingCallback>();
-      }
-    }
-    protected: Nuclex::Support::Events::Event<void(int)> testEvent;
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
-  class NuclexConcurrentEventUnsubscribe50Fixture : public celero::TestFixture {
-		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
-      for(std::size_t index = 0; index < 50; ++index) {
-        this->testEvent.Subscribe<&doNothingCallback>();
-      }
-    }
-    public: void Unsubscribe() {
-      for(std::size_t index = 0; index < 50; ++index) {
-        this->testEvent.Unsubscribe<&doNothingCallback>();
-      }
-    }
-    protected: Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
-  };
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Fast random number generator used in the benchmark</summary>
   std::mt19937_64 randomNumberGenerator;
   /// <summary>Uniform distribution to make the output cover all possible integers</summary>
@@ -135,56 +63,80 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE_F(Subscribe2, NuclexEvent, NuclexEventFixture, 30, 100000) {
-    this->testEvent.Subscribe<&doNothingCallback>();
-    this->testEvent.Subscribe<&doMoreNothingCallback>();
+  BASELINE(Subscribe2, NuclexEvent, 30, 100000) {
+    Nuclex::Support::Events::Event<void(int)> testEvent;
+    testEvent.Subscribe<&doNothingCallback>();
+    testEvent.Subscribe<&doMoreNothingCallback>();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Subscribe2, NuclexConcurrentEvent, NuclexConcurrentEventFixture, 30, 10000) {
-    this->testEvent.Subscribe<&doNothingCallback>();
-    this->testEvent.Subscribe<&doMoreNothingCallback>();
+  BENCHMARK(Subscribe2, NuclexConcurrentEvent, 30, 100000) {
+    Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
+    testEvent.Subscribe<&doNothingCallback>();
+    testEvent.Subscribe<&doMoreNothingCallback>();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE_F(Subscribe50, NuclexEvent, NuclexEventFixture, 30, 100000) {
+  BASELINE(Subscribe50, NuclexEvent, 30, 100000) {
+    Nuclex::Support::Events::Event<void(int)> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
-      this->testEvent.Subscribe<&doNothingCallback>();
+      testEvent.Subscribe<&doNothingCallback>();
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Subscribe50, NuclexConcurrentEvent, NuclexConcurrentEventFixture, 10, 250) {
+  BENCHMARK(Subscribe50, NuclexConcurrentEvent, 30, 100000) {
+    Nuclex::Support::Events::Event<void(int)> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
-      this->testEvent.Subscribe<&doNothingCallback>();
+      testEvent.Subscribe<&doNothingCallback>();
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE_F(Unsubscribe2, NuclexEvent, NuclexEventUnsubscribe2Fixture, 30, 100000) {
-    Unsubscribe();
+  BASELINE(Unsubscribe2, NuclexEvent, 30, 100000) {
+    Nuclex::Support::Events::Event<void(int)> testEvent;
+    testEvent.Subscribe<&doNothingCallback>();
+    testEvent.Subscribe<&doMoreNothingCallback>();
+    testEvent.Unsubscribe<&doMoreNothingCallback>();
+    testEvent.Unsubscribe<&doNothingCallback>();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Unsubscribe2, NuclexConcurrentEvent, NuclexConcurrentEventUnsubscribe2Fixture, 30, 1000) {
-    Unsubscribe();
+  BENCHMARK(Unsubscribe2, NuclexConcurrentEvent, 30, 100000) {
+    Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
+    testEvent.Subscribe<&doNothingCallback>();
+    testEvent.Subscribe<&doMoreNothingCallback>();
+    testEvent.Unsubscribe<&doMoreNothingCallback>();
+    testEvent.Unsubscribe<&doNothingCallback>();
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE_F(Unsubscribe50, NuclexEvent, NuclexEventUnsubscribe50Fixture, 30, 10000) {
-    Unsubscribe();
+  BASELINE(Unsubscribe50, NuclexEvent, 30, 100000) {
+    Nuclex::Support::Events::Event<void(int)> testEvent;
+    for(std::size_t index = 0; index < 50; ++index) {
+      testEvent.Subscribe<&doNothingCallback>();
+    }
+    for(std::size_t index = 0; index < 50; ++index) {
+      testEvent.Unsubscribe<&doNothingCallback>();
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Unsubscribe50, NuclexConcurrentEvent, NuclexConcurrentEventUnsubscribe50Fixture, 10, 250) {
-    Unsubscribe();
+  BENCHMARK(Unsubscribe50, NuclexConcurrentEvent, 30, 100000) {
+    Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
+    for(std::size_t index = 0; index < 50; ++index) {
+      testEvent.Subscribe<&doNothingCallback>();
+    }
+    for(std::size_t index = 0; index < 50; ++index) {
+      testEvent.Unsubscribe<&doNothingCallback>();
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

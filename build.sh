@@ -12,7 +12,7 @@ for buildMode in Debug Release; do
 	#
 	if [ -d obj ]; then
 		if [ -d obj/cmake-$buildMode ]; then
-			rm -rf obj/cmake-$buildMode
+			echo mooh #rm -rf obj/cmake-$buildMode
 		fi
 	fi
 
