@@ -23,9 +23,9 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#if defined(HAVE_LSIGNAL)
+#if defined(HAVE_BOOST_SIGNALS)
 
-#include "./lsignal-2017-05/lsignal.h"
+#include <boost/signals2.hpp>
 
 #include <celero/Celero.h>
 
@@ -35,7 +35,7 @@ License along with this library
 #include <string> // for std::string
 #include <type_traits> // for std::is_signed
 #include <cmath> // for std::abs()
-#include <optional> // because lsignal::connection cannot default-construct
+#include <vector> // for std::vector
 
 namespace {
 
@@ -61,13 +61,13 @@ namespace {
     }
 
     public: void tearDown() override {
-      this->testEvent.disconnect(this->doMoreNothingConnection.value());
-      this->testEvent.disconnect(this->doNothingConnection.value());
+      this->testEvent.disconnect(this->doMoreNothingConnection);
+      this->testEvent.disconnect(this->doNothingConnection);
     }
 
-    protected: lsignal::signal<void(int)> testEvent;
-    protected: std::optional<lsignal::connection> doNothingConnection;
-    protected: std::optional<lsignal::connection> doMoreNothingConnection;
+    protected: boost::signals2::signal<void(int)> testEvent;
+    protected: boost::signals2::connection doNothingConnection;
+    protected: boost::signals2::connection doMoreNothingConnection;
 
   };
 
@@ -89,8 +89,8 @@ namespace {
       }
     }
 
-    protected: lsignal::signal<void(int)> testEvent;
-    protected: std::vector<lsignal::connection> connections;
+    protected: boost::signals2::signal<void(int)> testEvent;
+    protected: std::vector<boost::signals2::connection> connections;
 
   };
 
@@ -109,16 +109,16 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe2, LSignal, 30, 100000) {
-    lsignal::signal<void(int)> testEvent;
+  BENCHMARK(Subscribe2, BoostSignals2, 30, 100000) {
+    boost::signals2::signal<void(int)> testEvent;
     testEvent.connect(doNothingCallback);
     testEvent.connect(doMoreNothingCallback);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe50, LSignal, 30, 100000) {
-    lsignal::signal<void(int)> testEvent;
+  BENCHMARK(Subscribe50, BoostSignals2, 30, 100000) {
+    boost::signals2::signal<void(int)> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.connect(doNothingCallback);
     }
@@ -126,19 +126,19 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe2, LSignal, 30, 100000) {
-    lsignal::signal<void(int)> testEvent;
-    lsignal::connection doNothingConnection = testEvent.connect(doNothingCallback);
-    lsignal::connection doMoreNothingConnection = testEvent.connect(doMoreNothingCallback);
+  BENCHMARK(Unsubscribe2, BoostSignals2, 30, 100000) {
+    boost::signals2::signal<void(int)> testEvent;
+    boost::signals2::connection doNothingConnection = testEvent.connect(doNothingCallback);
+    boost::signals2::connection doMoreNothingConnection = testEvent.connect(doMoreNothingCallback);
     testEvent.disconnect(doMoreNothingConnection);
     testEvent.disconnect(doNothingConnection);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe50, LSignal, 30, 100000) {
-    lsignal::signal<void(int)> testEvent;
-    std::vector<lsignal::connection> connections;
+  BENCHMARK(Unsubscribe50, BoostSignals2, 30, 100000) {
+    boost::signals2::signal<void(int)> testEvent;
+    std::vector<boost::signals2::connection> connections;
     connections.reserve(50);
     for(std::size_t index = 0; index < 50; ++index) {
       connections.push_back(std::move(testEvent.connect(doNothingCallback)));
@@ -150,7 +150,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke2_x100, LSignal, Event2Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke2_x100, BoostSignals2, Event2Fixture, 30, 1000) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent(index);
     }
@@ -158,7 +158,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke50_x100, LSignal, Event50Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke50_x100, BoostSignals2, Event50Fixture, 30, 1000) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent(index);
     }
@@ -168,4 +168,4 @@ namespace Nuclex { namespace Support { namespace Events {
 
 }}} // namespace Nuclex::Support::Events
 
-#endif // defined(HAVE_LSIGNAL)
+#endif // defined(HAVE_BOOST_SIGNALS)
