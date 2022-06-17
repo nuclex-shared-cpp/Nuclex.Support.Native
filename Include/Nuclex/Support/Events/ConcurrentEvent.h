@@ -357,11 +357,7 @@ namespace Nuclex { namespace Support { namespace Events {
         while(this->spinLock.load(std::memory_order::memory_order_relaxed)) {
           // Issue X86 PAUSE or ARM YIELD instruction to reduce contention
           // between hyper-threads
-#if defined(_MSC_VER) // MSVC
-          _mm_pause();
-#else // GCC and clang
-          __builtin_ia32_pause();
-#endif
+          NUCLEX_SUPPORT_CPU_YIELD;
         }
 
       } // for(;;)
