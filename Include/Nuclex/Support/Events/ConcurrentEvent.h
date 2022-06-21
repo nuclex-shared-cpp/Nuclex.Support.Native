@@ -611,6 +611,8 @@ namespace Nuclex { namespace Support { namespace Events {
         newQueue = this->recyclableSubscribers.exchange(nullptr);
         if(unlikely(newQueue == nullptr)) {
           newQueue = allocateBroadcastQueue(1);
+        } else {
+          newQueue->Count = 1;
         }
 
         newQueue->Callbacks[0] = delegate;
@@ -618,17 +620,18 @@ namespace Nuclex { namespace Support { namespace Events {
         currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
         releaseSpinLock();
 
+        BroadcastQueue *queueToRelease = currentQueue;
         ON_SCOPE_EXIT {
           // The spinlock does not need to be acquired here. If the queue is still assigned as
           // the active subscriber list, the reference counter will not reach 0. Otherwise,
           // it was already replaced by another thread, so we don't even need to check.
-          std::size_t totalReferences = currentQueue->ReferenceCount.fetch_sub(
+          std::size_t totalReferences = queueToRelease->ReferenceCount.fetch_sub(
             1, std::memory_order::memory_order_release
           );
           if(unlikely(totalReferences == 1)) { // We just released the last reference
-            currentQueue = this->recyclableSubscribers.exchange(currentQueue);
-            if(likely(currentQueue != nullptr)) {
-              freeBroadcastQueue(currentQueue);
+            queueToRelease = this->recyclableSubscribers.exchange(queueToRelease);
+            if(likely(queueToRelease != nullptr)) {
+              freeBroadcastQueue(queueToRelease);
             }
           }
         };
@@ -714,17 +717,18 @@ namespace Nuclex { namespace Support { namespace Events {
         currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
         releaseSpinLock();
 
+        BroadcastQueue *queueToRelease = currentQueue;
         ON_SCOPE_EXIT {
           // The spinlock does not need to be acquired here. If the queue is still assigned as
           // the active subscriber list, the reference counter will not reach 0. Otherwise,
           // it was already replaced by another thread, so we don't even need to check.
-          std::size_t totalReferences = currentQueue->ReferenceCount.fetch_sub(
+          std::size_t totalReferences = queueToRelease->ReferenceCount.fetch_sub(
             1, std::memory_order::memory_order_release
           );
           if(unlikely(totalReferences == 1)) { // We just released the last reference
-            currentQueue = this->recyclableSubscribers.exchange(currentQueue);
-            if(likely(currentQueue != nullptr)) {
-              freeBroadcastQueue(currentQueue);
+            queueToRelease = this->recyclableSubscribers.exchange(queueToRelease);
+            if(likely(queueToRelease != nullptr)) {
+              freeBroadcastQueue(queueToRelease);
             }
           }
         };
@@ -753,7 +757,7 @@ namespace Nuclex { namespace Support { namespace Events {
               std::copy_n(currentQueue->Callbacks, index, newQueue->Callbacks);
               std::copy_n(
                 currentQueue->Callbacks + index + 1,
-                currentSubscriberCount - index,
+                currentSubscriberCount - index - 1,
                 newQueue->Callbacks + index
               );
             }

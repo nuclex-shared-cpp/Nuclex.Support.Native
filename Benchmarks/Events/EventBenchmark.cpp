@@ -139,7 +139,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Subscribe2, NuclexEvent, 30, 100000) {
+  BASELINE(Subscribe2, NuclexEvent, 0, 10000) {
     Nuclex::Support::Events::Event<void(int)> testEvent;
     testEvent.Subscribe<&doNothingCallback>();
     testEvent.Subscribe<&doMoreNothingCallback>();
@@ -147,7 +147,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe2, NuclexConcurrentEvent, 30, 100000) {
+  BENCHMARK(Subscribe2, NuclexConcurrentEvent, 0, 10000) {
     Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
     testEvent.Subscribe<&doNothingCallback>();
     testEvent.Subscribe<&doMoreNothingCallback>();
@@ -155,7 +155,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Subscribe50, NuclexEvent, 30, 100000) {
+  BASELINE(Subscribe50, NuclexEvent, 0, 10000) {
     Nuclex::Support::Events::Event<void(int)> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.Subscribe<&doNothingCallback>();
@@ -164,7 +164,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe50, NuclexConcurrentEvent, 30, 100000) {
+  BENCHMARK(Subscribe50, NuclexConcurrentEvent, 0, 10000) {
     Nuclex::Support::Events::Event<void(int)> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.Subscribe<&doNothingCallback>();
@@ -173,7 +173,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Unsubscribe2, NuclexEvent, 30, 100000) {
+  BASELINE(Unsubscribe2, NuclexEvent, 0, 10000) {
     Nuclex::Support::Events::Event<void(int)> testEvent;
     testEvent.Subscribe<&doNothingCallback>();
     testEvent.Subscribe<&doMoreNothingCallback>();
@@ -183,7 +183,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe2, NuclexConcurrentEvent, 30, 100000) {
+  BENCHMARK(Unsubscribe2, NuclexConcurrentEvent, 0, 10000) {
     Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
     testEvent.Subscribe<&doNothingCallback>();
     testEvent.Subscribe<&doMoreNothingCallback>();
@@ -193,7 +193,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Unsubscribe50, NuclexEvent, 30, 100000) {
+  BASELINE(Unsubscribe50, NuclexEvent, 0, 10000) {
     Nuclex::Support::Events::Event<void(int)> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.Subscribe<&doNothingCallback>();
@@ -205,7 +205,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe50, NuclexConcurrentEvent, 30, 100000) {
+  BENCHMARK(Unsubscribe50, NuclexConcurrentEvent, 0, 10000) {
     Nuclex::Support::Events::ConcurrentEvent<void(int)> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.Subscribe<&doNothingCallback>();
@@ -217,7 +217,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE_F(Invoke2_x100, NuclexEvent, Event2Fixture, 30, 1000) {
+  BASELINE_F(Invoke2_x100, NuclexEvent, Event2Fixture, 0, 10000) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent.Emit(index);
     }
@@ -225,7 +225,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke2_x100, NuclexConcurrentEvent, ConcurrentEvent2Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke2_x100, NuclexConcurrentEvent, ConcurrentEvent2Fixture, 0, 10000) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent.Emit(index);
     }
@@ -233,7 +233,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE_F(Invoke50_x100, NuclexEvent, Event50Fixture, 30, 1000) {
+  BASELINE_F(Invoke50_x100, NuclexEvent, Event50Fixture, 0, 10000) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent.Emit(index);
     }
@@ -241,7 +241,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke50_x100, NuclexConcurrentEvent, ConcurrentEvent50Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke50_x100, NuclexConcurrentEvent, ConcurrentEvent50Fixture, 0, 10000) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent.Emit(index);
     }
