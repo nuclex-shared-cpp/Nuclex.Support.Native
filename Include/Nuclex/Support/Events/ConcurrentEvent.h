@@ -56,8 +56,8 @@ namespace Nuclex { namespace Support { namespace Events {
   ///   <para>
   ///     Like the single-threaded event, it assumes granular use, meaning you create many
   ///     individual events rather than one big multi-purpose notification. It also assumes that
-  ///     events typically have only a small number of subscribers and that firing will happen
-  ///     vastly more often than subscription/unsubscription.
+  ///     events typically have none or only a small number of subscribers and that firing will
+  ///     happen much more often than subscription/unsubscription.
   ///   </para>
   ///   <para>
   ///     This concurrent event implementation can be freely used from any thread, including
@@ -314,7 +314,7 @@ namespace Nuclex { namespace Support { namespace Events {
       );
 
       std::size_t capacity;
-      if(subscriberCount < 4) {
+      if(subscriberCount < 5) {
         capacity = 4;
       } else {
         capacity = BitTricks::GetUpperPowerOfTwo(subscriberCount);

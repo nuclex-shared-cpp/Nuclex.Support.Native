@@ -42,8 +42,9 @@ namespace Nuclex { namespace Support { namespace Events {
   /// <remarks>
   ///   <para>
   ///     This is the signal part of a standard signal/slot implementation. The name has been
-  ///     chosen because std::signal already defines the term 'signal' for something entirely
-  ///     different and the term 'event' is the second most common term for this kind of system.
+  ///     chosen because <code>std::signal</code> already defines the term 'signal' for
+  ///     an entirely thing and the term 'event' is the second most common term for this kind
+  ///     of system.
   ///   </para>
   ///   <para>
   ///     The design makes a few assumptions on the usage patterns it optimizes for. It assumes

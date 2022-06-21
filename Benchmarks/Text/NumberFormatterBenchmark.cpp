@@ -22,9 +22,10 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Config.h"
-#include "Nuclex/Support/Text/LexicalCast.h"
+//#include "Nuclex/Support/Text/LexicalCast.h"
 
 #include <celero/Celero.h>
+#include "./../../Source/Text/Jeaiii/int_to_chars_jeaiii.h"
 
 #include <algorithm> // for std::copy_n()
 #include <random> // for std::mt19937
@@ -89,30 +90,40 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Integer32ToString, CxxToString, 30, 100000) {
+  BASELINE(Integer32Itoa, JeaiiiOriginal, 30, 100000) {
+    char number[40];
     celero::DoNotOptimizeAway(
-      std::to_string(
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
+      int_to_chars_jeaiii(
+        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
+        number
       )
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Integer32ToString, NaiveDivideBy10, 30, 100000) {
+  char *itoa_better_y(std::uint32_t n, char *buffer);
+
+  BENCHMARK(Integer32Itoa, JeaiiiImproved, 30, 100000) {
+    char number[40];
     celero::DoNotOptimizeAway(
-      formatNumberNaive(
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
+      itoa_better_y(
+        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
+        number
       )
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Integer32ToString, NuclexLexicalCast, 30, 100000) {
+  char *formatInteger(std::uint32_t integerToFormat, char *buffer);
+
+  BENCHMARK(Integer32Itoa, JeaiiiDemacroed, 30, 100000) {
+    char number[40];
     celero::DoNotOptimizeAway(
-      Nuclex::Support::Text::lexical_cast<std::string>(
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
+      formatInteger(
+        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
+        number
       )
     );
   }
