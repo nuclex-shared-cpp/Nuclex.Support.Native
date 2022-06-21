@@ -23,7 +23,6 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Events/Delegate.h"
-#include "Nuclex/Support/ScopeGuard.h"
 #include "Nuclex/Support/BitTricks.h"
 
 #include <cstddef> // for std::size_t
@@ -298,6 +297,53 @@ namespace Nuclex { namespace Support { namespace Events {
 
     #pragma endregion // struct BroadcastQueue
 
+    #pragma region class ReleaseBroadcastQueueScope
+
+    /// <summary>Decrements a queue's reference counter upon scope exit</summary>
+    class ReleaseBroadcastQueueScope {
+
+      /// <summary>Initializes a new broadcase queue reference releasing scope</summary>
+      /// <param name="self">Event to which the broadcast queue belongs (for recycling)</param>
+      /// <param name="queueToRelease">
+      ///   Queue that will be released and recycled in case the last reference is dropped
+      /// </param>
+      public: ReleaseBroadcastQueueScope(
+        const ConcurrentEvent &self, BroadcastQueue *queueToRelease
+      ) :
+        self(self),
+        queueToRelease(queueToRelease) {}
+
+      /// <summary>Decrements the queue's reference counter and possibly recycles it</summary>
+      public: ~ReleaseBroadcastQueueScope() {
+
+        // The spinlock does not need to be acquired here. If the queue is still assigned as
+        // the active subscriber list, the reference counter will not reach 0. Otherwise,
+        // it was already replaced by another thread, so we don't even need to check.
+        std::size_t totalReferences = this->queueToRelease->ReferenceCount.fetch_sub(
+          1, std::memory_order::memory_order_release
+        );
+
+        // Did we just release the last reference to the queue?
+        if(unlikely(totalReferences == 1)) {
+          BroadcastQueue *recycledQueue = this->self.recyclableSubscribers.exchange(
+            this->queueToRelease
+          );
+          if(likely(recycledQueue != nullptr)) {
+            freeBroadcastQueue(recycledQueue);
+          }
+        }
+
+      }
+
+      /// <summary>Event that wants to decrement the queue's reference counter</summary>
+      private: const ConcurrentEvent &self;
+      /// <summary>Queue whose reference counter will be decremented on scope exit</summary>
+      private: BroadcastQueue *queueToRelease;
+
+    };
+
+    #pragma endregion // class ReleaseBroadcastQueueScope
+
     /// <summary>
     ///   Allocates a new broadcast queue for the specified number of subscribers
     /// </summary>
@@ -458,30 +504,18 @@ namespace Nuclex { namespace Support { namespace Events {
     // There are subscribers, so the event needs to be fired and we have incremented
     // the queue's reference counter, requiring us to decrement it again
     {
-      // The spinlock does not need to be acquired here. If the queue is still assigned as
-      // the active subscriber list, the reference counter will not reach 0. Otherwise,
-      // it was already replaced by another thread, so we don't even need to check.
-      ON_SCOPE_EXIT {
-        std::size_t totalReferences = currentQueue->ReferenceCount.fetch_sub(
-          1, std::memory_order::memory_order_release
-        );
-        if(unlikely(totalReferences == 1)) { // We just released the last reference
-          currentQueue = this->recyclableSubscribers.exchange(currentQueue);
-          if(likely(currentQueue != nullptr)) {
-            freeBroadcastQueue(currentQueue);
-          }
-        }
-      };
+      ReleaseBroadcastQueueScope releaseActiveQueue(*this, currentQueue);
 
       // Actually fire the event by calling all the subscribers
       std::size_t subscriberCount = currentQueue->Count;
       results.reserve(subscriberCount);
       for(std::size_t index = 0; index < subscriberCount; ++index) {
         results.push_back(currentQueue->Callbacks[index](std::forward<TArguments>(arguments)...));
-        // We don't need to worry about queue edits within the callsbacks because
+        // We don't need to worry about queue edits within the callbacks because
         // it will result in a new broadcast queue being placed while we happily
-        // continue working with the copy in our std::shared_ptr.
+        // continue working with the immutable copy we hold a reference to.
       }
+
       return results;
     }
   }
@@ -511,28 +545,15 @@ namespace Nuclex { namespace Support { namespace Events {
     // There are subscribers, so the event needs to be fired and we have incremented
     // the queue's reference counter, requiring us to decrement it again
     {
-      ON_SCOPE_EXIT {
-        // The spinlock does not need to be acquired here. If the queue is still assigned as
-        // the active subscriber list, the reference counter will not reach 0. Otherwise,
-        // it was already replaced by another thread, so we don't even need to check.
-        std::size_t totalReferences = currentQueue->ReferenceCount.fetch_sub(
-          1, std::memory_order::memory_order_release
-        );
-        if(unlikely(totalReferences == 1)) { // We just released the last reference
-          currentQueue = this->recyclableSubscribers.exchange(currentQueue);
-          if(likely(currentQueue != nullptr)) {
-            freeBroadcastQueue(currentQueue);
-          }
-        }
-      };
+      ReleaseBroadcastQueueScope releaseActiveQueue(*this, currentQueue);
 
       // Actually fire the event by calling all the subscribers
       std::size_t subscriberCount = currentQueue->Count;
       for(std::size_t index = 0; index < subscriberCount; ++index) {
         *results = currentQueue->Callbacks[index](std::forward<TArguments>(arguments)...);
-        // We don't need to worry about queue edits within the callsbacks because
+        // We don't need to worry about queue edits within the callbacks because
         // it will result in a new broadcast queue being placed while we happily
-        // continue working with the copy in our std::shared_ptr.
+        // continue working with the immutable copy we hold a reference to.
         ++results;
       }
     }
@@ -560,28 +581,15 @@ namespace Nuclex { namespace Support { namespace Events {
     // There are subscribers, so the event needs to be fired and we have incremented
     // the queue's reference counter, requiring us to decrement it again
     {
-      ON_SCOPE_EXIT {
-        // The spinlock does not need to be acquired here. If the queue is still assigned as
-        // the active subscriber list, the reference counter will not reach 0. Otherwise,
-        // it was already replaced by another thread, so we don't even need to check.
-        std::size_t totalReferences = currentQueue->ReferenceCount.fetch_sub(
-          1, std::memory_order::memory_order_release
-        );
-        if(unlikely(totalReferences == 1)) { // We just released the last reference
-          currentQueue = this->recyclableSubscribers.exchange(currentQueue);
-          if(likely(currentQueue != nullptr)) {
-            freeBroadcastQueue(currentQueue);
-          }
-        }
-      };
+      ReleaseBroadcastQueueScope releaseActiveQueue(*this, currentQueue);
 
       // Actually fire the event by calling all the subscribers
       std::size_t subscriberCount = currentQueue->Count;
       for(std::size_t index = 0; index < subscriberCount; ++index) {
         currentQueue->Callbacks[index](std::forward<TArguments>(arguments)...);
-        // We don't need to worry about queue edits within the callsbacks because
+        // We don't need to worry about queue edits within the callbacks because
         // it will result in a new broadcast queue being placed while we happily
-        // continue working with the copy in our std::shared_ptr.
+        // continue working with the immutable copy we hold a reference to.
       }
     }
 
@@ -620,21 +628,7 @@ namespace Nuclex { namespace Support { namespace Events {
         currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
         releaseSpinLock();
 
-        BroadcastQueue *queueToRelease = currentQueue;
-        ON_SCOPE_EXIT {
-          // The spinlock does not need to be acquired here. If the queue is still assigned as
-          // the active subscriber list, the reference counter will not reach 0. Otherwise,
-          // it was already replaced by another thread, so we don't even need to check.
-          std::size_t totalReferences = queueToRelease->ReferenceCount.fetch_sub(
-            1, std::memory_order::memory_order_release
-          );
-          if(unlikely(totalReferences == 1)) { // We just released the last reference
-            queueToRelease = this->recyclableSubscribers.exchange(queueToRelease);
-            if(likely(queueToRelease != nullptr)) {
-              freeBroadcastQueue(queueToRelease);
-            }
-          }
-        };
+        ReleaseBroadcastQueueScope releaseActiveQueue(*this, currentQueue);
 
         // Obtain a new queue to fill the subscribers into, either by re-=using the event's
         // previous queue or by creating a new one
@@ -651,7 +645,7 @@ namespace Nuclex { namespace Support { namespace Events {
         }
 
         // This section is at-risk of leaking memory if it throws. I don't think a memcpy()
-        // equivalent call can throw, but if I'm mistaking, we need another scope guard here.
+        // equivalent call can throw, but if I'm mistaken, we need another scope guard here.
         std::copy_n(currentQueue->Callbacks, subscriberCount, newQueue->Callbacks);
         newQueue->Callbacks[subscriberCount] = delegate;
       } // else block, also decrements active queue's reference count upon scope xit
@@ -717,21 +711,7 @@ namespace Nuclex { namespace Support { namespace Events {
         currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
         releaseSpinLock();
 
-        BroadcastQueue *queueToRelease = currentQueue;
-        ON_SCOPE_EXIT {
-          // The spinlock does not need to be acquired here. If the queue is still assigned as
-          // the active subscriber list, the reference counter will not reach 0. Otherwise,
-          // it was already replaced by another thread, so we don't even need to check.
-          std::size_t totalReferences = queueToRelease->ReferenceCount.fetch_sub(
-            1, std::memory_order::memory_order_release
-          );
-          if(unlikely(totalReferences == 1)) { // We just released the last reference
-            queueToRelease = this->recyclableSubscribers.exchange(queueToRelease);
-            if(likely(queueToRelease != nullptr)) {
-              freeBroadcastQueue(queueToRelease);
-            }
-          }
-        };
+        ReleaseBroadcastQueueScope releaseActiveQueue(*this, currentQueue);
 
         BroadcastQueue *newQueue;
 
