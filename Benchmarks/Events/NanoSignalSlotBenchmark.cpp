@@ -141,7 +141,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe2, NanoSignal, 30, 100000) {
+  BENCHMARK(Subscribe2, NanoSignal, 1000, 0) {
     Nano::Signal<void(int), Nano::ST_Policy> testEvent;
     testEvent.connect<&doNothingCallback>();
     testEvent.connect<&doMoreNothingCallback>();
@@ -149,7 +149,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe2, NanoThreadSafeSignal, 30, 100000) {
+  BENCHMARK(Subscribe2, NanoThreadSafeSignal, 1000, 0) {
     Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
     testEvent.connect<&doNothingCallback>();
     testEvent.connect<&doMoreNothingCallback>();
@@ -157,7 +157,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe50, NanoSignal, 30, 100000) {
+  BENCHMARK(Subscribe50, NanoSignal, 1000, 0) {
     Nano::Signal<void(int), Nano::ST_Policy> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.connect<&doNothingCallback>();
@@ -166,7 +166,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe50, NanoThreadSafeSignal, 30, 100000) {
+  BENCHMARK(Subscribe50, NanoThreadSafeSignal, 1000, 0) {
     Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.connect<&doNothingCallback>();
@@ -175,7 +175,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe2, NanoSignal, 30, 100000) {
+  BENCHMARK(Unsubscribe2, NanoSignal, 1000, 0) {
     Nano::Signal<void(int), Nano::ST_Policy> testEvent;
     testEvent.connect<&doNothingCallback>();
     testEvent.connect<&doMoreNothingCallback>();
@@ -185,7 +185,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe2, NanoThreadSafeSignal, 30, 100000) {
+  BENCHMARK(Unsubscribe2, NanoThreadSafeSignal, 1000, 0) {
     Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
     testEvent.connect<&doNothingCallback>();
     testEvent.connect<&doMoreNothingCallback>();
@@ -195,7 +195,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe50, NanoSignal, 30, 100000) {
+  BENCHMARK(Unsubscribe50, NanoSignal, 1000, 0) {
     Nano::Signal<void(int), Nano::ST_Policy> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.connect<&doNothingCallback>();
@@ -207,7 +207,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe50, NanoThreadSafeSignal, 30, 100000) {
+  BENCHMARK(Unsubscribe50, NanoThreadSafeSignal, 1000, 0) {
     Nano::Signal<void(int), Nano::TS_Policy_Safe<>> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.connect<&doNothingCallback>();
@@ -219,7 +219,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke2_x100, NanoSignal, Event2Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke2_x100, NanoSignal, Event2Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent.fire(index);
     }
@@ -227,7 +227,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke2_x100, NanoThreadSafeSignal, ThreadSafeEvent2Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke2_x100, NanoThreadSafeSignal, ThreadSafeEvent2Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent.fire(index);
     }
@@ -235,7 +235,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke50_x100, NanoSignal, Event50Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke50_x100, NanoSignal, Event50Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent.fire(index);
     }
@@ -243,7 +243,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke50_x100, NanoThreadSafeSignal, ThreadSafeEvent50Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke50_x100, NanoThreadSafeSignal, ThreadSafeEvent50Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent.fire(index);
     }

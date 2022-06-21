@@ -389,7 +389,23 @@ namespace Nuclex { namespace Support { namespace Events {
 
     /// <summary>Acquires the spinlock to access the subscriber queues</summary>
     /// <remarks>
-    ///   See https://rigtorp.se/spinlock/
+    ///   <para>
+    ///     Why are we implementing a manual spinlock here? It's essentially a rip-off of
+    ///     what std::atomic<std::shared_ptr>> does, acquire a spinlock for a very short period
+    ///     (2 or 3 machine instructions) to make grabbing a reference and incrementing
+    ///     its reference counter an atomic operation. Even under very high contention,
+    ///     it will only loop a bunch of times.
+    ///   </para>
+    ///   <para>
+    ///     If we relied std::shared_ptr, that would mean it has to acquire the spinlock often,
+    ///     even in situations where we can reason that the reference counter is either
+    ///     not being decremented to zero or the reference to the object being held isn't
+    ///     the one being referenced anymore. In short, we have a can achieve correctness with
+    ///     fewer steps than a full std::shared_ptr!
+    ///   </para>
+    ///   <para>
+    ///     For general spinlock implementation notes, see https://rigtorp.se/spinlock/
+    ///   </para>
     /// </remarks>
     private: inline void acquireSpinLock() const noexcept {
       for(;;) {
@@ -415,12 +431,6 @@ namespace Nuclex { namespace Support { namespace Events {
     }
 
     /// <summary>Micro-spinlock to synchronize access to the subscriber list + refcount</summary>
-    /// <remarks>
-    ///   Yes, this is used for a busy loop, just like modern mutex implementations (for
-    ///   a few thousand cycles at least) and std::atomic&lt;std::shared_ptr&lt;&gt;&gt;.
-    ///   We use it as a micro-spinlock only guarding 2-5 instructions, so contention should
-    ///   be really low.
-    /// </remarks>
     public: mutable std::atomic<bool> spinLock;
     /// <summary>Stores the current subscribers to the event</summary>
     public: std::atomic<BroadcastQueue *> subscribers;
@@ -440,7 +450,7 @@ namespace Nuclex { namespace Support { namespace Events {
   ConcurrentEvent<TResult(TArguments...)>::~ConcurrentEvent() {
 
     // Don't care about the spinlock, if the event is being destroyed, nobody is accessing
-    // it anymore (and if it was, it'll be a race between a thread and the destructor of
+    // it anymore (and if it was, it'll be a race between that thread and the destructor of
     // the class that owns the event, this humble destructor can do little about that anyway)
 
     BroadcastQueue *currentQueue = this->subscribers.load(
@@ -491,7 +501,7 @@ namespace Nuclex { namespace Support { namespace Events {
     // without touching anything else (anticipated zero-subscriber case)
     acquireSpinLock();
     BroadcastQueue *currentQueue = this->subscribers.load(
-      std::memory_order::memory_order_consume
+      std::memory_order::memory_order_consume // if carries dependency
     );
     if(likely(currentQueue == nullptr)) {
       releaseSpinLock();
@@ -532,7 +542,7 @@ namespace Nuclex { namespace Support { namespace Events {
     // without touching anything else (anticipated zero-subscriber case)
     acquireSpinLock();
     BroadcastQueue *currentQueue = this->subscribers.load(
-      std::memory_order::memory_order_consume
+      std::memory_order::memory_order_consume // if carries dependency
     );
     if(likely(currentQueue == nullptr)) {
       releaseSpinLock();
@@ -568,7 +578,7 @@ namespace Nuclex { namespace Support { namespace Events {
     // Get a hold of the current queue.
     acquireSpinLock();
     BroadcastQueue *currentQueue = this->subscribers.load(
-      std::memory_order::memory_order_consume
+      std::memory_order::memory_order_consume // if carries dependency
     );
     if(likely(currentQueue == nullptr)) {
       releaseSpinLock();
@@ -609,7 +619,7 @@ namespace Nuclex { namespace Support { namespace Events {
       // Get a hold of the current queue.
       acquireSpinLock();
       BroadcastQueue *currentQueue = this->subscribers.load(
-        std::memory_order::memory_order_consume
+        std::memory_order::memory_order_consume // if carries dependency
       );
       if(likely(currentQueue == nullptr)) {
         releaseSpinLock();
@@ -700,7 +710,7 @@ namespace Nuclex { namespace Support { namespace Events {
       // Get a hold of the current queue.
       acquireSpinLock();
       BroadcastQueue *currentQueue = this->subscribers.load(
-        std::memory_order::memory_order_consume
+        std::memory_order::memory_order_consume // if carries dependency
       );
       if(unlikely(currentQueue == nullptr)) {
         releaseSpinLock();

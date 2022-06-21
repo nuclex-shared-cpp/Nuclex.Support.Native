@@ -89,7 +89,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Integer32ToString, CxxToString, 0, 10000) {
+  BASELINE(Integer32ToString, CxxToString, 1000, 0) {
     celero::DoNotOptimizeAway(
       std::to_string(
         static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
@@ -99,7 +99,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Integer32ToString, NaiveDivideBy10, 0, 10000) {
+  BENCHMARK(Integer32ToString, NaiveDivideBy10, 1000, 0) {
     celero::DoNotOptimizeAway(
       formatNumberNaive(
         static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
@@ -109,7 +109,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Integer32ToString, NuclexLexicalCast, 0, 10000) {
+  BENCHMARK(Integer32ToString, NuclexLexicalCast, 1000, 0) {
     celero::DoNotOptimizeAway(
       Nuclex::Support::Text::lexical_cast<std::string>(
         static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))

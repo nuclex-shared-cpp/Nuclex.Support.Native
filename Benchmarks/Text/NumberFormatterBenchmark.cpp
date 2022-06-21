@@ -91,7 +91,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Integer32Itoa, JeaiiiOriginal, 0, 10000) {
+  BASELINE(Integer32Itoa, JeaiiiOriginal, 1000, 0) {
     char number[40];
     celero::DoNotOptimizeAway(
       int_to_chars_jeaiii(
@@ -105,7 +105,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   char *itoa_better_y(std::uint32_t n, char *buffer);
 
-  BENCHMARK(Integer32Itoa, JeaiiiImproved, 0, 10000) {
+  BENCHMARK(Integer32Itoa, JeaiiiImproved, 1000, 0) {
     char number[40];
     celero::DoNotOptimizeAway(
       itoa_better_y(
@@ -117,7 +117,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Integer32Itoa, JeaiiiDemacroed, 0, 10000) {
+  BENCHMARK(Integer32Itoa, JeaiiiDemacroed, 1000, 0) {
     char number[40];
     celero::DoNotOptimizeAway(
       FormatInteger(

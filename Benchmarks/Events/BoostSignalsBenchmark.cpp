@@ -109,7 +109,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe2, BoostSignals2, 30, 100000) {
+  BENCHMARK(Subscribe2, BoostSignals2, 1000, 0) {
     boost::signals2::signal<void(int)> testEvent;
     testEvent.connect(doNothingCallback);
     testEvent.connect(doMoreNothingCallback);
@@ -117,7 +117,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Subscribe50, BoostSignals2, 30, 100000) {
+  BENCHMARK(Subscribe50, BoostSignals2, 1000, 0) {
     boost::signals2::signal<void(int)> testEvent;
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.connect(doNothingCallback);
@@ -126,7 +126,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe2, BoostSignals2, 30, 100000) {
+  BENCHMARK(Unsubscribe2, BoostSignals2, 1000, 0) {
     boost::signals2::signal<void(int)> testEvent;
     boost::signals2::connection doNothingConnection = testEvent.connect(doNothingCallback);
     boost::signals2::connection doMoreNothingConnection = testEvent.connect(doMoreNothingCallback);
@@ -136,7 +136,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Unsubscribe50, BoostSignals2, 30, 100000) {
+  BENCHMARK(Unsubscribe50, BoostSignals2, 1000, 0) {
     boost::signals2::signal<void(int)> testEvent;
     std::vector<boost::signals2::connection> connections;
     connections.reserve(50);
@@ -150,7 +150,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke2_x100, BoostSignals2, Event2Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke2_x100, BoostSignals2, Event2Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent(index);
     }
@@ -158,7 +158,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK_F(Invoke50_x100, BoostSignals2, Event50Fixture, 30, 1000) {
+  BENCHMARK_F(Invoke50_x100, BoostSignals2, Event50Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
       this->testEvent(index);
     }
