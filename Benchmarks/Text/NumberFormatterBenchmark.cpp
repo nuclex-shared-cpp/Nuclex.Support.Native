@@ -22,10 +22,11 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Config.h"
-//#include "Nuclex/Support/Text/LexicalCast.h"
 
 #include <celero/Celero.h>
+
 #include "./../../Source/Text/Jeaiii/int_to_chars_jeaiii.h"
+#include "./../../Source/Text/NumberFormatter.h"
 
 #include <algorithm> // for std::copy_n()
 #include <random> // for std::mt19937
@@ -116,12 +117,10 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *formatInteger(std::uint32_t integerToFormat, char *buffer);
-
   BENCHMARK(Integer32Itoa, JeaiiiDemacroed, 30, 100000) {
     char number[40];
     celero::DoNotOptimizeAway(
-      formatInteger(
+      FormatInteger(
         static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
         number
       )

@@ -22,6 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Text/ParserHelper.h"
+#include "./../../Source/Text/NumberFormatter.h"
 
 #include <gtest/gtest.h>
 
@@ -36,9 +37,20 @@ namespace {
   std::mt19937_64 randomNumberGenerator;
   /// <summary>Uniform distribution to make the output cover all possible integers</summary>
   std::uniform_int_distribution<std::uint32_t> randomNumberDistribution32;
+  /// <summary>Uniform distribution to make the output cover all possible integers</summary>
   std::uniform_int_distribution<std::uint64_t> randomNumberDistribution64;
+  /// <summary>Uniform distribution to make the output cover all possible integers</summary>
+  std::uniform_int_distribution<std::int32_t> randomNumberDistribution32S;
+  /// <summary>Uniform distribution to make the output cover all possible integers</summary>
+  std::uniform_int_distribution<std::int64_t> randomNumberDistribution64S;
 
   // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>
+  ///   Since we can't check all integers within a reasonable time, this is the number
+  ///   of random checks we'll do to compare our integer formatter with std::to_string()
+  /// </summary>
+  const constexpr std::size_t SampleCount = 100'000;
 
 } // anonymous namespace
 
@@ -46,13 +58,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *formatInteger(std::uint32_t integerToFormat, char *buffer);
-  char *formatInteger(std::uint64_t integerToFormat, char *buffer);
-
-  // ------------------------------------------------------------------------------------------- //
-
-  TEST(NumberFormatterTest, IntegersAreFormattedCorrectly32) {
-    for(std::size_t index = 0; index < 500000; ++index) {
+  TEST(NumberFormatterTest, ThirtyTwoBitUnsignedIntegersAreFormattedCorrectly) {
+    for(std::size_t index = 0; index < SampleCount; ++index) {
       std::uint32_t number = static_cast<std::uint32_t>(
         randomNumberDistribution32(randomNumberGenerator)
       );
@@ -60,7 +67,7 @@ namespace Nuclex { namespace Support { namespace Text {
       std::string expected = std::to_string(number);
 
       char buffer[40];
-      char *end = formatInteger(number, buffer);
+      char *end = FormatInteger(number, buffer);
       std::string actual(buffer, end);
 
       EXPECT_EQ(expected, actual);
@@ -69,8 +76,26 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(NumberFormatterTest, IntegersAreFormattedCorrectly64) {
-    for(std::size_t index = 0; index < 500000; ++index) {
+  TEST(NumberFormatterTest, ThirtyTwoBitSignedIntegersAreFormattedCorrectly) {
+    for(std::size_t index = 0; index < SampleCount; ++index) {
+      std::uint32_t number = static_cast<std::int32_t>(
+        randomNumberDistribution32S(randomNumberGenerator)
+      );
+
+      std::string expected = std::to_string(number);
+
+      char buffer[40];
+      char *end = FormatInteger(number, buffer);
+      std::string actual(buffer, end);
+
+      EXPECT_EQ(expected, actual);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(NumberFormatterTest, SixtyFourBitUnsignedIntegersAreFormattedCorrectly) {
+    for(std::size_t index = 0; index < SampleCount; ++index) {
       std::uint32_t number = static_cast<std::uint64_t>(
         randomNumberDistribution64(randomNumberGenerator)
       );
@@ -78,7 +103,25 @@ namespace Nuclex { namespace Support { namespace Text {
       std::string expected = std::to_string(number);
 
       char buffer[40];
-      char *end = formatInteger(number, buffer);
+      char *end = FormatInteger(number, buffer);
+      std::string actual(buffer, end);
+
+      EXPECT_EQ(expected, actual);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(NumberFormatterTest, SixtyFourBitSignedIntegersAreFormattedCorrectly) {
+    for(std::size_t index = 0; index < SampleCount; ++index) {
+      std::uint32_t number = static_cast<std::int64_t>(
+        randomNumberDistribution64S(randomNumberGenerator)
+      );
+
+      std::string expected = std::to_string(number);
+
+      char buffer[40];
+      char *end = FormatInteger(number, buffer);
       std::string actual(buffer, end);
 
       EXPECT_EQ(expected, actual);

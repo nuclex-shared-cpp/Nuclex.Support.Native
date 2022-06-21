@@ -63,12 +63,6 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // anonymous namespace
-
-namespace Nuclex { namespace Support { namespace Text {
-
-  // ------------------------------------------------------------------------------------------- //
-
   struct pair { char t, o; };
 
   #define P(T) \
@@ -199,6 +193,80 @@ namespace Nuclex { namespace Support { namespace Text {
 
   }
 
+  #undef LAST
+  #undef PART
+
+  #undef L89
+  #undef L67
+  #undef L45
+  #undef L23
+  #undef L01
+
+  #undef L03
+  #undef L69
+  #undef L25
+  #undef L29
+  #undef L09
+
+  #undef C9
+  #undef C8
+  #undef C7
+  #undef C6
+  #undef C5
+  #undef C4
+  #undef C3
+  #undef C2
+  #undef C1
+  #undef C0
+
+  #undef D
+  #undef S
+  #undef A
+  #undef W
+  #undef P
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // anonymous namespace
+
+namespace Nuclex { namespace Support { namespace Text {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char *FormatInteger(std::uint32_t value, char *buffer /* [10] */) {
+    return int_to_chars_jeaiii_demacroed(value, buffer);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char *FormatInteger(std::int32_t value, char *buffer /* [11] */) {
+    return int_to_chars_jeaiii_demacroed(value, buffer);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char *FormatInteger(std::uint64_t value, char *buffer /* [20] */) {
+    return int_to_chars_jeaiii_demacroed(value, buffer);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char *FormatInteger(std::int64_t value, char *buffer /* [20] */) {
+    return int_to_chars_jeaiii_demacroed(value, buffer);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char *FormatFloat(float value, char *buffer /* [46] */) {
+    throw u8"Not implemented yet";
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char *FormatFloat(double value, char *buffer /* [325] */) {
+    throw u8"Not implemented yet";
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
   char *itoa_better_y(std::uint32_t n, char *buffer) {
@@ -291,17 +359,6 @@ namespace Nuclex { namespace Support { namespace Text {
       }
     }
     return buffer;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  char *formatInteger(std::uint32_t integerToFormat, char *buffer) {
-    return int_to_chars_jeaiii_demacroed(integerToFormat, buffer);
-    //return int_to_chars_jeaiii_x(integerToFormat, buffer);
-  }
-  char *formatInteger(std::uint64_t integerToFormat, char *buffer) {
-    return int_to_chars_jeaiii_demacroed(integerToFormat, buffer);
-    //return int_to_chars_jeaiii_x(integerToFormat, buffer);
   }
 
   // ------------------------------------------------------------------------------------------- //
