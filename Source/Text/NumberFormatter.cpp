@@ -65,15 +65,30 @@ namespace {
 
   struct pair { char t, o; };
 
-  #define P(T) \
-    { T, '0' }, { T, '1' }, { T, '2' }, { T, '3' }, { T, '4' }, \
-    { T, '5' }, { T, '6' }, { T, '7' }, { T, '8' }, { T, '9' }
-
-  static const pair s_pairs[] = { \
-    P('0'), P('1'), P('2'), P('3'), P('4'), P('5'), P('6'), P('7'), P('8'), P('9') \
+  static const pair s_pairs[] = {
+    { u8'0', u8'0' }, { u8'0', u8'1' }, { u8'0', u8'2' }, { u8'0', u8'3' }, { u8'0', u8'4' },
+    { u8'0', u8'5' }, { u8'0', u8'6' }, { u8'0', u8'7' }, { u8'0', u8'8' }, { u8'0', u8'9' },
+    { u8'1', u8'0' }, { u8'1', u8'1' }, { u8'1', u8'2' }, { u8'1', u8'3' }, { u8'1', u8'4' },
+    { u8'1', u8'5' }, { u8'1', u8'6' }, { u8'1', u8'7' }, { u8'1', u8'8' }, { u8'1', u8'9' },
+    { u8'2', u8'0' }, { u8'2', u8'1' }, { u8'2', u8'2' }, { u8'2', u8'3' }, { u8'2', u8'4' },
+    { u8'2', u8'5' }, { u8'2', u8'6' }, { u8'2', u8'7' }, { u8'2', u8'8' }, { u8'2', u8'9' },
+    { u8'3', u8'0' }, { u8'3', u8'1' }, { u8'3', u8'2' }, { u8'3', u8'3' }, { u8'3', u8'4' },
+    { u8'3', u8'5' }, { u8'3', u8'6' }, { u8'3', u8'7' }, { u8'3', u8'8' }, { u8'3', u8'9' },
+    { u8'4', u8'0' }, { u8'4', u8'1' }, { u8'4', u8'2' }, { u8'4', u8'3' }, { u8'4', u8'4' },
+    { u8'4', u8'5' }, { u8'4', u8'6' }, { u8'4', u8'7' }, { u8'4', u8'8' }, { u8'4', u8'9' },
+    { u8'5', u8'0' }, { u8'5', u8'1' }, { u8'5', u8'2' }, { u8'5', u8'3' }, { u8'5', u8'4' },
+    { u8'5', u8'5' }, { u8'5', u8'6' }, { u8'5', u8'7' }, { u8'5', u8'8' }, { u8'5', u8'9' },
+    { u8'6', u8'0' }, { u8'6', u8'1' }, { u8'6', u8'2' }, { u8'6', u8'3' }, { u8'6', u8'4' },
+    { u8'6', u8'5' }, { u8'6', u8'6' }, { u8'6', u8'7' }, { u8'6', u8'8' }, { u8'6', u8'9' },
+    { u8'7', u8'0' }, { u8'7', u8'1' }, { u8'7', u8'2' }, { u8'7', u8'3' }, { u8'7', u8'4' },
+    { u8'7', u8'5' }, { u8'7', u8'6' }, { u8'7', u8'7' }, { u8'7', u8'8' }, { u8'7', u8'9' },
+    { u8'8', u8'0' }, { u8'8', u8'1' }, { u8'8', u8'2' }, { u8'8', u8'3' }, { u8'8', u8'4' },
+    { u8'8', u8'5' }, { u8'8', u8'6' }, { u8'8', u8'7' }, { u8'8', u8'8' }, { u8'8', u8'9' },
+    { u8'9', u8'0' }, { u8'9', u8'1' }, { u8'9', u8'2' }, { u8'9', u8'3' }, { u8'9', u8'4' },
+    { u8'9', u8'5' }, { u8'9', u8'6' }, { u8'9', u8'7' }, { u8'9', u8'8' }, { u8'9', u8'9' },
   };
 
-  #define W(N, I) *(pair*)&buffer[N] = s_pairs[I]
+  #define WRITE_PAIR(bufferIndex, pairIndex) *(pair*)&buffer[bufferIndex] = s_pairs[pairIndex]
 
   #define A(N) t = \
     ( \
@@ -83,16 +98,17 @@ namespace {
     t *= u, \
     t >>= N / 5 * N * 53 / 16, \
     t += N / 6 * 4, \
-    W(0, t >> 32)
+    WRITE_PAIR(0, t >> 32)
 
-  #define S(N) buffer[N] = char(std::uint64_t(10) * std::uint32_t(t) >> 32) + '0'
+  #define S(bufferIndex) \
+    buffer[bufferIndex] = char(std::uint64_t(10) * std::uint32_t(t) >> 32) + '0'
 
-  #define D(N) t = \
+  #define D(bufferIndex) t = \
     std::uint64_t(100) * std::uint32_t(t), \
-    W(N, t >> 32)
+    WRITE_PAIR(bufferIndex, t >> 32)
 
   #define C0 buffer[0] = char(u) + '0'
-  #define C1 W(0, u)
+  #define C1 WRITE_PAIR(0, u)
   #define C2 A(1), S(2)
   #define C3 A(2), D(2)
   #define C4 A(3), D(2), S(4)
@@ -102,17 +118,68 @@ namespace {
   #define C8 A(7), D(2), D(4), D(6), S(8)
   #define C9 A(8), D(2), D(4), D(6), D(8)
 
-  #define L09(F) u < 100        ? L01(F) : L29(F)
-  #define L29(F) u < 1000000    ? L25(F) : L69(F)
-  #define L25(F) u < 10000      ? L23(F) : L45(F)
-  #define L69(F) u < 100000000  ? L67(F) : L89(F)
-  #define L03(F) u < 100        ? L01(F) : L23(F)
+  // L09:      if(u < 100) {
+  // L01:        if(u < 10) {
+  //               F(0);
+  //             } else {
+  //               F(1);
+  //             }
+  // L29:      } else if(u < 1'000'000} {
+  // L25:        if(u < 10'000) {
+  // L23:          if(u < 1'000) {
+  //                 F(2);
+  //               } else {
+  //                 F(3);
+  //               }
+  // L45:        } else if(u < 100'000) {
+  //               F(4);
+  //             } else {
+  //               F(5);
+  //             }
+  // L69:      } else if(u < 100'000'000) {
+  // L67:        if(u < 10'000'000) {
+  //               F(6);
+  //             } else {
+  //               F(7);
+  //             }
+  // L89:      } else {
+  //             if(u < 1'000'000'000) {
+  //               F(8);
+  //             } else {
+  //               F(9);
+  //             }
+  //           }
 
-  #define L01(F) u < 10         ? F(0) : F(1)
-  #define L23(F) u < 1000       ? F(2) : F(3)
-  #define L45(F) u < 100000     ? F(4) : F(5)
-  #define L67(F) u < 10000000   ? F(6) : F(7)
-  #define L89(F) u < 1000000000 ? F(8) : F(9)
+  #define LENGTH_0_TO_9(F) u <         100 ? LENGTH_0_OR_1(F) : LENGTH_2_TO_9(F)
+  #define LENGTH_2_TO_9(F) u <   1'000'000 ? LENGTH_2_TO_5(F) : LENGTH_6_TO_9(F)
+  #define LENGTH_2_TO_5(F) u <      10'000 ? LENGTH_2_OR_3(F) : LENGTH_4_OR_5(F)
+  #define LENGTH_6_TO_9(F) u < 100'000'000 ? LENGTH_6_OR_7(F) : LENGTH_8_OR_9(F)
+  #define LENGTH_0_TO_3(F) u <         100 ? LENGTH_0_OR_1(F) : LENGTH_2_OR_3(F)
+
+  #define LENGTH_0_OR_1(F) u <            10 ? F(0) : F(1)
+  #define LENGTH_2_OR_3(F) u <         1'000 ? F(2) : F(3)
+  #define LENGTH_4_OR_5(F) u <       100'000 ? F(4) : F(5)
+  #define LENGTH_6_OR_7(F) u <    10'000'000 ? F(6) : F(7)
+  #define LENGTH_8_OR_9(F) u < 1'000'000'000 ? F(8) : F(9)
+
+  #define LENGTH_0_TO_9_SWITCH(F) { \
+    if(u == 0) { \
+      return F(0); \
+    } else { \
+      switch(Nuclex::Support::BitTricks::GetLogBase10(u)) { \
+        case 1: return F(0); \
+        case 2: return F(1); \
+        case 3: return F(2); \
+        case 4: return F(3); \
+        case 5: return F(4); \
+        case 6: return F(5); \
+        case 7: return F(6); \
+        case 8: return F(7); \
+        case 9: return F(8); \
+        case 10: return F(9); \
+      } \
+    } \
+  }
 
   #define PART(N) (C##N, buffer += N + 1)
   #define LAST(N) (C##N, terminate<char *>(buffer + N + 1))
@@ -135,6 +202,11 @@ namespace {
   template<typename TInteger>
   char *int_to_chars_jeaiii_demacroed(TInteger integer, char *buffer) {
 
+    if(integer == 0) {
+      *buffer = u8'0';
+      return buffer + 1;
+    }
+
     // Version for integers of 32 bits or shorter
     if constexpr(sizeof(TInteger) < sizeof(std::uint64_t)) {
 
@@ -151,7 +223,17 @@ namespace {
       }
 
       std::uint64_t t;
-      return L09(LAST);
+
+      if(u < 100) {
+        return LENGTH_0_OR_1(LAST);
+      } else if(u < 1'000'000) {
+        return LENGTH_2_TO_5(LAST);
+      } else {
+        return LENGTH_6_TO_9(LAST);
+      }
+
+      //LENGTH_0_TO_9_SWITCH(LAST);
+      //return LENGTH_0_TO_9(LAST);
 
     } else { // Version for 64 bit integers
 
@@ -171,17 +253,17 @@ namespace {
 
       std::uint32_t u = static_cast<std::uint32_t>(n);
       if(u == n) {
-        return L09(LAST);
+        return LENGTH_0_TO_9(LAST);
       }
 
       std::uint64_t a = n / 100'000'000u;
       u = static_cast<std::uint32_t>(a);
 
       if(u == a) {
-        L09(PART);
+        LENGTH_0_TO_9(PART);
       } else {
         u = static_cast<std::uint32_t>(a / 100'000'000u);
-        L03(PART);
+        LENGTH_0_TO_3(PART);
         u = a % 100'000'000u;
         PART(7);
       }
