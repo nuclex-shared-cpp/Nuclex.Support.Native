@@ -75,6 +75,16 @@ namespace Nuclex { namespace Support { namespace Text {
       std::numeric_limits<std::int32_t>::max()
     );
 
+    for(std::size_t index = 8; index < 13; ++index) {
+      std::string expected = std::to_string(index);
+
+      char buffer[40];
+      char *end = FormatInteger(static_cast<std::uint32_t>(index), buffer);
+      std::string actual(buffer, end);
+
+      EXPECT_EQ(expected, actual);
+    }
+
     for(std::size_t index = 0; index < SampleCount; ++index) {
       std::int32_t number = static_cast<std::int32_t>(
         randomNumberDistribution32(randomNumberGenerator)
