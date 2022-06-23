@@ -120,18 +120,6 @@ namespace {
   #define C8 A(7), D(2), D(4), D(6), S(8)
   #define C9 A(8), D(2), D(4), D(6), D(8)
 
-  #define LENGTH_0_TO_9(F) u <         100 ? LENGTH_0_OR_1(F) : LENGTH_2_TO_9(F)
-  #define LENGTH_2_TO_9(F) u <   1'000'000 ? LENGTH_2_TO_5(F) : LENGTH_6_TO_9(F)
-  #define LENGTH_2_TO_5(F) u <      10'000 ? LENGTH_2_OR_3(F) : LENGTH_4_OR_5(F)
-  #define LENGTH_6_TO_9(F) u < 100'000'000 ? LENGTH_6_OR_7(F) : LENGTH_8_OR_9(F)
-  #define LENGTH_0_TO_3(F) u <         100 ? LENGTH_0_OR_1(F) : LENGTH_2_OR_3(F)
-
-  #define LENGTH_0_OR_1(F) u <            10 ? F(0) : F(1)
-  #define LENGTH_2_OR_3(F) u <         1'000 ? F(2) : F(3)
-  #define LENGTH_4_OR_5(F) u <       100'000 ? F(4) : F(5)
-  #define LENGTH_6_OR_7(F) u <    10'000'000 ? F(6) : F(7)
-  #define LENGTH_8_OR_9(F) u < 1'000'000'000 ? F(8) : F(9)
-
   #define PART(N) (C##N, buffer += N + 1)
 
   // ------------------------------------------------------------------------------------------- //
@@ -235,7 +223,24 @@ namespace {
       appendDigits32(buffer, u);
     } else {
       u = static_cast<std::uint32_t>(a / 100'000'000u);
-      LENGTH_0_TO_3(PART);
+
+      if(u < 100) {
+        if(u < 10) {
+          *buffer++ = u8'0' + u;
+          //PART(0);
+        } else {
+          //*buffer++ = Radix100[u * 2];
+          //*buffer++ = Radix100[u * 2] + 1;
+          PART(1);
+        }
+      } else {
+        if(u < 1'000) {
+          PART(2);
+        } else {
+          PART(3);
+        }
+      }
+
       u = a % 100'000'000u;
       C7;
       buffer += 8;
@@ -247,20 +252,7 @@ namespace {
     buffer += 8;
   }
 
-  #undef LAST
   #undef PART
-
-  #undef LENGTH_8_OR_9
-  #undef LENGTH_6_OR_7
-  #undef LENGTH_4_OR_5
-  #undef LENGTH_2_OR_3
-  #undef LENGTH_0_OR_1
-
-  #undef LENGTH_0_TO_3
-  #undef LENGTH_6_TO_9
-  #undef LENGTH_2_TO_5
-  #undef LENGTH_2_TO_9
-  #undef LENGTH_0_TO_9
 
   #undef C9
   #undef C8
