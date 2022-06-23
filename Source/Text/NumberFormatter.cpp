@@ -25,6 +25,7 @@ License along with this library
 #include "Nuclex/Support/BitTricks.h" // for the base-10 log function
 
 #include <cstdlib>
+#include <cstring> // for std::memcpy()
 
 // https://quick-bench.com/q/8j_Lm35goVp7YjFtQ-BDpg6zFRg
 //
@@ -65,9 +66,27 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  inline void appendTwoDigits(char *&buffer, std::uint32_t number) {
+#if defined(USE_PLAIN_MEMCPY)
+    memcpy(buffer, &Radix100[number * 2], 2); // is a semi-intrinsic in most compilers, fast!
+#else
+    struct TwoChars { char t, o; };
+
+    *reinterpret_cast<TwoChars *>(buffer) = ( \
+      *reinterpret_cast<const TwoChars *>(&Radix100[number * 2]) \
+    );
+#endif
+    buffer += 2;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  struct MooChars { char t, o; };
+
   #define WRITE_PAIR(bufferIndex, pairIndex) \
-    buffer[bufferIndex] = Radix100[(pairIndex) * 2], \
-    buffer[bufferIndex + 1] = Radix100[(pairIndex) * 2 + 1]
+    *reinterpret_cast<MooChars *>(buffer + bufferIndex) = ( \
+      *reinterpret_cast<const MooChars *>(&Radix100[(pairIndex) * 2]) \
+    )
 
   #define A(N) t = \
     ( \
@@ -97,12 +116,12 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Appends the decimal digits for a written-out integer to a buffer</summary>
+  /// <summary>Appends the character for an integral number in text form to a buffer</summary>
   /// <param name="buffer">
-  ///   Buffer to which the decimal digits will be appended. Will be advanced to
-  ///   a position one past that last character written.
+  ///   Buffer to which the character will be appended. Will be advanced to a position one past
+  ///   the last character written.
   /// </param>
-  /// <param name="n">Integer whose decimal digits will be appended</param>
+  /// <param name="n">Integer that will be appended to a buffer in textual form</param>
   /// <remarks>
   ///   <para>
   ///     This method does *NOT* write a closing zero byte as would be customary with C strings.
@@ -113,15 +132,14 @@ namespace {
   ///     also avoiding macros (if I succeed, note to self, remove this note)
   ///   </para>
   /// </remarks>
-  void appendDigits32(char *&buffer, std::uint32_t u) {
+  inline void appendDigits32(char *&buffer, std::uint32_t u) {
     std::uint64_t t;
 
     if(u < 100) {
       if(u < 10) {
         *buffer++ = u8'0' + u;
       } else {
-        *buffer++ = Radix100[u * 2];
-        *buffer++ = Radix100[u * 2 + 1];
+        appendTwoDigits(buffer, u);
       }
     } else if(u < 1'000'000) {
       if(u < 10'000) {
@@ -164,12 +182,12 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Appends the decimal digits for a written-out integer to a buffer</summary>
+  /// <summary>Appends the character for an integral number in text form to a buffer</summary>
   /// <param name="buffer">
-  ///   Buffer to which the decimal digits will be appended. Will be advanced to
-  ///   a position one past that last character written.
+  ///   Buffer to which the character will be appended. Will be advanced to a position one past
+  ///   the last character written.
   /// </param>
-  /// <param name="n">Integer whose decimal digits will be appended</param>
+  /// <param name="n">Integer that will be appended to a buffer in textual form</param>
   /// <remarks>
   ///   <para>
   ///     This method does *NOT* write a closing zero byte as would be customary with C strings.
@@ -180,7 +198,7 @@ namespace {
   ///     also avoiding macros (if I succeed, note to self, remove this note)
   ///   </para>
   /// </remarks>
-  void appendDigits64(char *&buffer, std::uint64_t n) {
+  inline void appendDigits64(char *&buffer, std::uint64_t n) {
     std::uint64_t t;
 
     std::uint32_t u = static_cast<std::uint32_t>(n);
@@ -235,8 +253,6 @@ namespace {
   #undef C4
   #undef C3
   #undef C2
-  #undef C1
-  #undef C0
 
   #undef D
   #undef S
