@@ -33,24 +33,13 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Fast random number generator used in the benchmark</summary>
-  std::mt19937_64 randomNumberGenerator;
-  /// <summary>Uniform distribution to make the output cover all possible integers</summary>
-  std::uniform_int_distribution<std::uint32_t> randomNumberDistribution32;
-  /// <summary>Uniform distribution to make the output cover all possible integers</summary>
-  std::uniform_int_distribution<std::uint64_t> randomNumberDistribution64;
-  /// <summary>Uniform distribution to make the output cover all possible integers</summary>
-  std::uniform_int_distribution<std::int32_t> randomNumberDistribution32S;
-  /// <summary>Uniform distribution to make the output cover all possible integers</summary>
-  std::uniform_int_distribution<std::int64_t> randomNumberDistribution64S;
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>
   ///   Since we can't check all integers within a reasonable time, this is the number
   ///   of random checks we'll do to compare our integer formatter with std::to_string()
   /// </summary>
   const constexpr std::size_t SampleCount = 100'000;
+
+  // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
@@ -59,6 +48,9 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(NumberFormatterTest, ThirtyTwoBitUnsignedIntegersAreFormattedCorrectly) {
+    std::mt19937 randomNumberGenerator;
+    std::uniform_int_distribution<std::uint32_t> randomNumberDistribution32;
+
     for(std::size_t index = 0; index < SampleCount; ++index) {
       std::uint32_t number = static_cast<std::uint32_t>(
         randomNumberDistribution32(randomNumberGenerator)
@@ -77,9 +69,15 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(NumberFormatterTest, ThirtyTwoBitSignedIntegersAreFormattedCorrectly) {
+    std::mt19937 randomNumberGenerator;
+    std::uniform_int_distribution<std::int32_t> randomNumberDistribution32(
+      std::numeric_limits<std::int32_t>::min(),
+      std::numeric_limits<std::int32_t>::max()
+    );
+
     for(std::size_t index = 0; index < SampleCount; ++index) {
-      std::uint32_t number = static_cast<std::int32_t>(
-        randomNumberDistribution32S(randomNumberGenerator)
+      std::int32_t number = static_cast<std::int32_t>(
+        randomNumberDistribution32(randomNumberGenerator)
       );
 
       std::string expected = std::to_string(number);
@@ -95,8 +93,11 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(NumberFormatterTest, SixtyFourBitUnsignedIntegersAreFormattedCorrectly) {
+    std::mt19937_64 randomNumberGenerator;
+    std::uniform_int_distribution<std::uint64_t> randomNumberDistribution64;
+
     for(std::size_t index = 0; index < SampleCount; ++index) {
-      std::uint32_t number = static_cast<std::uint64_t>(
+      std::uint64_t number = static_cast<std::uint64_t>(
         randomNumberDistribution64(randomNumberGenerator)
       );
 
@@ -113,9 +114,15 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(NumberFormatterTest, SixtyFourBitSignedIntegersAreFormattedCorrectly) {
+    std::mt19937_64 randomNumberGenerator;
+    std::uniform_int_distribution<std::int64_t> randomNumberDistribution64(
+      std::numeric_limits<std::int64_t>::min(),
+      std::numeric_limits<std::int64_t>::max()
+    );
+
     for(std::size_t index = 0; index < SampleCount; ++index) {
-      std::uint32_t number = static_cast<std::int64_t>(
-        randomNumberDistribution64S(randomNumberGenerator)
+      std::int64_t number = static_cast<std::int64_t>(
+        randomNumberDistribution64(randomNumberGenerator)
       );
 
       std::string expected = std::to_string(number);
@@ -126,6 +133,34 @@ namespace Nuclex { namespace Support { namespace Text {
 
       EXPECT_EQ(expected, actual);
     }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(NumberFormatterTest, LowestThirtyTwoBitSignedIntegersIsFormatted) {
+    std::int32_t lowestValue = std::numeric_limits<std::int32_t>::min();
+
+    std::string expected = std::to_string(lowestValue);
+
+    char buffer[40];
+    char *end = FormatInteger(lowestValue, buffer);
+    std::string actual(buffer, end);
+
+    EXPECT_EQ(expected, actual);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(NumberFormatterTest, LowestSixtyFourBitSignedIntegersIsFormatted) {
+    std::int64_t lowestValue = std::numeric_limits<std::int64_t>::min();
+
+    std::string expected = std::to_string(lowestValue);
+
+    char buffer[40];
+    char *end = FormatInteger(lowestValue, buffer);
+    std::string actual(buffer, end);
+
+    EXPECT_EQ(expected, actual);
   }
 
   // ------------------------------------------------------------------------------------------- //

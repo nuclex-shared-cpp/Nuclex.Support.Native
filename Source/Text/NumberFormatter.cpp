@@ -24,6 +24,8 @@ License along with this library
 #include "./DragonBox-1.1.2/dragonbox.h" // for the float-to-decimal algorithm
 #include "Nuclex/Support/BitTricks.h" // for the base-10 log function
 
+#include <cstdlib>
+
 // https://quick-bench.com/q/8j_Lm35goVp7YjFtQ-BDpg6zFRg
 //
 // JEAIII optimized surprisingly well (no div/mul?!)
@@ -118,38 +120,6 @@ namespace {
   #define C8 A(7), D(2), D(4), D(6), S(8)
   #define C9 A(8), D(2), D(4), D(6), D(8)
 
-  // L09:      if(u < 100) {
-  // L01:        if(u < 10) {
-  //               F(0);
-  //             } else {
-  //               F(1);
-  //             }
-  // L29:      } else if(u < 1'000'000} {
-  // L25:        if(u < 10'000) {
-  // L23:          if(u < 1'000) {
-  //                 F(2);
-  //               } else {
-  //                 F(3);
-  //               }
-  // L45:        } else if(u < 100'000) {
-  //               F(4);
-  //             } else {
-  //               F(5);
-  //             }
-  // L69:      } else if(u < 100'000'000) {
-  // L67:        if(u < 10'000'000) {
-  //               F(6);
-  //             } else {
-  //               F(7);
-  //             }
-  // L89:      } else {
-  //             if(u < 1'000'000'000) {
-  //               F(8);
-  //             } else {
-  //               F(9);
-  //             }
-  //           }
-
   #define LENGTH_0_TO_9(F) u <         100 ? LENGTH_0_OR_1(F) : LENGTH_2_TO_9(F)
   #define LENGTH_2_TO_9(F) u <   1'000'000 ? LENGTH_2_TO_5(F) : LENGTH_6_TO_9(F)
   #define LENGTH_2_TO_5(F) u <      10'000 ? LENGTH_2_OR_3(F) : LENGTH_4_OR_5(F)
@@ -162,30 +132,73 @@ namespace {
   #define LENGTH_6_OR_7(F) u <    10'000'000 ? F(6) : F(7)
   #define LENGTH_8_OR_9(F) u < 1'000'000'000 ? F(8) : F(9)
 
-  #define LENGTH_0_TO_9_SWITCH(F) { \
-    if(u == 0) { \
-      return F(0); \
-    } else { \
-      switch(Nuclex::Support::BitTricks::GetLogBase10(u)) { \
-        case 1: return F(0); \
-        case 2: return F(1); \
-        case 3: return F(2); \
-        case 4: return F(3); \
-        case 5: return F(4); \
-        case 6: return F(5); \
-        case 7: return F(6); \
-        case 8: return F(7); \
-        case 9: return F(8); \
-        case 10: return F(9); \
-      } \
-    } \
+  #define PART(N) (C##N, buffer += N + 1)
+
+  // ------------------------------------------------------------------------------------------- //
+
+  inline constexpr std::uint32_t absToUnsigned(std::int32_t value) noexcept {
+    return 0u - static_cast<std::uint32_t>(value);
   }
 
-  #define PART(N) (C##N, buffer += N + 1)
-  #define LAST(N) (C##N, terminate<char *>(buffer + N + 1))
+  inline constexpr std::uint64_t absToUnsigned(std::int64_t value) noexcept {
+    return 0u - static_cast<std::uint64_t>(value);
+  }
 
-  template<class T> inline T terminate(char *b) { return b; }
-  template<> inline void terminate<void>(char *b) { *b = 0; }
+  inline void appendMinus(char *&buffer) noexcept {
+    *buffer = u8'-';
+    ++buffer;
+  }
+
+  inline char *appendDigits(char *buffer, std::uint32_t u) {
+    std::uint64_t t;
+
+    if(u < 100) {
+      if(u < 10) {
+        *buffer = u8'0' + u;
+        return buffer + 1;
+      } else {
+        buffer[0] = Radix100[u * 2];
+        buffer[1] = Radix100[u * 2] + 1;
+        return buffer + 2;
+      }
+    } else if(u < 1'000'000) {
+      if(u < 10'000) {
+        if(u < 1'000) {
+          C2;
+          return buffer + 3;
+        } else {
+          C3;
+          return buffer + 4;
+        }
+      } else {
+        if(u < 100'000) {
+          C4;
+          return buffer + 5;
+        } else {
+          C5;
+          return buffer + 6;
+        }
+      }
+    } else {
+      if(u < 100'000'000) {
+        if(u < 10'000'000) {
+          C6;
+          return buffer + 7;
+        } else {
+          C7;
+          return buffer + 8;
+        }
+      } else {
+        if(u < 1'000'000'000) {
+          C8;
+          return buffer + 9;
+        } else {
+          C9;
+          return buffer + 10;
+        }
+      }
+    }
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -209,39 +222,23 @@ namespace {
 
     // Version for integers of 32 bits or shorter
     if constexpr(sizeof(TInteger) < sizeof(std::uint64_t)) {
-
-      std::uint32_t u;
       if constexpr(std::is_signed<TInteger>::value) {
         if(integer < 0) {
-          *buffer++ = u8'-';
-          u = 0u - static_cast<std::uint32_t>(static_cast<std::int32_t>(integer));
+          appendMinus(buffer);
+          return appendDigits(buffer, absToUnsigned(integer));
         } else {
-          u = static_cast<std::uint32_t>(integer);
+          return appendDigits(buffer, static_cast<std::uint32_t>(integer));
         }
       } else {
-        u = integer;
+        return appendDigits(buffer, integer);
       }
-
-      std::uint64_t t;
-
-      if(u < 100) {
-        return LENGTH_0_OR_1(LAST);
-      } else if(u < 1'000'000) {
-        return LENGTH_2_TO_5(LAST);
-      } else {
-        return LENGTH_6_TO_9(LAST);
-      }
-
-      //LENGTH_0_TO_9_SWITCH(LAST);
-      //return LENGTH_0_TO_9(LAST);
-
     } else { // Version for 64 bit integers
 
-      std::uint64_t n = integer < 0 ? *buffer++ = '-', 0u - std::uint64_t(integer) : std::uint64_t(integer);
+      std::uint64_t n; // = integer < 0 ? *buffer++ = '-', 0u - std::uint64_t(integer) : std::uint64_t(integer);
       if constexpr(std::is_signed<TInteger>::value) {
         if(integer < 0) {
-          *buffer++ = u8'-';
-          n = 0u - static_cast<std::uint64_t>(integer);
+          appendMinus(buffer);
+          n = absToUnsigned(integer);
         } else {
           n = static_cast<std::uint64_t>(integer);
         }
@@ -253,23 +250,25 @@ namespace {
 
       std::uint32_t u = static_cast<std::uint32_t>(n);
       if(u == n) {
-        return LENGTH_0_TO_9(LAST);
+        return appendDigits(buffer, u);
       }
 
       std::uint64_t a = n / 100'000'000u;
       u = static_cast<std::uint32_t>(a);
 
       if(u == a) {
-        LENGTH_0_TO_9(PART);
+        buffer = appendDigits(buffer, u);
       } else {
         u = static_cast<std::uint32_t>(a / 100'000'000u);
         LENGTH_0_TO_3(PART);
         u = a % 100'000'000u;
-        PART(7);
+        C7;
+        buffer += 8;
       }
 
       u = n % 100'000'000u;
-      return LAST(7);
+      C7;
+      return buffer + 8;
 
     } // 64 bit integer version
 
@@ -278,17 +277,17 @@ namespace {
   #undef LAST
   #undef PART
 
-  #undef L89
-  #undef L67
-  #undef L45
-  #undef L23
-  #undef L01
+  #undef LENGTH_8_OR_9
+  #undef LENGTH_6_OR_7
+  #undef LENGTH_4_OR_5
+  #undef LENGTH_2_OR_3
+  #undef LENGTH_0_OR_1
 
-  #undef L03
-  #undef L69
-  #undef L25
-  #undef L29
-  #undef L09
+  #undef LENGTH_0_TO_3
+  #undef LENGTH_6_TO_9
+  #undef LENGTH_2_TO_5
+  #undef LENGTH_2_TO_9
+  #undef LENGTH_0_TO_9
 
   #undef C9
   #undef C8
@@ -304,7 +303,7 @@ namespace {
   #undef D
   #undef S
   #undef A
-  #undef W
+  #undef WRITE_PAIR
   #undef P
 
   // ------------------------------------------------------------------------------------------- //
@@ -340,12 +339,16 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   char *FormatFloat(float value, char *buffer /* [46] */) {
+    (void)value;
+    (void)buffer;
     throw u8"Not implemented yet";
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   char *FormatFloat(double value, char *buffer /* [325] */) {
+    (void)value;
+    (void)buffer;
     throw u8"Not implemented yet";
   }
 
