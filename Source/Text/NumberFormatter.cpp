@@ -136,65 +136,66 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline constexpr std::uint32_t absToUnsigned(std::int32_t value) noexcept {
-    return 0u - static_cast<std::uint32_t>(value);
-  }
-
-  inline constexpr std::uint64_t absToUnsigned(std::int64_t value) noexcept {
-    return 0u - static_cast<std::uint64_t>(value);
-  }
-
-  inline void appendMinus(char *&buffer) noexcept {
-    *buffer = u8'-';
-    ++buffer;
-  }
-
-  inline char *appendDigits(char *buffer, std::uint32_t u) {
+  /// <summary>Appends the decimal digits for a written-out integer to a buffer</summary>
+  /// <param name="buffer">
+  ///   Buffer to which the decimal digits will be appended. Will be advanced to
+  ///   a position one past that last character written.
+  /// </param>
+  /// <param name="n">Integer whose decimal digits will be appended</param>
+  /// <remarks>
+  ///   <para>
+  ///     This method does *NOT* write a closing zero byte as would be customary with C strings.
+  ///   </para>
+  ///   <para>
+  ///     This is a direct clone of James Edward Anhalt III.'s itoa() implementation,
+  ///     modified a little bit to only check for negative numbers if the input is unsigned,
+  ///     also avoiding macros (if I succeed, note to self, remove this note)
+  ///   </para>
+  /// </remarks>
+  void appendDigits32(char *&buffer, std::uint32_t u) {
     std::uint64_t t;
 
     if(u < 100) {
       if(u < 10) {
-        *buffer = u8'0' + u;
-        return buffer + 1;
+        *buffer++ = u8'0' + u;
       } else {
-        buffer[0] = Radix100[u * 2];
-        buffer[1] = Radix100[u * 2] + 1;
-        return buffer + 2;
+        *buffer++ = Radix100[u * 2];
+        *buffer++ = Radix100[u * 2] + 1;
       }
     } else if(u < 1'000'000) {
       if(u < 10'000) {
         if(u < 1'000) {
           C2;
-          return buffer + 3;
+          buffer += 3;
         } else {
           C3;
-          return buffer + 4;
+          buffer += 4;
         }
       } else {
         if(u < 100'000) {
           C4;
-          return buffer + 5;
+          buffer += 5;
         } else {
           C5;
-          return buffer + 6;
+          buffer += 6;
         }
       }
     } else {
       if(u < 100'000'000) {
         if(u < 10'000'000) {
           C6;
-          return buffer + 7;
+          buffer += 7;
         } else {
           C7;
-          return buffer + 8;
+          buffer += 8;
         }
       } else {
         if(u < 1'000'000'000) {
           C8;
-          return buffer + 9;
+          buffer += 9;
         } else {
           C9;
-          return buffer + 10;
+          buffer += 10;
         }
       }
     }
@@ -202,76 +203,48 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Converts an integer into a string</summary>
-  /// <typeparam name="TInteger">Type of integer that will be converted</typeparam>
-  /// <param name="integer">Integer that will be converted into a string</param>
-  /// <param name="buffer">Buffer in which the converted characters will be placed</param>
-  /// <returns>A pointer to the last character written into the buffer</returns>
+  /// <summary>Appends the decimal digits for a written-out integer to a buffer</summary>
+  /// <param name="buffer">
+  ///   Buffer to which the decimal digits will be appended. Will be advanced to
+  ///   a position one past that last character written.
+  /// </param>
+  /// <param name="n">Integer whose decimal digits will be appended</param>
   /// <remarks>
-  ///   This is a direct clone of James Edward Anhalt III.'s itoa implementation,
-  ///   modified a little bit to only check for negative numbers if the input is unsigned,
-  ///   also avoiding macros (if I succeed, note to self, remove this note)
+  ///   <para>
+  ///     This method does *NOT* write a closing zero byte as would be customary with C strings.
+  ///   </para>
+  ///   <para>
+  ///     This is a direct clone of James Edward Anhalt III.'s itoa() implementation,
+  ///     modified a little bit to only check for negative numbers if the input is unsigned,
+  ///     also avoiding macros (if I succeed, note to self, remove this note)
+  ///   </para>
   /// </remarks>
-  template<typename TInteger>
-  char *int_to_chars_jeaiii_demacroed(TInteger integer, char *buffer) {
+  void appendDigits64(char *&buffer, std::uint64_t n) {
+    std::uint64_t t;
 
-    if(integer == 0) {
-      *buffer = u8'0';
-      return buffer + 1;
+    std::uint32_t u = static_cast<std::uint32_t>(n);
+    if(u == n) {
+      appendDigits32(buffer, u);
+      return;
     }
 
-    // Version for integers of 32 bits or shorter
-    if constexpr(sizeof(TInteger) < sizeof(std::uint64_t)) {
-      if constexpr(std::is_signed<TInteger>::value) {
-        if(integer < 0) {
-          appendMinus(buffer);
-          return appendDigits(buffer, absToUnsigned(integer));
-        } else {
-          return appendDigits(buffer, static_cast<std::uint32_t>(integer));
-        }
-      } else {
-        return appendDigits(buffer, integer);
-      }
-    } else { // Version for 64 bit integers
+    std::uint64_t a = n / 100'000'000u;
+    u = static_cast<std::uint32_t>(a);
 
-      std::uint64_t n; // = integer < 0 ? *buffer++ = '-', 0u - std::uint64_t(integer) : std::uint64_t(integer);
-      if constexpr(std::is_signed<TInteger>::value) {
-        if(integer < 0) {
-          appendMinus(buffer);
-          n = absToUnsigned(integer);
-        } else {
-          n = static_cast<std::uint64_t>(integer);
-        }
-      } else {
-        n = static_cast<std::uint64_t>(integer);
-      }
-
-      std::uint64_t t;
-
-      std::uint32_t u = static_cast<std::uint32_t>(n);
-      if(u == n) {
-        return appendDigits(buffer, u);
-      }
-
-      std::uint64_t a = n / 100'000'000u;
-      u = static_cast<std::uint32_t>(a);
-
-      if(u == a) {
-        buffer = appendDigits(buffer, u);
-      } else {
-        u = static_cast<std::uint32_t>(a / 100'000'000u);
-        LENGTH_0_TO_3(PART);
-        u = a % 100'000'000u;
-        C7;
-        buffer += 8;
-      }
-
-      u = n % 100'000'000u;
+    if(u == a) {
+      appendDigits32(buffer, u);
+    } else {
+      u = static_cast<std::uint32_t>(a / 100'000'000u);
+      LENGTH_0_TO_3(PART);
+      u = a % 100'000'000u;
       C7;
-      return buffer + 8;
+      buffer += 8;
+    }
 
-    } // 64 bit integer version
+    u = n % 100'000'000u;
 
+    C7;
+    buffer += 8;
   }
 
   #undef LAST
@@ -308,6 +281,34 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>
+  ///   Takes the absolute value of a signed 32 bit integer and returns it as unsigned
+  /// </summary>
+  /// <param name="value">Value whose absolute value will be returned as an unsigned type</param>
+  /// <returns>The absolute value if the input integer as an unsigned integer</returns>
+  /// <remarks>
+  ///   This avoids the undefined result of std::abs() applied to the lowest possible integer.
+  /// </remarks>
+  inline constexpr std::uint32_t absToUnsigned(std::int32_t value) noexcept {
+    return 0u - static_cast<std::uint32_t>(value);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>
+  ///   Takes the absolute value of a signed 64 bit integer and returns it as unsigned
+  /// </summary>
+  /// <param name="value">Value whose absolute value will be returned as an unsigned type</param>
+  /// <returns>The absolute value if the input integer as an unsigned integer</returns>
+  /// <remarks>
+  ///   This avoids the undefined result of std::abs() applied to the lowest possible integer.
+  /// </remarks>
+  inline constexpr std::uint64_t absToUnsigned(std::int64_t value) noexcept {
+    return 0u - static_cast<std::uint64_t>(value);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Text {
@@ -315,25 +316,43 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   char *FormatInteger(std::uint32_t value, char *buffer /* [10] */) {
-    return int_to_chars_jeaiii_demacroed(value, buffer);
+    appendDigits32(buffer, value);
+
+    return buffer;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   char *FormatInteger(std::int32_t value, char *buffer /* [11] */) {
-    return int_to_chars_jeaiii_demacroed(value, buffer);
+    if(value < 0) {
+      *buffer++ = u8'-';
+      appendDigits32(buffer, absToUnsigned(value));
+    } else {
+      appendDigits32(buffer, static_cast<std::uint32_t>(value));
+    }
+
+    return buffer;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   char *FormatInteger(std::uint64_t value, char *buffer /* [20] */) {
-    return int_to_chars_jeaiii_demacroed(value, buffer);
+    appendDigits64(buffer, value);
+
+    return buffer;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   char *FormatInteger(std::int64_t value, char *buffer /* [20] */) {
-    return int_to_chars_jeaiii_demacroed(value, buffer);
+    if(value < 0) {
+      *buffer++ = u8'-';
+      appendDigits64(buffer, absToUnsigned(value));
+    } else {
+      appendDigits64(buffer, static_cast<std::uint64_t>(value));
+    }
+
+    return buffer;
   }
 
   // ------------------------------------------------------------------------------------------- //
