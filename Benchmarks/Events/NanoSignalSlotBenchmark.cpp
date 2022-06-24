@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#if defined(HAVE_NANOSIGNAL)
+#if defined(HAVE_NANO_SIGNALS)
 
 #include "./nano-signal-slot-2.0.1/nano_signal_slot.hpp"
 
@@ -253,4 +253,4 @@ namespace Nuclex { namespace Support { namespace Events {
 
 }}} // namespace Nuclex::Support::Events
 
-#endif // defined(HAVE_NANOSIGNAL)
+#endif // defined(HAVE_NANO_SIGNALS)

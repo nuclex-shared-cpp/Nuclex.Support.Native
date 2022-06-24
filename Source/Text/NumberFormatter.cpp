@@ -66,53 +66,49 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline void appendTwoDigits(char *&buffer, std::uint32_t number) {
-#if defined(USE_PLAIN_MEMCPY)
-    memcpy(buffer, &Radix100[number * 2], 2); // is a semi-intrinsic in most compilers, fast!
-#else
-    struct TwoChars { char t, o; };
-
-    *reinterpret_cast<TwoChars *>(buffer) = ( \
-      *reinterpret_cast<const TwoChars *>(&Radix100[number * 2]) \
-    );
-#endif
-    buffer += 2;
-  }
+  /// <summary>Structure with the size of two chars</summary>
+  /// <remarks>
+  ///   This is only used to assign two characters at once. Benchmarks (in release mode on
+  ///   AMD64 with -O3 on GCC 11) revealed that std::memcpy() is not inlined/intrinsic'd as
+  ///   much as one would hope and that this method resulted in faster code.
+  /// </remarks>
+  struct TwoChars { char t, o; };
 
   // ------------------------------------------------------------------------------------------- //
 
-  struct MooChars { char t, o; };
-
-  #define WRITE_PAIR(bufferIndex, pairIndex) \
-    *reinterpret_cast<MooChars *>(buffer + bufferIndex) = ( \
-      *reinterpret_cast<const MooChars *>(&Radix100[(pairIndex) * 2]) \
-    )
-
-  #define A(N) t = \
-    ( \
-      (std::uint64_t(1) << (32 + N / 5 * N * 53 / 16)) / \
-      std::uint32_t(1e##N) + 1 + N/6 - N/8 \
+  // Uses a magic formula to turn a 32 bit number into a specific 64 bit number.
+  //
+  // I think the main thing this formula accomplishes is that the actual number sits at
+  // the upper end of a 32 bit integer. Thus, when you cast it to a 64 bit integer and
+  // multiply it by 100, you end up with the next two digits in the upper 32 bits of
+  // your 64 bit integer where they're easy to grab.
+  #define PREPARE_NUMBER_OF_MAGNITUDE(totalLength) \
+    t = ( \
+      (std::uint64_t(1) << (32 + totalLength / 5 * totalLength * 53 / 16)) / \
+      std::uint32_t(1e##totalLength) + 1 + totalLength/6 - totalLength/8 \
     ), \
     t *= u, \
-    t >>= N / 5 * N * 53 / 16, \
-    t += N / 6 * 4, \
-    WRITE_PAIR(0, t >> 32)
+    t >>= totalLength / 5 * totalLength * 53 / 16, \
+    t += totalLength / 6 * 4, \
+    *reinterpret_cast<TwoChars *>(buffer) = ( \
+      *reinterpret_cast<const TwoChars *>(&Radix100[(t >> 31) & 0xFE]) \
+    ), \
+    buffer += 2
 
-  #define S(bufferIndex) \
-    buffer[bufferIndex] = char(std::uint64_t(10) * std::uint32_t(t) >> 32) + '0'
+  // Appends the next two highest digits in the prepared number to the char buffer
+  // Also adjusts the number such that the next two digits are ready for extraction.
+  #define WRITE_TWO_DIGITS(bufferIndex) \
+    t = std::uint64_t(100) * static_cast<std::uint32_t>(t), \
+    *reinterpret_cast<TwoChars *>(buffer + bufferIndex) = ( \
+      *reinterpret_cast<const TwoChars *>(&Radix100[(t >> 31) & 0xFE]) \
+    )
 
-  #define D(bufferIndex) t = \
-    std::uint64_t(100) * std::uint32_t(t), \
-    WRITE_PAIR(bufferIndex, t >> 32)
-
-  #define C2 A(1), S(2)
-  #define C3 A(2), D(2)
-  #define C4 A(3), D(2), S(4)
-  #define C5 A(4), D(2), D(4)
-  #define C6 A(5), D(2), D(4), S(6)
-  #define C7 A(6), D(2), D(4), D(6)
-  #define C8 A(7), D(2), D(4), D(6), S(8)
-  #define C9 A(8), D(2), D(4), D(6), D(8)
+  // Appends the next highest digit in the prepared number to the char buffer
+  // Thus doesn't adjust the number because it is always used on the very last digit.
+  #define WRITE_ONE_DIGIT(bufferIndex) \
+    buffer[bufferIndex] = ( \
+      u8'0' + static_cast<char>(std::uint64_t(10) * std::uint32_t(t) >> 32) \
+    )
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -121,7 +117,7 @@ namespace {
   ///   Buffer to which the character will be appended. Will be advanced to a position one past
   ///   the last character written.
   /// </param>
-  /// <param name="n">Integer that will be appended to a buffer in textual form</param>
+  /// <param name="u">Integer that will be appended to a buffer in textual form</param>
   /// <remarks>
   ///   <para>
   ///     This method does *NOT* write a closing zero byte as would be customary with C strings.
@@ -135,49 +131,88 @@ namespace {
   inline void appendDigits32(char *&buffer, std::uint32_t u) {
     std::uint64_t t;
 
+    // It appears that the branching tree in the jeaiii implementation beats this.
+#if defined(USE_LOG10_SWITCH)
+    switch(Nuclex::Support::BitTricks::GetLogBase10(u)) {
+      case 0: { *buffer++ = u8'0' + u; break; }
+      case 1: { appendTwoDigits(buffer, u); break; }
+      case 2: { C2; buffer += 3; break; }
+      case 3: { C3; buffer += 4; break; }
+      case 4: { C4; buffer += 5; break; }
+      case 5: { C5; buffer += 6; break; }
+      case 6: { C6; buffer += 7; break; }
+      case 7: { C7; buffer += 8; break; }
+      case 8: { C8; buffer += 9; break; }
+      case 9: { C9; buffer += 10; break; }
+    }
+#else
     if(u < 100) {
       if(u < 10) {
         *buffer++ = u8'0' + u;
       } else {
-        appendTwoDigits(buffer, u);
+        *reinterpret_cast<TwoChars *>(buffer) = (
+          *reinterpret_cast<const TwoChars *>(&Radix100[u * 2])
+        );
+        buffer += 2;
       }
     } else if(u < 1'000'000) {
       if(u < 10'000) {
         if(u < 1'000) {
-          C2;
-          buffer += 3;
+          PREPARE_NUMBER_OF_MAGNITUDE(1);
+          WRITE_ONE_DIGIT(0);
+          buffer += 1;
         } else {
-          C3;
-          buffer += 4;
+          PREPARE_NUMBER_OF_MAGNITUDE(2);
+          WRITE_TWO_DIGITS(0);
+          buffer += 2;
         }
       } else {
         if(u < 100'000) {
-          C4;
-          buffer += 5;
+          PREPARE_NUMBER_OF_MAGNITUDE(3);
+          WRITE_TWO_DIGITS(0);
+          WRITE_ONE_DIGIT(2);
+          buffer += 3;
         } else {
-          C5;
-          buffer += 6;
+          PREPARE_NUMBER_OF_MAGNITUDE(4);
+          WRITE_TWO_DIGITS(0);
+          WRITE_TWO_DIGITS(2);
+          buffer += 4;
         }
       }
     } else {
       if(u < 100'000'000) {
         if(u < 10'000'000) {
-          C6;
-          buffer += 7;
+          PREPARE_NUMBER_OF_MAGNITUDE(5);
+          WRITE_TWO_DIGITS(0);
+          WRITE_TWO_DIGITS(2);
+          WRITE_ONE_DIGIT(4);
+          buffer += 5;
         } else {
-          C7;
-          buffer += 8;
+          PREPARE_NUMBER_OF_MAGNITUDE(6);
+          WRITE_TWO_DIGITS(0);
+          WRITE_TWO_DIGITS(2);
+          WRITE_TWO_DIGITS(4);
+          buffer += 6;
         }
       } else {
         if(u < 1'000'000'000) {
-          C8;
-          buffer += 9;
+          PREPARE_NUMBER_OF_MAGNITUDE(7);
+          WRITE_TWO_DIGITS(0);
+          WRITE_TWO_DIGITS(2);
+          WRITE_TWO_DIGITS(4);
+          WRITE_ONE_DIGIT(6);
+          buffer += 7;
         } else {
-          C9;
-          buffer += 10;
+          PREPARE_NUMBER_OF_MAGNITUDE(8);
+          WRITE_TWO_DIGITS(0);
+          WRITE_TWO_DIGITS(2);
+          WRITE_TWO_DIGITS(4);
+          WRITE_TWO_DIGITS(6);
+          buffer += 8;
         }
       }
     }
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -199,17 +234,18 @@ namespace {
   ///   </para>
   /// </remarks>
   inline void appendDigits64(char *&buffer, std::uint64_t n) {
-    std::uint64_t t;
 
+    // If this number fits into 32 bits, then don't bother with the extra processing
     std::uint32_t u = static_cast<std::uint32_t>(n);
     if(u == n) {
       appendDigits32(buffer, u);
       return;
     }
 
+    std::uint64_t t;
+
     std::uint64_t a = n / 100'000'000u;
     u = static_cast<std::uint32_t>(a);
-
     if(u == a) {
       appendDigits32(buffer, u);
     } else {
@@ -219,46 +255,45 @@ namespace {
         if(u < 10) {
           *buffer++ = u8'0' + u;
         } else {
-          *buffer++ = Radix100[u * 2];
-          *buffer++ = Radix100[u * 2 + 1];
+          *reinterpret_cast<TwoChars *>(buffer) = (
+            *reinterpret_cast<const TwoChars *>(&Radix100[u * 2])
+          );
+          buffer += 2;
         }
       } else {
         if(u < 1'000) {
-          C2;
-          buffer += 3;
+          PREPARE_NUMBER_OF_MAGNITUDE(1);
+          WRITE_ONE_DIGIT(0);
+          buffer += 1;
         } else {
-          C3;
-          buffer += 4;
+          PREPARE_NUMBER_OF_MAGNITUDE(2);
+          WRITE_TWO_DIGITS(0);
+          buffer += 2;
         }
       }
 
       u = a % 100'000'000u;
-      C7;
-      buffer += 8;
+
+      PREPARE_NUMBER_OF_MAGNITUDE(6);
+      WRITE_TWO_DIGITS(0);
+      WRITE_TWO_DIGITS(2);
+      WRITE_TWO_DIGITS(4);
+      buffer += 6;
     }
 
     u = n % 100'000'000u;
 
-    C7;
-    buffer += 8;
+    PREPARE_NUMBER_OF_MAGNITUDE(6);
+    WRITE_TWO_DIGITS(0);
+    WRITE_TWO_DIGITS(2);
+    WRITE_TWO_DIGITS(4);
+    buffer += 6;
   }
 
-  #undef PART
-
-  #undef C9
-  #undef C8
-  #undef C7
-  #undef C6
-  #undef C5
-  #undef C4
-  #undef C3
-  #undef C2
-
-  #undef D
-  #undef S
-  #undef A
+  #undef WRITE_TWO_DIGITS
+  #undef WRITE_ONE_DIGIT
+  #undef PREPARE_NUMBER_OF_MAGNITUDE
   #undef WRITE_PAIR
-  #undef P
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -353,98 +388,6 @@ namespace Nuclex { namespace Support { namespace Text {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
-  char *itoa_better_y(std::uint32_t n, char *buffer) {
-    std::uint64_t prod;
-
-    auto get_next_two_digits = [&]() {
-      prod = std::uint32_t(prod) * std::uint64_t(100);
-      return int(prod >> 32);
-    };
-    auto print_1 = [&](int digit) {
-      buffer[0] = char(digit + '0');
-      buffer += 1;
-    };
-    auto print_2 = [&] (int two_digits) {
-      std::memcpy(buffer, Radix100 + two_digits * 2, 2);
-      buffer += 2;
-    };
-    auto print = [&](std::uint64_t magic_number, int extra_shift, auto remaining_count) {
-      prod = n * magic_number;
-      prod >>= extra_shift;
-      auto two_digits = int(prod >> 32);
-
-      if (two_digits < 10) {
-        print_1(two_digits);
-        for (int i = 0; i < remaining_count; ++i) {
-          print_2(get_next_two_digits());
-        }
-      }
-      else {
-        print_2(two_digits);
-        for (int i = 0; i < remaining_count; ++i) {
-          print_2(get_next_two_digits());
-        }
-      }
-    };
-
-    if (n < 100) {
-      if (n < 10) {
-        // 1 digit.
-        print_1(n);
-      }
-      else {
-        // 2 digit.
-        print_2(n);
-      }
-    }
-    else {
-      if (n < 100'0000) {
-        if (n < 1'0000) {
-          // 3 or 4 digits.
-          // 42949673 = ceil(2^32 / 10^2)
-          print(42949673, 0, std::integral_constant<int, 1>{});
-        }
-        else {
-          // 5 or 6 digits.
-          // 429497 = ceil(2^32 / 10^4)
-          print(429497, 0, std::integral_constant<int, 2>{});
-        }
-      }
-      else {
-        if (n < 1'0000'0000) {
-          // 7 or 8 digits.
-          // 281474978 = ceil(2^48 / 10^6) + 1
-          print(281474978, 16, std::integral_constant<int, 3>{});
-        }
-        else {
-          if (n < 10'0000'0000) {
-            // 9 digits.
-            // 1441151882 = ceil(2^57 / 10^8) + 1
-            prod = n * std::uint64_t(1441151882);
-            prod >>= 25;
-            print_1(int(prod >> 32));
-            print_2(get_next_two_digits());
-            print_2(get_next_two_digits());
-            print_2(get_next_two_digits());
-            print_2(get_next_two_digits());
-          }
-          else {
-            // 10 digits.
-            // 1441151881 = ceil(2^57 / 10^8)
-            prod = n * std::uint64_t(1441151881);
-            prod >>= 25;
-            print_2(int(prod >> 32));
-            print_2(get_next_two_digits());
-            print_2(get_next_two_digits());
-            print_2(get_next_two_digits());
-            print_2(get_next_two_digits());
-          }
-        }
-      }
-    }
-    return buffer;
-  }
 
   // ------------------------------------------------------------------------------------------- //
 

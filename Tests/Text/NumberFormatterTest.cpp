@@ -176,4 +176,3 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Text
-

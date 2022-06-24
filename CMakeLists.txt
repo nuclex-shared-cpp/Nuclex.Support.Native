@@ -10,8 +10,25 @@ project(
 )
 
 set(BUILD_DOCS OFF CACHE BOOL "Whether to generate documentation via Doxygen")
-set(BUILD_UNIT_TESTS ON CACHE BOOL "Whether to build the unit test executable")
-set(BUILD_BENCHMARKS ON CACHE BOOL "Whether to build the benchmarks executable")
+
+set(
+  BUILD_UNIT_TESTS OFF CACHE BOOL
+  "Whether to build the unit test executable. This will require an extra"
+  "compilation of the entire source tree as well as the GoogleTest library."
+)
+set(
+  BUILD_BENCHMARKS OFF CACHE BOOL
+  "Whether to build the benchmark executable. This will require an extra"
+  "compilation of the entire source tree as well as the Celero library."
+)
+
+set(
+  BENCHMARK_THIRD_PARTY_LIBRARIES OFF CACHE BOOL
+  "Whether to include third-party libraries in the benchmarks. If you enable"
+  "this option, you need to manually place the extra libraries into your"
+  "source tree (easiest done by just enabling and checking the missing files"
+  "in the compiler output)."
+)
 
 # -------------------------------------------------------------------------------------------------
 
@@ -23,22 +40,27 @@ include("../BuildSystem/cmake/cplusplus.cmake")
 #   https://en.wikipedia.org/wiki/Pthreads
 find_package(Threads REQUIRED)
 
+message(STATUS "Enabled options for Nuclex.Support.Native:")
+
 if(BUILD_UNIT_TESTS)
+	message(STATUS "  ⚫ Build unit tests")
 
 	# Add GoogleTest as a sub-project so we can link our unit test executable
 	if(NOT (TARGET GoogleTest))
 		add_subdirectory(${PROJECT_SOURCE_DIR}/../ThirdParty/gtest ${CMAKE_BINARY_DIR}/gtest)
 	endif()
-
 endif()
 
 if(BUILD_BENCHMARKS)
+	message(STATUS "  ⚫ Build benchmark")
+	if(BENCHMARK_THIRD_PARTY_LIBRARIES)
+		message(STATUS "  ⚫ Benchmark includes third-party libraries")
+	endif()
 
 	# Add Celero as a sub-project so we can link our benchmark executable
 	if(NOT (TARGET Celero))
 		add_subdirectory(${PROJECT_SOURCE_DIR}/../ThirdParty/celero ${CMAKE_BINARY_DIR}/celero)
 	endif()
-
 endif()
 
 # Use CMake's own package for locating Doxygen on the system
@@ -216,6 +238,17 @@ if(BUILD_BENCHMARKS)
 		NuclexSupportNativeBenchmark
 		PRIVATE NUCLEX_SUPPORT_EXECUTABLE
 	)
+
+	if(BENCHMARK_THIRD_PARTY_LIBRARIES)
+		target_compile_definitions(
+			NuclexSupportNativeBenchmark
+			PRIVATE HAVE_BOOST_SIGNALS
+			PRIVATE HAVE_LSIGNAL
+			PRIVATE HAVE_NANO_SIGNALS
+			PRIVATE HAVE_AMDN_ITOA
+			PRIVATE HAVE_JEAIII_ITOA
+		)
+	endif()
 
 	# Add directory with public headers to include path
 	target_include_directories(

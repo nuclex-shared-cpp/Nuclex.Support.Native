@@ -23,60 +23,22 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
+#if defined(HAVE_AMDN_ITOA)
+
 #include <celero/Celero.h>
 
-#include "./../../Source/Text/NumberFormatter.h"
+// Arturo Martin-de-Nicolas' quite readable itoa() implementation
+// https://github.com/amdn/itoa_ljust
+#include "NicolasLJust-2016/itoa_ljust.h"
 
-#include <algorithm> // for std::copy_n()
+// Arturo Martin-de-Nicolas' fastest itoa() implementation
+// https://github.com/amdn/itoa
+#include "NicolasFast-2016/itoa.h"
+
 #include <random> // for std::mt19937
 #include <cstdint> // for std::uint32_t, std::uint64_t
-#include <string> // for std::string
-#include <type_traits> // for std::is_signed
-#include <cmath> // for std::abs()
 
 namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Formats a number into a character string in a naive, slow way</summary>
-  /// <typeparam name="TInteger">Integer type that will be converted</typeparam>
-  /// <param name="integer">Integer that will be formatted into a string</param>
-  /// <param name="buffer">Integer that will be formatted into a string</param>
-  /// <returns>A pointer one past the last character written to the buffer</returns>
-  template<typename TInteger>
-  char *formatNumberNaive(TInteger integer, char *buffer) {
-    char temp[40]; // max 128 bit integer length without terminating \0
-
-    // If the integer may be negative, remember it and make it positive
-    if constexpr(std::is_signed<TInteger>::value) {
-      if(integer < 0) {
-        temp[0] = u8'-';
-        integer = std::abs(integer);
-      }
-    }
-
-    // Build the integer backwards by successively dividing it by 10
-    char *end = temp + sizeof(temp) - 1;
-    while(integer >= 10) {
-      *end = static_cast<char>(u8'0' + (integer % 10));
-      integer /= 10;
-      --end; // go backwards
-    }
-    *end = static_cast<char>(u8'0' + integer);
-
-    // If the integer may be negative, and was negative, prepend a minus sign
-    if constexpr(std::is_signed<TInteger>::value) {
-      if(temp[0] == u8'-') {
-        --end;
-        *end = u8'-';
-      }
-    }
-
-    // Package the generated character in an std::string
-    std::size_t length = temp + sizeof(temp) - end;
-    std::copy_n(end, length, buffer);
-    return buffer + length;
-  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -93,18 +55,11 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Integer32Itoa, CxxToString, 1000, 0) {
-    celero::DoNotOptimizeAway(
-      std::to_string(randomNumberDistribution(randomNumberGenerator))
-    );
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  BENCHMARK(Integer32Itoa, NaiveDivideBy10, 1000, 0) {
+  BENCHMARK(Integer32Itoa, NicolasLJust, 1000, 0) {
     char number[40];
+
     celero::DoNotOptimizeAway(
-      formatNumberNaive(
+      itoa_ljust::itoa(
         static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
         number
       )
@@ -113,10 +68,11 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Integer32Itoa, NumberFormatter, 1000, 0) {
+  BENCHMARK(Integer32Itoa, NicolasFast, 1000, 0) {
     char number[40];
+
     celero::DoNotOptimizeAway(
-      FormatInteger(
+      itoa_fwd(
         static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
         number
       )
@@ -126,3 +82,5 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Text
+
+#endif // defined(HAVE_AMDN_ITOA)
