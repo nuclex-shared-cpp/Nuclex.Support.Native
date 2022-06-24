@@ -29,11 +29,11 @@ License along with this library
 
 // Arturo Martin-de-Nicolas' quite readable itoa() implementation
 // https://github.com/amdn/itoa_ljust
-#include "NicolasLJust-2016/itoa_ljust.h"
+#include "AmdnLJust-2016/itoa_ljust.h"
 
 // Arturo Martin-de-Nicolas' fastest itoa() implementation
 // https://github.com/amdn/itoa
-#include "NicolasFast-2016/itoa.h"
+#include "AmdnFast-2016/itoa.h"
 
 #include <random> // for std::mt19937
 #include <cstdint> // for std::uint32_t, std::uint64_t

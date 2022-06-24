@@ -59,7 +59,7 @@ namespace Nuclex { namespace Support { namespace Text {
       std::string expected = std::to_string(number);
 
       char buffer[40];
-      char *end = FormatInteger(number, buffer);
+      char *end = FormatInteger(buffer, number);
       std::string actual(buffer, end);
 
       EXPECT_EQ(expected, actual);
@@ -79,7 +79,7 @@ namespace Nuclex { namespace Support { namespace Text {
       std::string expected = std::to_string(index);
 
       char buffer[40];
-      char *end = FormatInteger(static_cast<std::uint32_t>(index), buffer);
+      char *end = FormatInteger(buffer, static_cast<std::uint32_t>(index));
       std::string actual(buffer, end);
 
       EXPECT_EQ(expected, actual);
@@ -93,7 +93,7 @@ namespace Nuclex { namespace Support { namespace Text {
       std::string expected = std::to_string(number);
 
       char buffer[40];
-      char *end = FormatInteger(number, buffer);
+      char *end = FormatInteger(buffer, number);
       std::string actual(buffer, end);
 
       EXPECT_EQ(expected, actual);
@@ -114,7 +114,7 @@ namespace Nuclex { namespace Support { namespace Text {
       std::string expected = std::to_string(number);
 
       char buffer[40];
-      char *end = FormatInteger(number, buffer);
+      char *end = FormatInteger(buffer, number);
       std::string actual(buffer, end);
 
       EXPECT_EQ(expected, actual);
@@ -138,7 +138,7 @@ namespace Nuclex { namespace Support { namespace Text {
       std::string expected = std::to_string(number);
 
       char buffer[40];
-      char *end = FormatInteger(number, buffer);
+      char *end = FormatInteger(buffer, number);
       std::string actual(buffer, end);
 
       EXPECT_EQ(expected, actual);
@@ -153,7 +153,7 @@ namespace Nuclex { namespace Support { namespace Text {
     std::string expected = std::to_string(lowestValue);
 
     char buffer[40];
-    char *end = FormatInteger(lowestValue, buffer);
+    char *end = FormatInteger(buffer, lowestValue);
     std::string actual(buffer, end);
 
     EXPECT_EQ(expected, actual);
@@ -167,7 +167,7 @@ namespace Nuclex { namespace Support { namespace Text {
     std::string expected = std::to_string(lowestValue);
 
     char buffer[40];
-    char *end = FormatInteger(lowestValue, buffer);
+    char *end = FormatInteger(buffer, lowestValue);
     std::string actual(buffer, end);
 
     EXPECT_EQ(expected, actual);

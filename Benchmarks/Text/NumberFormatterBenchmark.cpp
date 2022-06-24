@@ -117,8 +117,8 @@ namespace Nuclex { namespace Support { namespace Text {
     char number[40];
     celero::DoNotOptimizeAway(
       FormatInteger(
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
-        number
+        number,
+        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
       )
     );
   }

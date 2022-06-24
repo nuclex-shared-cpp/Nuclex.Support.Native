@@ -22,15 +22,7 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "./DragonBox-1.1.2/dragonbox.h" // for the float-to-decimal algorithm
-#include "Nuclex/Support/BitTricks.h" // for the base-10 log function
-
-#include <cstdlib>
-#include <cstring> // for std::memcpy()
-
-// https://quick-bench.com/q/8j_Lm35goVp7YjFtQ-BDpg6zFRg
-//
-// JEAIII optimized surprisingly well (no div/mul?!)
-// https://godbolt.org/#z:OYLghAFBqd5QCxAYwPYBMCmBRdBLAF1QCcAaPECAMzwBtMA7AQwFtMQByARg9KtQYEAysib0QXACx8BBAKoBnTAAUAHpwAMvAFYTStJg1DIApACYAQuYukl9ZATwDKjdAGFUtAK4sGEgMykrgAyeAyYAHI%2BAEaYxCD%2BABykAA6oCoRODB7evgGp6ZkCoeFRLLHxSbaY9o4CQgRMxAQ5Pn5cgXaYDlkNTQQlkTFxCckKjc2teR22EwNhQ%2BUjSQCUtqhexMjsHOb%2BYcjeWADUJv5uyOPEYcBn2CYaAIJ7B0eYp%2BeXBPiCdw/PZn2DEOXhOZwuLCYBAQfyeL2Bbw%2BFzCBAIAE8UpgFLCAUCQWDPuN0LQ8NEcf9xlC8MhjmgGONMKoUsRaQgmsdiEx8KoAPpcDQaHmNaL0EwAVisYoAIh8ZSYAOxWJ7HFXHMAcDTq0hqjVanWa3g6rh69UG7Xqswm3WG9X%2BK1mnWSLX/VX6q1i%2B1WgBsnptHHlvvNHESgZ1AE5ncrVerjX6HTGrbGg0mdZa/SnbYmrU7eC7o9x3Vm/T701aA6W/SGK0GI7moyqLaHG9XU1a00H2zq7X7O%2Bqc6Q8w2OL2OB6e9622XJ5XpzXI49XZm41bu8mV7Ou%2Bu/avHfPFxwd%2Bqx0HDxwSyep9urVWL37awP67vl37%2B0bsxu%2B1ug6/P3WF/mf1Hd9i2AoNy2/a9QPDPd82PN0/TghMEI/ICr2Ql8YKHRDUKDbDzx1bDwIIyD0LnP993w00JxbdVKOHajbyDOj%2B0HHU6Lwhi2MvJiSJ4u9MJ1IiqL9ISCxElDRNPUSWMfdVRMIzi5O4wTeJU/jyPzG94KDLSkJ0lDdIPVTfwff8h0M7DDLowzRMMuyrXvVj1XvbToJojgXObMjGLciCNKHTycN8rj1LAhzjI88LdjheUpTOJVnieZA2WIAAqY5CFQJghQAd1QHl8GAQgFB5TFiAKvAADcICJEAQC8FF/DMIVjgYbVkqadLoi8KgqDiFZTkVPMOpZAhMBYFJxQsRJxTi/wEpVEb0pSAgWTOGUxom05LGODIAC9MFQKgIE2lIVnivNapAfBKpayqxC8d51sGixjg0bUGEGuaFuOHKEDod4IE%2Bv5/BlfkNAGhUfpVFaWQAWmeswLsfe7vEwAA6YhxtlY5Uce9GAEcvFQAhtrFY5weRszcYejGiZJnG8bp4nSYAegpgUqddK62BYZAUjRCBYe1TluT5AUhSYEUnp2iAmcx8aBvSsxtTMc75tY4HQZptHCZZrmvrzPAqGOIGPnubX%2BUhobHx58b%2BcF7reriEWuTwXlwcl6Xttez7ldV9XoeOJ2%2BrWyxEYNhU4qjGolBe1iQ7iKaNFmnGRogYSfdawOE560OfeerhI9ivMmC8IgOXGpgwhuHl6CMaEcdOrP9sO47ToGuHjlhg27b5gWIETshu9WkWq5row68YYBoRzqMsYITZPqHrOschCfgCnhuYQ1mLo8Sx4UWOdeGAga2g5G44xtUAgpq4JHpRxqGU5L3fqcy7KCDyiqioIEqyoqtVTkDB0Bn21NfAgc9nixQ4GsWgnAxS8D8BqXgqBOBuGsNYXaGwtgy38DwUgBBNCwLWAAaxAGKd68COCSCQcQ0gaCOC8AUCAd6RCUFrDgLAJAaAJoAzIBQCAvCUj8JAMAe%2BXA%2BB0DGsQFhg96HRDCE0NEnACG8LYIIAA8gwWgKiUGkCwJCIw4h9H4Cxj0SqWJ6GMm6OXHYBCUQ1HoSSaInJiBog8Fgehq08AsFUbAvgBhgAKAAGp4EwDlTRmJkEEP4IIEQYh2BSBkIIRQKh1D6N0JIgwRgUCYMsPoUkLDIBrFQCtLILCOBw00f4ZhNRuh1D8BAVwUx2hBBAYMMoFQ9BpAyI01pPTCiNM6cMeIkiug9HqHMAZ4z6mTIYH0ZoIylhjNmP0GZaylkLC6SMLgawFA4O2HoVamB7EBOoYg0gyCtAMM4KoRIXo4ZekkMcYAyAaT33RlwU2GDw4FOOLgTKYd8Hag8Hw%2BgwK9m8HYVoFYZCKFUM4LQq59DGHMNYYQ4hcL9CcDMHQ/RaLMUcLWJY2RWQQCSCAA%3D%3D
+//#include "Nuclex/Support/BitTricks.h" // for the base-10 log function
 
 namespace {
 
@@ -82,18 +74,21 @@ namespace {
   // the upper end of a 32 bit integer. Thus, when you cast it to a 64 bit integer and
   // multiply it by 100, you end up with the next two digits in the upper 32 bits of
   // your 64 bit integer where they're easy to grab.
-  #define PREPARE_NUMBER_OF_MAGNITUDE(bufferPointer, totalLength) \
+  //
+  // Magnitude is 1 for 100, 2 for 1'000, 3 for 10'000 and so on
+  //
+  #define PREPARE_NUMBER_OF_MAGNITUDE(number, magnitude) \
     t = ( \
-      (std::uint64_t(1) << (32 + totalLength / 5 * totalLength * 53 / 16)) / \
-      std::uint32_t(1e##totalLength) + 1 + totalLength/6 - totalLength/8 \
+      (std::uint64_t(1) << (32 + magnitude / 5 * magnitude * 53 / 16)) / \
+      std::uint32_t(1e##magnitude) + 1 + magnitude/6 - magnitude/8 \
     ), \
-    t *= u, \
-    t >>= totalLength / 5 * totalLength * 53 / 16, \
-    t += totalLength / 6 * 4
+    t *= number, \
+    t >>= magnitude / 5 * magnitude * 53 / 16, \
+    t += magnitude / 6 * 4
 
   // Brings the next two digits of the prepeared number into the upper 32 bits
   // so they can be extracted by the WRITE_ONE_DIGIT and WRITE_TWO_DIGITS macros
-  #define PREPARE_NEXT_TWO_DIGITS() \
+  #define READY_NEXT_TWO_DIGITS() \
     t = std::uint64_t(100) * static_cast<std::uint32_t>(t)
 
   // Appends the next two highest digits in the prepared number to the char buffer
@@ -131,7 +126,17 @@ namespace {
   inline void appendDigits32(char *&buffer, std::uint32_t u) {
     std::uint64_t t;
 
-    // It appears that the branching tree in the jeaiii implementation beats this.
+    // I have a nice Nuclex::Support::BitTricks::GetLogBase10() method which uses
+    // no branching, just the CLZ (count leading zeros) CPU instruction, but feeding
+    // this into a switch statement turns out to be slower than the branching tree.
+    //
+    // I also tried building a manual jump table with functions for each digit count
+    // that is indexed by GetLogBase10() and called - so just one indirection in place
+    // of several branching instructions, but it was slower, too. Not predictable enough
+    // for the CPU?
+    //
+    // So this bunch of branches is outperforming every trick I have...
+    //
     if(u < 100) {
       if(u < 10) {
         *buffer++ = u8'0' + u;
@@ -144,31 +149,31 @@ namespace {
     } else if(u < 1'000'000) {
       if(u < 10'000) {
         if(u < 1'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 1);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 1);
           WRITE_TWO_DIGITS(buffer);
           WRITE_ONE_DIGIT(buffer + 2);
           buffer += 3;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 2);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 2);
           WRITE_TWO_DIGITS(buffer);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
           buffer += 4;
         }
       } else {
         if(u < 100'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 3);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 3);
           WRITE_TWO_DIGITS(buffer);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
           WRITE_ONE_DIGIT(buffer + 4);
           buffer += 5;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 4);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 4);
           WRITE_TWO_DIGITS(buffer);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 4);
           buffer += 6;
         }
@@ -176,47 +181,47 @@ namespace {
     } else {
       if(u < 100'000'000) {
         if(u < 10'000'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 5);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 5);
           WRITE_TWO_DIGITS(buffer);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 4);
           WRITE_ONE_DIGIT(buffer + 6);
           buffer += 7;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 6);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 6);
           WRITE_TWO_DIGITS(buffer);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 4);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 6);
           buffer += 8;
         }
       } else {
         if(u < 1'000'000'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 7);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 7);
           WRITE_TWO_DIGITS(buffer);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 4);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 6);
           WRITE_ONE_DIGIT(buffer + 8);
           buffer += 9;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 8);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 8);
           WRITE_TWO_DIGITS(buffer);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 4);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 6);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 8);
           buffer += 10;
         }
@@ -274,14 +279,14 @@ namespace {
         }
       } else {
         if(u < 1'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 1);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 1);
           WRITE_TWO_DIGITS(buffer);
           WRITE_ONE_DIGIT(buffer + 2);
           buffer += 3;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 2);
+          PREPARE_NUMBER_OF_MAGNITUDE(u, 2);
           WRITE_TWO_DIGITS(buffer);
-          PREPARE_NEXT_TWO_DIGITS();
+          READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
           buffer += 4;
         }
@@ -289,33 +294,33 @@ namespace {
 
       u = a % 100'000'000u;
 
-      PREPARE_NUMBER_OF_MAGNITUDE(buffer, 6);
+      PREPARE_NUMBER_OF_MAGNITUDE(u, 6);
       WRITE_TWO_DIGITS(buffer);
-      PREPARE_NEXT_TWO_DIGITS();
+      READY_NEXT_TWO_DIGITS();
       WRITE_TWO_DIGITS(buffer + 2);
-      PREPARE_NEXT_TWO_DIGITS();
+      READY_NEXT_TWO_DIGITS();
       WRITE_TWO_DIGITS(buffer + 4);
-      PREPARE_NEXT_TWO_DIGITS();
+      READY_NEXT_TWO_DIGITS();
       WRITE_TWO_DIGITS(buffer + 6);
       buffer += 8;
     }
 
     u = n % 100'000'000u;
 
-    PREPARE_NUMBER_OF_MAGNITUDE(buffer, 6);
+    PREPARE_NUMBER_OF_MAGNITUDE(u, 6);
     WRITE_TWO_DIGITS(buffer);
-    PREPARE_NEXT_TWO_DIGITS();
+    READY_NEXT_TWO_DIGITS();
     WRITE_TWO_DIGITS(buffer + 2);
-    PREPARE_NEXT_TWO_DIGITS();
+    READY_NEXT_TWO_DIGITS();
     WRITE_TWO_DIGITS(buffer + 4);
-    PREPARE_NEXT_TWO_DIGITS();
+    READY_NEXT_TWO_DIGITS();
     WRITE_TWO_DIGITS(buffer + 6);
     buffer += 8;
   }
 
   #undef WRITE_TWO_DIGITS
   #undef WRITE_ONE_DIGIT
-  #undef PREPARE_NEXT_TWO_DIGITS
+  #undef READY_NEXT_TWO_DIGITS
   #undef PREPARE_NUMBER_OF_MAGNITUDE
 
   // ------------------------------------------------------------------------------------------- //
@@ -354,7 +359,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(std::uint32_t value, char *buffer /* [10] */) {
+  char *FormatInteger(char *buffer /* [10] */, std::uint32_t value) {
     appendDigits32(buffer, value);
 
     return buffer;
@@ -362,7 +367,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(std::int32_t value, char *buffer /* [11] */) {
+  char *FormatInteger(char *buffer /* [11] */, std::int32_t value) {
     if(value < 0) {
       *buffer++ = u8'-';
       appendDigits32(buffer, absToUnsigned(value));
@@ -375,7 +380,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(std::uint64_t value, char *buffer /* [20] */) {
+  char *FormatInteger(char *buffer /* [20] */, std::uint64_t value) {
     appendDigits64(buffer, value);
 
     return buffer;
@@ -383,7 +388,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(std::int64_t value, char *buffer /* [20] */) {
+  char *FormatInteger(char *buffer /* [20] */, std::int64_t value) {
     if(value < 0) {
       *buffer++ = u8'-';
       appendDigits64(buffer, absToUnsigned(value));
@@ -396,7 +401,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatFloat(float value, char *buffer /* [46] */) {
+  char *FormatFloat(char *buffer /* [46] */, float value) {
     (void)value;
     (void)buffer;
     throw u8"Not implemented yet";
@@ -404,13 +409,11 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatFloat(double value, char *buffer /* [325] */) {
+  char *FormatFloat(char *buffer /* [325] */, double value) {
     (void)value;
     (void)buffer;
     throw u8"Not implemented yet";
   }
-
-  // ------------------------------------------------------------------------------------------- //
 
   // ------------------------------------------------------------------------------------------- //
 

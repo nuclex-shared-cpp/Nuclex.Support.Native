@@ -29,7 +29,7 @@ License along with this library
 
 // James Edward Anhalt III.'s itoa() implementation
 // https://github.com/jeaiii/itoa
-#include "./../../Source/Text/Jeaiii/int_to_chars_jeaiii.h"
+#include "./Jeaiii-2020/int_to_chars_jeaiii.h"
 
 #include <random> // for std::mt19937
 #include <cstdint> // for std::uint32_t, std::uint64_t
