@@ -82,31 +82,31 @@ namespace {
   // the upper end of a 32 bit integer. Thus, when you cast it to a 64 bit integer and
   // multiply it by 100, you end up with the next two digits in the upper 32 bits of
   // your 64 bit integer where they're easy to grab.
-  #define PREPARE_NUMBER_OF_MAGNITUDE(totalLength) \
+  #define PREPARE_NUMBER_OF_MAGNITUDE(bufferPointer, totalLength) \
     t = ( \
       (std::uint64_t(1) << (32 + totalLength / 5 * totalLength * 53 / 16)) / \
       std::uint32_t(1e##totalLength) + 1 + totalLength/6 - totalLength/8 \
     ), \
     t *= u, \
     t >>= totalLength / 5 * totalLength * 53 / 16, \
-    t += totalLength / 6 * 4, \
-    *reinterpret_cast<TwoChars *>(buffer) = ( \
-      *reinterpret_cast<const TwoChars *>(&Radix100[(t >> 31) & 0xFE]) \
-    ), \
-    buffer += 2
+    t += totalLength / 6 * 4
+
+  // Brings the next two digits of the prepeared number into the upper 32 bits
+  // so they can be extracted by the WRITE_ONE_DIGIT and WRITE_TWO_DIGITS macros
+  #define PREPARE_NEXT_TWO_DIGITS() \
+    t = std::uint64_t(100) * static_cast<std::uint32_t>(t)
 
   // Appends the next two highest digits in the prepared number to the char buffer
   // Also adjusts the number such that the next two digits are ready for extraction.
-  #define WRITE_TWO_DIGITS(bufferIndex) \
-    t = std::uint64_t(100) * static_cast<std::uint32_t>(t), \
-    *reinterpret_cast<TwoChars *>(buffer + bufferIndex) = ( \
+  #define WRITE_TWO_DIGITS(bufferPointer) \
+    *reinterpret_cast<TwoChars *>(bufferPointer) = ( \
       *reinterpret_cast<const TwoChars *>(&Radix100[(t >> 31) & 0xFE]) \
     )
 
   // Appends the next highest digit in the prepared number to the char buffer
   // Thus doesn't adjust the number because it is always used on the very last digit.
-  #define WRITE_ONE_DIGIT(bufferIndex) \
-    buffer[bufferIndex] = ( \
+  #define WRITE_ONE_DIGIT(bufferPointer) \
+    *reinterpret_cast<char *>(bufferPointer) = ( \
       u8'0' + static_cast<char>(std::uint64_t(10) * std::uint32_t(t) >> 32) \
     )
 
@@ -132,20 +132,6 @@ namespace {
     std::uint64_t t;
 
     // It appears that the branching tree in the jeaiii implementation beats this.
-#if defined(USE_LOG10_SWITCH)
-    switch(Nuclex::Support::BitTricks::GetLogBase10(u)) {
-      case 0: { *buffer++ = u8'0' + u; break; }
-      case 1: { appendTwoDigits(buffer, u); break; }
-      case 2: { C2; buffer += 3; break; }
-      case 3: { C3; buffer += 4; break; }
-      case 4: { C4; buffer += 5; break; }
-      case 5: { C5; buffer += 6; break; }
-      case 6: { C6; buffer += 7; break; }
-      case 7: { C7; buffer += 8; break; }
-      case 8: { C8; buffer += 9; break; }
-      case 9: { C9; buffer += 10; break; }
-    }
-#else
     if(u < 100) {
       if(u < 10) {
         *buffer++ = u8'0' + u;
@@ -158,61 +144,84 @@ namespace {
     } else if(u < 1'000'000) {
       if(u < 10'000) {
         if(u < 1'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(1);
-          WRITE_ONE_DIGIT(0);
-          buffer += 1;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 1);
+          WRITE_TWO_DIGITS(buffer);
+          WRITE_ONE_DIGIT(buffer + 2);
+          buffer += 3;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(2);
-          WRITE_TWO_DIGITS(0);
-          buffer += 2;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 2);
+          WRITE_TWO_DIGITS(buffer);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 2);
+          buffer += 4;
         }
       } else {
         if(u < 100'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(3);
-          WRITE_TWO_DIGITS(0);
-          WRITE_ONE_DIGIT(2);
-          buffer += 3;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 3);
+          WRITE_TWO_DIGITS(buffer);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 2);
+          WRITE_ONE_DIGIT(buffer + 4);
+          buffer += 5;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(4);
-          WRITE_TWO_DIGITS(0);
-          WRITE_TWO_DIGITS(2);
-          buffer += 4;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 4);
+          WRITE_TWO_DIGITS(buffer);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 2);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 4);
+          buffer += 6;
         }
       }
     } else {
       if(u < 100'000'000) {
         if(u < 10'000'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(5);
-          WRITE_TWO_DIGITS(0);
-          WRITE_TWO_DIGITS(2);
-          WRITE_ONE_DIGIT(4);
-          buffer += 5;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 5);
+          WRITE_TWO_DIGITS(buffer);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 2);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 4);
+          WRITE_ONE_DIGIT(buffer + 6);
+          buffer += 7;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(6);
-          WRITE_TWO_DIGITS(0);
-          WRITE_TWO_DIGITS(2);
-          WRITE_TWO_DIGITS(4);
-          buffer += 6;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 6);
+          WRITE_TWO_DIGITS(buffer);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 2);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 4);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 6);
+          buffer += 8;
         }
       } else {
         if(u < 1'000'000'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(7);
-          WRITE_TWO_DIGITS(0);
-          WRITE_TWO_DIGITS(2);
-          WRITE_TWO_DIGITS(4);
-          WRITE_ONE_DIGIT(6);
-          buffer += 7;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 7);
+          WRITE_TWO_DIGITS(buffer);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 2);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 4);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 6);
+          WRITE_ONE_DIGIT(buffer + 8);
+          buffer += 9;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(8);
-          WRITE_TWO_DIGITS(0);
-          WRITE_TWO_DIGITS(2);
-          WRITE_TWO_DIGITS(4);
-          WRITE_TWO_DIGITS(6);
-          buffer += 8;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 8);
+          WRITE_TWO_DIGITS(buffer);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 2);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 4);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 6);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 8);
+          buffer += 10;
         }
       }
     }
-#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -242,6 +251,9 @@ namespace {
       return;
     }
 
+    // Temporary value, the integer to be converted will be placed in the upper end
+    // of its lower 32 bits and then converted by shifting 2 characters apiece into
+    // the upper 32 bits of this 64 bit integer.
     std::uint64_t t;
 
     std::uint64_t a = n / 100'000'000u;
@@ -262,38 +274,49 @@ namespace {
         }
       } else {
         if(u < 1'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(1);
-          WRITE_ONE_DIGIT(0);
-          buffer += 1;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 1);
+          WRITE_TWO_DIGITS(buffer);
+          WRITE_ONE_DIGIT(buffer + 2);
+          buffer += 3;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(2);
-          WRITE_TWO_DIGITS(0);
-          buffer += 2;
+          PREPARE_NUMBER_OF_MAGNITUDE(buffer, 2);
+          WRITE_TWO_DIGITS(buffer);
+          PREPARE_NEXT_TWO_DIGITS();
+          WRITE_TWO_DIGITS(buffer + 2);
+          buffer += 4;
         }
       }
 
       u = a % 100'000'000u;
 
-      PREPARE_NUMBER_OF_MAGNITUDE(6);
-      WRITE_TWO_DIGITS(0);
-      WRITE_TWO_DIGITS(2);
-      WRITE_TWO_DIGITS(4);
-      buffer += 6;
+      PREPARE_NUMBER_OF_MAGNITUDE(buffer, 6);
+      WRITE_TWO_DIGITS(buffer);
+      PREPARE_NEXT_TWO_DIGITS();
+      WRITE_TWO_DIGITS(buffer + 2);
+      PREPARE_NEXT_TWO_DIGITS();
+      WRITE_TWO_DIGITS(buffer + 4);
+      PREPARE_NEXT_TWO_DIGITS();
+      WRITE_TWO_DIGITS(buffer + 6);
+      buffer += 8;
     }
 
     u = n % 100'000'000u;
 
-    PREPARE_NUMBER_OF_MAGNITUDE(6);
-    WRITE_TWO_DIGITS(0);
-    WRITE_TWO_DIGITS(2);
-    WRITE_TWO_DIGITS(4);
-    buffer += 6;
+    PREPARE_NUMBER_OF_MAGNITUDE(buffer, 6);
+    WRITE_TWO_DIGITS(buffer);
+    PREPARE_NEXT_TWO_DIGITS();
+    WRITE_TWO_DIGITS(buffer + 2);
+    PREPARE_NEXT_TWO_DIGITS();
+    WRITE_TWO_DIGITS(buffer + 4);
+    PREPARE_NEXT_TWO_DIGITS();
+    WRITE_TWO_DIGITS(buffer + 6);
+    buffer += 8;
   }
 
   #undef WRITE_TWO_DIGITS
   #undef WRITE_ONE_DIGIT
+  #undef PREPARE_NEXT_TWO_DIGITS
   #undef PREPARE_NUMBER_OF_MAGNITUDE
-  #undef WRITE_PAIR
 
   // ------------------------------------------------------------------------------------------- //
 

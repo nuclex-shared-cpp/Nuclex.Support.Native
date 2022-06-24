@@ -22,12 +22,16 @@ for buildMode in Debug Release; do
 	if [ $# -ge 1 ] && [ $1 == "ninja" ]; then
 		cmake \
 			-B obj/cmake-$buildMode \
-			-DCMAKE_BUILD_TYPE=$buildMode \
+			-D CMAKE_BUILD_TYPE=$buildMode \
+			-D BUILD_UNIT_TESTS=ON \
+			-D BUILD_BENCHMARKS=ON
 			-GNinja
 	else
 		cmake \
 			-B obj/cmake-$buildMode \
-			-DCMAKE_BUILD_TYPE=$buildMode
+			-D CMAKE_BUILD_TYPE=$buildMode \
+			-D BUILD_UNIT_TESTS=ON \
+			-D BUILD_BENCHMARKS=ON
 	fi
 
 	# Compile the binary

@@ -11,23 +11,26 @@ project(
 
 set(BUILD_DOCS OFF CACHE BOOL "Whether to generate documentation via Doxygen")
 
-set(
-  BUILD_UNIT_TESTS OFF CACHE BOOL
-  "Whether to build the unit test executable. This will require an extra"
-  "compilation of the entire source tree as well as the GoogleTest library."
+option(
+  BUILD_UNIT_TESTS
+  "Whether to build the unit test executable. This will require an extra \
+  compilation of the entire source tree as well as the GoogleTest library."
+  OFF
 )
-set(
-  BUILD_BENCHMARKS OFF CACHE BOOL
-  "Whether to build the benchmark executable. This will require an extra"
-  "compilation of the entire source tree as well as the Celero library."
+option(
+  BUILD_BENCHMARKS
+  "Whether to build the benchmark executable. This will require an extra \
+  compilation of the entire source tree as well as the Celero library."
+  OFF
 )
 
-set(
-  BENCHMARK_THIRD_PARTY_LIBRARIES OFF CACHE BOOL
-  "Whether to include third-party libraries in the benchmarks. If you enable"
-  "this option, you need to manually place the extra libraries into your"
-  "source tree (easiest done by just enabling and checking the missing files"
-  "in the compiler output)."
+option(
+  BENCHMARK_THIRD_PARTY_LIBRARIES
+  "Whether to include third-party libraries in the benchmarks. If you enable \
+  this option, you need to manually place the extra libraries into your \
+  source tree (easiest done by just enabling and checking the missing files \
+  in the compiler output)."
+  OFF
 )
 
 # -------------------------------------------------------------------------------------------------
@@ -41,6 +44,7 @@ include("../BuildSystem/cmake/cplusplus.cmake")
 find_package(Threads REQUIRED)
 
 message(STATUS "Enabled options for Nuclex.Support.Native:")
+message(STATUS "  ⚫ Build core library")
 
 if(BUILD_UNIT_TESTS)
 	message(STATUS "  ⚫ Build unit tests")
