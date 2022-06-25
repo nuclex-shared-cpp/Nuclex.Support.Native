@@ -22,7 +22,8 @@ License along with this library
 #define NUCLEX_SUPPORT_TEXT_NUMBERFORMATTER_H
 
 #include "Nuclex/Support/Config.h"
-#include <cstdint>
+#include <cstdint> // for std::uint32_t, std::int32_t, std::uint64_t, std::int64_t
+#include <string> // for std::string
 
 //
 // Data type       |   Number of mantissa bits     |   Smallest possible exponent (radix 10)
@@ -46,6 +47,15 @@ License along with this library
 //
 
 namespace Nuclex { namespace Support { namespace Text {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Table of the numbers 00 .. 99 as a flat array</summary>
+  /// <remarks>
+  ///   Used for James Edward Anhalt III.'s integer formatting technique where two digits
+  ///   are converted at once, among other tricks.
+  /// </remarks>
+  extern const char Radix100[200];
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -90,6 +100,48 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   This does not append a terminating zero to the buffer.
   /// </remarks>
   char *FormatInteger(char *buffer /* [20] */, std::int64_t value);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Writes the digits of an integer as UTF-8 characters into a buffer</summary>
+  /// <param name="buffer">Buffer into which the characters will be written</param>
+  /// <param name="value">Value that will be turned into a string</param>
+  /// <returns>A pointer to one character past the last character written</returns>
+  /// <remarks>
+  ///   This does not append a terminating zero to the buffer.
+  /// </remarks>
+  void AppendInteger(std::string &target, std::uint32_t value);
+
+  /// <summary>Writes the digits of an integer as UTF-8 characters into a buffer</summary>
+  /// <param name="buffer">Buffer into which the characters will be written</param>
+  /// <param name="value">Value that will be turned into a string</param>
+  /// <returns>A pointer to one character past the last character written</returns>
+  /// <remarks>
+  ///   This does not append a terminating zero to the buffer.
+  /// </remarks>
+  void AppendInteger(std::string &target, std::int32_t value);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Writes the digits of an integer as UTF-8 characters into a buffer</summary>
+  /// <param name="buffer">Buffer into which the characters will be written</param>
+  /// <param name="value">Value that will be turned into a string</param>
+  /// <returns>A pointer to one character past the last character written</returns>
+  /// <remarks>
+  ///   This does not append a terminating zero to the buffer.
+  /// </remarks>
+  void AppendInteger(std::string &target, std::uint64_t value);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Writes the digits of an integer as UTF-8 characters into a buffer</summary>
+  /// <param name="buffer">Buffer into which the characters will be written</param>
+  /// <param name="value">Value that will be turned into a string</param>
+  /// <returns>A pointer to one character past the last character written</returns>
+  /// <remarks>
+  ///   This does not append a terminating zero to the buffer.
+  /// </remarks>
+  void AppendInteger(std::string &target, std::int64_t value);
 
   // ------------------------------------------------------------------------------------------- //
 
