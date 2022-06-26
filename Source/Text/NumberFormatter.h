@@ -103,48 +103,6 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Writes the digits of an integer as UTF-8 characters into a buffer</summary>
-  /// <param name="buffer">Buffer into which the characters will be written</param>
-  /// <param name="value">Value that will be turned into a string</param>
-  /// <returns>A pointer to one character past the last character written</returns>
-  /// <remarks>
-  ///   This does not append a terminating zero to the buffer.
-  /// </remarks>
-  void AppendInteger(std::string &target, std::uint32_t value);
-
-  /// <summary>Writes the digits of an integer as UTF-8 characters into a buffer</summary>
-  /// <param name="buffer">Buffer into which the characters will be written</param>
-  /// <param name="value">Value that will be turned into a string</param>
-  /// <returns>A pointer to one character past the last character written</returns>
-  /// <remarks>
-  ///   This does not append a terminating zero to the buffer.
-  /// </remarks>
-  void AppendInteger(std::string &target, std::int32_t value);
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Writes the digits of an integer as UTF-8 characters into a buffer</summary>
-  /// <param name="buffer">Buffer into which the characters will be written</param>
-  /// <param name="value">Value that will be turned into a string</param>
-  /// <returns>A pointer to one character past the last character written</returns>
-  /// <remarks>
-  ///   This does not append a terminating zero to the buffer.
-  /// </remarks>
-  void AppendInteger(std::string &target, std::uint64_t value);
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Writes the digits of an integer as UTF-8 characters into a buffer</summary>
-  /// <param name="buffer">Buffer into which the characters will be written</param>
-  /// <param name="value">Value that will be turned into a string</param>
-  /// <returns>A pointer to one character past the last character written</returns>
-  /// <remarks>
-  ///   This does not append a terminating zero to the buffer.
-  /// </remarks>
-  void AppendInteger(std::string &target, std::int64_t value);
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>
   ///   Writes the digits of a floating point value as UTF-8 characters into a buffer
   /// </summary>

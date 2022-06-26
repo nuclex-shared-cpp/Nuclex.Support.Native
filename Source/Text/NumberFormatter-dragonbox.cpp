@@ -37,15 +37,105 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   char *FormatFloat(float value, char *buffer /* [46] */) {
-    (void)value;
-    return buffer;
+    jkj::dragonbox::float_bits<
+      float, jkj::dragonbox::default_float_traits<float>
+    > floatBits(value);
+
+    unsigned int exponentBits = floatBits.extract_exponent_bits();
+
+    jkj::dragonbox::signed_significand_bits<
+      float, jkj::dragonbox::default_float_traits<float>
+    > significandBits = floatBits.remove_exponent_bits(exponentBits);
+
+    if(floatBits.is_finite(exponentBits)) {
+
+      // TODO
+      /*
+      if (s.is_negative()) {
+          *buffer = '-';
+          ++buffer;
+      }
+      if (br.is_nonzero()) {
+          auto result = to_decimal<Float, FloatTraits>(
+              s, exponent_bits, policy::sign::ignore, policy::trailing_zero::remove,
+              typename PolicyHolder::decimal_to_binary_rounding_policy{},
+              typename PolicyHolder::binary_to_decimal_rounding_policy{},
+              typename PolicyHolder::cache_policy{});
+          return to_chars_detail::to_chars<Float, FloatTraits>(result.significand,
+                                                                result.exponent, buffer);
+      } else {
+          std::memcpy(buffer, "0E0", 3);
+          return buffer + 3;
+      }
+      */
+      return buffer;
+
+    } else {
+      if(significandBits.has_all_zero_significand_bits()) {
+        if(significandBits.is_negative()) {
+          std::memcpy(buffer, "-Infinity", 9);
+          return buffer + 9;
+        } else {
+          std::memcpy(buffer, "Infinity", 8);
+          return buffer + 8;
+        }
+      } else {
+        std::memcpy(buffer, "NaN", 3);
+        return buffer + 3;
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   char *FormatFloat(double value, char *buffer /* [325] */) {
-    (void)value;
-    return buffer;
+    jkj::dragonbox::float_bits<
+      double, jkj::dragonbox::default_float_traits<double>
+    > floatBits(value);
+
+    unsigned int exponentBits = floatBits.extract_exponent_bits();
+
+    jkj::dragonbox::signed_significand_bits<
+      double, jkj::dragonbox::default_float_traits<double>
+    > significandBits = floatBits.remove_exponent_bits(exponentBits);
+
+    if(floatBits.is_finite(exponentBits)) {
+
+      // TODO
+      /*
+      if (s.is_negative()) {
+          *buffer = '-';
+          ++buffer;
+      }
+      if (br.is_nonzero()) {
+          auto result = to_decimal<Float, FloatTraits>(
+              s, exponent_bits, policy::sign::ignore, policy::trailing_zero::remove,
+              typename PolicyHolder::decimal_to_binary_rounding_policy{},
+              typename PolicyHolder::binary_to_decimal_rounding_policy{},
+              typename PolicyHolder::cache_policy{});
+          return to_chars_detail::to_chars<Float, FloatTraits>(result.significand,
+                                                                result.exponent, buffer);
+      } else {
+          std::memcpy(buffer, "0E0", 3);
+          return buffer + 3;
+      }
+      */
+      return buffer;
+
+    } else {
+      if(significandBits.has_all_zero_significand_bits()) {
+        if(significandBits.is_negative()) {
+          std::memcpy(buffer, "-Infinity", 9);
+          return buffer + 9;
+        } else {
+          std::memcpy(buffer, "Infinity", 8);
+          return buffer + 8;
+        }
+      } else {
+        std::memcpy(buffer, "NaN", 3);
+        return buffer + 3;
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
