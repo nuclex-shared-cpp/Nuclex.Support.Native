@@ -52,20 +52,4 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatFloat(char *buffer /* [46] */, float value) {
-    (void)value;
-    (void)buffer;
-    throw u8"Not implemented yet";
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  char *FormatFloat(char *buffer /* [325] */, double value) {
-    (void)value;
-    (void)buffer;
-    throw u8"Not implemented yet";
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
 }}} // namespace Nuclex::Support::Text

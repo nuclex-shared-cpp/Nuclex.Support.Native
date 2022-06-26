@@ -36,7 +36,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatFloat(float value, char *buffer /* [46] */) {
+  char *FormatFloat(char *buffer /* [46] */, float value) {
     jkj::dragonbox::float_bits<
       float, jkj::dragonbox::default_float_traits<float>
     > floatBits(value);
@@ -48,26 +48,27 @@ namespace Nuclex { namespace Support { namespace Text {
     > significandBits = floatBits.remove_exponent_bits(exponentBits);
 
     if(floatBits.is_finite(exponentBits)) {
+      if(significandBits.is_negative()) {
+        *buffer = '-';
+        ++buffer;
+      }
+      if(floatBits.is_nonzero()) {
+        jkj::dragonbox::decimal_fp<
+          typename jkj::dragonbox::default_float_traits<float>::carrier_uint,
+          true, // return has a sign bit
+          false // don't care about trailing zeros
+        > result = jkj::dragonbox::to_decimal<
+          float, jkj::dragonbox::default_float_traits<float>
+        >(significandBits, exponentBits);
 
-      // TODO
-      /*
-      if (s.is_negative()) {
-          *buffer = '-';
-          ++buffer;
-      }
-      if (br.is_nonzero()) {
-          auto result = to_decimal<Float, FloatTraits>(
-              s, exponent_bits, policy::sign::ignore, policy::trailing_zero::remove,
-              typename PolicyHolder::decimal_to_binary_rounding_policy{},
-              typename PolicyHolder::binary_to_decimal_rounding_policy{},
-              typename PolicyHolder::cache_policy{});
-          return to_chars_detail::to_chars<Float, FloatTraits>(result.significand,
-                                                                result.exponent, buffer);
+        // TODO: Convert result into string
+        return FormatInteger(buffer, result.significand);
+
       } else {
-          std::memcpy(buffer, "0E0", 3);
-          return buffer + 3;
+        std::memcpy(buffer, "0.0", 3);
+        return buffer + 3;
       }
-      */
+
       return buffer;
 
     } else {
@@ -88,7 +89,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatFloat(double value, char *buffer /* [325] */) {
+  char *FormatFloat(char *buffer /* [325] */, double value) {
     jkj::dragonbox::float_bits<
       double, jkj::dragonbox::default_float_traits<double>
     > floatBits(value);
@@ -100,26 +101,27 @@ namespace Nuclex { namespace Support { namespace Text {
     > significandBits = floatBits.remove_exponent_bits(exponentBits);
 
     if(floatBits.is_finite(exponentBits)) {
+      if(significandBits.is_negative()) {
+        *buffer = '-';
+        ++buffer;
+      }
+      if(floatBits.is_nonzero()) {
+        jkj::dragonbox::decimal_fp<
+          typename jkj::dragonbox::default_float_traits<double>::carrier_uint,
+          true, // return has a sign bit
+          false // don't care about trailing zeros
+        > result = jkj::dragonbox::to_decimal<
+          double, jkj::dragonbox::default_float_traits<double>
+        >(significandBits, exponentBits);
 
-      // TODO
-      /*
-      if (s.is_negative()) {
-          *buffer = '-';
-          ++buffer;
-      }
-      if (br.is_nonzero()) {
-          auto result = to_decimal<Float, FloatTraits>(
-              s, exponent_bits, policy::sign::ignore, policy::trailing_zero::remove,
-              typename PolicyHolder::decimal_to_binary_rounding_policy{},
-              typename PolicyHolder::binary_to_decimal_rounding_policy{},
-              typename PolicyHolder::cache_policy{});
-          return to_chars_detail::to_chars<Float, FloatTraits>(result.significand,
-                                                                result.exponent, buffer);
+        // TODO: Convert result into string
+        return FormatInteger(buffer, result.significand);
+
       } else {
-          std::memcpy(buffer, "0E0", 3);
-          return buffer + 3;
+        std::memcpy(buffer, "0.0", 3);
+        return buffer + 3;
       }
-      */
+
       return buffer;
 
     } else {

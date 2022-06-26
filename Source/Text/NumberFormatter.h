@@ -113,7 +113,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   Always uses non-exponential notation.
   ///   This does not append a terminating zero to the buffer.
   /// </remarks>
-  char *FormatFloat(float value, char *buffer /* [46] */);
+  char *FormatFloat(char *buffer /* [46] */, float value);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -127,7 +127,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   Always uses non-exponential notation.
   ///   This does not append a terminating zero to the buffer.
   /// </remarks>
-  char *FormatFloat(double value, char *buffer /* [325] */);
+  char *FormatFloat(char *buffer /* [325] */, double value);
 
   // ------------------------------------------------------------------------------------------- //
 

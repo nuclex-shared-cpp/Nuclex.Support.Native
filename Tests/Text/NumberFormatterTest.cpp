@@ -37,7 +37,7 @@ namespace {
   ///   Since we can't check all integers within a reasonable time, this is the number
   ///   of random checks we'll do to compare our integer formatter with std::to_string()
   /// </summary>
-  const constexpr std::size_t SampleCount = 100'000;
+  const constexpr std::size_t SampleCount = 1'000;
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -171,6 +171,25 @@ namespace Nuclex { namespace Support { namespace Text {
     std::string actual(buffer, end);
 
     EXPECT_EQ(expected, actual);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(NumberFormatterTest, FloatingPointValuesCanBePrinted) {
+    std::mt19937_64 randomNumberGenerator;
+    std::uniform_real_distribution<float> randomNumberDistribution;
+
+    for(std::size_t index = 0; index < SampleCount; ++index) {
+      float number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
+
+      std::string expected = std::to_string(number);
+
+      char buffer[48];
+      char *end = FormatFloat(buffer, number);
+      std::string actual(buffer, end);
+
+      EXPECT_EQ(expected, actual);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
