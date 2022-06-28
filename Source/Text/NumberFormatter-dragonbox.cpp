@@ -85,7 +85,8 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   const std::uint32_t factors[] = {
-                0, //4'294'967'297, // magnitude 1e0
+                0, // magnitude 1e-1 (invalid)
+                0, // magnitude 1e0 (invalid) (4'294'967'297)
       429'496'730, // magnitude 1e1
        42'949'673, // magnitude 1e2
         4'294'968, // magnitude 1e3
@@ -99,7 +100,8 @@ namespace {
   };
 
   const std::uint32_t shift[] = {
-     0, // magnitude 1e0
+     0, // magnitude 1e-1 (invalid)
+     0, // magnitude 1e0 (invalid)
      0, // magnitude 1e1
      0, // magnitude 1e2
      0, // magnitude 1e3
@@ -113,7 +115,8 @@ namespace {
   };
 
   const std::uint32_t bias[] = {
-    0, // magnitude 1e0
+    0, // magnitude 1e-1 (invalid)
+    0, // magnitude 1e0 (invalid)
     0, // magnitude 1e1
     0, // magnitude 1e2
     0, // magnitude 1e3
@@ -131,6 +134,11 @@ namespace {
     temp *= factors[magnitude];
     temp >>= shift[magnitude];
     temp += bias[magnitude];
+
+    if(magnitude == 0) {
+      WRITE_ONE_DIGIT(buffer);
+      return buffer + 1;
+    }
 
     // Magnitude must be 2 or larger initially because a decimal
     // point cannot be placed /between/ a single digit, so we can
@@ -188,15 +196,17 @@ namespace Nuclex { namespace Support { namespace Text {
         );
         int decimalPointPosition = result.exponent + digitCountMinusOne;
 
+        return buffer;
+
         // The decimal point is *before* the entire number, i.e. 0.123 or 0.0123,
         // so we need to start with a '0.', possibly followed by more zeros
-        if(digitCountMinusOne < (-result.significand)) {
+        if(digitCountMinusOne < (-result.exponent)) {
 
           // The exponent is negative, so this number is less than 1.0 and needs to begin with
           // a "0." and possibly additional zeros.
           *buffer++ = u8'0';
           *buffer++ = u8'.';
-          while(result.exponent < -1) {
+          while(result.exponent + digitCountMinusOne < -1) {
             *buffer++ = u8'0';
             ++result.exponent;
           }
@@ -204,6 +214,7 @@ namespace Nuclex { namespace Support { namespace Text {
           // The decimal point has already been placed, so the remaining digits can
           // be appended as-is.
           // PERF: We know the digit count already. Would a manual jump table be faster?
+          char *shit = FormatInteger(buffer, result.significand);
           return formatIntegerSimple(buffer, result.significand, digitCountMinusOne);
           //return FormatInteger(buffer, result.significand);
 
