@@ -23,13 +23,28 @@ License along with this library
 
 #include "Nuclex/Support/Text/ParserHelper.h"
 #include "./../../Source/Text/NumberFormatter.h"
+#include "./../../Source/Text/DragonBox-1.1.2/dragonbox_to_chars.h"
 
 #include <gtest/gtest.h>
 
-#include <random>
-#include <cmath>
+#include <random> // for std::uniform_int_distribution, std::uniform_real_distribution
+//#include <locale> // for std::numpunct::decimal_point()
+//#include <cmath> // for
 
 namespace {
+
+  void localizeDecimalPoint(std::string &numberAsText) {
+    char localizedDecimalPoint = u8','; // std::numpunct::decimal_point()
+    std::string silly = std::to_string(1.2f);
+    localizedDecimalPoint = silly[1];
+
+    std::string::size_type length = numberAsText.length();
+    for(std::string::size_type index = 0; index < length; ++index) {
+      if(numberAsText[index] == u8'.') {
+        numberAsText[index] = localizedDecimalPoint;
+      }
+    }
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -175,20 +190,45 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(NumberFormatterTest, FloatingPointValuesCanBePrinted) {
+  TEST(NumberFormatterTest, SmallFloatingPointValuesCanBePrinted) {
     std::mt19937_64 randomNumberGenerator;
-    std::uniform_real_distribution<float> randomNumberDistribution;
+    std::uniform_real_distribution<float> randomNumberDistribution(-1.0f, +1.0f);
 
     for(std::size_t index = 0; index < SampleCount; ++index) {
       float number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
 
-      std::string expected = std::to_string(number);
-
       char buffer[48];
       char *end = FormatFloat(buffer, number);
-      std::string actual(buffer, end);
+      std::string formatted(buffer, end);
+      localizeDecimalPoint(formatted);
 
-      EXPECT_EQ(expected, actual);
+      float actual = std::strtof(formatted.c_str(), &end);
+
+      float expected = number;
+      EXPECT_EQ(actual, expected);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(NumberFormatterTest, LargeFloatingPointValuesCanBePrinted) {
+    std::mt19937_64 randomNumberGenerator;
+    std::uniform_real_distribution<float> randomNumberDistribution(-1'000'000.0f, +1'000'000.0f);
+
+    for(std::size_t index = 0; index < SampleCount; ++index) {
+      float number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
+
+      char buffer[48];
+      //jkj::dragonbox::to_chars(number, buffer);
+      char *end = FormatFloat(buffer, number);
+      std::string formatted(buffer, end);
+      localizeDecimalPoint(formatted);
+
+
+      float actual = std::strtof(formatted.c_str(), &end);
+
+      float expected = number;
+      EXPECT_EQ(actual, expected);
     }
   }
 

@@ -278,8 +278,7 @@ namespace Nuclex { namespace Support { namespace Events {
       public: BroadcastQueue(std::size_t capacity, std::size_t count) noexcept :
         ReferenceCount(1),
         Capacity(capacity),
-        Count(count),
-        Callbacks(/* leave undefined! */) {}
+        Count(count) {}
 
       /// <summary>Frees all memory owned by the broadcast queue</summary>
       public: ~BroadcastQueue() = default;

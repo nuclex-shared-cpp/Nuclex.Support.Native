@@ -34,31 +34,31 @@ License along with this library
 // Magnitude is 1 for 100, 2 for 1'000, 3 for 10'000 and so on
 //
 #define PREPARE_NUMBER_OF_MAGNITUDE(number, magnitude) \
-  t = ( \
+  temp = ( \
     (std::uint64_t(1) << (32 + magnitude / 5 * magnitude * 53 / 16)) / \
     std::uint32_t(1e##magnitude) + 1 + magnitude/6 - magnitude/8 \
   ), \
-  t *= number, \
-  t >>= magnitude / 5 * magnitude * 53 / 16, \
-  t += magnitude / 6 * 4
+  temp *= number, \
+  temp >>= magnitude / 5 * magnitude * 53 / 16, \
+  temp += magnitude / 6 * 4
 
 // Brings the next two digits of the prepeared number into the upper 32 bits
 // so they can be extracted by the WRITE_ONE_DIGIT and WRITE_TWO_DIGITS macros
 #define READY_NEXT_TWO_DIGITS() \
-  t = std::uint64_t(100) * static_cast<std::uint32_t>(t)
+  temp = std::uint64_t(100) * static_cast<std::uint32_t>(temp)
 
 // Appends the next two highest digits in the prepared number to the char buffer
 // Also adjusts the number such that the next two digits are ready for extraction.
 #define WRITE_TWO_DIGITS(bufferPointer) \
   *reinterpret_cast<TwoChars *>(bufferPointer) = ( \
-    *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[(t >> 31) & 0xFE]) \
+    *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[(temp >> 31) & 0xFE]) \
   )
 
 // Appends the next highest digit in the prepared number to the char buffer
 // Thus doesn't adjust the number because it is always used on the very last digit.
 #define WRITE_ONE_DIGIT(bufferPointer) \
   *reinterpret_cast<char *>(bufferPointer) = ( \
-    u8'0' + static_cast<char>(std::uint64_t(10) * std::uint32_t(t) >> 32) \
+    u8'0' + static_cast<char>(std::uint64_t(10) * std::uint32_t(temp) >> 32) \
   )
 
 namespace {
@@ -109,8 +109,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(char *buffer /* [10] */, std::uint32_t u) {
-    std::uint64_t t;
+  char *FormatInteger(char *buffer /* [10] */, std::uint32_t number) {
+    std::uint64_t temp;
 
     // I have a nice Nuclex::Support::BitTricks::GetLogBase10() method which uses
     // no branching, just the CLZ (count leading zeros) CPU instruction, but feeding
@@ -123,40 +123,40 @@ namespace Nuclex { namespace Support { namespace Text {
     //
     // So this bunch of branches is outperforming every trick I have...
     //
-    if(u < 100) {
-      if(u < 10) {
-        *buffer = u8'0' + u;
+    if(number < 100) {
+      if(number < 10) {
+        *buffer = u8'0' + number;
         return buffer + 1;
       } else {
         *reinterpret_cast<TwoChars *>(buffer) = (
-          *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[u * 2])
+          *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[number * 2])
         );
         return buffer + 2;
       }
-    } else if(u < 1'000'000) {
-      if(u < 10'000) {
-        if(u < 1'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 1);
+    } else if(number < 1'000'000) {
+      if(number < 10'000) {
+        if(number < 1'000) {
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 1);
           WRITE_TWO_DIGITS(buffer);
           WRITE_ONE_DIGIT(buffer + 2);
           return buffer + 3;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 2);
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 2);
           WRITE_TWO_DIGITS(buffer);
           READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
           return buffer + 4;
         }
       } else {
-        if(u < 100'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 3);
+        if(number < 100'000) {
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 3);
           WRITE_TWO_DIGITS(buffer);
           READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
           WRITE_ONE_DIGIT(buffer + 4);
           return buffer + 5;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 4);
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 4);
           WRITE_TWO_DIGITS(buffer);
           READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
@@ -166,9 +166,9 @@ namespace Nuclex { namespace Support { namespace Text {
         }
       }
     } else {
-      if(u < 100'000'000) {
-        if(u < 10'000'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 5);
+      if(number < 100'000'000) {
+        if(number < 10'000'000) {
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 5);
           WRITE_TWO_DIGITS(buffer);
           READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
@@ -177,7 +177,7 @@ namespace Nuclex { namespace Support { namespace Text {
           WRITE_ONE_DIGIT(buffer + 6);
           return buffer + 7;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 6);
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 6);
           WRITE_TWO_DIGITS(buffer);
           READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
@@ -188,8 +188,8 @@ namespace Nuclex { namespace Support { namespace Text {
           return buffer + 8;
         }
       } else {
-        if(u < 1'000'000'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 7);
+        if(number < 1'000'000'000) {
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 7);
           WRITE_TWO_DIGITS(buffer);
           READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
@@ -200,7 +200,7 @@ namespace Nuclex { namespace Support { namespace Text {
           WRITE_ONE_DIGIT(buffer + 8);
           return buffer + 9;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 8);
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 8);
           WRITE_TWO_DIGITS(buffer);
           READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
@@ -229,43 +229,43 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(char *buffer /* [20] */, std::uint64_t n) {
+  char *FormatInteger(char *buffer /* [20] */, std::uint64_t number64) {
 
     // If this number fits into 32 bits, then don't bother with the extra processing
-    std::uint32_t u = static_cast<std::uint32_t>(n);
-    if(u == n) {
-      return FormatInteger(buffer, u);
+    std::uint32_t number = static_cast<std::uint32_t>(number64);
+    if(number == number64) {
+      return FormatInteger(buffer, number);
     }
 
     // Temporary value, the integer to be converted will be placed in the upper end
     // of its lower 32 bits and then converted by shifting 2 characters apiece into
     // the upper 32 bits of this 64 bit integer.
-    std::uint64_t t;
+    std::uint64_t temp;
 
-    std::uint64_t a = n / 100'000'000u;
-    u = static_cast<std::uint32_t>(a);
-    if(u == a) {
-      buffer = FormatInteger(buffer, u);
+    std::uint64_t a = number64 / 100'000'000u;
+    number = static_cast<std::uint32_t>(a);
+    if(number == a) {
+      buffer = FormatInteger(buffer, number);
     } else {
-      u = static_cast<std::uint32_t>(a / 100'000'000u);
+      number = static_cast<std::uint32_t>(a / 100'000'000u);
 
-      if(u < 100) {
-        if(u < 10) {
-          *buffer++ = u8'0' + u;
+      if(number < 100) {
+        if(number < 10) {
+          *buffer++ = u8'0' + number;
         } else {
           *reinterpret_cast<TwoChars *>(buffer) = (
-            *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[u * 2])
+            *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[number * 2])
           );
           buffer += 2;
         }
       } else {
-        if(u < 1'000) {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 1);
+        if(number < 1'000) {
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 1);
           WRITE_TWO_DIGITS(buffer);
           WRITE_ONE_DIGIT(buffer + 2);
           buffer += 3;
         } else {
-          PREPARE_NUMBER_OF_MAGNITUDE(u, 2);
+          PREPARE_NUMBER_OF_MAGNITUDE(number, 2);
           WRITE_TWO_DIGITS(buffer);
           READY_NEXT_TWO_DIGITS();
           WRITE_TWO_DIGITS(buffer + 2);
@@ -273,9 +273,9 @@ namespace Nuclex { namespace Support { namespace Text {
         }
       }
 
-      u = a % 100'000'000u;
+      number = a % 100'000'000u;
 
-      PREPARE_NUMBER_OF_MAGNITUDE(u, 6);
+      PREPARE_NUMBER_OF_MAGNITUDE(number, 6);
       WRITE_TWO_DIGITS(buffer);
       READY_NEXT_TWO_DIGITS();
       WRITE_TWO_DIGITS(buffer + 2);
@@ -286,9 +286,9 @@ namespace Nuclex { namespace Support { namespace Text {
       buffer += 8;
     }
 
-    u = n % 100'000'000u;
+    number = number64 % 100'000'000u;
 
-    PREPARE_NUMBER_OF_MAGNITUDE(u, 6);
+    PREPARE_NUMBER_OF_MAGNITUDE(number, 6);
     WRITE_TWO_DIGITS(buffer);
     READY_NEXT_TWO_DIGITS();
     WRITE_TWO_DIGITS(buffer + 2);
@@ -302,12 +302,12 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(char *buffer /* [20] */, std::int64_t value) {
-    if(value >= 0) {
-      return FormatInteger(buffer, static_cast<std::uint64_t>(value));
+  char *FormatInteger(char *buffer /* [20] */, std::int64_t number64) {
+    if(number64 >= 0) {
+      return FormatInteger(buffer, static_cast<std::uint64_t>(number64));
     } else {
       *buffer++ = u8'-';
-      return FormatInteger(buffer, absToUnsigned(value));
+      return FormatInteger(buffer, absToUnsigned(number64));
     }
   }
 
