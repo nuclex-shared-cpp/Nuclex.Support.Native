@@ -204,10 +204,30 @@ namespace Nuclex { namespace Support { namespace Text {
       std::string formatted(buffer, end);
       localizeDecimalPoint(formatted);
 
-
       float actual = std::strtof(formatted.c_str(), &end);
-
       float expected = number;
+      EXPECT_FLOAT_EQ(actual, expected);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(NumberFormatterTest, DoublePrecisionFloatingPointValuesCanBePrinted) {
+    double numbers[] = {
+      0.123456, 1.23456, 12.3456, 123.456, 1234.56, 12345.6, 123456.0,
+      0.12345, 1.2345, 12.345, 123.45, 1234.5, 12345.0
+    };
+
+    for(double number : numbers) {
+      char buffer[48];
+      std::memset(buffer, 0, 48);
+
+      char *end = FormatFloat(buffer, number);
+      std::string formatted(buffer, end);
+      localizeDecimalPoint(formatted);
+
+      double actual = std::strtod(formatted.c_str(), &end);
+      double expected = number;
       EXPECT_FLOAT_EQ(actual, expected);
     }
   }

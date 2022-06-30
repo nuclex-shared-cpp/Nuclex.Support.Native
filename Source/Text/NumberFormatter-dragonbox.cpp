@@ -50,10 +50,6 @@ License along with this library
 #define READY_NEXT_TWO_DIGITS() \
   temp = std::uint64_t(100) * static_cast<std::uint32_t>(temp)
 
-// Gets the address of the
-#define GET_TWO_DIGITS_ADDRESS() \
-  *reinterpret_cast<const char *>(&Nuclex::Support::Text::Radix100[(temp >> 31) & 0xFE])
-
 // Appends the next two highest digits in the prepared number to the char buffer
 // Also adjusts the number such that the next two digits are ready for extraction.
 #define WRITE_TWO_DIGITS(bufferPointer) \
@@ -136,8 +132,17 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Formats an integral number but adds a decimal point between two digits</summary>
+  /// <param name="buffer">Buffer into which the number will be written</param>
+  /// <param name="number">Significand, aka the digits without a decimal point</param>
+  /// <param name="magnitude">Magnitude of the number (digit count minus 1)</param>
+  /// <param name="decimalPointPosition">
+  ///   Position of the decimal point with 0 pointing to the first possible location,
+  ///   which is between the first and second integral digit
+  /// </param>
+  /// <returns>A pointer one past the last written character in the buffer</returns>
   char *formatIntegerWithDecimalPoint(
-    char *buffer /* [10] */, std::uint32_t number, int magnitude, int decimalPointPosition
+    char *buffer /* [48] */, std::uint32_t number, int magnitude, int decimalPointPosition
   ) {
     std::uint64_t temp = number;
     temp *= factors[magnitude];
@@ -151,12 +156,6 @@ namespace {
     //
     // So be aware!
     //
-
-    // REMOVE - for testing
-    char *originalBuffer = buffer;
-    //if(decimalPointPosition > 0) {
-    //  --decimalPointPosition;
-    //}
 
     // If this method is called, the decimal point is between two digits,
     // thus the number must have magnitude 1 at least.
@@ -175,8 +174,7 @@ namespace {
       for(;;) {
         WRITE_TWO_DIGITS(buffer);
         if(decimalPointPosition < 2) { // Are less than 2 remaining?
-          pendingDigit = buffer[1];
-          buffer += 1;
+          pendingDigit = buffer[1]; // Remember the digit that goes after the decimal point
           break;
         }
         READY_NEXT_TWO_DIGITS();
@@ -185,30 +183,29 @@ namespace {
       }
 
       // Here comes the decimal point now
-      *buffer++ = u8'.';
-      *buffer++ = pendingDigit;
+      buffer[1] = u8'.';
+      buffer[2] = pendingDigit;
 
       // The digits behind the decimal point are at least 1 (otherwise this method
       // would not be called), but they may also be exactly 1, so deal with this here.
       if(magnitude == 1) {
-        WRITE_ONE_DIGIT(buffer);
-        return buffer + 1;
+        WRITE_ONE_DIGIT(buffer + 3);
+        return buffer + 4;
       }
 
       // Append the digits after the decimal point. This time we can use the ordinary
       // mixed double/single loop because we don't have to interrupt work in the middle.
       for(;;) {
         READY_NEXT_TWO_DIGITS();
-        WRITE_TWO_DIGITS(buffer);
-        if(magnitude < 5) { // Are less than 2 remaining? (4 because we didn't decrement yet)
-          if(magnitude >= 4) { // is even 1 remaining? (3 because we didn't decrement yet)
-            WRITE_ONE_DIGIT(buffer + 2);
-            return buffer + 3;
+        WRITE_TWO_DIGITS(buffer + 3);
+        if(magnitude < 5) { // Are less than 2 remaining? (5 because pre-decrement + pending)
+          if(magnitude >= 4) { // is even 1 remaining? (4 because pre-decrement + pending)
+            WRITE_ONE_DIGIT(buffer + 5);
+            return buffer + 6;
           } else {
-            return buffer + 2;
+            return buffer + 5;
           }
         }
-        //READY_NEXT_TWO_DIGITS();
         magnitude -= 2;
         buffer += 2;
       }
@@ -220,7 +217,6 @@ namespace {
       for(;;) {
         WRITE_TWO_DIGITS(buffer);
         if(decimalPointPosition < 3) { // Are less than 2 following? (3 because pre-decrement)
-          buffer += 2;
           break;
         }
         READY_NEXT_TWO_DIGITS();
@@ -229,35 +225,54 @@ namespace {
       }
 
       // Here comes the decimal point now
-      *buffer++ = u8'.';
+      buffer[2] = u8'.';
 
       // The digits behind the decimal point are at least 1 (otherwise this method
       // would not be called), but they may also be exactly 1, so deal with this here.
       if(magnitude == 1) {
-        WRITE_ONE_DIGIT(buffer);
-        return buffer + 1;
+        WRITE_ONE_DIGIT(buffer + 3);
+        return buffer + 4;
       }
 
       // Append the digits after the decimal point. This time we can use the ordinary
       // mixed double/single loop because we don't have to interrupt work in the middle.
       for(;;) {
         READY_NEXT_TWO_DIGITS();
-        WRITE_TWO_DIGITS(buffer);
+        WRITE_TWO_DIGITS(buffer + 3);
         if(magnitude < 4) { // Are less than 2 remaining? (4 because we didn't decrement yet)
           if(magnitude >= 3) { // is even 1 remaining? (3 because we didn't decrement yet)
-            WRITE_ONE_DIGIT(buffer + 2);
-            return buffer + 3;
+            WRITE_ONE_DIGIT(buffer + 5);
+            return buffer + 6;
           } else {
-            return buffer + 2;
+            return buffer + 5;
           }
         }
-        //READY_NEXT_TWO_DIGITS();
         magnitude -= 2;
         buffer += 2;
       }
 
     }
   }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Formats an integral number but adds a decimal point between two digits</summary>
+  /// <param name="buffer">Buffer into which the number will be written</param>
+  /// <param name="number">Significand, aka the digits without a decimal point</param>
+  /// <param name="magnitude">Magnitude of the number (digit count minus 1)</param>
+  /// <param name="decimalPointPosition">
+  ///   Position of the decimal point with 0 pointing to the first possible location,
+  ///   which is between the first and second integral digit
+  /// </param>
+  /// <returns>A pointer one past the last written character in the buffer</returns>
+  char *formatIntegerWithDecimalPoint(
+    char *buffer /* [48] */, std::uint64_t number, int magnitude, int decimalPointPosition
+  ) {
+    std::memcpy(buffer, u8"Not implemented yet", 19);
+    return buffer + 19;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
@@ -328,9 +343,6 @@ namespace Nuclex { namespace Support { namespace Text {
         std::memcpy(buffer, "0.0", 3);
         return buffer + 3;
       }
-
-      return buffer;
-
     } else if(significandBits.has_all_zero_significand_bits()) { // indicates infinity
       if(significandBits.is_negative()) {
         std::memcpy(buffer, "-Infinity", 9);
@@ -390,13 +402,10 @@ namespace Nuclex { namespace Support { namespace Text {
             }
             return FormatInteger(buffer, result.significand);
           } else { // Nope, the decimal point is within the significand's digits!
-            //formatIntegerSimple(buffer, result.significand, digitCountMinusOne, decimalPointPosition);
-            std::memcpy(buffer, "oh shit", 7);
-            return buffer + 7;
+            return formatIntegerWithDecimalPoint(
+              buffer, result.significand, digitCountMinusOne, decimalPointPosition
+            );
           }
-
-          // remove, for testing
-
         } else { // Exponent is zero or positive, number has no decimal places
           buffer = FormatInteger(buffer, result.significand);
           while(result.exponent > 0) {
@@ -413,9 +422,6 @@ namespace Nuclex { namespace Support { namespace Text {
         std::memcpy(buffer, "0.0", 3);
         return buffer + 3;
       }
-
-      return buffer;
-
     } else if(significandBits.has_all_zero_significand_bits()) { // indicates infinity
       if(significandBits.is_negative()) {
         std::memcpy(buffer, "-Infinity", 9);
