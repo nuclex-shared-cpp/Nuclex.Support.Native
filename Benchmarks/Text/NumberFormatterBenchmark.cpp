@@ -44,7 +44,7 @@ namespace {
   /// <param name="buffer">Integer that will be formatted into a string</param>
   /// <returns>A pointer one past the last character written to the buffer</returns>
   template<typename TInteger>
-  char *formatNumberNaive(TInteger integer, char *buffer) {
+  char *formatNumberNaive(char *buffer, TInteger integer) {
     char temp[40]; // max 128 bit integer length without terminating \0
 
     // If the integer may be negative, remember it and make it positive
@@ -81,9 +81,19 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Fast random number generator used in the benchmark</summary>
-  std::mt19937_64 randomNumberGenerator;
+  std::mt19937 randomNumberGenerator32;
   /// <summary>Uniform distribution to make the output cover all possible integers</summary>
-  std::uniform_int_distribution<std::uint32_t> randomNumberDistribution;
+  std::uniform_int_distribution<std::uint32_t> randomNumberDistribution32;
+
+  /// <summary>Fast random number generator used in the benchmark</summary>
+  std::mt19937_64 randomNumberGenerator64;
+  /// <summary>Uniform distribution to make the output cover all possible integers</summary>
+  std::uniform_int_distribution<std::uint64_t> randomNumberDistribution64;
+
+  std::uniform_real_distribution<float> smallRandomNumberDistributionFloat(-1.0f, +1.0f);
+  std::uniform_real_distribution<float> largeRandomNumberDistributionFloat(
+    std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()
+  );
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -93,20 +103,39 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  BASELINE(Integer32Itoa, CxxToString, 1000, 0) {
+  BASELINE(Integer32Itoa, NaiveDivideBy10, 1000, 0) {
+    char number[40];
     celero::DoNotOptimizeAway(
-      std::to_string(randomNumberDistribution(randomNumberGenerator))
+      formatNumberNaive(
+        number,
+        static_cast<std::uint32_t>(randomNumberDistribution32(randomNumberGenerator32))
+      )
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  BENCHMARK(Integer32Itoa, NaiveDivideBy10, 1000, 0) {
+  BASELINE(Integer64Itoa, NaiveDivideBy10, 1000, 0) {
     char number[40];
     celero::DoNotOptimizeAway(
       formatNumberNaive(
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
-        number
+        number,
+        static_cast<std::uint64_t>(randomNumberDistribution64(randomNumberGenerator64))
+      )
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  BASELINE(Float32Ftoa_x2, CxxToString, 1000, 0) {
+    celero::DoNotOptimizeAway(
+      std::to_string(
+        static_cast<float>(smallRandomNumberDistributionFloat(randomNumberGenerator64))
+      )
+    );
+    celero::DoNotOptimizeAway(
+      std::to_string(
+        static_cast<float>(largeRandomNumberDistributionFloat(randomNumberGenerator64))
       )
     );
   }
@@ -118,7 +147,38 @@ namespace Nuclex { namespace Support { namespace Text {
     celero::DoNotOptimizeAway(
       FormatInteger(
         number,
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
+        static_cast<std::uint32_t>(randomNumberDistribution32(randomNumberGenerator32))
+      )
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  BENCHMARK(Integer64Itoa, NumberFormatter, 1000, 0) {
+    char number[40];
+    celero::DoNotOptimizeAway(
+      FormatInteger(
+        number,
+        static_cast<std::uint64_t>(randomNumberDistribution64(randomNumberGenerator64))
+      )
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  BENCHMARK(Float32Ftoa_x2, NumberFormatter, 1000, 0) {
+    char number[48];
+
+    celero::DoNotOptimizeAway(
+      FormatFloat(
+        number,
+        static_cast<float>(smallRandomNumberDistributionFloat(randomNumberGenerator64))
+      )
+    );
+    celero::DoNotOptimizeAway(
+      FormatFloat(
+        number,
+        static_cast<float>(largeRandomNumberDistributionFloat(randomNumberGenerator64))
       )
     );
   }

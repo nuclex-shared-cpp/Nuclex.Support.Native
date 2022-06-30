@@ -166,9 +166,14 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Fast random number generator used in the benchmark</summary>
-  std::mt19937_64 randomNumberGenerator;
+  std::mt19937 randomNumberGenerator32;
   /// <summary>Uniform distribution to make the output cover all possible integers</summary>
-  std::uniform_int_distribution<std::uint32_t> randomNumberDistribution;
+  std::uniform_int_distribution<std::uint32_t> randomNumberDistribution32;
+
+  /// <summary>Fast random number generator used in the benchmark</summary>
+  std::mt19937_64 randomNumberGenerator64;
+  /// <summary>Uniform distribution to make the output cover all possible integers</summary>
+  std::uniform_int_distribution<std::uint64_t> randomNumberDistribution64;
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -182,7 +187,19 @@ namespace Nuclex { namespace Support { namespace Text {
     char number[40];
     celero::DoNotOptimizeAway(
       int_to_chars_jeaiii(
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
+        static_cast<std::uint32_t>(randomNumberDistribution32(randomNumberGenerator32)),
+        number
+      )
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  BENCHMARK(Integer64Itoa, JeaiiiOriginal, 1000, 0) {
+    char number[40];
+    celero::DoNotOptimizeAway(
+      int_to_chars_jeaiii(
+        static_cast<std::uint64_t>(randomNumberDistribution64(randomNumberGenerator64)),
         number
       )
     );
@@ -194,7 +211,19 @@ namespace Nuclex { namespace Support { namespace Text {
     char number[40];
     celero::DoNotOptimizeAway(
       itoa_better_y(
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator)),
+        static_cast<std::uint32_t>(randomNumberDistribution32(randomNumberGenerator32)),
+        number
+      )
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  BENCHMARK(Integer64Itoa, JeaiiiImproved, 1000, 0) {
+    char number[40];
+    celero::DoNotOptimizeAway(
+      itoa_better_y(
+        static_cast<std::uint64_t>(randomNumberDistribution64(randomNumberGenerator64)),
         number
       )
     );

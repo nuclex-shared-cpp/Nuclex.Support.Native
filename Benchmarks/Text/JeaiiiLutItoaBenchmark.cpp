@@ -258,9 +258,9 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Fast random number generator used in the benchmark</summary>
-  std::mt19937_64 randomNumberGenerator;
+  std::mt19937 randomNumberGenerator32;
   /// <summary>Uniform distribution to make the output cover all possible integers</summary>
-  std::uniform_int_distribution<std::uint32_t> randomNumberDistribution;
+  std::uniform_int_distribution<std::uint32_t> randomNumberDistribution32;
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -276,7 +276,7 @@ namespace Nuclex { namespace Support { namespace Text {
     celero::DoNotOptimizeAway(
       jeaiiiLutItoa(
         number,
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
+        static_cast<std::uint32_t>(randomNumberDistribution32(randomNumberGenerator32))
       )
     );
   }
@@ -289,7 +289,7 @@ namespace Nuclex { namespace Support { namespace Text {
     celero::DoNotOptimizeAway(
       jeaiiiStructLutItoa(
         number,
-        static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
+        static_cast<std::uint32_t>(randomNumberDistribution32(randomNumberGenerator32))
       )
     );
   }
