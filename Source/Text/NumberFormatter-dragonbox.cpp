@@ -158,14 +158,9 @@ namespace {
     //  --decimalPointPosition;
     //}
 
-    // TODO: We should be able to eliminate this case
-    //       If this method is called, the decimal point is between two digits,
-    //       thus the number must have magnitude 1 at least.
-    if(magnitude == 0) {
-      assert(false);
-      WRITE_ONE_DIGIT(buffer);
-      return buffer + 1;
-    }
+    // If this method is called, the decimal point is between two digits,
+    // thus the number must have magnitude 1 at least.
+    assert((magnitude >= 1) && u8"At least two digits are present");
 
     // Calculate the remaining digits behind the decimal point
     magnitude -= decimalPointPosition;
@@ -173,13 +168,50 @@ namespace {
     // Decimal point position indices *after* which digit the decimal point is to be placed,
     // so if it is zero we've got an odd number of digits before, otherwise an even number.
     if((decimalPointPosition & 1) == 0) {
+      char pendingDigit;
 
-      // Assumption: decimal point can not be at 0 because then it wouldn't be between
-      // any digits and this method would not be called
-      //assert((decimalPointPosition >= 1) && u8"Decimal point is inbetween other digits");
+      // Append the digits before the decimal point. We know it's an even number,
+      // so we can skip the single digit check and don't need to store a half.
+      for(;;) {
+        WRITE_TWO_DIGITS(buffer);
+        if(decimalPointPosition < 2) { // Are less than 2 remaining?
+          pendingDigit = buffer[1];
+          buffer += 1;
+          break;
+        }
+        READY_NEXT_TWO_DIGITS();
+        decimalPointPosition -= 2;
+        buffer += 2;
+      }
 
-      // TODO
-      return buffer;
+      // Here comes the decimal point now
+      *buffer++ = u8'.';
+      *buffer++ = pendingDigit;
+
+      // The digits behind the decimal point are at least 1 (otherwise this method
+      // would not be called), but they may also be exactly 1, so deal with this here.
+      if(magnitude == 1) {
+        WRITE_ONE_DIGIT(buffer);
+        return buffer + 1;
+      }
+
+      // Append the digits after the decimal point. This time we can use the ordinary
+      // mixed double/single loop because we don't have to interrupt work in the middle.
+      for(;;) {
+        READY_NEXT_TWO_DIGITS();
+        WRITE_TWO_DIGITS(buffer);
+        if(magnitude < 5) { // Are less than 2 remaining? (4 because we didn't decrement yet)
+          if(magnitude >= 4) { // is even 1 remaining? (3 because we didn't decrement yet)
+            WRITE_ONE_DIGIT(buffer + 2);
+            return buffer + 3;
+          } else {
+            return buffer + 2;
+          }
+        }
+        //READY_NEXT_TWO_DIGITS();
+        magnitude -= 2;
+        buffer += 2;
+      }
 
     } else { // Number of digits before decimal point is even
 
@@ -187,7 +219,7 @@ namespace {
       // so we can skip the single digit check and don't need to store a half.
       for(;;) {
         WRITE_TWO_DIGITS(buffer);
-        if(decimalPointPosition < 2) { // Are less than 2 remaining?
+        if(decimalPointPosition < 3) { // Are less than 2 following? (3 because pre-decrement)
           buffer += 2;
           break;
         }
@@ -213,16 +245,17 @@ namespace {
         WRITE_TWO_DIGITS(buffer);
         if(magnitude < 4) { // Are less than 2 remaining? (4 because we didn't decrement yet)
           if(magnitude >= 3) { // is even 1 remaining? (3 because we didn't decrement yet)
-            WRITE_ONE_DIGIT(buffer + 1);
+            WRITE_ONE_DIGIT(buffer + 2);
             return buffer + 3;
           } else {
             return buffer + 2;
           }
         }
-        READY_NEXT_TWO_DIGITS();
+        //READY_NEXT_TWO_DIGITS();
         magnitude -= 2;
         buffer += 2;
       }
+
     }
   }
 

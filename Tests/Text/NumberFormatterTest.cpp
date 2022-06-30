@@ -190,6 +190,30 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(NumberFormatterTest, FloatingPointValuesCanBePrinted) {
+    float numbers[] = {
+      0.123456f, 1.23456f, 12.3456f, 123.456f, 1234.56f, 12345.6f, 123456.0f,
+      0.12345f, 1.2345f, 12.345f, 123.45f, 1234.5f, 12345.0f
+    };
+
+    for(float number : numbers) {
+      char buffer[48];
+      std::memset(buffer, 0, 48);
+
+      char *end = FormatFloat(buffer, number);
+      std::string formatted(buffer, end);
+      localizeDecimalPoint(formatted);
+
+
+      float actual = std::strtof(formatted.c_str(), &end);
+
+      float expected = number;
+      EXPECT_FLOAT_EQ(actual, expected);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+#if 0
   TEST(NumberFormatterTest, SmallFloatingPointValuesCanBePrinted) {
     std::mt19937_64 randomNumberGenerator;
     std::uniform_real_distribution<float> randomNumberDistribution(-1.0f, +1.0f);
@@ -231,7 +255,7 @@ namespace Nuclex { namespace Support { namespace Text {
       EXPECT_FLOAT_EQ(actual, expected);
     }
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Text
