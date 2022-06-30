@@ -50,6 +50,10 @@ License along with this library
 #define READY_NEXT_TWO_DIGITS() \
   temp = std::uint64_t(100) * static_cast<std::uint32_t>(temp)
 
+// Gets the address of the
+#define GET_TWO_DIGITS_ADDRESS() \
+  *reinterpret_cast<const char *>(&Nuclex::Support::Text::Radix100[(temp >> 31) & 0xFE])
+
 // Appends the next two highest digits in the prepared number to the char buffer
 // Also adjusts the number such that the next two digits are ready for extraction.
 #define WRITE_TWO_DIGITS(bufferPointer) \
@@ -76,14 +80,9 @@ namespace {
   /// </remarks>
   struct TwoChars { char t, o; };
 
-  struct JeaiiiValues {
-    std::uint32_t Factor;
-    std::uint32_t Shift;
-    std::uint32_t Bias;
-  };
-
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Factors the jeaiii algorithm uses to prepare a number for printing</summary>
   const std::uint32_t factors[] = {
                 0, // magnitude 1e-1 (invalid)
                 0, // magnitude 1e0 (invalid) (4'294'967'297)
@@ -99,7 +98,10 @@ namespace {
                 5  // magnitude 1e10
   };
 
-  const std::uint32_t shift[] = {
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Bit shifts the jeaiii algorithm uses to prepare a number for printing</summary>
+  const int shift[] = {
      0, // magnitude 1e-1 (invalid)
      0, // magnitude 1e0 (invalid)
      0, // magnitude 1e1
@@ -114,6 +116,9 @@ namespace {
     66  // magnitude 1e10
   };
 
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Bias added to numbers by jeaiii algorithm</summary>
   const std::uint32_t bias[] = {
     0, // magnitude 1e-1 (invalid)
     0, // magnitude 1e0 (invalid)
@@ -129,33 +134,95 @@ namespace {
     4  // magnitude 1e10
   };
 
-  char *formatIntegerSimple(char *buffer /* [10] */, std::uint32_t number, int magnitude) {
+  // ------------------------------------------------------------------------------------------- //
+
+  char *formatIntegerWithDecimalPoint(
+    char *buffer /* [10] */, std::uint32_t number, int magnitude, int decimalPointPosition
+  ) {
     std::uint64_t temp = number;
     temp *= factors[magnitude];
     temp >>= shift[magnitude];
     temp += bias[magnitude];
 
+    // The inputs are offset by 1 and incrementing them would just cost CPU cycles.
+    //
+    // 123.456    <-- magnitude = 5
+    //    ^-- decimalPointPosition = 2
+    //
+    // So be aware!
+    //
+
+    // REMOVE - for testing
+    char *originalBuffer = buffer;
+    //if(decimalPointPosition > 0) {
+    //  --decimalPointPosition;
+    //}
+
+    // TODO: We should be able to eliminate this case
+    //       If this method is called, the decimal point is between two digits,
+    //       thus the number must have magnitude 1 at least.
     if(magnitude == 0) {
+      assert(false);
       WRITE_ONE_DIGIT(buffer);
       return buffer + 1;
     }
 
-    // Magnitude must be 2 or larger initially because a decimal
-    // point cannot be placed /between/ a single digit, so we can
-    // skip the initial check.
-    for(;;) {
-      WRITE_TWO_DIGITS(buffer);
-      if(magnitude < 2) { // Are less than 2 remaining?
-        if(magnitude >= 1) { // is even 1 remaining?
-          WRITE_ONE_DIGIT(buffer);
-          return buffer + 3;
-        } else {
-          return buffer + 2;
+    // Calculate the remaining digits behind the decimal point
+    magnitude -= decimalPointPosition;
+
+    // Decimal point position indices *after* which digit the decimal point is to be placed,
+    // so if it is zero we've got an odd number of digits before, otherwise an even number.
+    if((decimalPointPosition & 1) == 0) {
+
+      // Assumption: decimal point can not be at 0 because then it wouldn't be between
+      // any digits and this method would not be called
+      //assert((decimalPointPosition >= 1) && u8"Decimal point is inbetween other digits");
+
+      // TODO
+      return buffer;
+
+    } else { // Number of digits before decimal point is even
+
+      // Append the digits before the decimal point. We know it's an even number,
+      // so we can skip the single digit check and don't need to store a half.
+      for(;;) {
+        WRITE_TWO_DIGITS(buffer);
+        if(decimalPointPosition < 2) { // Are less than 2 remaining?
+          buffer += 2;
+          break;
         }
+        READY_NEXT_TWO_DIGITS();
+        decimalPointPosition -= 2;
+        buffer += 2;
       }
-      READY_NEXT_TWO_DIGITS();
-      magnitude -= 2;
-      buffer += 2;
+
+      // Here comes the decimal point now
+      *buffer++ = u8'.';
+
+      // The digits behind the decimal point are at least 1 (otherwise this method
+      // would not be called), but they may also be exactly 1, so deal with this here.
+      if(magnitude == 1) {
+        WRITE_ONE_DIGIT(buffer);
+        return buffer + 1;
+      }
+
+      // Append the digits after the decimal point. This time we can use the ordinary
+      // mixed double/single loop because we don't have to interrupt work in the middle.
+      for(;;) {
+        READY_NEXT_TWO_DIGITS();
+        WRITE_TWO_DIGITS(buffer);
+        if(magnitude < 4) { // Are less than 2 remaining? (4 because we didn't decrement yet)
+          if(magnitude >= 3) { // is even 1 remaining? (3 because we didn't decrement yet)
+            WRITE_ONE_DIGIT(buffer + 1);
+            return buffer + 3;
+          } else {
+            return buffer + 2;
+          }
+        }
+        READY_NEXT_TWO_DIGITS();
+        magnitude -= 2;
+        buffer += 2;
+      }
     }
   }
 
@@ -190,51 +257,40 @@ namespace Nuclex { namespace Support { namespace Text {
           float, jkj::dragonbox::default_float_traits<float>
         >(significandBits, exponentBits);
 
-        // An exponent of 0 means the decimal point is at the right end of the number,
-        std::size_t digitCountMinusOne = (
-          Nuclex::Support::BitTricks::GetLogBase10(result.significand)
-        );
-        int decimalPointPosition = result.exponent + digitCountMinusOne;
+        // If the exponent is negative, the decimal point lies within or before the number
+        if(result.exponent < 0) {
+          std::size_t digitCountMinusOne = (
+            Nuclex::Support::BitTricks::GetLogBase10(result.significand)
+          );
+          int decimalPointPosition = result.exponent + digitCountMinusOne;
 
-        return buffer;
-
-        // The decimal point is *before* the entire number, i.e. 0.123 or 0.0123,
-        // so we need to start with a '0.', possibly followed by more zeros
-        if(digitCountMinusOne < (-result.exponent)) {
-
-          // The exponent is negative, so this number is less than 1.0 and needs to begin with
-          // a "0." and possibly additional zeros.
-          *buffer++ = u8'0';
-          *buffer++ = u8'.';
-          while(result.exponent + digitCountMinusOne < -1) {
+          // Does the decimal point lie before all the significand's digits?
+          if(decimalPointPosition < 0) {
+            buffer[0] = u8'0';
+            buffer[1] = u8'.';
+            buffer += 2;
+            while(decimalPointPosition < -1) {
+              *buffer++ = u8'0';
+              ++decimalPointPosition;
+            }
+            return FormatInteger(buffer, result.significand);
+          } else { // Nope, the decimal point is within the significand's digits!
+            return formatIntegerWithDecimalPoint(
+              buffer, result.significand, digitCountMinusOne, decimalPointPosition
+            );
+          }
+        } else { // Exponent is zero or positive, number has no decimal places
+          buffer = FormatInteger(buffer, result.significand);
+          while(result.exponent > 0) {
             *buffer++ = u8'0';
-            ++result.exponent;
+            --result.exponent;
           }
 
-          // The decimal point has already been placed, so the remaining digits can
-          // be appended as-is.
-          // PERF: We know the digit count already. Would a manual jump table be faster?
-          char *shit = FormatInteger(buffer, result.significand);
-          return formatIntegerSimple(buffer, result.significand, digitCountMinusOne);
-          //return FormatInteger(buffer, result.significand);
-
-        } else if(decimalPointPosition < digitCountMinusOne) {
-        } else {
-
-          //
-          // TODO: Convert result into string
-          //buffer = writeDigits(buffer, result.significand, )
-
-        //} else { // exponent matches digitCount, so the decimal point is exactly at the end
-
-          // The number is an integer. Per convention, we write it like 123.0
-          buffer = FormatInteger(buffer, result.significand);;
+          // Append a ".0" to indicate that this is a floating point number
           buffer[0] = u8'.';
           buffer[1] = u8'0';
           return buffer + 2;
-
         }
-
       } else {
         std::memcpy(buffer, "0.0", 3);
         return buffer + 3;
@@ -242,19 +298,17 @@ namespace Nuclex { namespace Support { namespace Text {
 
       return buffer;
 
-    } else {
-      if(significandBits.has_all_zero_significand_bits()) {
-        if(significandBits.is_negative()) {
-          std::memcpy(buffer, "-Infinity", 9);
-          return buffer + 9;
-        } else {
-          std::memcpy(buffer, "Infinity", 8);
-          return buffer + 8;
-        }
+    } else if(significandBits.has_all_zero_significand_bits()) { // indicates infinity
+      if(significandBits.is_negative()) {
+        std::memcpy(buffer, "-Infinity", 9);
+        return buffer + 9;
       } else {
-        std::memcpy(buffer, "NaN", 3);
-        return buffer + 3;
+        std::memcpy(buffer, "Infinity", 8);
+        return buffer + 8;
       }
+    } else { // infinite and non-empty signifiand -> not a number
+      std::memcpy(buffer, "NaN", 3);
+      return buffer + 3;
     }
   }
 
@@ -285,9 +339,43 @@ namespace Nuclex { namespace Support { namespace Text {
           double, jkj::dragonbox::default_float_traits<double>
         >(significandBits, exponentBits);
 
-        // TODO: Convert result into string
-        return FormatInteger(buffer, result.significand);
+        // If the exponent is negative, the decimal point lies within or before the number
+        if(result.exponent < 0) {
+          std::size_t digitCountMinusOne = (
+            Nuclex::Support::BitTricks::GetLogBase10(result.significand)
+          );
+          int decimalPointPosition = result.exponent + digitCountMinusOne;
 
+          // Does the decimal point lie before all the significand's digits?
+          if(decimalPointPosition < 0) {
+            buffer[0] = u8'0';
+            buffer[1] = u8'.';
+            buffer += 2;
+            while(decimalPointPosition < -1) {
+              *buffer++ = u8'0';
+              ++decimalPointPosition;
+            }
+            return FormatInteger(buffer, result.significand);
+          } else { // Nope, the decimal point is within the significand's digits!
+            //formatIntegerSimple(buffer, result.significand, digitCountMinusOne, decimalPointPosition);
+            std::memcpy(buffer, "oh shit", 7);
+            return buffer + 7;
+          }
+
+          // remove, for testing
+
+        } else { // Exponent is zero or positive, number has no decimal places
+          buffer = FormatInteger(buffer, result.significand);
+          while(result.exponent > 0) {
+            *buffer++ = u8'0';
+            --result.exponent;
+          }
+
+          // Append a ".0" to indicate that this is a floating point number
+          buffer[0] = u8'.';
+          buffer[1] = u8'0';
+          return buffer + 2;
+        }
       } else {
         std::memcpy(buffer, "0.0", 3);
         return buffer + 3;
@@ -295,19 +383,17 @@ namespace Nuclex { namespace Support { namespace Text {
 
       return buffer;
 
-    } else {
-      if(significandBits.has_all_zero_significand_bits()) {
-        if(significandBits.is_negative()) {
-          std::memcpy(buffer, "-Infinity", 9);
-          return buffer + 9;
-        } else {
-          std::memcpy(buffer, "Infinity", 8);
-          return buffer + 8;
-        }
+    } else if(significandBits.has_all_zero_significand_bits()) { // indicates infinity
+      if(significandBits.is_negative()) {
+        std::memcpy(buffer, "-Infinity", 9);
+        return buffer + 9;
       } else {
-        std::memcpy(buffer, "NaN", 3);
-        return buffer + 3;
+        std::memcpy(buffer, "Infinity", 8);
+        return buffer + 8;
       }
+    } else { // infinite and non-empty signifiand -> not a number
+      std::memcpy(buffer, "NaN", 3);
+      return buffer + 3;
     }
   }
 

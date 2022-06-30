@@ -228,7 +228,7 @@ namespace Nuclex { namespace Support { namespace Text {
       float actual = std::strtof(formatted.c_str(), &end);
 
       float expected = number;
-      EXPECT_EQ(actual, expected);
+      EXPECT_FLOAT_EQ(actual, expected);
     }
   }
 
