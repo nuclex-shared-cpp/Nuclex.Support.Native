@@ -244,7 +244,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
       double actual = std::strtod(formatted.c_str(), &end);
       double expected = number;
-      EXPECT_FLOAT_EQ(actual, expected);
+      EXPECT_DOUBLE_EQ(actual, expected);
     }
   }
 
@@ -330,7 +330,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
       double actual = std::strtod(formatted.c_str(), &end);
       double expected = number;
-      EXPECT_FLOAT_EQ(actual, expected);
+      EXPECT_DOUBLE_EQ(actual, expected);
     }
   }
 
