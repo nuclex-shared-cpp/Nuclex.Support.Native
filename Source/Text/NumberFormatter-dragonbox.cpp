@@ -154,9 +154,9 @@ namespace {
     // less than two are left.
     for(;;) {
       WRITE_TWO_DIGITS(buffer);
-      if(magnitude < 2) { // Are less than 2 remaining?
-        if(magnitude >= 1) { // is even 1 remaining?
-          WRITE_ONE_DIGIT(buffer);
+      if(magnitude < 3) { // Are less than 2 remaining?
+        if(magnitude >= 2) { // is even 1 remaining?
+          WRITE_ONE_DIGIT(buffer + 2);
           return buffer + 3;
         } else {
           return buffer + 2;
@@ -339,15 +339,14 @@ namespace {
       );
       return formatInteger32(buffer, number % 1'000'000'000, 8);
 
-      // print first 9 digits with decimal point
-      // print any remaining digits manually
     } else {
-      // print first 9 digits manually
-      // print any remaining digits with decimal point
-    }
 
-    std::memcpy(buffer, u8"Not implemented yet", 19);
-    return buffer + 19;
+      buffer = formatInteger32(buffer, number / 1'000'000'000, magnitude - 9);
+      return formatInteger32WithDecimalPoint(
+        buffer, number % 1'000'000'000, 8, decimalPointPosition - (magnitude - 8)
+      );
+
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
