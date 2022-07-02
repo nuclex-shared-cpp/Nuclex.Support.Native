@@ -397,7 +397,7 @@ namespace Nuclex { namespace Support { namespace Text {
           std::size_t digitCountMinusOne = (
             Nuclex::Support::BitTricks::GetLogBase10(result.significand)
           );
-          std::size_t decimalPointPosition = result.exponent + digitCountMinusOne;
+          int decimalPointPosition = result.exponent + static_cast<int>(digitCountMinusOne);
 
           // Does the decimal point lie before all the significand's digits?
           if(decimalPointPosition < 0) {
@@ -476,7 +476,7 @@ namespace Nuclex { namespace Support { namespace Text {
           std::size_t digitCountMinusOne = (
             Nuclex::Support::BitTricks::GetLogBase10(result.significand)
           );
-          std::size_t decimalPointPosition = result.exponent + digitCountMinusOne;
+          int decimalPointPosition = result.exponent + static_cast<int>(digitCountMinusOne);
 
           // Does the decimal point lie before all the significand's digits?
           if(decimalPointPosition < 0) {

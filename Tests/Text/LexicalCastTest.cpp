@@ -412,7 +412,7 @@ namespace Nuclex { namespace Support { namespace Text {
     // for round-trip parsing) and where adding more decimals would not actually change
     // the resulting double-precision floating point value when it is parsed back in.
     double parsedPI = lexical_cast<double>(text);
-    EXPECT_FLOAT_EQ(parsedPI, PI);
+    EXPECT_DOUBLE_EQ(parsedPI, PI);
     EXPECT_EQ(text.find(u8"141592653589793"), 2U);
     //EXPECT_EQ(text, "3.141592653589793");
   }
