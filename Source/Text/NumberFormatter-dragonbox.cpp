@@ -27,24 +27,6 @@ License along with this library
 
 #include <iostream>
 
-// Uses a magic formula to turn a 32 bit number into a specific 64 bit number.
-//
-// I think the main thing this formula accomplishes is that the actual number sits at
-// the upper end of a 32 bit integer. Thus, when you cast it to a 64 bit integer and
-// multiply it by 100, you end up with the next two digits in the upper 32 bits of
-// your 64 bit integer where they're easy to grab.
-//
-// Magnitude is 1 for 100, 2 for 1'000, 3 for 10'000 and so on
-//
-#define PREPARE_NUMBER_OF_MAGNITUDE(number, magnitude) \
-  temp = ( \
-    (std::uint64_t(1) << (32 + magnitude / 5 * magnitude * 53 / 16)) / \
-    std::uint32_t(1e##magnitude) + 1 + magnitude/6 - magnitude/8 \
-  ), \
-  temp *= number, \
-  temp >>= magnitude / 5 * magnitude * 53 / 16, \
-  temp += magnitude / 6 * 4
-
 // Brings the next two digits of the prepeared number into the upper 32 bits
 // so they can be extracted by the WRITE_ONE_DIGIT and WRITE_TWO_DIGITS macros
 #define READY_NEXT_TWO_DIGITS() \
@@ -78,6 +60,28 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  // Table of jeaiii values up to 1e+14.
+  //
+  //  Magnitude |           Factor            | Shift  | Bias
+  // ---------------------------------------------------------
+  //     1e0    |              4'294'967'297  |    0   |  0
+  //     1e1    |                429'496'730  |    0   |  0
+  //     1e2    |                 42'949'673  |    0   |  0
+  //     1e3    |                  4'294'968  |    0   |  0
+  //     1e4    |                    429'497  |    0   |  0
+  //     1e5    |              2'814'749'768  |   16   |  0
+  //     1e6    |              2'251'799'815  |   19   |  4
+  //     1e7    |              3'602'879'703  |   23   |  4
+  //     1e8    |              2'882'303'762  |   26   |  4
+  //     1e9    |              2'305'843'010  |   29   |  4
+  //     1e10   |             17'179'869'189  |   66   |  4
+  //     1e11   |          1'099'511'628'033  |   72   |  4
+  //     1e12   |        140'737'488'388'098  |   79   |  8
+  //     1e13   |     18'014'398'513'676'290  |   86   |  8
+  //     1e14   |  1'152'921'504'875'282'434  |   92   |  8
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Factors the jeaiii algorithm uses to prepare a number for printing</summary>
   const std::uint32_t factors[] = {
                 0, // magnitude 1e-1 (invalid)
@@ -91,7 +95,6 @@ namespace {
     3'602'879'703, // magnitude 1e7
     2'882'303'762, // magnitude 1d8
     2'305'843'010, // magnitude 1e9
-                5  // magnitude 1e10
   };
 
   // ------------------------------------------------------------------------------------------- //
@@ -109,7 +112,6 @@ namespace {
     23, // magnitude 1e7
     26, // magnitude 1e8
     29, // magnitude 1e9
-    66  // magnitude 1e10
   };
 
   // ------------------------------------------------------------------------------------------- //
@@ -127,14 +129,13 @@ namespace {
     4, // magnitude 1e7
     4, // magnitude 1e8
     4, // magnitude 1e9
-    4  // magnitude 1e10
   };
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Formats an integral number but adds a decimal point between two digits</summary>
   /// <param name="buffer">Buffer into which the number will be written</param>
-  /// <param name="number">Significand, aka the digits without a decimal point</param>
+  /// <param name="temp">Significand, aka the digits without a decimal point</param>
   /// <param name="magnitude">Magnitude of the number (digit count minus 1)</param>
   /// <param name="decimalPointPosition">
   ///   Position of the decimal point with 0 pointing to the first possible location,
@@ -144,6 +145,8 @@ namespace {
   char *formatInteger32WithDecimalPoint(
     char *buffer /* [48] */, std::uint64_t temp, int magnitude, int decimalPointPosition
   ) {
+    assert(static_cast<std::uint32_t>(temp) == temp); // Must fit in 32 bits integer!
+
     //     ###      The magnitude and decimalPointPosition inputs are offset by -1 and
     //    ## ##     incrementing them would just cost CPU cycles.
     //   ## | ##
@@ -187,7 +190,7 @@ namespace {
       //    ## ##     the remaining digits, but both are offset by -1, so now there's
       //   ## | ##    no offset anymore *but* we already wrote one digit above
       //  ##  '  ##
-      // ###########  456  <-- magnitude = 4
+      // ###########  [4] 56  <-- magnitude = 3
       //
 
       // Append the digits after the decimal point. This time we can use the ordinary
@@ -226,6 +229,13 @@ namespace {
       // Here comes the decimal point now
       buffer[2] = u8'.';
 
+      //     ###      We subtracted the decimal point position from the magnitude to get
+      //    ## ##     the remaining digits, but both are offset by -1, so now there's
+      //   ## | ##    no offset anymore.
+      //  ##  '  ##
+      // ###########  456  <-- magnitude = 3
+      //
+
       // The digits behind the decimal point are at least 1 (otherwise this method
       // would not be called), but they may also be exactly 1, so deal with this here.
       if(magnitude == 1) {
@@ -238,11 +248,11 @@ namespace {
       for(;;) {
         READY_NEXT_TWO_DIGITS();
         WRITE_TWO_DIGITS(buffer + 3);
-        if(magnitude < 4) { // Are less than 2 remaining? (4 because we didn't decrement yet)
+        if(magnitude < 4) { // are less than 2 remaining? (4 because we didn't decrement yet)
           if(magnitude >= 3) { // is even 1 remaining? (3 because we didn't decrement yet)
             WRITE_ONE_DIGIT(buffer + 5);
             return buffer + 6;
-          } else {
+          } else { // none are remaining
             return buffer + 5;
           }
         }
@@ -267,6 +277,20 @@ namespace {
   char *formatInteger64WithDecimalPoint(
     char *buffer /* [48] */, std::uint64_t number, int magnitude, int decimalPointPosition
   ) {
+    // float64 has 53 bits precision for the significand, thus the largest number we can
+    // expect in 'number' is 9'007'199'254'740'991 and only need to deal, which can always be
+    // covered with two calls to the 32 bit formatting routine.
+    //
+    // 18'446'744'073'709'551'615     Maximum 64 bit integer
+    //      9'007'199'254'740'991     Maximum 53 bit integer
+    //              4'294'967'295     Maximum 32 bit integer
+    //
+    // So we have 2 possibilities
+    //   * 10 digits + 9 digits with decimal point
+    //   * 9 digits with decimal point + 10 digits
+
+
+
     std::memcpy(buffer, u8"Not implemented yet", 19);
     return buffer + 19;
   }
@@ -452,4 +476,3 @@ namespace Nuclex { namespace Support { namespace Text {
 #undef WRITE_TWO_DIGITS
 #undef WRITE_ONE_DIGIT
 #undef READY_NEXT_TWO_DIGITS
-#undef PREPARE_NUMBER_OF_MAGNITUDE
