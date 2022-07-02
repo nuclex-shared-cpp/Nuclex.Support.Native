@@ -310,9 +310,9 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(LexicalCastTest, FloatToStringDecimalsAreOptional) {
+  TEST(LexicalCastTest, FloatToStringDecimalsAreMandatory) {
     std::string text = lexical_cast<std::string>(1.0f);
-    EXPECT_EQ(text, "1");
+    EXPECT_EQ(text, "1.0");
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -372,9 +372,9 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(LexicalCastTest, DoubleToStringDecimalsAreOptional) {
+  TEST(LexicalCastTest, DoubleToStringDecimalsAreMandatory) {
     std::string text = lexical_cast<std::string>(1.0);
-    EXPECT_EQ(text, "1");
+    EXPECT_EQ(text, "1.0");
   }
 
   // ------------------------------------------------------------------------------------------- //

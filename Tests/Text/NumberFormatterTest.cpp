@@ -192,8 +192,14 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(NumberFormatterTest, FloatingPointValuesCanBePrinted) {
     float numbers[] = {
+      // Different odd/even digit counts before and after the decimal point
       0.123456f, 1.23456f, 12.3456f, 123.456f, 1234.56f, 12345.6f, 123456.0f,
-      0.12345f, 1.2345f, 12.345f, 123.45f, 1234.5f, 12345.0f
+      // Alternate odd/even digit counts before and after the decimal point
+      0.12345f, 1.2345f, 12.345f, 123.45f, 1234.5f, 12345.0f,
+      // Tiniest and largest negative float values
+      -0.58775e-038f, -1.1755e-038f, -1.7014E+038f, -3.4028e+038f,
+      // Tiniest and largest positive float values
+      0.58775e-038f, 1.1755e-038f, 1.7014E+038f, 3.4028e+038f
     };
 
     for(float number : numbers) {
@@ -214,13 +220,17 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(NumberFormatterTest, DoublePrecisionFloatingPointValuesCanBePrinted) {
     double numbers[] = {
+      // Different odd/even digit counts before and after the decimal point
       0.123456, 1.23456, 12.3456, 123.456, 1234.56, 12345.6, 123456.0,
-      0.12345, 1.2345, 12.345, 123.45, 1234.5, 12345.0
+      // Alternate odd/even digit counts before and after the decimal point
+      0.12345, 1.2345, 12.345, 123.45, 1234.5, 12345.0,
+      //12345678901234567890,
+      //2.2251e-308, 1.11255e-308, 1.7976931348623157E+308, 0.8988465674311579E+308
     };
 
     for(double number : numbers) {
-      char buffer[48];
-      std::memset(buffer, 0, 48);
+      char buffer[325];
+      std::memset(buffer, 0, 325);
 
       char *end = FormatFloat(buffer, number);
       std::string formatted(buffer, end);

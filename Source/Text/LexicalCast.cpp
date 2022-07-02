@@ -23,9 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Text/LexicalCast.h"
 #include "./NumberFormatter.h"
-
-#include "Dragon4/PrintFloat.h"
-#include "Ryu/ryu_parse.h"
+#include "./Ryu/ryu_parse.h"
 
 #include <limits> // for std::numeric_limits
 
@@ -343,12 +341,9 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::string lexical_cast<>(const float &from) {
-    char characters[64];
-    tU32 length = ::PrintFloat32(
-      characters, sizeof(characters), from, PrintFloatFormat_Positional, -1
-    );
-
-    return std::string(static_cast<const char *>(characters), static_cast<std::size_t>(length));
+    char characters[48];
+    char *end = FormatFloat(characters, from);
+    return std::string(characters, end);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -382,12 +377,9 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::string lexical_cast<>(const double &from) {
-    char characters[256];
-    tU32 length = ::PrintFloat64(
-      characters, sizeof(characters), from, PrintFloatFormat_Positional, -1
-    );
-
-    return std::string(static_cast<const char *>(characters), static_cast<std::size_t>(length));
+    char characters[325];
+    char *end = FormatFloat(characters, from);
+    return std::string(characters, end);
   }
 
   // ------------------------------------------------------------------------------------------- //

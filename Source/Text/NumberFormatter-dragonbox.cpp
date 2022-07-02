@@ -141,21 +141,18 @@ namespace {
   ///   which is between the first and second integral digit
   /// </param>
   /// <returns>A pointer one past the last written character in the buffer</returns>
-  char *formatIntegerWithDecimalPoint(
-    char *buffer /* [48] */, std::uint32_t number, int magnitude, int decimalPointPosition
+  char *formatInteger32WithDecimalPoint(
+    char *buffer /* [48] */, std::uint64_t temp, int magnitude, int decimalPointPosition
   ) {
-    std::uint64_t temp = number;
+    //     ###      The magnitude and decimalPointPosition inputs are offset by -1 and
+    //    ## ##     incrementing them would just cost CPU cycles.
+    //   ## | ##
+    //  ##  '  ##   123.456    <-- magnitude = 5
+    // ###########     ^-- decimalPointPosition = 2
+    //
     temp *= factors[magnitude];
     temp >>= shift[magnitude];
     temp += bias[magnitude];
-
-    // The inputs are offset by 1 and incrementing them would just cost CPU cycles.
-    //
-    // 123.456    <-- magnitude = 5
-    //    ^-- decimalPointPosition = 2
-    //
-    // So be aware!
-    //
 
     // If this method is called, the decimal point is between two digits,
     // thus the number must have magnitude 1 at least.
@@ -173,7 +170,7 @@ namespace {
       // so we can skip the single digit check and don't need to store a half.
       for(;;) {
         WRITE_TWO_DIGITS(buffer);
-        if(decimalPointPosition < 2) { // Are less than 2 remaining?
+        if(decimalPointPosition < 2) { // Are less than 3 remaining?
           pendingDigit = buffer[1]; // Remember the digit that goes after the decimal point
           break;
         }
@@ -186,26 +183,28 @@ namespace {
       buffer[1] = u8'.';
       buffer[2] = pendingDigit;
 
-      // The digits behind the decimal point are at least 1 (otherwise this method
-      // would not be called), but they may also be exactly 1, so deal with this here.
-      if(magnitude == 1) {
-        WRITE_ONE_DIGIT(buffer + 3);
-        return buffer + 4;
-      }
+      //     ###      We subtracted the decimal point position from the magnitude to get
+      //    ## ##     the remaining digits, but both are offset by -1, so now there's
+      //   ## | ##    no offset anymore *but* we already wrote one digit above
+      //  ##  '  ##
+      // ###########  456  <-- magnitude = 4
+      //
 
       // Append the digits after the decimal point. This time we can use the ordinary
       // mixed double/single loop because we don't have to interrupt work in the middle.
       for(;;) {
-        READY_NEXT_TWO_DIGITS();
-        WRITE_TWO_DIGITS(buffer + 3);
-        if(magnitude < 5) { // Are less than 2 remaining? (5 because pre-decrement + pending)
-          if(magnitude >= 4) { // is even 1 remaining? (4 because pre-decrement + pending)
-            WRITE_ONE_DIGIT(buffer + 5);
-            return buffer + 6;
+        if(magnitude < 3) { // Are less than 2 remaining? (5 because pre-decrement + pending)
+          if(magnitude >= 2) { // is even 1 remaining? (4 because pre-decrement + pending)
+            WRITE_ONE_DIGIT(buffer + 3);
+            return buffer + 4;
           } else {
-            return buffer + 5;
+            return buffer + 3;
           }
         }
+
+        READY_NEXT_TWO_DIGITS();
+        WRITE_TWO_DIGITS(buffer + 3);
+
         magnitude -= 2;
         buffer += 2;
       }
@@ -265,7 +264,7 @@ namespace {
   ///   which is between the first and second integral digit
   /// </param>
   /// <returns>A pointer one past the last written character in the buffer</returns>
-  char *formatIntegerWithDecimalPoint(
+  char *formatInteger64WithDecimalPoint(
     char *buffer /* [48] */, std::uint64_t number, int magnitude, int decimalPointPosition
   ) {
     std::memcpy(buffer, u8"Not implemented yet", 19);
@@ -303,7 +302,7 @@ namespace Nuclex { namespace Support { namespace Text {
           false // don't care about trailing zeros
         > result = jkj::dragonbox::to_decimal<
           float, jkj::dragonbox::default_float_traits<float>
-        >(significandBits, exponentBits);
+        >(significandBits, exponentBits, jkj::dragonbox::policy::trailing_zero::remove);
 
         // If the exponent is negative, the decimal point lies within or before the number
         if(result.exponent < 0) {
@@ -323,7 +322,7 @@ namespace Nuclex { namespace Support { namespace Text {
             }
             return FormatInteger(buffer, result.significand);
           } else { // Nope, the decimal point is within the significand's digits!
-            return formatIntegerWithDecimalPoint(
+            return formatInteger32WithDecimalPoint(
               buffer, result.significand, digitCountMinusOne, decimalPointPosition
             );
           }
@@ -382,7 +381,7 @@ namespace Nuclex { namespace Support { namespace Text {
           false // don't care about trailing zeros
         > result = jkj::dragonbox::to_decimal<
           double, jkj::dragonbox::default_float_traits<double>
-        >(significandBits, exponentBits);
+        >(significandBits, exponentBits, jkj::dragonbox::policy::trailing_zero::remove);
 
         // If the exponent is negative, the decimal point lies within or before the number
         if(result.exponent < 0) {
@@ -402,9 +401,19 @@ namespace Nuclex { namespace Support { namespace Text {
             }
             return FormatInteger(buffer, result.significand);
           } else { // Nope, the decimal point is within the significand's digits!
-            return formatIntegerWithDecimalPoint(
-              buffer, result.significand, digitCountMinusOne, decimalPointPosition
-            );
+
+            std::uint32_t number = static_cast<std::uint32_t>(result.significand);
+            if(number == result.significand) {
+              return formatInteger32WithDecimalPoint(
+                buffer, number, digitCountMinusOne, decimalPointPosition
+              );
+            } else {
+              return formatInteger64WithDecimalPoint(
+                buffer, result.significand, digitCountMinusOne, decimalPointPosition
+              );
+              //return buffer;
+            }
+
           }
         } else { // Exponent is zero or positive, number has no decimal places
           buffer = FormatInteger(buffer, result.significand);
