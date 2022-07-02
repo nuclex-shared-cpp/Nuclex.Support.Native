@@ -199,7 +199,9 @@ namespace Nuclex { namespace Support { namespace Text {
       // Tiniest and largest negative float values
       -0.58775e-038f, -1.1755e-038f, -1.7014E+038f, -3.4028e+038f,
       // Tiniest and largest positive float values
-      0.58775e-038f, 1.1755e-038f, 1.7014E+038f, 3.4028e+038f
+      0.58775e-038f, 1.1755e-038f, 1.7014E+038f, 3.4028e+038f,
+      // Large digit counts before and after the decimal point
+      0.16777215f, 1.6777215, 16777215.0f, 1677721.5f
     };
 
     for(float number : numbers) {
@@ -224,8 +226,12 @@ namespace Nuclex { namespace Support { namespace Text {
       0.123456, 1.23456, 12.3456, 123.456, 1234.56, 12345.6, 123456.0,
       // Alternate odd/even digit counts before and after the decimal point
       0.12345, 1.2345, 12.345, 123.45, 1234.5, 12345.0,
-      //12345678901234567890,
-      //2.2251e-308, 1.11255e-308, 1.7976931348623157E+308, 0.8988465674311579E+308
+      // Tiniest and largest negative double values
+      -2.2251e-308, -1.11255e-308, -1.7976931348623157E+308, -0.8988465674311579E+308,
+      // Tiniest and largest positive double values
+      2.2251e-308, 1.11255e-308, 1.7976931348623157E+308, 0.8988465674311579E+308,
+      // Large digit counts before and after the decimal point
+      0.4503599627370495, 4.503599627370495, 4503599627370495.0, 450359962737049.5
     };
 
     for(double number : numbers) {
@@ -243,7 +249,7 @@ namespace Nuclex { namespace Support { namespace Text {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if 0
+
   TEST(NumberFormatterTest, SmallFloatingPointValuesCanBePrinted) {
     std::mt19937_64 randomNumberGenerator;
     std::uniform_real_distribution<float> randomNumberDistribution(-1.0f, +1.0f);
@@ -257,7 +263,6 @@ namespace Nuclex { namespace Support { namespace Text {
       localizeDecimalPoint(formatted);
 
       float actual = std::strtof(formatted.c_str(), &end);
-
       float expected = number;
       EXPECT_EQ(actual, expected);
     }
@@ -267,7 +272,9 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(NumberFormatterTest, LargeFloatingPointValuesCanBePrinted) {
     std::mt19937_64 randomNumberGenerator;
-    std::uniform_real_distribution<float> randomNumberDistribution(-1'000'000.0f, +1'000'000.0f);
+    std::uniform_real_distribution<float> randomNumberDistribution(
+      std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()
+    );
 
     for(std::size_t index = 0; index < SampleCount; ++index) {
       float number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
@@ -278,14 +285,55 @@ namespace Nuclex { namespace Support { namespace Text {
       std::string formatted(buffer, end);
       localizeDecimalPoint(formatted);
 
-
       float actual = std::strtof(formatted.c_str(), &end);
-
       float expected = number;
       EXPECT_FLOAT_EQ(actual, expected);
     }
   }
-#endif
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(NumberFormatterTest, SmallDoublePrecisionFloatingPointValuesCanBePrinted) {
+    std::mt19937_64 randomNumberGenerator;
+    std::uniform_real_distribution<double> randomNumberDistribution(-1.0f, +1.0f);
+
+    for(std::size_t index = 0; index < SampleCount; ++index) {
+      double number = static_cast<double>(randomNumberDistribution(randomNumberGenerator));
+
+      char buffer[325];
+      char *end = FormatFloat(buffer, number);
+      std::string formatted(buffer, end);
+      localizeDecimalPoint(formatted);
+
+      double actual = std::strtod(formatted.c_str(), &end);
+      double expected = number;
+      EXPECT_EQ(actual, expected);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(NumberFormatterTest, LargeDoublePrecisionFloatingPointValuesCanBePrinted) {
+    std::mt19937_64 randomNumberGenerator;
+    std::uniform_real_distribution<double> randomNumberDistribution(
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max()
+    );
+
+    for(std::size_t index = 0; index < SampleCount; ++index) {
+      double number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
+
+      char buffer[325];
+      //jkj::dragonbox::to_chars(number, buffer);
+      char *end = FormatFloat(buffer, number);
+      std::string formatted(buffer, end);
+      localizeDecimalPoint(formatted);
+
+      double actual = std::strtod(formatted.c_str(), &end);
+      double expected = number;
+      EXPECT_FLOAT_EQ(actual, expected);
+    }
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Text

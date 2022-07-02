@@ -95,6 +95,11 @@ namespace {
     std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()
   );
 
+  std::uniform_real_distribution<double> smallRandomNumberDistributionDouble(-1.0f, +1.0f);
+  std::uniform_real_distribution<double> largeRandomNumberDistributionDouble(
+    std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max()
+  );
+
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
@@ -142,6 +147,21 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  BASELINE(Float64Ftoa_x2, CxxToString, 1000, 0) {
+    celero::DoNotOptimizeAway(
+      std::to_string(
+        static_cast<double>(smallRandomNumberDistributionDouble(randomNumberGenerator64))
+      )
+    );
+    celero::DoNotOptimizeAway(
+      std::to_string(
+        static_cast<double>(largeRandomNumberDistributionDouble(randomNumberGenerator64))
+      )
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   BENCHMARK(Integer32Itoa, NumberFormatter, 1000, 0) {
     char number[40];
     celero::DoNotOptimizeAway(
@@ -179,6 +199,26 @@ namespace Nuclex { namespace Support { namespace Text {
       FormatFloat(
         number,
         static_cast<float>(largeRandomNumberDistributionFloat(randomNumberGenerator64))
+      )
+    );
+  }
+
+
+  // ------------------------------------------------------------------------------------------- //
+
+  BENCHMARK(Float64Ftoa_x2, NumberFormatter, 1000, 0) {
+    char number[325];
+
+    celero::DoNotOptimizeAway(
+      FormatFloat(
+        number,
+        static_cast<double>(smallRandomNumberDistributionDouble(randomNumberGenerator64))
+      )
+    );
+    celero::DoNotOptimizeAway(
+      FormatFloat(
+        number,
+        static_cast<double>(largeRandomNumberDistributionDouble(randomNumberGenerator64))
       )
     );
   }

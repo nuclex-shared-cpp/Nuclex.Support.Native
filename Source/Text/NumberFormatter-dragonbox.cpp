@@ -133,6 +133,43 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Formats an integral number without adding a decimal point</summary>
+  /// <param name="buffer">Buffer into which the number will be written</param>
+  /// <param name="temp">The integer that will be written to the buffer</param>
+  /// <param name="magnitude">Magnitude of the number (digit count minus 1)</param>
+  /// <returns>A pointer one past the last written character in the buffer</returns>
+  char *formatInteger32(char *buffer /* [10] */, std::uint64_t temp, int magnitude) {
+    temp *= factors[magnitude];
+    temp >>= shift[magnitude];
+    temp += bias[magnitude];
+
+    // If it's just one digit, skip the two-digit-pull loop and just
+    // output that lone digit
+    if(magnitude == 0) {
+      WRITE_ONE_DIGIT(buffer);
+      return buffer + 1;
+    }
+
+    // If there are at least two digits, turn them into text in pairs until
+    // less than two are left.
+    for(;;) {
+      WRITE_TWO_DIGITS(buffer);
+      if(magnitude < 2) { // Are less than 2 remaining?
+        if(magnitude >= 1) { // is even 1 remaining?
+          WRITE_ONE_DIGIT(buffer);
+          return buffer + 3;
+        } else {
+          return buffer + 2;
+        }
+      }
+      READY_NEXT_TWO_DIGITS();
+      magnitude -= 2;
+      buffer += 2;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Formats an integral number but adds a decimal point between two digits</summary>
   /// <param name="buffer">Buffer into which the number will be written</param>
   /// <param name="temp">Significand, aka the digits without a decimal point</param>
@@ -158,7 +195,7 @@ namespace {
     temp += bias[magnitude];
 
     // If this method is called, the decimal point is between two digits,
-    // thus the number must have magnitude 1 at least.
+    // thus the number must have magnitude 1 (two digits) at least.
     assert((magnitude >= 1) && u8"At least two digits are present");
 
     // Calculate the remaining digits behind the decimal point
@@ -188,7 +225,7 @@ namespace {
 
       //     ###      We subtracted the decimal point position from the magnitude to get
       //    ## ##     the remaining digits, but both are offset by -1, so now there's
-      //   ## | ##    no offset anymore *but* we already wrote one digit above
+      //   ## | ##    no offset anymore *but* we already wrote one digit above.
       //  ##  '  ##
       // ###########  [4] 56  <-- magnitude = 3
       //
@@ -275,21 +312,39 @@ namespace {
   /// </param>
   /// <returns>A pointer one past the last written character in the buffer</returns>
   char *formatInteger64WithDecimalPoint(
-    char *buffer /* [48] */, std::uint64_t number, int magnitude, int decimalPointPosition
+    char *buffer /* [325] */, std::uint64_t number, int magnitude, int decimalPointPosition
   ) {
-    // float64 has 53 bits precision for the significand, thus the largest number we can
-    // expect in 'number' is 9'007'199'254'740'991 and only need to deal, which can always be
-    // covered with two calls to the 32 bit formatting routine.
+    // float64 has 53 bits precision for the significand, thus the largest value we can
+    // expect in 'number' is 9'007'199'254'740'991.
     //
     // 18'446'744'073'709'551'615     Maximum 64 bit integer
-    //      9'007'199'254'740'991     Maximum 53 bit integer
+    //      9'007'199'254'740'991     Maximum 53 bit integer (float64 significand)
     //              4'294'967'295     Maximum 32 bit integer
     //
-    // So we have 2 possibilities
-    //   * 10 digits + 9 digits with decimal point
-    //   * 9 digits with decimal point + 10 digits
+    // This fits beautifully into two calls to the 32 bit integer formatting method!
 
+    //     ###      The magnitude and decimalPointPosition inputs are offset by -1 and
+    //    ## ##     incrementing them would just cost CPU cycles.
+    //   ## | ##
+    //  ##  '  ##   123456789.123456789    <-- magnitude = 17 (with 18 digits)
+    // ###########           ^-- decimalPointPosition = 8 (after 9th digit)
+    //
 
+    if(magnitude < 10) {
+      return formatInteger32WithDecimalPoint(buffer, number, magnitude, decimalPointPosition);
+    } else if(decimalPointPosition < 9) {
+
+      buffer = formatInteger32WithDecimalPoint(
+        buffer, number / 1'000'000'000, magnitude - 9, decimalPointPosition
+      );
+      return formatInteger32(buffer, number % 1'000'000'000, 8);
+
+      // print first 9 digits with decimal point
+      // print any remaining digits manually
+    } else {
+      // print first 9 digits manually
+      // print any remaining digits with decimal point
+    }
 
     std::memcpy(buffer, u8"Not implemented yet", 19);
     return buffer + 19;
@@ -435,9 +490,7 @@ namespace Nuclex { namespace Support { namespace Text {
               return formatInteger64WithDecimalPoint(
                 buffer, result.significand, digitCountMinusOne, decimalPointPosition
               );
-              //return buffer;
             }
-
           }
         } else { // Exponent is zero or positive, number has no decimal places
           buffer = FormatInteger(buffer, result.significand);

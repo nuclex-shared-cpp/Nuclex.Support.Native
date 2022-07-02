@@ -120,25 +120,25 @@ namespace {
         if (n < 10'000) {
           // 3 or 4 digits.
           // 42949673 = ceil(2^32 / 10^2)
-          print(42949673, 0, std::integral_constant<int, 1>{});
+          print(42'949'673, 0, std::integral_constant<int, 1>{});
         }
         else {
           // 5 or 6 digits.
           // 429497 = ceil(2^32 / 10^4)
-          print(429497, 0, std::integral_constant<int, 2>{});
+          print(429'497, 0, std::integral_constant<int, 2>{});
         }
       }
       else {
         if (n < 100'000'000) {
           // 7 or 8 digits.
           // 281474978 = ceil(2^48 / 10^6) + 1
-          print(281474978, 16, std::integral_constant<int, 3>{});
+          print(281'474'978, 16, std::integral_constant<int, 3>{});
         }
         else {
           if (n < 1'000'000'000) {
             // 9 digits.
             // 1441151882 = ceil(2^57 / 10^8) + 1
-            prod = n * std::uint64_t(1441151882);
+            prod = n * std::uint64_t(1'441'151'882);
             prod >>= 25;
             print_1(int(prod >> 32));
             print_2(get_next_two_digits());
@@ -149,7 +149,7 @@ namespace {
           else {
             // 10 digits.
             // 1441151881 = ceil(2^57 / 10^8)
-            prod = n * std::uint64_t(1441151881);
+            prod = n * std::uint64_t(1'441'151'881);
             prod >>= 25;
             print_2(int(prod >> 32));
             print_2(get_next_two_digits());
@@ -212,18 +212,6 @@ namespace Nuclex { namespace Support { namespace Text {
     celero::DoNotOptimizeAway(
       itoa_better_y(
         static_cast<std::uint32_t>(randomNumberDistribution32(randomNumberGenerator32)),
-        number
-      )
-    );
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  BENCHMARK(Integer64Itoa, JeaiiiImproved, 1000, 0) {
-    char number[40];
-    celero::DoNotOptimizeAway(
-      itoa_better_y(
-        static_cast<std::uint64_t>(randomNumberDistribution64(randomNumberGenerator64)),
         number
       )
     );
