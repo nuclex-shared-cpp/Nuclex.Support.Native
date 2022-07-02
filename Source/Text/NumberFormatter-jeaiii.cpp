@@ -125,7 +125,7 @@ namespace Nuclex { namespace Support { namespace Text {
     //
     if(number < 100) {
       if(number < 10) {
-        *buffer = u8'0' + number;
+        *buffer = static_cast<char>(u8'0' + number);
         return buffer + 1;
       } else {
         *reinterpret_cast<TwoChars *>(buffer) = (
@@ -251,7 +251,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
       if(number < 100) {
         if(number < 10) {
-          *buffer++ = u8'0' + number;
+          *buffer++ = static_cast<char>(u8'0' + number);
         } else {
           *reinterpret_cast<TwoChars *>(buffer) = (
             *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[number * 2])

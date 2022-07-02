@@ -56,8 +56,8 @@ namespace {
   class Event2Fixture : public celero::TestFixture {
 
 		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
-      this->doNothingConnection = std::move(this->testEvent.connect(doNothingCallback));
-      this->doMoreNothingConnection = std::move(this->testEvent.connect(doMoreNothingCallback));
+      this->doNothingConnection = this->testEvent.connect(doNothingCallback);
+      this->doMoreNothingConnection = this->testEvent.connect(doMoreNothingCallback);
     }
 
     public: void tearDown() override {
@@ -79,7 +79,7 @@ namespace {
       this->connections.reserve(50);
       this->connections.clear();
       for(std::size_t index = 0; index < 50; ++index) {
-        this->connections.push_back(std::move(this->testEvent.connect(doNothingCallback)));
+        this->connections.push_back(this->testEvent.connect(doNothingCallback));
       }
     }
 
@@ -141,7 +141,7 @@ namespace Nuclex { namespace Support { namespace Events {
     std::vector<lsignal::connection> connections;
     connections.reserve(50);
     for(std::size_t index = 0; index < 50; ++index) {
-      connections.push_back(std::move(testEvent.connect(doNothingCallback)));
+      connections.push_back(testEvent.connect(doNothingCallback));
     }
     for(std::size_t index = 0; index < 50; ++index) {
       testEvent.disconnect(connections[49 - index]);

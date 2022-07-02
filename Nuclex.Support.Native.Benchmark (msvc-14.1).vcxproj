@@ -197,6 +197,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Benchmarks\Events\BoostSignalsBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Events\EventBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Events\LSignalBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Events\NanoSignalSlotBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\AmdnItoaBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\IntegerToStringBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\JeaiiiItoaBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\JeaiiiLutItoaBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\NumberFormatterBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\BenchmarkMain.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\MoodyCamel\blockingconcurrentqueue.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\MoodyCamel\concurrentqueue.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\MoodyCamel\lightweightsemaphore.h" />
@@ -265,9 +277,6 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Benchmarks\BenchmarkMain.cpp" />
-    <ClCompile Include="Benchmarks\Events\EventBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\Text\IntegerToStringBenchmark.cpp" />
     <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentCollection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
@@ -323,24 +332,8 @@
     <ClCompile Include="Source\Settings\MemorySettingsStore.cpp" />
     <ClCompile Include="Source\Settings\RegistrySettingsStore.cpp" />
     <ClCompile Include="Source\Settings\SettingsStore.cpp" />
-    <ClCompile Include="Source\TemporaryDirectoryScope.cpp" />
-    <ClCompile Include="Source\TemporaryFileScope.cpp" />
-    <ClCompile Include="Source\Text\Amartin\itoa.cpp" />
-    <ClInclude Include="Source\Text\Amartin\itoa.h" />
-    <ClInclude Include="Source\Text\Amartin\itoa_impl.h" />
-    <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp" />
-    <ClInclude Include="Source\Text\Dragon4\Dragon4.h" />
-    <ClInclude Include="Source\Text\Dragon4\Math.h" />
-    <ClCompile Include="Source\Text\Dragon4\PrintFloat.cpp" />
-    <ClInclude Include="Source\Text\Dragon4\PrintFloat.h" />
-    <ClInclude Include="Source\Text\Dragon4\Standard.h" />
-    <ClCompile Include="Source\Text\Dragon4\Math.cpp" />
-    <ClInclude Include="Source\Text\Jeaiii\int_to_chars_jeaiii.h" />
-    <ClCompile Include="Source\Text\Jeaiii\itoa_jeaiii.cpp" />
-    <ClCompile Include="Source\Text\Jeaiii\to_chars.cpp" />
-    <ClInclude Include="Source\Text\Jeaiii\to_text_from_integer.h" />
+    <ClInclude Include="Source\Text\DragonBox-1.1.2\dragonbox.h" />
     <ClInclude Include="Source\Text\Ryu\common.h" />
-    <ClCompile Include="Source\Text\ParserHelper.cpp" />
     <ClCompile Include="Source\Text\Ryu\d2fixed.c" />
     <ClInclude Include="Source\Text\Ryu\d2fixed_full_table.h" />
     <ClCompile Include="Source\Text\Ryu\d2s.c" />
@@ -361,6 +354,11 @@
     <ClCompile Include="Source\Text\LexicalAppend.cpp" />
     <ClCompile Include="Source\Text\LexicalCast.cpp" />
     <ClCompile Include="Source\Text\Logger.cpp" />
+    <ClCompile Include="Source\Text\NumberFormatter-dragonbox.cpp" />
+    <ClCompile Include="Source\Text\NumberFormatter-jeaiii.cpp" />
+    <ClCompile Include="Source\Text\NumberFormatter.cpp" />
+    <ClInclude Include="Source\Text\NumberFormatter.h" />
+    <ClCompile Include="Source\Text\ParserHelper.cpp" />
     <ClCompile Include="Source\Text\RollingLogger.cpp" />
     <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
@@ -383,6 +381,8 @@
     <ClCompile Include="Source\Config.cpp" />
     <ClCompile Include="Source\Optional.cpp" />
     <ClCompile Include="Source\ScopeGuard.cpp" />
+    <ClCompile Include="Source\TemporaryDirectoryScope.cpp" />
+    <ClCompile Include="Source\TemporaryFileScope.cpp" />
     <ClCompile Include="Source\Variant.cpp" />
     <ClCompile Include="Source\VariantType.cpp" />
   </ItemGroup>

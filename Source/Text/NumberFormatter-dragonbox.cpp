@@ -22,10 +22,18 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "./NumberFormatter.h"
-#include "./DragonBox-1.1.2/dragonbox.h" // for the float-to-decimal algorithm
-#include "Nuclex/Support/BitTricks.h" // for BitTricks::GetLogBase10()
 
-#include <iostream>
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable: 4307) // Integral constant overflow
+#pragma warning(disable: 4702) // Unreachable code
+#endif
+#include "./DragonBox-1.1.2/dragonbox.h" // for the float-to-decimal algorithm
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
+#include "Nuclex/Support/BitTricks.h" // for BitTricks::GetLogBase10()
 
 // Brings the next two digits of the prepeared number into the upper 32 bits
 // so they can be extracted by the WRITE_ONE_DIGIT and WRITE_TWO_DIGITS macros
@@ -138,7 +146,7 @@ namespace {
   /// <param name="temp">The integer that will be written to the buffer</param>
   /// <param name="magnitude">Magnitude of the number (digit count minus 1)</param>
   /// <returns>A pointer one past the last written character in the buffer</returns>
-  char *formatInteger32(char *buffer /* [10] */, std::uint64_t temp, int magnitude) {
+  char *formatInteger32(char *buffer /* [10] */, std::uint64_t temp, std::size_t magnitude) {
     temp *= factors[magnitude];
     temp >>= shift[magnitude];
     temp += bias[magnitude];
@@ -180,7 +188,8 @@ namespace {
   /// </param>
   /// <returns>A pointer one past the last written character in the buffer</returns>
   char *formatInteger32WithDecimalPoint(
-    char *buffer /* [48] */, std::uint64_t temp, int magnitude, int decimalPointPosition
+    char *buffer /* [48] */, std::uint64_t temp,
+    std::size_t magnitude, std::size_t decimalPointPosition
   ) {
     assert(static_cast<std::uint32_t>(temp) == temp); // Must fit in 32 bits integer!
 
@@ -312,7 +321,8 @@ namespace {
   /// </param>
   /// <returns>A pointer one past the last written character in the buffer</returns>
   char *formatInteger64WithDecimalPoint(
-    char *buffer /* [325] */, std::uint64_t number, int magnitude, int decimalPointPosition
+    char *buffer /* [325] */, std::uint64_t number,
+    std::size_t magnitude, std::size_t decimalPointPosition
   ) {
     // float64 has 53 bits precision for the significand, thus the largest value we can
     // expect in 'number' is 9'007'199'254'740'991.
@@ -387,7 +397,7 @@ namespace Nuclex { namespace Support { namespace Text {
           std::size_t digitCountMinusOne = (
             Nuclex::Support::BitTricks::GetLogBase10(result.significand)
           );
-          int decimalPointPosition = result.exponent + digitCountMinusOne;
+          std::size_t decimalPointPosition = result.exponent + digitCountMinusOne;
 
           // Does the decimal point lie before all the significand's digits?
           if(decimalPointPosition < 0) {
@@ -466,7 +476,7 @@ namespace Nuclex { namespace Support { namespace Text {
           std::size_t digitCountMinusOne = (
             Nuclex::Support::BitTricks::GetLogBase10(result.significand)
           );
-          int decimalPointPosition = result.exponent + digitCountMinusOne;
+          std::size_t decimalPointPosition = result.exponent + digitCountMinusOne;
 
           // Does the decimal point lie before all the significand's digits?
           if(decimalPointPosition < 0) {

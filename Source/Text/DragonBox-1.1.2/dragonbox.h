@@ -2541,6 +2541,7 @@ namespace jkj::dragonbox {
             [exponent_bits, signed_significand_bits](auto interval_type_provider) {
                 using format = typename FloatTraits::format;
                 constexpr auto tag = decltype(interval_type_provider)::tag;
+                typedef decltype(interval_type_provider) interval_type_provider_type;
 
                 auto two_fc = signed_significand_bits.remove_sign_bit_and_shift();
                 auto exponent = int(exponent_bits);
@@ -2580,13 +2581,12 @@ namespace jkj::dragonbox {
                                       std::is_same_v<format, ieee754_binary64>);
 
                         if (two_fc == 0) {
-                            return decltype(interval_type_provider)::invoke_shorter_interval_case(
+                            return interval_type_provider_type::invoke_shorter_interval_case(
                                 signed_significand_bits, [exponent](auto... additional_args) {
                                     return detail::impl<Float, FloatTraits>::
                                         template compute_nearest_shorter<
                                             return_type,
-                                            typename decltype(interval_type_provider)::
-                                                shorter_interval_type,
+                                            typename interval_type_provider_type::shorter_interval_type,
                                             typename policy_holder::trailing_zero_policy,
                                             typename policy_holder::
                                                 binary_to_decimal_rounding_policy,
@@ -2607,7 +2607,7 @@ namespace jkj::dragonbox {
                             return detail::impl<Float, FloatTraits>::
                                 template compute_nearest_normal<
                                     return_type,
-                                    typename decltype(interval_type_provider)::normal_interval_type,
+                                    typename interval_type_provider_type::normal_interval_type,
                                     typename policy_holder::trailing_zero_policy,
                                     typename policy_holder::binary_to_decimal_rounding_policy,
                                     typename policy_holder::cache_policy>(two_fc, exponent,

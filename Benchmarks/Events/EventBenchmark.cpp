@@ -219,7 +219,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   BASELINE_F(Invoke2_x100, NuclexEvent, Event2Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
-      this->testEvent.Emit(index);
+      this->testEvent.Emit(static_cast<int>(index));
     }
   }
 
@@ -227,7 +227,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   BENCHMARK_F(Invoke2_x100, NuclexConcurrentEvent, ConcurrentEvent2Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
-      this->testEvent.Emit(index);
+      this->testEvent.Emit(static_cast<int>(index));
     }
   }
 
@@ -235,7 +235,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   BASELINE_F(Invoke50_x100, NuclexEvent, Event50Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
-      this->testEvent.Emit(index);
+      this->testEvent.Emit(static_cast<int>(index));
     }
   }
 
@@ -243,7 +243,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
   BENCHMARK_F(Invoke50_x100, NuclexConcurrentEvent, ConcurrentEvent50Fixture, 1000, 0) {
     for(std::size_t index = 0; index < 100; ++index) {
-      this->testEvent.Emit(index);
+      this->testEvent.Emit(static_cast<int>(index));
     }
   }
 

@@ -60,14 +60,8 @@
     <Filter Include="Source\Text">
       <UniqueIdentifier>{f20ce72c-f037-4bfc-8e47-a38db78850de}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Text\Amartin">
-      <UniqueIdentifier>{b977faae-cbf4-4ade-babf-a461faf70e9f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Text\Dragon4">
-      <UniqueIdentifier>{a269f932-f334-49f2-b999-0fef78045fdd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Text\Jeaiii">
-      <UniqueIdentifier>{97b856ce-f03c-4aba-9713-e2c95f1d3dca}</UniqueIdentifier>
+    <Filter Include="Source\Text\DragonBox-1.1.2">
+      <UniqueIdentifier>{823678f3-8cdc-419f-a34a-7b7cddff31a6}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Text\Ryu">
       <UniqueIdentifier>{6d6734f5-932c-4dcd-bb67-6a9b69db0f2e}</UniqueIdentifier>
@@ -84,6 +78,41 @@
     <Filter Include="Benchmark\Text">
       <UniqueIdentifier>{7a44a823-dc62-4c62-90c0-80cd15deed96}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Platform">
+      <UniqueIdentifier>{4ba97360-63bc-4b0c-9b62-77b6d23382a0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Benchmarks\Text\AmdnItoaBenchmark.cpp">
+      <Filter>Benchmark\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmarks\Text\IntegerToStringBenchmark.cpp">
+      <Filter>Benchmark\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmarks\Text\JeaiiiItoaBenchmark.cpp">
+      <Filter>Benchmark\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmarks\Text\JeaiiiLutItoaBenchmark.cpp">
+      <Filter>Benchmark\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmarks\Text\NumberFormatterBenchmark.cpp">
+      <Filter>Benchmark\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmarks\Events\BoostSignalsBenchmark.cpp">
+      <Filter>Benchmark\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmarks\Events\EventBenchmark.cpp">
+      <Filter>Benchmark\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmarks\Events\LSignalBenchmark.cpp">
+      <Filter>Benchmark\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmarks\Events\NanoSignalSlotBenchmark.cpp">
+      <Filter>Benchmark\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmarks\BenchmarkMain.cpp">
+      <Filter>Benchmark</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\MoodyCamel\blockingconcurrentqueue.h">
@@ -284,39 +313,6 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Platform\LinuxFileApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\PosixApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\PosixFileApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\PosixPathApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\PosixProcessApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\PosixTimeApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\WindowsApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\WindowsFileApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\WindowsPathApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\WindowsProcessApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Platform\WindowsRegistryApi.h">
-      <Filter>Source</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Collection.cpp">
@@ -385,6 +381,72 @@
     <ClCompile Include="Source\Events\Event.cpp">
       <Filter>Source\Events</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Platform\LinuxFileApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\LinuxFileApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\PosixApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\PosixApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\PosixFileApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\PosixFileApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\PosixPathApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\PosixPathApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\PosixProcessApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\PosixProcessApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\PosixTimeApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\PosixTimeApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\WindowsApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\WindowsApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\WindowsFileApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\WindowsFileApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\WindowsPathApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\WindowsPathApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\WindowsProcessApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\WindowsProcessApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
+    <ClCompile Include="Source\Platform\WindowsRegistryApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\WindowsRegistryApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
@@ -418,47 +480,8 @@
     <ClCompile Include="Source\Settings\SettingsStore.cpp">
       <Filter>Source\Settings</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Text\Amartin\itoa.cpp">
-      <Filter>Source\Text\Amartin</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Text\Amartin\itoa.h">
-      <Filter>Source\Text\Amartin</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Amartin\itoa_impl.h">
-      <Filter>Source\Text\Amartin</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Text\Dragon4\Dragon4.cpp">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Dragon4\Math.cpp">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Dragon4\PrintFloat.cpp">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Text\Dragon4\Dragon4.h">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Dragon4\Math.h">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Dragon4\PrintFloat.h">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Dragon4\Standard.h">
-      <Filter>Source\Text\Dragon4</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Jeaiii\int_to_chars_jeaiii.h">
-      <Filter>Source\Text\Jeaiii</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Text\Jeaiii\itoa_jeaiii.cpp">
-      <Filter>Source\Text\Jeaiii</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Jeaiii\to_chars.cpp">
-      <Filter>Source\Text\Jeaiii</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Text\Jeaiii\to_text_from_integer.h">
-      <Filter>Source\Text\Jeaiii</Filter>
+    <ClInclude Include="Source\Text\DragonBox-1.1.2\dragonbox.h">
+      <Filter>Source\Text\DragonBox-1.1.2</Filter>
     </ClInclude>
     <ClCompile Include="Source\Text\Ryu\d2fixed.c">
       <Filter>Source\Text\Ryu</Filter>
@@ -523,6 +546,18 @@
     <ClCompile Include="Source\Text\Logger.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Text\NumberFormatter-dragonbox.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\NumberFormatter-jeaiii.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Text\NumberFormatter.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Text\NumberFormatter.h">
+      <Filter>Source\Text</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Text\ParserHelper.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
@@ -603,48 +638,6 @@
     </ClCompile>
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\LinuxFileApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\PosixApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\PosixFileApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\PosixPathApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\PosixProcessApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\PosixTimeApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\WindowsApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\WindowsFileApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\WindowsPathApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\WindowsProcessApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Platform\WindowsRegistryApi.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Benchmarks\Events\EventBenchmark.cpp">
-      <Filter>Benchmark\Events</Filter>
-    </ClCompile>
-    <ClCompile Include="Benchmarks\Text\IntegerToStringBenchmark.cpp">
-      <Filter>Benchmark\Text</Filter>
-    </ClCompile>
-    <ClCompile Include="Benchmarks\BenchmarkMain.cpp">
-      <Filter>Benchmark</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
