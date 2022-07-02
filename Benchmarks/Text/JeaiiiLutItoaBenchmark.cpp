@@ -33,24 +33,6 @@ License along with this library
 #include <cstdint> // for std::uint32_t, std::uint64_t
 #include <type_traits> // for std::integral_constant
 
-// Uses a magic formula to turn a 32 bit number into a specific 64 bit number.
-//
-// I think the main thing this formula accomplishes is that the actual number sits at
-// the upper end of a 32 bit integer. Thus, when you cast it to a 64 bit integer and
-// multiply it by 100, you end up with the next two digits in the upper 32 bits of
-// your 64 bit integer where they're easy to grab.
-//
-// Magnitude is 1 for 100, 2 for 1'000, 3 for 10'000 and so on
-//
-#define PREPARE_NUMBER_OF_MAGNITUDE(number, magnitude) \
-  temp = ( \
-    (std::uint64_t(1) << (32 + magnitude / 5 * magnitude * 53 / 16)) / \
-    std::uint32_t(1e##magnitude) + 1 + magnitude/6 - magnitude/8 \
-  ), \
-  temp *= number, \
-  temp >>= magnitude / 5 * magnitude * 53 / 16, \
-  temp += magnitude / 6 * 4
-
 // Brings the next two digits of the prepeared number into the upper 32 bits
 // so they can be extracted by the WRITE_ONE_DIGIT and WRITE_TWO_DIGITS macros
 #define READY_NEXT_TWO_DIGITS() \
@@ -203,9 +185,9 @@ namespace {
     // less than two are left.
     for(;;) {
       WRITE_TWO_DIGITS(buffer);
-      if(magnitude < 2) { // Are less than 2 remaining?
-        if(magnitude >= 1) { // is even 1 remaining?
-          WRITE_ONE_DIGIT(buffer);
+      if(magnitude < 3) { // Are less than 2 remaining?
+        if(magnitude >= 2) { // is even 1 remaining?
+          WRITE_ONE_DIGIT(buffer + 2);
           return buffer + 3;
         } else {
           return buffer + 2;
@@ -241,9 +223,9 @@ namespace {
     // less than two are left.
     for(;;) {
       WRITE_TWO_DIGITS(buffer);
-      if(magnitude < 2) { // Are less than 2 remaining?
-        if(magnitude >= 1) { // is even 1 remaining?
-          WRITE_ONE_DIGIT(buffer);
+      if(magnitude < 3) { // Are less than 2 remaining?
+        if(magnitude >= 2) { // is even 1 remaining?
+          WRITE_ONE_DIGIT(buffer + 2);
           return buffer + 3;
         } else {
           return buffer + 2;
@@ -301,6 +283,5 @@ namespace Nuclex { namespace Support { namespace Text {
 #undef WRITE_TWO_DIGITS
 #undef WRITE_ONE_DIGIT
 #undef READY_NEXT_TWO_DIGITS
-#undef PREPARE_NUMBER_OF_MAGNITUDE
 
 #endif // defined(HAVE_JEAIII_ITOA)

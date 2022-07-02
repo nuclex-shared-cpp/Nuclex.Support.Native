@@ -29,7 +29,6 @@ License along with this library
 #include <limits> // for std::numeric_limits
 #include <algorithm> // for std::copy_n()
 
-#include "Dragon4/PrintFloat.h"
 #include "Ryu/ryu_parse.h"
 
 // TODO lexical_append() with std::string could resize within NumberFormatter
@@ -479,14 +478,10 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> void lexical_append<>(std::string &target, const float &from) {
     std::string::size_type length = target.length();
+    target.resize(length + 48U);
 
-    target.resize(length + 64U);
-
-    tU32 actualLength = ::PrintFloat32(
-      target.data() + length, 64U, from, PrintFloatFormat_Positional, -1
-    );
-
-    target.resize(length + static_cast<std::string::size_type>(actualLength));
+    char *end = FormatFloat(target.data() + length, from);
+    target.resize(end - target.data());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -494,16 +489,14 @@ namespace Nuclex { namespace Support { namespace Text {
   template<> std::size_t lexical_append<>(
     char *target, std::size_t availableBytes, const float &from
   ) {
-    if(availableBytes >= 64U) {
-      tU32 actualLength = ::PrintFloat32(
-        target, static_cast<tU32>(availableBytes), from, PrintFloatFormat_Positional, -1
-      );
-      return static_cast<std::size_t>(actualLength);
+    if(availableBytes >= 48U) {
+      char *end = FormatFloat(target, from);
+      return static_cast<std::size_t>(end - target);
     } else {
-      char characters[64];
-      std::size_t actualLength = static_cast<std::size_t>(
-        ::PrintFloat32(characters, sizeof(characters), from, PrintFloatFormat_Positional, -1)
-      );
+      char characters[48];
+      char *end = FormatFloat(characters, from);
+
+      std::size_t actualLength = static_cast<std::size_t>(end - characters);
       if(availableBytes >= actualLength) {
         std::copy_n(characters, actualLength, target);
       }
@@ -517,14 +510,10 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> void lexical_append<>(std::string &target, const double &from) {
     std::string::size_type length = target.length();
+    target.resize(length + 325U);
 
-    target.resize(length + 256U);
-
-    tU32 actualLength = ::PrintFloat64(
-      target.data() + length, 256U, from, PrintFloatFormat_Positional, -1
-    );
-
-    target.resize(length + static_cast<std::string::size_type>(actualLength));
+    char *end = FormatFloat(target.data() + length, from);
+    target.resize(end - target.data());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -532,16 +521,14 @@ namespace Nuclex { namespace Support { namespace Text {
   template<> std::size_t lexical_append<>(
     char *target, std::size_t availableBytes, const double &from
   ) {
-    if(availableBytes >= 256U) {
-      tU32 actualLength = ::PrintFloat64(
-        target, static_cast<tU32>(availableBytes), from, PrintFloatFormat_Positional, -1
-      );
-      return static_cast<std::size_t>(actualLength);
+    if(availableBytes >= 325U) {
+      char *end = FormatFloat(target, from);
+      return static_cast<std::size_t>(end - target);
     } else {
-      char characters[256];
-      std::size_t actualLength = static_cast<std::size_t>(
-        ::PrintFloat64(characters, sizeof(characters), from, PrintFloatFormat_Positional, -1)
-      );
+      char characters[325];
+      char *end = FormatFloat(characters, from);
+
+      std::size_t actualLength = static_cast<std::size_t>(end - characters);
       if(availableBytes >= actualLength) {
         std::copy_n(characters, actualLength, target);
       }
