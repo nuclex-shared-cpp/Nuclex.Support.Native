@@ -35,21 +35,3 @@ Windows has a similar capability via WaitOnAddress(), allowing potentially
 much faster threading primitives than using the lame Win32 API calls.
 
  * Benchmark and implement Semaphore, Gate and Latch via WaitOnAddress()
-
-
-DragonBox and J E A III Float and Integer Formatter
----------------------------------------------------
-
-After switching out the earlier integer formatter (author turned fash
-and calls the other side fash, typical of Russian indoctrination :D),
-I am now considering moving to DragonBox.
-
-The lynchpin is whether I can make DragonBox output strictly non-exponential
-notation for floating point numbers. DragonBox also comes with an example
-integer formatter (used by its float formatter) based on the J E A III
-technique.
-
- * Rewrite DragonBox float formatter to output non-exponential notation
- * Expose its J E A III integer formatting routines for external use
- * Throw out J E A III and AMartin integer formatters
-

@@ -9,7 +9,11 @@ project(
 	DESCRIPTION "Utility functions and basic interface definitions"
 )
 
-set(BUILD_DOCS OFF CACHE BOOL "Whether to generate documentation via Doxygen")
+option(
+	BUILD_DOCS
+	"Whether to generate documentation via Doxygen"
+	OFF
+)
 
 option(
   BUILD_UNIT_TESTS
@@ -18,7 +22,7 @@ option(
   OFF
 )
 option(
-  BUILD_BENCHMARKS
+  BUILD_BENCHMARK
   "Whether to build the benchmark executable. This will require an extra \
   compilation of the entire source tree as well as the Celero library."
   OFF
@@ -55,10 +59,10 @@ if(BUILD_UNIT_TESTS)
 	endif()
 endif()
 
-if(BUILD_BENCHMARKS)
+if(BUILD_BENCHMARK)
 	message(STATUS "  ⚫ Build benchmark")
 	if(BENCHMARK_THIRD_PARTY_LIBRARIES)
-		message(STATUS "  ⚫ Benchmark includes third-party libraries")
+		message(STATUS "  ⚫ Include third-party libraries in benchmark")
 	endif()
 
 	# Add Celero as a sub-project so we can link our benchmark executable
@@ -221,7 +225,7 @@ endif() # if BUILD_UNIT_TESTS enabled
 
 # -------------------------------------------------------------------------------------------------
 
-if(BUILD_BENCHMARKS)
+if(BUILD_BENCHMARK)
 
 	# Executable that runs the unit tests (main() supplied by Googletest)
 	add_executable(NuclexSupportNativeBenchmark)
@@ -285,7 +289,7 @@ if(BUILD_BENCHMARKS)
 		)
 	endif()
 
-endif() # if BUILD_BENCHMARKS enabled
+endif() # if BUILD_BENCHMARK enabled
 
 # -------------------------------------------------------------------------------------------------
 
@@ -319,7 +323,7 @@ if(BUILD_UNIT_TESTS)
 endif()
 
 # Install benchmarks in same location as shared library.
-if(BUILD_BENCHMARKS)
+if(BUILD_BENCHMARK)
 	install(
 		TARGETS NuclexSupportNativeBenchmark
 		RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
