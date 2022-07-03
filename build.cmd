@@ -28,7 +28,8 @@ FOR %%m IN (Debug Release) DO (
 			-B obj\cmake-%%m ^
 			-D CMAKE_BUILD_TYPE=%%m ^
 			-D BUILD_UNIT_TESTS=ON ^
-			-D BUILD_BENCHMARKS=ON ^
+			-D BUILD_BENCHMARK=ON ^
+			-D BENCHMARK_THIRD_PARTY_LIBRARIES=OFF ^
 			-GNinja
 	) ELSE (
 		cmake ^
@@ -36,7 +37,8 @@ FOR %%m IN (Debug Release) DO (
 			-D CMAKE_BUILD_TYPE=%%m ^
 			-D CMAKE_GENERATOR_PLATFORM=x64 ^
 			-D BUILD_UNIT_TESTS=ON ^
-			-D BUILD_BENCHMARKS=ON
+			-D BUILD_BENCHMARK=ON ^
+			-D BENCHMARK_THIRD_PARTY_LIBRARIES=OFF
 	)
 
 	REM Compile the binary

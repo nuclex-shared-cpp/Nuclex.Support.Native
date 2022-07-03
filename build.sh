@@ -24,16 +24,16 @@ for buildMode in Debug Release; do
 			-B obj/cmake-$buildMode \
 			-D CMAKE_BUILD_TYPE=$buildMode \
 			-D BUILD_UNIT_TESTS=ON \
-			-D BUILD_BENCHMARKS=ON \
-			-D BENCHMARK_THIRD_PARTY_LIBRARIES=ON \
+			-D BUILD_BENCHMARK=ON \
+			-D BENCHMARK_THIRD_PARTY_LIBRARIES=OFF \
 			-GNinja
 	else
 		cmake \
 			-B obj/cmake-$buildMode \
 			-D CMAKE_BUILD_TYPE=$buildMode \
 			-D BUILD_UNIT_TESTS=ON \
-			-D BUILD_BENCHMARKS=ON \
-			-D BENCHMARK_THIRD_PARTY_LIBRARIES=ON
+			-D BUILD_BENCHMARK=ON \
+			-D BENCHMARK_THIRD_PARTY_LIBRARIES=OFF
 	fi
 
 	# Compile the binary

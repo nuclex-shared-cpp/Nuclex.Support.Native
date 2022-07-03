@@ -92,12 +92,12 @@ namespace {
 
   std::uniform_real_distribution<float> smallRandomNumberDistributionFloat(-1.0f, +1.0f);
   std::uniform_real_distribution<float> largeRandomNumberDistributionFloat(
-    std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()
+    std::numeric_limits<float>::lowest() / 2.1f, std::numeric_limits<float>::max() / 2.1f
   );
 
   std::uniform_real_distribution<double> smallRandomNumberDistributionDouble(-1.0f, +1.0f);
   std::uniform_real_distribution<double> largeRandomNumberDistributionDouble(
-    std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max()
+    std::numeric_limits<double>::lowest() / 2.1, std::numeric_limits<double>::max() / 2.1
   );
 
   // ------------------------------------------------------------------------------------------- //

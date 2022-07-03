@@ -273,7 +273,7 @@ namespace Nuclex { namespace Support { namespace Text {
   TEST(NumberFormatterTest, LargeFloatingPointValuesCanBePrinted) {
     std::mt19937_64 randomNumberGenerator;
     std::uniform_real_distribution<float> randomNumberDistribution(
-      std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()
+      std::numeric_limits<float>::lowest() / 2.1f, std::numeric_limits<float>::max() / 2.1f
     );
 
     for(std::size_t index = 0; index < SampleCount; ++index) {
@@ -316,7 +316,7 @@ namespace Nuclex { namespace Support { namespace Text {
   TEST(NumberFormatterTest, LargeDoublePrecisionFloatingPointValuesCanBePrinted) {
     std::mt19937_64 randomNumberGenerator;
     std::uniform_real_distribution<double> randomNumberDistribution(
-      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max()
+      std::numeric_limits<double>::lowest() / 2.1, std::numeric_limits<double>::max() / 2.1
     );
 
     for(std::size_t index = 0; index < SampleCount; ++index) {
