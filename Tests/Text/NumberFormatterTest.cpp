@@ -201,7 +201,7 @@ namespace Nuclex { namespace Support { namespace Text {
       // Tiniest and largest positive float values
       0.58775e-038f, 1.1755e-038f, 1.7014E+038f, 3.4028e+038f,
       // Large digit counts before and after the decimal point
-      0.16777215f, 1.6777215, 16777215.0f, 1677721.5f
+      0.16777215f, 1.6777215f, 16777215.0f, 1677721.5f
     };
 
     for(float number : numbers) {
