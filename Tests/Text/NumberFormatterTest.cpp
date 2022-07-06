@@ -28,11 +28,13 @@ License along with this library
 #include <gtest/gtest.h>
 
 #include <random> // for std::uniform_int_distribution, std::uniform_real_distribution
-//#include <locale> // for std::numpunct::decimal_point()
-//#include <cmath> // for
 
 namespace {
 
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Replaces the decimal point with its localized equivalent</summary>
+  /// <param name="numberAsText">String containing an unlocalized decimal point</param>
   void localizeDecimalPoint(std::string &numberAsText) {
     char localizedDecimalPoint = u8','; // std::numpunct::decimal_point()
     std::string silly = std::to_string(1.2f);
@@ -280,7 +282,6 @@ namespace Nuclex { namespace Support { namespace Text {
       float number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
 
       char buffer[48];
-      //jkj::dragonbox::to_chars(number, buffer);
       char *end = FormatFloat(buffer, number);
       std::string formatted(buffer, end);
       localizeDecimalPoint(formatted);
@@ -323,7 +324,6 @@ namespace Nuclex { namespace Support { namespace Text {
       double number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
 
       char buffer[325];
-      //jkj::dragonbox::to_chars(number, buffer);
       char *end = FormatFloat(buffer, number);
       std::string formatted(buffer, end);
       localizeDecimalPoint(formatted);

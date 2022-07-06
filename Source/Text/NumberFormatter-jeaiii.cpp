@@ -22,7 +22,6 @@ License along with this library
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "./NumberFormatter.h"
-//#include "Nuclex/Support/BitTricks.h" // for the base-10 log function
 
 // Uses a magic formula to turn a 32 bit number into a specific 64 bit number.
 //

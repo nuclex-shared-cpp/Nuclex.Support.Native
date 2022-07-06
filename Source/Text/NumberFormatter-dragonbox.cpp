@@ -489,7 +489,6 @@ namespace Nuclex { namespace Support { namespace Text {
             }
             return FormatInteger(buffer, result.significand);
           } else { // Nope, the decimal point is within the significand's digits!
-
             std::uint32_t number = static_cast<std::uint32_t>(result.significand);
             if(number == result.significand) {
               return formatInteger32WithDecimalPoint(

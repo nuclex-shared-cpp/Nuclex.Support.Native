@@ -61,7 +61,7 @@ std::string scoreText = u8"Current score: ";
 lexical_append(scoreText, 110025);
 ```
 
-Uses [Dragon4](http://www.ryanjuckett.com/programming/printing-floating-point-numbers/),
+Uses [DragonBox](https://github.com/jk-jeon/dragonbox/),
 [James Edward Anhalt III itoa](https://github.com/jeaiii/itoa) and
 [Ryu](https://github.com/ulfjack/ryu) internally, which have licenses that allow this
 use. See Copyright.md in the Documents directory for more details.

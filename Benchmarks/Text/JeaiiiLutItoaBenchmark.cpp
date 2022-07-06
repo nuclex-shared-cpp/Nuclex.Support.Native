@@ -23,6 +23,15 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
+// Microsoft compilers cause this benchmark to crash stochastically with a silent
+// runtime error 0xc0000005 (apparently an access violation => SIGSEGV).
+//
+// This would indicate that there's a bug with certain numbers, but so far I could
+// never reproduce it in the debugger and it never happened with any other compiler.
+#if defined(_MSC_VER)
+#undef HAVE_JEAIII_ITOA
+#endif
+
 #if defined(HAVE_JEAIII_ITOA)
 
 #include "Nuclex/Support/BitTricks.h" // for BitTricks::GetLogBase10()
@@ -86,10 +95,14 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>A structure with the exact size of two unpadded 'char' variables</summary>
   struct TwoChars { char t, o; };
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>
+  ///   Stores the factor, shift offset and bias to prepare a number for printing
+  /// </summary>
   struct JeaiiiValues {
     std::uint32_t Factor;
     std::uint32_t Shift;
@@ -98,6 +111,7 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>All factors, shift offsets and biases for magnitudes from 1e1 to 1e9</summary>
   const JeaiiiValues magic[] = {
     {             0,  0, 0 }, // magnitude 1e-1 (invalid)
     {             0,  0, 0 }, // magnitude 1e0 (invalid) (4'294'967'297)
@@ -109,12 +123,12 @@ namespace {
     { 2'251'799'815, 19, 4 }, // magnitude 1e6
     { 3'602'879'703, 23, 4 }, // magnitude 1e7
     { 2'882'303'762, 26, 4 }, // magnitude 1d8
-    { 2'305'843'010, 29, 4 }, // magnitude 1e9
-    {             5, 66, 4 }  // magnitude 1e10
+    { 2'305'843'010, 29, 4 }  // magnitude 1e9
   };
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Factors the jeaiii algorithm uses to prepare a number for printing</summary>
   const std::uint32_t factors[] = {
                 0, // magnitude 1e-1 (invalid)
                 0, // magnitude 1e0 (invalid) (4'294'967'297)
@@ -126,12 +140,12 @@ namespace {
     2'251'799'815, // magnitude 1e6
     3'602'879'703, // magnitude 1e7
     2'882'303'762, // magnitude 1d8
-    2'305'843'010, // magnitude 1e9
-                5  // magnitude 1e10
+    2'305'843'010  // magnitude 1e9
   };
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Bit shifts the jeaiii algorithm uses to prepare a number for printing</summary>
   const std::uint32_t shift[] = {
      0, // magnitude 1e-1 (invalid)
      0, // magnitude 1e0 (invalid)
@@ -143,12 +157,12 @@ namespace {
     19, // magnitude 1e6
     23, // magnitude 1e7
     26, // magnitude 1e8
-    29, // magnitude 1e9
-    66  // magnitude 1e10
+    29  // magnitude 1e9
   };
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Bias added to numbers by jeaiii algorithm</summary>
   const std::uint32_t bias[] = {
     0, // magnitude 1e-1 (invalid)
     0, // magnitude 1e0 (invalid)
@@ -160,12 +174,17 @@ namespace {
     4, // magnitude 1e6
     4, // magnitude 1e7
     4, // magnitude 1e8
-    4, // magnitude 1e9
-    4  // magnitude 1e10
+    4  // magnitude 1e9
   };
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>
+  ///   Implementation of the jeaiii algorithm using look-up-tables instead of branches
+  /// </summary>
+  /// <param name="buffer">Buffer that will receive the printed number</param>
+  /// <param name="number">Number that will be printed</param>
+  /// <returns>A pointer one past the last character written into the buffer</returns>
   char *jeaiiiLutItoa(char *buffer /* [10] */, std::uint32_t number) {
     int magnitude = Nuclex::Support::BitTricks::GetLogBase10(number);
 
@@ -201,6 +220,13 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>
+  ///   Implementation of the jeaiii algorithm using look-up-tables merged into
+  ///   a structure instead of branches
+  /// </summary>
+  /// <param name="buffer">Buffer that will receive the printed number</param>
+  /// <param name="number">Number that will be printed</param>
+  /// <returns>A pointer one past the last character written into the buffer</returns>
   char *jeaiiiStructLutItoa(char *buffer /* [10] */, std::uint32_t number) {
     int magnitude = Nuclex::Support::BitTricks::GetLogBase10(number);
 
