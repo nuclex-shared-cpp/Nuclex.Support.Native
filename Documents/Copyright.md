@@ -51,9 +51,9 @@ Markus Ewald and licensed under the terms of the IBM Common Public License
 Nuclex.Support.Native also embeds additional libraries, belonging to their
 respective owners and used according to their respective licenses:
 
-  * The Dragon 4 floating point formatter under the ZLib license
   * The James Edward Anhalt III integer formatter under the MIT license
-  * The Ryu floating point formatter under the Apache 2.0 license
+  * Junekey Jeon's DragonBox float formatter under the Apache 2.0 license
+  * Ulf Adams' float parser from the Ryu library under the Apache 2.0 license
   * Cameron Desrochers' Multi-threaded queues under the Boost Software license
 
 

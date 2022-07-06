@@ -128,7 +128,7 @@ file(
 # Shared library that can be linked to other projects
 add_library(NuclexSupportNative SHARED)
 
-# Enable compiler warnings only if this library is compiles on its own.
+# Enable compiler warnings only if this library is compiled on its own.
 # If it's used as a sub-project, the including project's developers aren't
 # interested in seeing warnings from a project they're not maintaining.
 if(${CMAKE_PROJECT_NAME} STREQUAL "NuclexSupportNative")
