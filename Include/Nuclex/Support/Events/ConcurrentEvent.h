@@ -31,7 +31,6 @@ License along with this library
 #include <algorithm> // for std::copy_n()
 #include <memory> // for std::shared_ptr
 #include <vector> // for std::vector
-#include <vector> // for std::vector
 
 namespace Nuclex { namespace Support { namespace Events {
 
@@ -53,24 +52,23 @@ namespace Nuclex { namespace Support { namespace Events {
   ///     the concurrent event attempts the same while allowing free-threaded use.
   ///   </para>
   ///   <para>
-  ///     Like the single-threaded event, it assumes granular use, meaning you create many
-  ///     individual events rather than one big multi-purpose notification. It also assumes that
-  ///     events typically have none or only a small number of subscribers and that firing will
-  ///     happen much more often than subscription/unsubscription.
+  ///     Like the single-threaded event, it is optimized towards granular use, meaning you
+  ///     create many individual events rather than one big multi-purpose notification. It also
+  ///     assumes that events typically have none or only a small number of subscribers and
+  ///     is optimized for firing over subscription/unsubscription.
   ///   </para>
   ///   <para>
   ///     This concurrent event implementation can be freely used from any thread, including
   ///     simultaneous firing, subscription and unsubscription without any synchronization on
-  ///     the side the user of the event. Depending on your platform and C++ standard library,
-  ///     firing could be wait-free, but likely will use a spinlock around a piece of code
-  ///     covering just a few CPU cyles (two instructions ideally).
+  ///     the side of the user of the event. Firing uses a micro-spinlock around a piece of code
+  ///     covering just a few CPU cyles (two instructions ideally), so waits are highly unlikely
+  ///     and should be resolved in just a few cycles if they happen.
   ///   </para>
   ///   <para>
-  ///     A concurrent event should be equivalent in size to 1 shared_ptr on its own.
+  ///     A concurrent event should be equivalent in size to 3 pointers on its own.
   ///     It does not allocate any memory upon construction or firing, but will allocate
-  ///     a single memory block each time callbacks are subscribed or unsubscribed. Said memory
-  ///     block is the size of the std::shared_ptr reference count + two pointers + two more
-  ///     pointers per subscriber (overall typically 64 bytes + 16 bytes per subscriber).
+  ///     a memory block each time the number of subscribers passes a power of two.
+  ///     Said memory block is the size of 4 pointers + two more pointers per subscriber.
   ///   </para>
   ///   <para>
   ///     Usage example:
@@ -380,27 +378,27 @@ namespace Nuclex { namespace Support { namespace Events {
     /// <param name="queue">Queue whose memory will be freed</param>
     private: static void freeBroadcastQueue(BroadcastQueue *queue) noexcept {
       queue->~BroadcastQueue();
-      //static_assert(std::is_trivially_constructible<BroadcastQueue>::value);
-      //static_assert(std::is_trivially_constructible<DelegateType>::value);
+      //static_assert(std::is_trivially_destructible<BroadcastQueue>::value);
+      //static_assert(std::is_trivially_destructible<DelegateType>::value);
       delete[] reinterpret_cast<const std::uint8_t *>(queue);
     }
-
 
     /// <summary>Acquires the spinlock to access the subscriber queues</summary>
     /// <remarks>
     ///   <para>
     ///     Why are we implementing a manual spinlock here? It's essentially a rip-off of
-    ///     what std::atomic<std::shared_ptr>> does, acquire a spinlock for a very short period
-    ///     (2 or 3 machine instructions) to make grabbing a reference and incrementing
-    ///     its reference counter an atomic operation. Even under very high contention,
+    ///     what std::atomic<std::shared_ptr>> does: acquire a spinlock for a very short period
+    ///     (2 or 3 machine instructions) to make grabbing the pointer and incrementing
+    ///     the reference counter an atomic operation. Even under very high contention,
     ///     it will only loop a bunch of times.
     ///   </para>
     ///   <para>
     ///     If we relied std::shared_ptr, that would mean it has to acquire the spinlock often,
-    ///     even in situations where we can reason that the reference counter is either
-    ///     not being decremented to zero or the reference to the object being held isn't
-    ///     the one being referenced anymore. In short, we have a can achieve correctness with
-    ///     fewer steps than a full std::shared_ptr!
+    ///     even in situations where we can reason that one of the following must be true:
+    ///     * either the reference counter is not being decremented down to zero
+    ///     * or the object the reference counter is decremented for is abandoned.
+    ///     In short, in our special case, we can achieve correctness while doing fewer steps
+    ///     than a full std::shared_ptr would have to, avoiding a few spinlock accesses!
     ///   </para>
     ///   <para>
     ///     For general spinlock implementation notes, see https://rigtorp.se/spinlock/

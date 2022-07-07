@@ -401,6 +401,7 @@ namespace Nuclex { namespace Support { namespace Text {
       }
       return 1U;
     } else {
+      // TODO: This will fail on INT_MIN!
       std::size_t requiredBytes = BitTricks::GetLogBase10(static_cast<std::uint32_t>(-from)) + 2;
       if(availableBytes >= requiredBytes) {
         FormatInteger(target, from);

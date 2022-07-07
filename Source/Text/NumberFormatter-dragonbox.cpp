@@ -210,13 +210,13 @@ namespace {
     // Calculate the remaining digits behind the decimal point
     magnitude -= decimalPointPosition;
 
-    // Decimal point position indices *after* which digit the decimal point is to be placed,
-    // so if it is zero we've got an odd number of digits before, otherwise an even number.
+    // Is there an odd number of digits before the decimal point? Logic is inverse
+    // because of the -1 offset on the decimal point posiiton.
     if((decimalPointPosition & 1) == 0) {
       char pendingDigit;
 
-      // Append the digits before the decimal point. We know it's an even number,
-      // so we can skip the single digit check and don't need to store a half.
+      // Append the digits before the decimal point. We know it's an odd number,
+      // so once we get within 2 chars of the decimal point, we have to keep one on hold.
       for(;;) {
         WRITE_TWO_DIGITS(buffer);
         if(decimalPointPosition < 2) { // Are less than 3 remaining?
@@ -242,8 +242,8 @@ namespace {
       // Append the digits after the decimal point. This time we can use the ordinary
       // mixed double/single loop because we don't have to interrupt work in the middle.
       for(;;) {
-        if(magnitude < 3) { // Are less than 2 remaining? (5 because pre-decrement + pending)
-          if(magnitude >= 2) { // is even 1 remaining? (4 because pre-decrement + pending)
+        if(magnitude < 3) { // Are less than 2 remaining? (3 because pendingDigit)
+          if(magnitude >= 2) { // is even 1 remaining? (2 because pendingDigit)
             WRITE_ONE_DIGIT(buffer + 3);
             return buffer + 4;
           } else {
@@ -258,9 +258,9 @@ namespace {
         buffer += 2;
       }
 
-    } else { // Number of digits before decimal point is even
+    } else { // Even number of digits before decimal point
 
-      // Append the digits before the decimal point. We know it's an even number,
+      // Append all digits before the decimal point. We know it's an even number,
       // so we can skip the single digit check and don't need to store a half.
       for(;;) {
         WRITE_TWO_DIGITS(buffer);
