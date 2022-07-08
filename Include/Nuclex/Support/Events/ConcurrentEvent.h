@@ -712,12 +712,12 @@ namespace Nuclex { namespace Support { namespace Events {
       if(unlikely(currentQueue == nullptr)) {
         releaseSpinLock();
         return false; // No queue -> no subscribers -> subscriber not found -> exit!
+      } else {
+        currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
+        releaseSpinLock();
       }
 
       { // A queue is present, increment its reference count so it isn't deleted
-        currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
-        releaseSpinLock();
-
         ReleaseBroadcastQueueScope releaseActiveQueue(*this, currentQueue);
 
         BroadcastQueue *newQueue;

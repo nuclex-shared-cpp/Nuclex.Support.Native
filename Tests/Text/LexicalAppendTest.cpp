@@ -494,7 +494,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForInt32) {
-    char characters[2] = { 0 };
+    char characters[1] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 1U, std::int32_t(0)), 1U);
 
