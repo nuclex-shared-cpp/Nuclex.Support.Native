@@ -47,17 +47,17 @@ namespace Nuclex { namespace Support { namespace Text {
 
     /// <summary>Turns a duration in seconds into a human-readable string</summary>
     /// <param name="duration">Duration for which a string will be generated</param>
-    /// <param name="useLongFormat">
-    ///   If true, the string will spell out the duration as it would be spoken
-    ///   (&quot;5 minutes, 10 seconds&quot;), otherwise, it will be just be a compact
-    ///   counter (&quot;1d 1:34:12&quot;) that will fit in 8 to 13 characters
+    /// <param name="useSimpleFormat">
+    ///   If true, the string will spell out the duration as a single number and unit
+    ///   (&quot;5.5 minutes&quot;), otherwise, it will indicate the exact duration as
+    ///   the number of days, hours, minutes and seconds (&quot;1d 1:34:12&quot;)
     /// </param>
     /// <remarks>
-    ///   This is a simple helper with no localization. The short form should be universally
-    ///   understood, but the long form would need translation.
+    ///   This is a simple helper with no localization. While the strings generated
+    ///   should be universally, they will use English terms for the units.
     /// </remarks>
     public: NUCLEX_SUPPORT_API static std::string stringFromDuration(
-      std::chrono::seconds duration, bool useLongFormat = true
+      std::chrono::seconds duration, bool useSimpleFormat = true
     );
 
     // Duration
@@ -65,10 +65,6 @@ namespace Nuclex { namespace Support { namespace Text {
     // Elapsed time since UTC timestamp
 
     // Reamining time
-
-
-
-
 
   };
 

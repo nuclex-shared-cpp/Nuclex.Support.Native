@@ -129,7 +129,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(QuantityFormatterTest, CanPrintLongDuration) {
+  TEST(QuantityFormatterTest, CanPrintSimpleDuration) {
     std::string smallDuration = QuantityFormatter::stringFromDuration(std::chrono::seconds(18));
     EXPECT_NE(smallDuration.find(u8"18"), std::string::npos);
     EXPECT_NE(smallDuration.find(u8"seconds"), std::string::npos);
@@ -181,6 +181,65 @@ namespace Nuclex { namespace Support { namespace Text {
     bigDuration = QuantityFormatter::stringFromDuration(std::chrono::seconds(130'382'901));
     EXPECT_NE(bigDuration.find(u8"4.1"), std::string::npos);
     EXPECT_NE(bigDuration.find(u8"years"), std::string::npos);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(QuantityFormatterTest, CanPrintFullDuration) {
+    std::string smallDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(18), false
+    );
+    EXPECT_EQ(smallDuration, std::string(u8"18s"));
+
+    std::string bigDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(46), false
+    );
+    EXPECT_EQ(bigDuration, std::string(u8"46s"));
+
+    smallDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(1'423), false
+    );
+    EXPECT_EQ(smallDuration, std::string(u8"23m43s"));
+
+    bigDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(3'390), false
+    );
+    EXPECT_EQ(bigDuration, std::string(u8"56m30s"));
+
+    smallDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(28'123), false
+    );
+    EXPECT_EQ(smallDuration, std::string(u8"7h48m43s"));
+
+    bigDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(67'803), false
+    );
+    EXPECT_EQ(bigDuration, std::string(u8"18h50m03s"));
+
+    smallDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(248'824), false
+    );
+    EXPECT_EQ(smallDuration, std::string(u8"2d 21h07m04s"));
+
+    bigDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(432'430), false
+    );
+    EXPECT_EQ(bigDuration, std::string(u8"5d 0h07m10s"));
+
+    smallDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(13'329'083), false
+    );
+    EXPECT_EQ(smallDuration, std::string(u8"5m1d 18h31m23s"));
+
+    bigDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(30'382'901), false
+    );
+    EXPECT_EQ(bigDuration, std::string(u8"11m16d 3h41m41s"));
+
+    bigDuration = QuantityFormatter::stringFromDuration(
+      std::chrono::seconds(130'382'901), false
+    );
+    EXPECT_EQ(bigDuration, std::string(u8"4y1m20d 15h52m21s"));
   }
 
   // ------------------------------------------------------------------------------------------- //
