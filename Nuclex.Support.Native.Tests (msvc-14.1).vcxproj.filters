@@ -242,6 +242,9 @@
     <ClInclude Include="Include\Nuclex\Support\Text\ParserHelper.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\QuantityFormatter.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Text\RollingLogger.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
@@ -556,6 +559,9 @@
     <ClCompile Include="Source\Text\ParserHelper.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Text\QuantityFormatter.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Text\RollingLogger.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
@@ -733,6 +739,9 @@
       <Filter>Tests\Text</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Text\ParserHelperTest.cpp">
+      <Filter>Tests\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Text\QuantityFormatterTest.cpp">
       <Filter>Tests\Text</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Text\RollingLoggerTest.cpp">

@@ -23,7 +23,6 @@ License along with this library
 
 #include "Nuclex/Support/Text/ParserHelper.h"
 #include "./../../Source/Text/NumberFormatter.h"
-#include "./../../Source/Text/DragonBox-1.1.2/dragonbox_to_chars.h"
 
 #include <gtest/gtest.h>
 
