@@ -27,6 +27,7 @@ License along with this library
 #include <gtest/gtest.h>
 
 #include <random> // for std::uniform_int_distribution, std::uniform_real_distribution
+#include <cstring> // for std::memset()
 
 namespace {
 
