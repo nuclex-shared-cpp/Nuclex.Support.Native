@@ -91,9 +91,9 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Factors the jeaiii algorithm uses to prepare a number for printing</summary>
-  const std::uint32_t factors[] = {
+  const std::uint64_t factors[] = {
                 0, // magnitude 1e-1 (invalid)
-                0, // magnitude 1e0 (invalid) (4'294'967'297)
+    4'294'967'297, // magnitude 1e0
       429'496'730, // magnitude 1e1
        42'949'673, // magnitude 1e2
         4'294'968, // magnitude 1e3
@@ -110,7 +110,7 @@ namespace {
   /// <summary>Bit shifts the jeaiii algorithm uses to prepare a number for printing</summary>
   const int shift[] = {
      0, // magnitude 1e-1 (invalid)
-     0, // magnitude 1e0 (invalid)
+     0, // magnitude 1e0
      0, // magnitude 1e1
      0, // magnitude 1e2
      0, // magnitude 1e3
@@ -127,7 +127,7 @@ namespace {
   /// <summary>Bias added to numbers by jeaiii algorithm</summary>
   const std::uint32_t bias[] = {
     0, // magnitude 1e-1 (invalid)
-    0, // magnitude 1e0 (invalid)
+    0, // magnitude 1e0
     0, // magnitude 1e1
     0, // magnitude 1e2
     0, // magnitude 1e3

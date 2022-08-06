@@ -9,8 +9,7 @@
             ],
             "defines": [
                 "NUCLEX_SUPPORT_EXECUTABLE",
-                "NUCLEX_SUPPORT_SOURCE",
-                "HAVE_JEAIII_ITOA"
+                "NUCLEX_SUPPORT_SOURCE"
             ],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c11",

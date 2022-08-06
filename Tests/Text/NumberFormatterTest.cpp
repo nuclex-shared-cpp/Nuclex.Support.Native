@@ -193,6 +193,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(NumberFormatterTest, FloatingPointValuesCanBePrinted) {
     float numbers[] = {
+      // Short values
+      0.5f, 2.7f,
       // Different odd/even digit counts before and after the decimal point
       0.123456f, 1.23456f, 12.3456f, 123.456f, 1234.56f, 12345.6f, 123456.0f,
       // Alternate odd/even digit counts before and after the decimal point
@@ -223,6 +225,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(NumberFormatterTest, DoublePrecisionFloatingPointValuesCanBePrinted) {
     double numbers[] = {
+      // Short values
+      0.5, 2.7,
       // Different odd/even digit counts before and after the decimal point
       0.123456, 1.23456, 12.3456, 123.456, 1234.56, 12345.6, 123456.0,
       // Alternate odd/even digit counts before and after the decimal point
