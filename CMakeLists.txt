@@ -248,9 +248,14 @@ if(BUILD_BENCHMARK)
 			PRIVATE HAVE_BOOST_SIGNALS
 			PRIVATE HAVE_LSIGNAL
 			PRIVATE HAVE_NANO_SIGNALS
-			PRIVATE HAVE_AMDN_ITOA
 			PRIVATE HAVE_JEAIII_ITOA
 		)
+		if(NOT WIN32)
+			target_compile_definitions(
+				NuclexSupportNativeBenchmark
+				PRIVATE HAVE_AMDN_ITOA
+			)
+		endif()
 	endif()
 
 	# Add directory with public headers to include path
