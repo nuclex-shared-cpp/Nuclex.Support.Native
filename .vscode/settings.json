@@ -1,6 +1,6 @@
 // Workspace settings
 {
-    // The following will hide the js and map files in the editor
+    // The following will hide temporary clutter in the editor
     "files.exclude": {
         "*.vcxproj": true,
         "*.vcxproj.filters": true,

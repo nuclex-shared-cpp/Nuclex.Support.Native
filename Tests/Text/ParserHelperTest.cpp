@@ -100,8 +100,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  //TEST(ParserHelperTest, CanParseUInt32) {
-  //}
+  TEST(ParserHelperTest, CanParseUInt32) {
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
