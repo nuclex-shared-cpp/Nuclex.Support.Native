@@ -18,15 +18,15 @@ License along with this library
 */
 #pragma endregion // CPL License
 
-#ifndef NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
-#define NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
+#ifndef NUCLEX_SUPPORT_THREADS_MOODYCAMELQUEUE_H
+#define NUCLEX_SUPPORT_THREADS_MOODYCAMELQUEUE_H
 
 #include "Nuclex/Support/Collections/ConcurrentCollection.h"
 
 // We delegate this implementation to the Boost-Licensed MoodyCamel library
-#include "Nuclex/Support/Collections/MoodyCamel/concurrentqueue.h"
+#include "./cameron314-concurrentqueue-1.0.4/concurrentqueue.h"
 
-namespace Nuclex { namespace Support { namespace Collections {
+namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -61,11 +61,11 @@ namespace Nuclex { namespace Support { namespace Collections {
   ///   </para>
   template<
     typename TElement,
-    ConcurrentAccessBehavior accessBehavior = (
-      ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
+    Collections::ConcurrentAccessBehavior accessBehavior = (
+      Collections::ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
     )
   >
-  class MoodyCamelQueue : public ConcurrentCollection<TElement> {
+  class MoodyCamelQueue : public Collections::ConcurrentCollection<TElement> {
 
     /// <summary>Initializes a new lock-free queue</summary>
     public: MoodyCamelQueue() : wrappedQueue() {}
@@ -118,21 +118,12 @@ namespace Nuclex { namespace Support { namespace Collections {
     }
 
     /// <summary>Lock-free queue from the MoodyCamel library we're wrapping</summary>
-    private: moodycamel::MoodyCamelQueue<TElement> wrappedQueue;
+    private: moodycamel::ConcurrentQueue<TElement> wrappedQueue;
 
   };
 
   // ------------------------------------------------------------------------------------------- //
-/*
-  /// <summary>
-  ///   Multi-producer, multi-consumer version of the lock-free, unbounded queue
-  /// </summary>
-  /// <typeparam name="TElement">Type of elements the queue will store</typeparam>
-  template<typename TElement>
-  class MoodyCamelQueue<
-    TElement, ConcurrentAccessBehavior::MultipleProducersMultipleConsumers
-  > : ConcurrentCollection<TElement> {};
-*/
-}}} // namespace Nuclex::Support::Collections
 
-#endif // NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTQUEUE_H
+}}} // namespace Nuclex::Support::Threading
+
+#endif // NUCLEX_SUPPORT_THREADS_MOODYCAMELQUEUE_H

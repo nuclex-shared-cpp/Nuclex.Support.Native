@@ -23,6 +23,8 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
+#include <cstddef> // for std::size_t
+
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
