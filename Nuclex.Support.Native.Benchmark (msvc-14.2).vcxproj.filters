@@ -17,9 +17,6 @@
     <Filter Include="Include\Collections">
       <UniqueIdentifier>{bb7bb4c9-39c3-4ac7-b033-c752c0cec4d7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Include\Collections\MoodyCamel">
-      <UniqueIdentifier>{c5c67ac2-62c5-4276-b1d8-45cc243b372d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Include\Errors">
       <UniqueIdentifier>{0efb8298-425d-438c-ac9c-e1aba6120891}</UniqueIdentifier>
     </Filter>
@@ -80,6 +77,9 @@
     </Filter>
     <Filter Include="Source\Platform">
       <UniqueIdentifier>{4ba97360-63bc-4b0c-9b62-77b6d23382a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Threading\cameron314-concurrentqueue-1.0.4">
+      <UniqueIdentifier>{c88854c8-5df4-4351-98ca-87a5cbc02098}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -522,12 +522,24 @@
     <ClCompile Include="Source\Text\UnicodeHelper.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\concurrentqueue.h">
+      <Filter>Source\Threading\cameron314-concurrentqueue-1.0.4</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\lightweightsemaphore.h">
+      <Filter>Source\Threading\cameron314-concurrentqueue-1.0.4</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Threading\Latch.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Source\Threading\Gate.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Threading\MoodyCamelQueue.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Threading\MoodyCamelQueue.h">
+      <Filter>Source\Threading</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Threading\Process.Linux.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
