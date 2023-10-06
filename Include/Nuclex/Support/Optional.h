@@ -27,8 +27,9 @@ License along with this library
   #warning Nuclex::Support::Optional has been deprecated in favor of C++17 std::optional
 #endif
 
-#include <type_traits>
-#include <stdexcept>
+//#include <type_traits> //
+#include <stdexcept> // for std::logic_error
+#include <cstdint> // for std::uint8_t
 
 namespace Nuclex { namespace Support {
 
