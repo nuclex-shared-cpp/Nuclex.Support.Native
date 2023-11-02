@@ -396,6 +396,12 @@
     <ClInclude Include="Source\Platform\WindowsRegistryApi.h">
       <Filter>Source\Platform</Filter>
     </ClInclude>
+    <ClCompile Include="Source\Platform\WindowsSyncApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\WindowsSyncApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>

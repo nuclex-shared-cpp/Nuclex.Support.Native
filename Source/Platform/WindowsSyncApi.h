@@ -1,0 +1,321 @@
+#pragma region CPL License
+/*
+Nuclex Native Framework
+Copyright (C) 2002-2021 Nuclex Development Labs
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the IBM Common Public License as
+published by the IBM Corporation; either version 1.0 of the
+License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+IBM Common Public License for more details.
+
+You should have received a copy of the IBM Common Public
+License along with this library
+*/
+#pragma endregion // CPL License
+
+#ifndef NUCLEX_SUPPORT_PLATFORM_WINDOWSSYNCAPI_H
+#define NUCLEX_SUPPORT_PLATFORM_WINDOWSSYNCAPI_H
+
+#include "Nuclex/Support/Config.h"
+
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+
+#include "WindowsApi.h"
+
+#include <chrono> // for std::chrono::milliseconds
+
+namespace Nuclex { namespace Support { namespace Platform {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Wraps the API used for advanced thread synchronization on Windows</summary>
+  class WindowsSyncApi {
+
+    /// <summary>Waits for the specified wait variable to change in memory</summary>
+    /// <param name="waitVariable">Wait variable that will be watched</param>
+    /// <param name="comparedValue">Value the wait variable will be compared against</param>
+    /// <param name="maximumWaitTime">Maximum time to wait in milliseconds</param>
+    /// <returns>
+    ///   True if the variable has probably changed, false if the variable remained
+    ///   unchanged until the wait timeout was reached
+    /// </returns>
+    /// <remarks>
+    ///   <para>
+    ///     There can be spurious wake-ups where the variable did not change its value
+    ///     but some other unpredictable event (including false sharing) causes
+    ///     this method to return.
+    ///   </para>
+    ///   <para>
+    ///     If you have several variables to wait on, false sharing will result in a lot
+    ///     of spurious wake-ups. To minimize spurious wake-ups in this specific case,
+    ///     interleave the wait variables with other data (if possible) or pad the wait
+    ///     variables so they each have at least a size of
+    ///     <code>std::hardware_constructive_interference_size</code>. C++17 developers
+    ///     can make use of <code>alignas()</code> for individual variables (but do take
+    ///     care of neighboring variables if you can)
+    ///   </para>
+    /// </remarks>
+    public: template<typename TWaitVariable>
+    inline static bool WaitOnAddress(
+      const volatile TWaitVariable &waitVariable,
+      TWaitVariable comparedValue,
+      std::chrono::milliseconds maximumWaitTime
+    );
+
+    /// <summary>Waits for the specified wait variable to change in memory</summary>
+    /// <param name="waitVariable">Wait variable that will be watched</param>
+    /// <param name="comparedValue">Value the wait variable will be compared against</param>
+    /// <returns>
+    ///   True if the variable has probably changed, false if the wait was interrupted
+    /// </returns>
+    /// <remarks>
+    ///   <para>
+    ///     There can be spurious wake-ups where the variable did not change its value
+    ///     but some other unpredictable event (including false sharing) causes
+    ///     this method to return.
+    ///   </para>
+    ///   <para>
+    ///     If you have several variables to wait on, false sharing will result in a lot
+    ///     of spurious wake-ups. To minimize spurious wake-ups in this specific case,
+    ///     interleave the wait variables with other data (if possible) or pad the wait
+    ///     variables so they each have at least a size of
+    ///     <code>std::hardware_constructive_interference_size</code>. C++17 developers
+    ///     can make use of <code>alignas()</code> for individual variables (but do take
+    ///     care of neighboring variables if you can)
+    ///   </para>
+    /// </remarks>
+    public: template<typename TWaitVariable>
+    inline static bool WaitOnAddress(
+      const volatile TWaitVariable &waitVariable,
+      TWaitVariable comparedValue
+    );
+
+    /// <summary>Wakes a single threads waiting for a value in memory to change</summary>
+    /// <param name="address">
+    ///   Memory address of the value for which one observer will be waken up
+    /// </param>
+    public: template<typename TWaitVariable>
+    inline static void WakeByAddressSingle(
+      const volatile TWaitVariable &waitVariable
+    );
+
+    /// <summary>Wakes all threads waiting for a value in memory to change</summary>
+    /// <param name="address">
+    ///   Memory address of the value for which any observers will be waken up
+    /// </param>
+    public: template<typename TWaitVariable>
+    inline static void WakeByAddressAll(
+      const volatile TWaitVariable &waitVariable
+    );
+
+    /// <summary>Waits for a value to change in memory</summary>
+    /// <param name="waitVariable">Wait variable that will be watched</param>
+    /// <param name="comparisonValue">Value the wait variable will be compared against</param>
+    /// <param name="waitVariableByteCount">Size of the wait variable in bytes</param>
+    /// <param name="maximumWaitTime">Maximum time to wait in milliseconds</param>
+    /// <returns>
+    ///   True if the variable has probably changed, false if the variable remained
+    ///   unchanged until the wait timeout was reached
+    /// </returns>
+    private: static bool waitOnAddressWithTimeout(
+      const volatile void *waitVariableAddress,
+      void *comparisonValue,
+      std::size_t waitVariableByteCount,
+      std::chrono::milliseconds maximumWaitTime
+    );
+
+    /// <summary>Waits for a value to change in memory</summary>
+    /// <param name="waitVariable">Wait variable that will be watched</param>
+    /// <param name="comparedValue">Value the wait variable will be compared against</param>
+    /// <param name="waitVariableByteCount">Size of the wait variable in bytes</param>
+    /// <returns>
+    ///   True if the variable has probably changed, false if the wait was interrupted
+    /// </returns>
+    private: static bool waitOnAddressNoTimeout(
+      const volatile void *waitVariableAddress,
+      void *comparisonValue,
+      std::size_t waitVariableByteCount
+    );
+
+    /// <summary>Wakes a single threads waiting for a value in memory to change</summary>
+    /// <param name="address">
+    ///   Memory address of the value for which one observer will be waken up
+    /// </param>
+    private: static void wakeByAddressSingle(const volatile void *address);
+
+    /// <summary>Wakes all threads waiting for a value in memory to change</summary>
+    /// <param name="address">
+    ///   Memory address of the value for which any observers will be waken up
+    /// </param>
+    private: static void wakeByAddressAll(const volatile void *address);
+
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline bool WindowsSyncApi::WaitOnAddress(
+    const volatile std::uint8_t &waitVariable,
+    std::uint8_t comparedValue,
+    std::chrono::milliseconds maximumWaitTime
+  ) {
+    return waitOnAddressWithTimeout(
+      &waitVariable, &comparedValue, sizeof(std::uint8_t), maximumWaitTime
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline bool WindowsSyncApi::WaitOnAddress(
+    const volatile std::uint16_t &waitVariable,
+    std::uint16_t comparedValue,
+    std::chrono::milliseconds maximumWaitTime
+  ) {
+    return waitOnAddressWithTimeout(
+      &waitVariable, &comparedValue, sizeof(std::uint16_t), maximumWaitTime
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline bool WindowsSyncApi::WaitOnAddress(
+    const volatile std::uint32_t &waitVariable,
+    std::uint32_t comparedValue,
+    std::chrono::milliseconds maximumWaitTime
+  ) {
+    return waitOnAddressWithTimeout(
+      &waitVariable, &comparedValue, sizeof(std::uint32_t), maximumWaitTime
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline bool WindowsSyncApi::WaitOnAddress(
+    const volatile std::uint64_t &waitVariable,
+    std::uint64_t comparedValue,
+    std::chrono::milliseconds maximumWaitTime
+  ) {
+    return waitOnAddressWithTimeout(
+      &waitVariable, &comparedValue, sizeof(std::uint64_t), maximumWaitTime
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline bool WindowsSyncApi::WaitOnAddress(
+    const volatile std::uint8_t &waitVariable,
+    std::uint8_t comparedValue
+  ) {
+    return waitOnAddressNoTimeout(
+      &waitVariable, &comparedValue, sizeof(std::uint8_t)
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline bool WindowsSyncApi::WaitOnAddress(
+    const volatile std::uint16_t &waitVariable,
+    std::uint16_t comparedValue
+  ) {
+    return waitOnAddressNoTimeout(
+      &waitVariable, &comparedValue, sizeof(std::uint16_t)
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline bool WindowsSyncApi::WaitOnAddress(
+    const volatile std::uint32_t &waitVariable,
+    std::uint32_t comparedValue
+  ) {
+    return waitOnAddressNoTimeout(
+      &waitVariable, &comparedValue, sizeof(std::uint32_t)
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline bool WindowsSyncApi::WaitOnAddress(
+    const volatile std::uint64_t &waitVariable,
+    std::uint64_t comparedValue
+  ) {
+    return waitOnAddressNoTimeout(
+      &waitVariable, &comparedValue, sizeof(std::uint64_t)
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline void WindowsSyncApi::WakeByAddressSingle(const volatile std::uint8_t &waitVariable) {
+    wakeByAddressSingle(&waitVariable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline void WindowsSyncApi::WakeByAddressSingle(const volatile std::uint16_t &waitVariable) {
+    wakeByAddressSingle(&waitVariable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline void WindowsSyncApi::WakeByAddressSingle(const volatile std::uint32_t &waitVariable) {
+    wakeByAddressSingle(&waitVariable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline void WindowsSyncApi::WakeByAddressSingle(const volatile std::uint64_t &waitVariable) {
+    wakeByAddressSingle(&waitVariable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline void WindowsSyncApi::WakeByAddressAll(const volatile std::uint8_t &waitVariable) {
+    wakeByAddressAll(&waitVariable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline void WindowsSyncApi::WakeByAddressAll(const volatile std::uint16_t &waitVariable) {
+    wakeByAddressAll(&waitVariable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline void WindowsSyncApi::WakeByAddressAll(const volatile std::uint32_t &waitVariable) {
+    wakeByAddressAll(&waitVariable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<>
+  inline void WindowsSyncApi::WakeByAddressAll(const volatile std::uint64_t &waitVariable) {
+    wakeByAddressAll(&waitVariable);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+}}} // namespace Nuclex::Support::Platform
+
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
+
+#endif // NUCLEX_SUPPORT_PLATFORM_WINDOWSSYNCAPI_H
