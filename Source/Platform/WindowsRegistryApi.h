@@ -89,7 +89,6 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   };
 
-
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Platform
