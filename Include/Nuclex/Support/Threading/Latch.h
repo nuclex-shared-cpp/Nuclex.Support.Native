@@ -99,10 +99,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Accesses the platform dependent implementation data container</summary>
     /// <returns>A reference to the platform dependent implementation data</returns>
     private: PlatformDependentImplementationData &getImplementationData();
-#if defined(NUCLEX_SUPPORT_LINUX)
-    alignas(8) unsigned char implementationDataBuffer[16];
-#elif defined(NUCLEX_SUPPORT_WINDOWS)
-    unsigned char implementationDataBuffer[sizeof(std::size_t) * 12]; // matches HANDLE size
+#if defined(NUCLEX_SUPPORT_LINUX) || defined(NUCLEX_SUPPORT_WINDOWS)
+    alignas(8) unsigned char implementationDataBuffer[sizeof(std::size_t) * 2];
 #else // Posix
     unsigned char implementationDataBuffer[96];
 #endif

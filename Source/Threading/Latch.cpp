@@ -74,23 +74,17 @@ namespace Nuclex { namespace Support { namespace Threading {
 #if defined(NUCLEX_SUPPORT_LINUX)
     /// <summary>Switches between 0 (no waiters) and 1 (has waiters)</summary>
     public: mutable volatile std::uint32_t FutexWord;
-    /// <summary>Counter, unlocks the latch when it reaches zero</summary>
-    public: std::atomic<std::size_t> Countdown;
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
-    /// <summary>Countdown until the latch will open</summary>
-    public: std::atomic<std::size_t> Countdown;
-    /// <summary>Gate that lets threads through if the countdown is zero</summary>
-    public: ::HANDLE EventHandle;
-    /// <summary>Mutex required to ensure threads never miss the signal</summary>
-    public: std::mutex Mutex;
+    /// <summary>Switches between 0 (no waiters) and 1 (has waiters)</summary>
+    public: mutable volatile std::uint32_t WaitWord;
 #else // Posix
-    /// <summary>How many tasks the latch is waiting on</summary>
-    public: std::atomic<std::size_t> Countdown;
     /// <summary>Conditional variable used to signal waiting threads</summary>
     public: mutable ::pthread_cond_t Condition;
     /// <summary>Mutex required to ensure threads never miss the signal</summary>
     public: mutable ::pthread_mutex_t Mutex;
 #endif
+    /// <summary>How many tasks the latch is waiting on</summary>
+    public: std::atomic<std::size_t> Countdown;
 
   };
 
@@ -107,24 +101,8 @@ namespace Nuclex { namespace Support { namespace Threading {
   Latch::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
-    Countdown(initialCount),
-    EventHandle(INVALID_HANDLE_VALUE),
-    Mutex() {
-
-    // Create the Win32 event we'll use for this
-    this->EventHandle = ::CreateEventW(
-      nullptr, TRUE, (initialCount > 0) ? FALSE : TRUE, nullptr
-    );
-    bool eventCreationFailed = (
-      (this->EventHandle == 0) || (this->EventHandle == INVALID_HANDLE_VALUE)
-    );
-    if(unlikely(eventCreationFailed)) {
-      DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-        u8"Could not create thread synchronication event for countdown latch", lastErrorCode
-      );
-    }
-  }
+    WaitWord((initialCount > 0) ? 0 : 1),
+    Countdown(initialCount) {}
 #endif
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
@@ -157,14 +135,10 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_LINUX)
+#if defined(NUCLEX_SUPPORT_LINUX) || defined(NUCLEX_SUPPORT_WINDOWS)
   Latch::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     // Nothing to do. If threads are waiting, they're now waiting on dead memory.
   }
-#endif
-  // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WINDOWS)
-  Latch::PlatformDependentImplementationData::~PlatformDependentImplementationData() {}
 #endif
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS) // -> Posix
@@ -188,7 +162,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // likely crash or at least malfunction.
     assert(
       (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData)) &&
-      u8"Private implementation data for Nuclex::Support::Threading::Process fits in buffer"
+      u8"Private implementation data for Nuclex::Support::Threading::Latch fits in buffer"
     );
     new(this->implementationDataBuffer) PlatformDependentImplementationData(initialCount);
   }
@@ -233,9 +207,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // This means we can have a spurious open latch (which is easy to deal with), but
       // never a spurious closed latch (which blocks the thread and can't be dealt with).
       //
-      previousCountdown = impl.Countdown.load(
-        std::memory_order_consume
-      );
+      previousCountdown = impl.Countdown.load(std::memory_order_consume);
       if(likely(previousCountdown == 0)) {
         __atomic_store_n(&impl.FutexWord, 1, __ATOMIC_RELEASE); // 1 -> latch open
       }
@@ -248,25 +220,43 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Latch::Post(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
+    // Increment the latch counter. This locks the latch.
     std::size_t previousCountdown = impl.Countdown.fetch_add(
-      count, std::memory_order_consume // if() below carries dependency
+      count, std::memory_order_release
     );
-    if(unlikely(previousCountdown == 0)) {
-      std::unique_lock mutexLock(impl.Mutex);
 
-      previousCountdown = impl.Countdown.load(
-        std::memory_order_relaxed // We're in a mutex now
-      );
-      if(previousCountdown > 0) {
-        DWORD result = ::ResetEvent(impl.EventHandle);
-        if(unlikely(result == FALSE)) {
-          DWORD lastErrorCode = ::GetLastError();
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-            u8"Could not reset synchronization event to closed state", lastErrorCode
-          );
-        }
+    // If the latch was open at the time of this call, we need to close it so threads
+    // can wait on the futex.
+    if(unlikely(previousCountdown == 0)) {
+
+      // There's a race condition at this point. If at this exact point, another thread
+      // calls CountDown() and sets the FutexWord to 1 because the counter hit zero,
+      // we'd falsely change it back to 0.
+      //
+      // Then a third thread which saw the countdown being greater than zero might reach
+      // the futex wait and actually begin waiting even though the latch should be open.
+      //
+      // To fix this, we re-check the latch counter after setting the futex word.
+      //
+      if(likely(count > 0)) {
+        impl.WaitWord = 0; // 0 -> latch now locked
+        std::atomic_thread_fence(std::memory_order::memory_order_release);
       }
-    }
+
+      // Re-check the latch counter. This might seem like a naive hack at first sight,
+      // but by only doing this re-check in Post() and not in CountDown(), we can guarantee
+      // that both methods exit by checking whether the latch should be open.
+      //
+      // This means we can have a spurious open latch (which is easy to deal with), but
+      // never a spurious closed latch (which blocks the thread and can't be dealt with).
+      //
+      previousCountdown = impl.Countdown.load(std::memory_order_consume);
+      if(likely(previousCountdown == 0)) {
+        impl.WaitWord = 1; // 1 -> latch open
+        std::atomic_thread_fence(std::memory_order::memory_order_release);
+      }
+
+    } // if(previousAdmitCounter < 0)
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -348,27 +338,38 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Latch::CountDown(std::size_t count /* = 1 */) {
     PlatformDependentImplementationData &impl = getImplementationData();
 
+    // Decrement the latch counter and fetch its previous value so we can both
+    // detect when the counter goes negative and open the latch when it reaches zero
     std::size_t previousCountdown = impl.Countdown.fetch_sub(
-      count, std::memory_order_consume // if() below carries dependency
+      count, std::memory_order_release
     );
     assert((previousCountdown >= count) && u8"Latch remains zero or positive");
 
+    // If we just decremented the latch to zero, signal the futex
     if(unlikely(previousCountdown == count)) {
-      std::unique_lock mutexLock(impl.Mutex);
 
-      previousCountdown = impl.Countdown.load(
-        std::memory_order_relaxed // We're in a mutex now
-      );
-      if(previousCountdown == 0) {
-        DWORD result = ::SetEvent(impl.EventHandle);
-        if(unlikely(result == FALSE)) {
-          DWORD lastErrorCode = ::GetLastError();
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-            u8"Could not set synchronization event to signalled state", lastErrorCode
-          );
-        }
+      // Just like in the semaphore implementation, another thread may have incremented
+      // the latch counter between our fetch_sub() and this point (a classical race
+      // condition).
+      //
+      // This isn't a problem, however, as changing the futex wakes up all blocked threads
+      // and causes them to re-check the counter. So we'll have potential spurious wake-ups,
+      // but no spurious blocks.
+      //
+      if(likely(count > 0)) { // check needed? nobody would post 0 tasks...
+        impl.WaitWord = 1; // 1 -> countdown is zero
+        std::atomic_thread_fence(std::memory_order::memory_order_release);
       }
-    }
+
+      // WakeByAddressAll() (Windows 8+)
+      // https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-wakebyaddressall
+      //
+      // This will signal other threads sitting in the Latch::Wait() method to re-check
+      // the latch counter and resume running
+      //
+      Platform::WindowsSyncApi::WakeByAddressAll(impl.WaitWord);
+
+    } // if latch counter decremented to zero
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -469,19 +470,43 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Latch::Wait() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
-    // Check if the countdown is currently zero
-    std::size_t safeCountdown = impl.Countdown.load(
-      std::memory_order_consume // if() below carries dependency
-    );
-    if(safeCountdown > 0) {
-      DWORD result = ::WaitForSingleObject(impl.EventHandle, INFINITE);
-      if(likely(result != WAIT_OBJECT_0)) {
-        DWORD lastErrorCode = ::GetLastError();
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-          u8"Error waiting for semaphore via WaitForSingleObject()", lastErrorCode
-        );
+    // Loop until we can snatch an available ticket
+    std::size_t safeCountdown = impl.Countdown.load(std::memory_order_consume);
+    for(;;) {
+      if(safeCountdown == 0) {
+        return;
       }
-    }
+
+      // WaitOnAddress (Windows 8+)
+      // https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitonaddress
+      //
+      // This sends the thread to sleep for as long as the wait value has the expected value.
+      // Checking and entering sleep is one atomic operation, avoiding a race condition.
+      bool result = Platform::WindowsSyncApi::WaitOnAddress(
+        static_cast<const volatile std::uint32_t &>(impl.WaitWord),
+        static_cast<std::uint32_t>(0) // wait while wait variable is 0 (== gate closed)
+      );
+      if(likely(result)) {
+
+        // If this was a spurious wake-up, we need to adjust the wait variable in order to
+        // prevent a busy loop in this Wait() method.
+        safeCountdown = impl.Countdown.load(std::memory_order_consume);
+        if(safeCountdown > 0) {
+          impl.WaitWord = 0; // 0 -> latch now locked
+          std::atomic_thread_fence(std::memory_order::memory_order_release);
+
+          // But just like in Post(), this is a race condition with other threads potentially
+          // calling CountDown(), so to err on the side of having spurious open latches, we
+          // need to re-check the latch counter.
+          //
+          safeCountdown = impl.Countdown.load(std::memory_order_consume);
+          if(safeCountdown == 0) {
+            impl.WaitWord = 1; // 1 -> latch open
+            std::atomic_thread_fence(std::memory_order::memory_order_release);
+          }
+        }
+      }
+    } // for(;;)
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -596,26 +621,75 @@ namespace Nuclex { namespace Support { namespace Threading {
   bool Latch::WaitFor(const std::chrono::microseconds &patience) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
-    // Check if the countdown is currently zero
-    std::size_t safeCountdown = impl.Countdown.load(
-      std::memory_order_consume // if() below carries dependency
+    // Query the tick counter, but don't do anything with it yet (the wait time is
+    // relative, so unless we get a spurious wait, the tick counter isn't even needed)
+    std::chrono::milliseconds startTickCount(::GetTickCount64());
+    std::chrono::milliseconds patienceTickCount = (
+      std::chrono::duration_cast<std::chrono::milliseconds>(patience)
     );
-    if(safeCountdown > 0) {
-      DWORD milliseconds = static_cast<DWORD>((patience.count() + 500) / 1000);
-      DWORD result = ::WaitForSingleObject(impl.EventHandle, milliseconds);
-      if(likely(result == WAIT_OBJECT_0)) {
-        return true;
-      } else if(result == WAIT_TIMEOUT) {
-        return false;
+    std::chrono::milliseconds remainingTickCount = patienceTickCount;
+
+    // Loop until we can snatch an available ticket
+    std::size_t safeCountdown = impl.Countdown.load(std::memory_order_consume);
+    if(safeCountdown == 0) {
+      return true;
+    }
+    for(;;) {
+
+      // WaitOnAddress (Windows 8+)
+      // https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitonaddress
+      //
+      // This sends the thread to sleep for as long as the wait value has the expected value.
+      // Checking and entering sleep is one atomic operation, avoiding a race condition.
+      bool result = Platform::WindowsSyncApi::WaitOnAddress(
+        static_cast<const volatile std::uint32_t &>(impl.WaitWord),
+        static_cast<std::uint32_t>(0), // wait while wait variable is 0 (== gate closed)
+        remainingTickCount
+      );
+
+      if(likely(result)) {
+
+        // If this was a spurious wake-up, we need to adjust the futex word in order to prevent
+        // a busy loop in this Wait() method.
+        safeCountdown = impl.Countdown.load(std::memory_order_consume);
+        if(likely(safeCountdown > 0)) {
+          impl.WaitWord = 0; // 0 -> latch now locked
+          std::atomic_thread_fence(std::memory_order::memory_order_release);
+
+          // But just like in Post(), this is a race condition with other threads potentially
+          // calling CountDown(), so to err on the side of having spurious open latches, we
+          // need to re-check the latch counter.
+          //
+          safeCountdown = impl.Countdown.load(std::memory_order_consume);
+          if(unlikely(safeCountdown == 0)) {
+            impl.WaitWord = 1; // 1 -> latch open
+            std::atomic_thread_fence(std::memory_order::memory_order_release);
+          }
+        }
+
+        if(safeCountdown == 0) {
+          break;
+        }
+
       }
 
-      DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
-        u8"Error waiting for latch via WaitForSingleObject()", lastErrorCode
-      );
-    }
+      // Calculate the new relative timeout. If this is some kind of spurious
+      // wake-up, but the value does indeed change while we're here, that's not
+      // a problem since the WaitOnAddress() call will re-check the wait value.
+      {
+        std::chrono::milliseconds elapsedTickCount = (
+          std::chrono::milliseconds(::GetTickCount64()) - startTickCount
+          );
+        if(elapsedTickCount >= patienceTickCount) {
+          return false; // timeout expired
+        } else {
+          remainingTickCount = patienceTickCount - elapsedTickCount;
+        }
+      }
 
-    return true;
+    } // for(;;)
+
+    return true; // wait noticed a change to the wait variable and latch was ready
   }
 #endif
   // ------------------------------------------------------------------------------------------- //

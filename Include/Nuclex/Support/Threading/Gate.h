@@ -23,7 +23,7 @@ License along with this library
 
 #include "Nuclex/Support/Config.h"
 
-#include <cstddef> // for std::size_t
+#include <cstdint> // for std::uint32_t
 #include <chrono> // for std::chrono::microseconds
 
 namespace Nuclex { namespace Support { namespace Threading {
@@ -102,10 +102,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       ///   Small performance / memory fragmentation improvement.
       ///   This avoids a micro-allocation for the implenmentation data structure in most cases.
       /// </remarks>
-#if defined(NUCLEX_SUPPORT_LINUX)
-      unsigned char implementationDataBuffer[4];
-#elif defined(NUCLEX_SUPPORT_WINDOWS)
-      unsigned char implementationDataBuffer[sizeof(std::size_t)]; // matches HANDLE size
+#if defined(NUCLEX_SUPPORT_LINUX) || defined(NUCLEX_SUPPORT_WINDOWS)
+      unsigned char implementationDataBuffer[sizeof(std::uint32_t)];
 #else // Posix
       unsigned char implementationDataBuffer[96];
 #endif

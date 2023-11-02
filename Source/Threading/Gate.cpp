@@ -32,6 +32,7 @@ License along with this library
 #elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
 #include "../Platform/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #include "../Platform/WindowsSyncApi.h" // for ::WaitOnAddress(), ::WakeByAddressAll()
+#include <atomic> // for std::atomic
 #else // Posix: use a pthreads conditional variable to emulate a gate
 #include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
@@ -130,13 +131,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_LINUX)
-  Gate::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
-    // Nothing to do. If threads are waiting, they're now waiting on dead memory.
-  }
-#endif
-  // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_WINDOWS)
+#if defined(NUCLEX_SUPPORT_LINUX) || defined(NUCLEX_SUPPORT_WINDOWS)
   Gate::PlatformDependentImplementationData::~PlatformDependentImplementationData() {
     // Nothing to do. If threads are waiting, they're now waiting on dead memory.
   }
@@ -163,7 +158,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // likely crash or at least malfunction.
     assert(
       (sizeof(this->implementationDataBuffer) >= sizeof(PlatformDependentImplementationData)) &&
-      u8"Private implementation data for Nuclex::Support::Threading::Process fits in buffer"
+      u8"Private implementation data for Nuclex::Support::Threading::Gate fits in buffer"
     );
     new(this->implementationDataBuffer) PlatformDependentImplementationData(initiallyOpen);
   }
@@ -211,7 +206,14 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Simply set the atomic variable to 1 to indicate the gate is open
     impl.WaitWord = 1; // std::atomic_store(...);
+    std::atomic_thread_fence(std::memory_order::memory_order_release);
 
+    // WakeByAddressAll() (Windows 8+)
+    // https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-wakebyaddressall
+    //
+    // This will signal other threads sitting in the Latch::Wait() method to re-check
+    // the gate's state and resume running
+    //
     Platform::WindowsSyncApi::WakeByAddressAll(impl.WaitWord);
   }
 #endif
@@ -263,6 +265,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Simply set the atomic variable to 1 to indicate the gate is open
     impl.WaitWord = 0; // std::atomic_store(...);
+    std::atomic_thread_fence(std::memory_order::memory_order_release);
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -494,7 +497,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       return true; // Gate was open
     }
 
-    // Query the tick counter, but don't do anything with it yet (the futex wait is
+    // Query the tick counter, but don't do anything with it yet (the wait time is
     // relative, so unless we get a spurious wait, the tick counter isn't even needed)
     std::chrono::milliseconds startTickCount(::GetTickCount64());
     std::chrono::milliseconds patienceTickCount = (
@@ -539,7 +542,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     }
 
-    return true; // wait noticed a change to the futex word
+    return true; // wait noticed a change to the wait variable and gate was open
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
