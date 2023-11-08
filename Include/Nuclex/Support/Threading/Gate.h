@@ -103,7 +103,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       ///   This avoids a micro-allocation for the implenmentation data structure in most cases.
       /// </remarks>
 #if defined(NUCLEX_SUPPORT_LINUX) || defined(NUCLEX_SUPPORT_WINDOWS)
-      unsigned char implementationDataBuffer[sizeof(std::uint32_t)];
+      alignas(8) unsigned char implementationDataBuffer[sizeof(std::uint32_t)];
 #else // Posix
       unsigned char implementationDataBuffer[96];
 #endif

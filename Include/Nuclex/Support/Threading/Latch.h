@@ -38,7 +38,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   ///   </para>
   ///   <para>
   ///     This behavior is useful if you need to wait for a series of tasks to finish or
-  ///     a set of resources to complete a process before shutting down.
+  ///     resources used by several threads to become available.
   ///   </para>
   /// </remarks>
   class NUCLEX_SUPPORT_TYPE Latch {
