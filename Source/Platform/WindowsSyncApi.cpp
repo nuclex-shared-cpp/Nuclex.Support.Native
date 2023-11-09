@@ -88,14 +88,14 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void WindowsSyncApi::wakeByAddressAll(const volatile void *address) {
-    ::WakeByAddressAll(const_cast<PVOID>(address));
+  void WindowsSyncApi::wakeByAddressAll(const volatile void *waitVariableAddress) {
+    ::WakeByAddressAll(const_cast<PVOID>(waitVariableAddress));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void WindowsSyncApi::wakeByAddressSingle(const volatile void *address) {
-    ::WakeByAddressSingle(const_cast<PVOID>(address));
+  void WindowsSyncApi::wakeByAddressSingle(const volatile void *waitVariableAddress) {
+    ::WakeByAddressSingle(const_cast<PVOID>(waitVariableAddress));
   }
 
   // ------------------------------------------------------------------------------------------- //

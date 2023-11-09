@@ -331,6 +331,12 @@
     <ClInclude Include="Source\Platform\LinuxFileApi.h">
       <Filter>Source\Platform</Filter>
     </ClInclude>
+    <ClCompile Include="Source\Platform\LinuxFutexApi.cpp">
+      <Filter>Source\Platform</Filter>
+    </ClCompile>
+    <ClInclude Include="Source\Platform\LinuxFutexApi.h">
+      <Filter>Source\Platform</Filter>
+    </ClInclude>
     <ClCompile Include="Source\Platform\PosixApi.cpp">
       <Filter>Source\Platform</Filter>
     </ClCompile>

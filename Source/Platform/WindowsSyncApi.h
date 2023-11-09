@@ -37,6 +37,9 @@ namespace Nuclex { namespace Support { namespace Platform {
   class WindowsSyncApi {
 
     /// <summary>Waits for the specified wait variable to change in memory</summary>
+    /// <typeparam name="TWaitVariable">
+    ///   Type of the wait variable, must be either int8, int16, int32 or int64
+    /// </typeparam>
     /// <param name="waitVariable">Wait variable that will be watched</param>
     /// <param name="comparedValue">Value the wait variable will be compared against</param>
     /// <param name="maximumWaitTime">Maximum time to wait in milliseconds</param>
@@ -68,6 +71,9 @@ namespace Nuclex { namespace Support { namespace Platform {
     );
 
     /// <summary>Waits for the specified wait variable to change in memory</summary>
+    /// <typeparam name="TWaitVariable">
+    ///   Type of the wait variable, must be either int8, int16, int32 or int64
+    /// </typeparam>
     /// <param name="waitVariable">Wait variable that will be watched</param>
     /// <param name="comparedValue">Value the wait variable will be compared against</param>
     /// <returns>
@@ -96,8 +102,11 @@ namespace Nuclex { namespace Support { namespace Platform {
     );
 
     /// <summary>Wakes a single threads waiting for a value in memory to change</summary>
-    /// <param name="address">
-    ///   Memory address of the value for which one observer will be waken up
+    /// <typeparam name="TWaitVariable">
+    ///   Type of the wait variable, must be either int8, int16, int32 or int64
+    /// </typeparam>
+    /// <param name="waitVariable">
+    ///   Variable for which one watching observer will be waken up
     /// </param>
     public: template<typename TWaitVariable>
     inline static void WakeByAddressSingle(
@@ -105,8 +114,11 @@ namespace Nuclex { namespace Support { namespace Platform {
     );
 
     /// <summary>Wakes all threads waiting for a value in memory to change</summary>
-    /// <param name="address">
-    ///   Memory address of the value for which any observers will be waken up
+    /// <typeparam name="TWaitVariable">
+    ///   Type of the wait variable, must be either int8, int16, int32 or int64
+    /// </typeparam>
+    /// <param name="waitVariable">
+    ///   Variable for which all watching observers will be waken up
     /// </param>
     public: template<typename TWaitVariable>
     inline static void WakeByAddressAll(
@@ -130,8 +142,10 @@ namespace Nuclex { namespace Support { namespace Platform {
     );
 
     /// <summary>Waits for a value to change in memory</summary>
-    /// <param name="waitVariable">Wait variable that will be watched</param>
-    /// <param name="comparedValue">Value the wait variable will be compared against</param>
+    /// <param name="waitVariableAddress">Memory address of the wait variable</param>
+    /// <param name="comparedValue">
+    ///   Memory address holding the value the wait variable will be compared against
+    /// </param>
     /// <param name="waitVariableByteCount">Size of the wait variable in bytes</param>
     /// <returns>
     ///   True if the variable has probably changed, false if the wait was interrupted
@@ -142,17 +156,17 @@ namespace Nuclex { namespace Support { namespace Platform {
       std::size_t waitVariableByteCount
     );
 
-    /// <summary>Wakes a single threads waiting for a value in memory to change</summary>
-    /// <param name="address">
+    /// <summary>Wakes a single thread waiting for a value in memory to change</summary>
+    /// <param name="waitVariableAddress">
     ///   Memory address of the value for which one observer will be waken up
     /// </param>
-    private: static void wakeByAddressSingle(const volatile void *address);
+    private: static void wakeByAddressSingle(const volatile void *waitVariableAddress);
 
     /// <summary>Wakes all threads waiting for a value in memory to change</summary>
-    /// <param name="address">
+    /// <param name="waitVariableAddress">
     ///   Memory address of the value for which any observers will be waken up
     /// </param>
-    private: static void wakeByAddressAll(const volatile void *address);
+    private: static void wakeByAddressAll(const volatile void *waitVariableAddress);
 
   };
 

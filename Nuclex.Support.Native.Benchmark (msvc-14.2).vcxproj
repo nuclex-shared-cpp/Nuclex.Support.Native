@@ -284,6 +284,8 @@
     <ClCompile Include="Source\Events\Event.cpp" />
     <ClCompile Include="Source\Platform\LinuxFileApi.cpp" />
     <ClInclude Include="Source\Platform\LinuxFileApi.h" />
+    <ClCompile Include="Source\Platform\LinuxFutexApi.cpp" />
+    <ClInclude Include="Source\Platform\LinuxFutexApi.h" />
     <ClCompile Include="Source\Platform\PosixApi.cpp" />
     <ClInclude Include="Source\Platform\PosixApi.h" />
     <ClCompile Include="Source\Platform\PosixFileApi.cpp" />

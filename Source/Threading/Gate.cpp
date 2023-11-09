@@ -25,10 +25,7 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX) // Directly use futex via kernel syscalls
 #include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
-#include <linux/futex.h> // for futex constants
-#include <unistd.h> // for ::syscall()
-#include <limits.h> // for INT_MAX
-#include <sys/syscall.h> // for ::SYS_futex
+#include "../Platform/LinuxFutexApi.h" // for LinuxFutexApi::PrivateFutexWait() and more
 #elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
 #include "../Platform/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #include "../Platform/WindowsSyncApi.h" // for ::WaitOnAddress(), ::WakeByAddressAll()
@@ -182,21 +179,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     //
     // This will signal other threads sitting in the Gate::Wait() method to
     // re-check the gate's status and resume running
-    long result = ::syscall(
-      SYS_futex, // syscall id
-      static_cast<volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-      static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAKE), // process-private futex wakeup
-      static_cast<int>(INT_MAX), // wake up all waiters
-      static_cast<struct ::timespec *>(nullptr), // timeout -> ignored
-      static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-      static_cast<int>(0) // second futex word value -> ignored
-    );
-    if(unlikely(result == -1)) {
-      int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-        u8"Could not wake up threads waiting on futex", errorNumber
-      );
-    }
+    Platform::LinuxFutexApi::PrivateFutexWakeAll(impl.FutexWord);
   }
 #endif
   // ------------------------------------------------------------------------------------------- //
@@ -308,23 +291,14 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      long result = ::syscall(
-        SYS_futex, // syscall id
-        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-        static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
-        static_cast<int>(0), // wait while futex word is 0 (== gate closed)
-        static_cast<struct ::timespec *>(nullptr), // timeout -> infinite
-        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-        static_cast<int>(0) // second futex word value -> ignored
+      bool futexWordLikelyChanged = Platform::LinuxFutexApi::PrivateFutexWait(
+        impl.FutexWord,
+        0 // wait while futex word is 0 (== gate closed)
       );
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        if(likely(errorNumber == EAGAIN)) { // Value was not 0, so gate is now open
-          return;
-        } else if(errorNumber != EINTR) {
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-            u8"Could not sleep on gate status via futex wait", errorNumber
-          );
+      if(likely(futexWordLikelyChanged)) {
+        safeFutexWord = __atomic_load_n(&impl.FutexWord, __ATOMIC_CONSUME);
+        if(likely(safeFutexWord != 0)) {
+          return; // Gate now open
         }
       }
 
@@ -450,28 +424,20 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      long result = ::syscall(
-        SYS_futex, // syscall id
-        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-        static_cast<int>(FUTEX_PRIVATE_FLAG | FUTEX_WAIT), // process-private futex wakeup
-        static_cast<int>(0), // wait while futex word is 0 (== gate closed)
-        static_cast<struct ::timespec *>(&timeout), // timeout after which to fail
-        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-        static_cast<int>(0) // second futex word value -> ignored
+      bool hasTimedOut = false;
+      bool futexWordLikelyChanged = Platform::LinuxFutexApi::PrivateFutexWait(
+        impl.FutexWord,
+        0, // wait while futex word is 0 (== gate closed)
+        timeout, // timeout after which to fail
+        hasTimedOut
       );
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        if(likely(errorNumber == EAGAIN)) { // Value was not 0, so gate is now open
-          return true;
-        } else if(likely(errorNumber == ETIMEDOUT)) { // Timeout, wait failed
-          return false;
-        } else if(unlikely(errorNumber != EINTR)) {
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-            u8"Could not sleep on gate status via futex wait", errorNumber
-          );
+      if(likely(futexWordLikelyChanged)) {
+        safeFutexWord = __atomic_load_n(&impl.FutexWord, __ATOMIC_CONSUME);
+        if(safeFutexWord != 0) {
+          return true; // Gate now open
         }
-      } else { // result did not indicate an error, so the futex word has changed!
-        break;
+      } else if(hasTimedOut) {
+        return false; // Patience has been exceeded
       }
 
       // Calculate the new relative timeout. If this is some kind of spurious
