@@ -25,22 +25,17 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX) // Directly use futex via kernel syscalls
 #include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetRemainingTimeout()
-#include <linux/futex.h> // for futex constants
-#include <unistd.h> // for ::syscall()
-#include <limits.h> // for INT_MAX
-#include <sys/syscall.h> // for ::SYS_futex
-#include <ctime> // for ::clock_gettime()
+#include "../Platform/LinuxFutexApi.h" // for LinuxFutexApi::PrivateFutexWait() and more
 #include <atomic> // for std::atomic
 #elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
 #include "../Platform/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #include "../Platform/WindowsSyncApi.h" // for ::WaitOnAddress(), ::WakeByAddressAll()
-#include <atomic> // for std::atomic
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
 #include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
-#include <atomic> // for std::atomic
 #endif
 
+#include <atomic> // for std::atomic
 #include <cassert> // for assert()
 
 #if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS)
@@ -231,21 +226,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // This will signal other threads sitting in the Semaphore::WaitAndDecrement() method to
       // re-check the semaphore's status and resume running
       //
-      long result = ::syscall(
-        SYS_futex, // syscall id
-        static_cast<volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-        static_cast<int>(FUTEX_WAKE_PRIVATE), // process-private futex wakeup
-        static_cast<int>(count), // wake up as many waiting threads as may be needed
-        static_cast<struct ::timespec *>(nullptr), // timeout -> ignored
-        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-        static_cast<int>(0) // second futex word value -> ignored
-      );
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-          u8"Could not wake up threads waiting on futex", errorNumber
-        );
-      }
+      Platform::LinuxFutexApi::PrivateFutexWakeAll(impl.FutexWord);
 
     } // if(previousAdmitCounter < 0)
   }
@@ -380,23 +361,10 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      long result = ::syscall(
-        SYS_futex, // syscall id
-        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-        static_cast<int>(FUTEX_WAIT_PRIVATE), // process-private futex wakeup
-        static_cast<int>(0), // wait while futex word is 0 (== threads are waiting, no tickets)
-        static_cast<struct ::timespec *>(nullptr), // timeout -> infinite
-        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-        static_cast<int>(0) // second futex word value -> ignored
+      Platform::LinuxFutexApi::PrivateFutexWait(
+        impl.FutexWord,
+        0 // wait while futex word is 0 (== threads are waiting, no tickets)
       );
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        if(unlikely((errorNumber != EAGAIN) && (errorNumber != EINTR))) {
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-            u8"Could not sleep on semaphore via futex wait", errorNumber
-          );
-        }
-      }
 
       // At this point the thread has woken up because of either
       // - a signal (EINTR)
@@ -598,26 +566,15 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      long result = ::syscall(
-        SYS_futex, // syscall id
-        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-        static_cast<int>(FUTEX_WAIT_PRIVATE), // process-private futex wakeup
-        static_cast<int>(0), // wait while futex word is 0 (== threads are waiting, no tickets)
-        static_cast<struct ::timespec *>(&timeout), // timeout after which to fail
-        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-        static_cast<int>(0) // second futex word value -> ignored
+      Platform::LinuxFutexApi::WaitResult result = Platform::LinuxFutexApi::PrivateFutexWait(
+        impl.FutexWord,
+        0, // wait while futex word is 0 (== threads are waiting, no tickets)
+        timeout
       );
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        if(unlikely(errorNumber == ETIMEDOUT)) {
-          return false; // Timeout elapsed, so it's time to give the bad news to the caller
-        }
-        if(unlikely((errorNumber != EAGAIN) && (errorNumber != EINTR))) {
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-            u8"Could not sleep on semaphore via futex wait", errorNumber
-          );
-        }
+      if(unlikely(result == Platform::LinuxFutexApi::WaitResult::TimedOut)) {
+        return false;
       }
+
 
       // At this point the thread has woken up because of either
       // - a signal (EINTR)

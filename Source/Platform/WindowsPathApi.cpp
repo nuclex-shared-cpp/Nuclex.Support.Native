@@ -116,7 +116,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       }
 
       Platform::WindowsApi::ThrowExceptionForSystemError(
-        u8"Could not check process exit code", lastErrorCode
+        u8"Could not check if file exists via GetFileAttributesW()", lastErrorCode
       );
     }
 

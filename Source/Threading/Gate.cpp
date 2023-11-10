@@ -29,12 +29,12 @@ License along with this library
 #elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
 #include "../Platform/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #include "../Platform/WindowsSyncApi.h" // for ::WaitOnAddress(), ::WakeByAddressAll()
-#include <atomic> // for std::atomic
 #else // Posix: use a pthreads conditional variable to emulate a gate
 #include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
-#include <atomic> // for std::atomic
 #endif
+
+#include <atomic> // for std::atomic
 
 #if !defined(NUCLEX_SUPPORT_LINUX) && !defined(NUCLEX_SUPPORT_WINDOWS)
   // Just some safety checks to make sure pthread_condattr_setclock() is available.
