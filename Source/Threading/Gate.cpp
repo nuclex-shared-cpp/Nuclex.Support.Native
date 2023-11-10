@@ -291,11 +291,11 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      bool futexWordLikelyChanged = Platform::LinuxFutexApi::PrivateFutexWait(
+      Platform::LinuxFutexApi::WaitResult result = Platform::LinuxFutexApi::PrivateFutexWait(
         impl.FutexWord,
         0 // wait while futex word is 0 (== gate closed)
       );
-      if(likely(futexWordLikelyChanged)) {
+      if(likely(result != Platform::LinuxFutexApi::Interrupted)) {
         safeFutexWord = __atomic_load_n(&impl.FutexWord, __ATOMIC_CONSUME);
         if(likely(safeFutexWord != 0)) {
           return; // Gate now open
@@ -326,14 +326,14 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the wait value has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      bool result = Platform::WindowsSyncApi::WaitOnAddress(
+      Platform::WindowsSyncApi::WaitResult result = Platform::WindowsSyncApi::WaitOnAddress(
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0) // wait while wait variable is 0 (== gate closed)
       );
-      if(likely(result)) { // Value was not 0, so gate is now open
+      if(likely(result != Platform::WindowsSyncApi::WaitResult::TimedOut)) {
         safeWaitValue = impl.WaitWord; // std::atomic_load(...);
         if(likely(safeWaitValue != 0)) {
-          return;
+          return; // Value was not 0, so gate is now open
         }
       }
 
@@ -424,19 +424,17 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      bool hasTimedOut = false;
-      bool futexWordLikelyChanged = Platform::LinuxFutexApi::PrivateFutexWait(
+      Platform::LinuxFutexApi::WaitResult result = Platform::LinuxFutexApi::PrivateFutexWait(
         impl.FutexWord,
         0, // wait while futex word is 0 (== gate closed)
-        timeout, // timeout after which to fail
-        hasTimedOut
+        timeout // timeout after which to fail
       );
-      if(likely(futexWordLikelyChanged)) {
+      if(likely(result == Platform::LinuxFutexApi::WaitResult::ValueChanged)) {
         safeFutexWord = __atomic_load_n(&impl.FutexWord, __ATOMIC_CONSUME);
         if(safeFutexWord != 0) {
           return true; // Gate now open
         }
-      } else if(hasTimedOut) {
+      } else if(unlikely(result == Platform::LinuxFutexApi::WaitResult::TimedOut)) {
         return false; // Patience has been exceeded
       }
 
@@ -480,14 +478,14 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the wait value has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      bool result = Platform::WindowsSyncApi::WaitOnAddress(
+      Platform::WindowsSyncApi::WaitResult result = Platform::WindowsSyncApi::WaitOnAddress(
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0), // wait while wait variable is 0 (== gate closed)
         remainingTickCount
       );
-      if(likely(result)) { // Value was not 0, so gate is now open
+      if(likely(result != Platform::WindowsSyncApi::WaitResult::TimedOut)) {
         safeWaitValue = impl.WaitWord; // std::atomic_load(...);
-        if(likely(safeWaitValue != 0)) {
+        if(likely(safeWaitValue != 0)) { // Value was not 0, so gate is now open
           break;
         }
       }

@@ -37,9 +37,29 @@ namespace Nuclex { namespace Support { namespace Platform {
   /// <summary>Wraps the Linux futex synchronization API</summary>
   class LinuxFutexApi {
 
+    // ----------------------------------------------------------------------------------------- //
     // These are all for "private" futexes. Which means we hint to the Linux kernel
     // that the futex is private to the calling process (i.e. not in shared memory)
     // and certain assumptions and optimizations for that special case can be made.
+    // ----------------------------------------------------------------------------------------- //
+
+    #pragma region enum WaitResult
+
+    /// <summary>Reasons for why <see cref="WaitOnAddress" /> has returned</summary>
+    public: enum WaitResult {
+
+      /// <summary>The wait was cancelled because the timeout was reached</summary>>
+      TimedOut = -1,
+      /// <summary>The wait was interrupted for some reason</summary>
+      Interrupted = 0,
+      /// <summary>Either the monitored value changed or we woke spuriously</summary>
+      ValueChanged = 1
+
+      // We can distinguish between ValueChanged and ManualWake, but we don't need it
+
+    };
+
+    #pragma endregion // enum WaitResult
 
     /// <summary>Waits for a private futex variable to change its value</summary>
     /// <param name="futexWord">Futex word that will be watched for changed</param>
@@ -48,10 +68,10 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   when the watched futex word has a different value.
     /// </param>
     /// <returns>
-    ///   True if the comparison value has likely changed, false if the ait
-    ///   was interrupted
+    ///   The reason why the wait method has returned. This method will never report back
+    ///   <see cref="WaitResult::TimedOut" /> as a reason because it does not time out.
     /// </returns>
-    public: static bool PrivateFutexWait(
+    public: static WaitResult PrivateFutexWait(
       const volatile std::uint32_t &futexWord,
       std::uint32_t comparisonValue
     );
@@ -65,18 +85,11 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <param name="patience">
     ///   Maximum amount of time to wait before returning even when the value doesn't change
     /// </param>
-    /// <param name="timeoutFlagOutput">
-    ///   Is set to true if the wait was cancelled due to reaching its timeout
-    /// </param>
-    /// <returns>
-    ///   True if the comparison value has likely changed, false if the ait
-    ///   was interrupted
-    /// </returns>
-    public: static bool PrivateFutexWait(
+    /// <returns>The reason why the wait method has returned</returns>
+    public: static WaitResult PrivateFutexWait(
       const volatile std::uint32_t &futexWord,
       std::uint32_t comparisonValue,
-      const ::timespec &patience,
-      bool &timeoutFlagOutput
+      const ::timespec &patience
     );
 
     /// <summary>Wakes a single thread waiting for a futex word to change</summary>

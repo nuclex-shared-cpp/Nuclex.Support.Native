@@ -38,7 +38,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool LinuxFutexApi::PrivateFutexWait(
+  LinuxFutexApi::WaitResult LinuxFutexApi::PrivateFutexWait(
     const volatile std::uint32_t& futexWord,
     std::uint32_t comparisonValue
   ) {
@@ -60,7 +60,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(unlikely(result == -1)) {
       int errorNumber = errno;
       if(likely(errorNumber == EAGAIN)) { // Value was not 0, so gate is now open
-        return true;
+        return WaitResult::ValueChanged;
       } else if(errorNumber != EINTR) {
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
           u8"Could not sleep via futex wait. Ancient Linux kernel version?", errorNumber
@@ -71,17 +71,16 @@ namespace Nuclex { namespace Support { namespace Platform {
     // According to the man pages, FUTEX_WAIT returns 0 if the caller was woken up,
     // in which case we return true as well (the other case is when we get an errno
     // of EAGAIN, indicating that the futex word has changed its value.
-    return (result == 0);
+    return (result == 0) ? WaitResult::ValueChanged : WaitResult::Interrupted;
 
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool LinuxFutexApi::PrivateFutexWait(
+  LinuxFutexApi::WaitResult LinuxFutexApi::PrivateFutexWait(
     const volatile std::uint32_t& futexWord,
     std::uint32_t comparisonValue,
-    const ::timespec &patience,
-    bool &timeoutFlagOutput
+    const ::timespec &patience
   ) {
 
     // Futex Wait (Linux 2.6.0+)
@@ -101,11 +100,9 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(unlikely(result == -1)) {
       int errorNumber = errno;
       if(likely(errorNumber == EAGAIN)) { // Value was not 0, so gate is now open
-        timeoutFlagOutput = false;
-        return true;
+        return WaitResult::ValueChanged;
       } else if(likely(errorNumber == ETIMEDOUT)) { // Timeout, wait failed
-        timeoutFlagOutput = true;
-        return false;
+        return WaitResult::TimedOut;
       } else if(errorNumber != EINTR) {
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
           u8"Could not sleep via futex wait. Ancient Linux kernel version?", errorNumber
@@ -116,8 +113,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     // According to the man pages, FUTEX_WAIT returns 0 if the caller was woken up,
     // in which case we return true as well (the other case is when we get an errno
     // of EAGAIN, indicating that the futex word has changed its value.
-    timeoutFlagOutput = false;
-    return (result == 0);
+    return (result == 0) ? WaitResult::ValueChanged : WaitResult::Interrupted;
 
   }
 

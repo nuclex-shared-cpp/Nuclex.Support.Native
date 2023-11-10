@@ -41,33 +41,33 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool WindowsSyncApi::waitOnAddressWithTimeout(
+  WindowsSyncApi::WaitResult WindowsSyncApi::waitOnAddressWithTimeout(
     const volatile void *waitVariableAddress,
     void *comparisonValue,
     std::size_t waitVariableByteCount,
-    std::chrono::milliseconds maximumWaitTime
+    std::chrono::milliseconds patience
   ) {
     BOOL result = ::WaitOnAddress(
       const_cast<volatile VOID *>(waitVariableAddress),
       reinterpret_cast<PVOID>(comparisonValue),
       static_cast<SIZE_T>(waitVariableByteCount),
-      static_cast<DWORD>(maximumWaitTime.count())
+      static_cast<DWORD>(patience.count())
     );
     if(unlikely(result == FALSE)) {
       DWORD errorCode = ::GetLastError();
       if(likely(errorCode == ERROR_TIMEOUT)) {
-        return false;
+        return WaitResult::TimedOut;
       }
 
       WindowsApi::ThrowExceptionForSystemError(u8"Could not wait on memory address", errorCode);
     }
 
-    return true;
+    return WaitResult::ValueChanged;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool WindowsSyncApi::waitOnAddressNoTimeout(
+  WindowsSyncApi::WaitResult WindowsSyncApi::waitOnAddressNoTimeout(
     const volatile void *waitVariableAddress,
     void *comparisonValue,
     std::size_t waitVariableByteCount
@@ -83,7 +83,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       WindowsApi::ThrowExceptionForSystemError(u8"Could not wait on memory address", errorCode);
     }
 
-    return true;
+    return WaitResult::ValueChanged;
   }
 
   // ------------------------------------------------------------------------------------------- //

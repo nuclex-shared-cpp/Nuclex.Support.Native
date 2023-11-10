@@ -25,11 +25,7 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_LINUX) // Directly use futex via kernel syscalls
 #include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetRemainingTimeout()
-#include <linux/futex.h> // for futex constants
-#include <unistd.h> // for ::syscall()
-#include <limits.h> // for INT_MAX
-#include <sys/syscall.h> // for ::SYS_futex
-#include <ctime> // for ::clock_gettime()
+#include "../Platform/LinuxFutexApi.h" // for LinuxFutexApi::PrivateFutexWait() and more
 #elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
 #include "../Platform/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
 #include "../Platform/WindowsSyncApi.h" // for ::WaitOnAddress(), ::WakeByAddressAll()
@@ -314,21 +310,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // This will signal other threads sitting in the Latch::Wait() method to re-check
       // the latch counter and resume running
       //
-      long result = ::syscall(
-        SYS_futex, // syscall id
-        static_cast<volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-        static_cast<int>(FUTEX_WAKE_PRIVATE), // process-private futex wakeup
-        static_cast<int>(INT_MAX), // wake up all waiting threads
-        static_cast<struct ::timespec *>(nullptr), // timeout -> ignored
-        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-        static_cast<int>(0) // second futex word value -> ignored
-      );
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-          u8"Could not wake up threads waiting on futex", errorNumber
-        );
-      }
+      Platform::LinuxFutexApi::PrivateFutexWakeAll(impl.FutexWord);
 
     } // if latch counter decremented to zero
   }
@@ -417,7 +399,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   void Latch::Wait() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
-    // Loop until we can snatch an available ticket
+    // Loop until we find the latch to be open
     std::size_t safeCountdown = impl.Countdown.load(std::memory_order_consume);
     for(;;) {
       if(safeCountdown == 0) {
@@ -429,23 +411,10 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      long result = ::syscall(
-        SYS_futex, // syscall id
-        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-        static_cast<int>(FUTEX_WAIT_PRIVATE), // process-private futex wakeup
-        static_cast<int>(0), // wait while futex word is 0 (== latch counter is greater than zero)
-        static_cast<struct ::timespec *>(nullptr), // timeout -> infinite
-        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-        static_cast<int>(0) // second futex word value -> ignored
+      Platform::LinuxFutexApi::PrivateFutexWait(
+        impl.FutexWord,
+        0 // wait while futex word is 0 (== latch counter is greater than zero)
       );
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        if(unlikely((errorNumber != EAGAIN) && (errorNumber != EINTR))) {
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-            u8"Could not sleep on latch via futex wait", errorNumber
-          );
-        }
-      }
 
       // If this was a spurious wake-up, we need to adjust the futex word in order to prevent
       // a busy loop in this Wait() method.
@@ -462,6 +431,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           __atomic_store_n(&impl.FutexWord, 1, __ATOMIC_RELEASE); // 1 -> latch open
         }
       }
+
     } // for(;;)
   }
 #endif
@@ -482,28 +452,26 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the wait value has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      bool result = Platform::WindowsSyncApi::WaitOnAddress(
+      Platform::WindowsSyncApi::WaitOnAddress(
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0) // wait while wait variable is 0 (== gate closed)
       );
-      if(likely(result)) {
 
-        // If this was a spurious wake-up, we need to adjust the wait variable in order to
-        // prevent a busy loop in this Wait() method.
+      // If this was a spurious wake-up, we need to adjust the wait variable in order to
+      // prevent a busy loop in this Wait() method.
+      safeCountdown = impl.Countdown.load(std::memory_order_consume);
+      if(safeCountdown > 0) {
+        impl.WaitWord = 0; // 0 -> latch now locked
+        std::atomic_thread_fence(std::memory_order::memory_order_release);
+
+        // But just like in Post(), this is a race condition with other threads potentially
+        // calling CountDown(), so to err on the side of having spurious open latches, we
+        // need to re-check the latch counter.
+        //
         safeCountdown = impl.Countdown.load(std::memory_order_consume);
-        if(safeCountdown > 0) {
-          impl.WaitWord = 0; // 0 -> latch now locked
+        if(safeCountdown == 0) {
+          impl.WaitWord = 1; // 1 -> latch open
           std::atomic_thread_fence(std::memory_order::memory_order_release);
-
-          // But just like in Post(), this is a race condition with other threads potentially
-          // calling CountDown(), so to err on the side of having spurious open latches, we
-          // need to re-check the latch counter.
-          //
-          safeCountdown = impl.Countdown.load(std::memory_order_consume);
-          if(safeCountdown == 0) {
-            impl.WaitWord = 1; // 1 -> latch open
-            std::atomic_thread_fence(std::memory_order::memory_order_release);
-          }
         }
       }
     } // for(;;)
@@ -577,25 +545,13 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      long result = ::syscall(
-        SYS_futex, // syscall id
-        static_cast<const volatile std::uint32_t *>(&impl.FutexWord), // futex word being accessed
-        static_cast<int>(FUTEX_WAIT_PRIVATE), // process-private futex wakeup
-        static_cast<int>(0), // wait while futex word is 0 (== latch counter is greater than zero)
-        static_cast<struct ::timespec *>(&timeout), // timeout after which to fail
-        static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
-        static_cast<int>(0) // second futex word value -> ignored
+      Platform::LinuxFutexApi::WaitResult result = Platform::LinuxFutexApi::PrivateFutexWait(
+        impl.FutexWord,
+        0,
+        timeout
       );
-      if(unlikely(result == -1)) {
-        int errorNumber = errno;
-        if(unlikely(errorNumber == ETIMEDOUT)) {
-          return false; // Timeout elapsed, so it's time to give the bad news to the caller
-        }
-        if(unlikely((errorNumber != EAGAIN) && (errorNumber != EINTR))) {
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-            u8"Could not sleep on latch via futex wait", errorNumber
-          );
-        }
+      if(unlikely(result == Platform::LinuxFutexApi::TimedOut)) {
+        return false; // Timeout elapsed, so it's time to give the bad news to the caller
       }
 
       // If this was a spurious wake-up, we need to adjust the futex word in order to prevent
@@ -641,36 +597,35 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the wait value has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      bool result = Platform::WindowsSyncApi::WaitOnAddress(
+      Platform::WindowsSyncApi::WaitResult result = Platform::WindowsSyncApi::WaitOnAddress(
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0), // wait while wait variable is 0 (== gate closed)
         remainingTickCount
       );
 
-      if(likely(result)) {
+      if(unlikely(result == Platform::WindowsSyncApi::WaitResult::TimedOut)) {
+        return false;
+      }
 
-        // If this was a spurious wake-up, we need to adjust the futex word in order to prevent
-        // a busy loop in this Wait() method.
+      // If this was a spurious wake-up, we need to adjust the futex word in order to prevent
+      // a busy loop in this Wait() method.
+      safeCountdown = impl.Countdown.load(std::memory_order_consume);
+      if(likely(safeCountdown > 0)) {
+        impl.WaitWord = 0; // 0 -> latch now locked
+        std::atomic_thread_fence(std::memory_order::memory_order_release);
+
+        // But just like in Post(), this is a race condition with other threads potentially
+        // calling CountDown(), so to err on the side of having spurious open latches, we
+        // need to re-check the latch counter.
+        //
         safeCountdown = impl.Countdown.load(std::memory_order_consume);
-        if(likely(safeCountdown > 0)) {
-          impl.WaitWord = 0; // 0 -> latch now locked
+        if(unlikely(safeCountdown == 0)) {
+          impl.WaitWord = 1; // 1 -> latch open
           std::atomic_thread_fence(std::memory_order::memory_order_release);
-
-          // But just like in Post(), this is a race condition with other threads potentially
-          // calling CountDown(), so to err on the side of having spurious open latches, we
-          // need to re-check the latch counter.
-          //
-          safeCountdown = impl.Countdown.load(std::memory_order_consume);
-          if(unlikely(safeCountdown == 0)) {
-            impl.WaitWord = 1; // 1 -> latch open
-            std::atomic_thread_fence(std::memory_order::memory_order_release);
-          }
         }
-
-        if(safeCountdown == 0) {
-          break;
-        }
-
+      }
+      if(safeCountdown == 0) {
+        break;
       }
 
       // Calculate the new relative timeout. If this is some kind of spurious
@@ -679,7 +634,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       {
         std::chrono::milliseconds elapsedTickCount = (
           std::chrono::milliseconds(::GetTickCount64()) - startTickCount
-          );
+        );
         if(elapsedTickCount >= patienceTickCount) {
           return false; // timeout expired
         } else {

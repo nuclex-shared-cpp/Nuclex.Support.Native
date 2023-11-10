@@ -36,13 +36,30 @@ namespace Nuclex { namespace Support { namespace Platform {
   /// <summary>Wraps the API used for advanced thread synchronization on Windows</summary>
   class WindowsSyncApi {
 
+    #pragma region enum WaitResult
+
+    /// <summary>Reasons for why <see cref="WaitOnAddress" /> has returned</summary>
+    public: enum WaitResult {
+
+      /// <summary>The wait was cancelled because the timeout was reached</summary>>
+      TimedOut = -1,
+      /// <summary>Either the monitored value changed or we woke spuriously</summary>
+      ValueChanged = 1
+
+    };
+
+    #pragma endregion // enum WaitResult
+
     /// <summary>Waits for the specified wait variable to change in memory</summary>
     /// <typeparam name="TWaitVariable">
     ///   Type of the wait variable, must be either int8, int16, int32 or int64
     /// </typeparam>
     /// <param name="waitVariable">Wait variable that will be watched</param>
     /// <param name="comparedValue">Value the wait variable will be compared against</param>
-    /// <param name="maximumWaitTime">Maximum time to wait in milliseconds</param>
+    /// <param name="patience">Maximum time to wait in milliseconds</param>
+    /// <param name="timeoutFlagOutput">
+    ///   Is set to true if the wait was cancelled due to reaching its timeout
+    /// </param>
     /// <returns>
     ///   True if the variable has probably changed, false if the variable remained
     ///   unchanged until the wait timeout was reached
@@ -64,10 +81,10 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   </para>
     /// </remarks>
     public: template<typename TWaitVariable>
-    inline static bool WaitOnAddress(
+    inline static WaitResult WaitOnAddress(
       const volatile TWaitVariable &waitVariable,
       TWaitVariable comparedValue,
-      std::chrono::milliseconds maximumWaitTime
+      std::chrono::milliseconds patience
     );
 
     /// <summary>Waits for the specified wait variable to change in memory</summary>
@@ -96,7 +113,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   </para>
     /// </remarks>
     public: template<typename TWaitVariable>
-    inline static bool WaitOnAddress(
+    inline static WaitResult WaitOnAddress(
       const volatile TWaitVariable &waitVariable,
       TWaitVariable comparedValue
     );
@@ -129,16 +146,16 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <param name="waitVariable">Wait variable that will be watched</param>
     /// <param name="comparisonValue">Value the wait variable will be compared against</param>
     /// <param name="waitVariableByteCount">Size of the wait variable in bytes</param>
-    /// <param name="maximumWaitTime">Maximum time to wait in milliseconds</param>
+    /// <param name="patience">Maximum time to wait in milliseconds</param>
     /// <returns>
     ///   True if the variable has probably changed, false if the variable remained
     ///   unchanged until the wait timeout was reached
     /// </returns>
-    private: static bool waitOnAddressWithTimeout(
+    private: static WaitResult waitOnAddressWithTimeout(
       const volatile void *waitVariableAddress,
       void *comparisonValue,
       std::size_t waitVariableByteCount,
-      std::chrono::milliseconds maximumWaitTime
+      std::chrono::milliseconds patience
     );
 
     /// <summary>Waits for a value to change in memory</summary>
@@ -150,7 +167,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <returns>
     ///   True if the variable has probably changed, false if the wait was interrupted
     /// </returns>
-    private: static bool waitOnAddressNoTimeout(
+    private: static WaitResult waitOnAddressNoTimeout(
       const volatile void *waitVariableAddress,
       void *comparisonValue,
       std::size_t waitVariableByteCount
@@ -173,59 +190,59 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   template<>
-  inline bool WindowsSyncApi::WaitOnAddress(
+  inline WindowsSyncApi::WaitResult WindowsSyncApi::WaitOnAddress(
     const volatile std::uint8_t &waitVariable,
     std::uint8_t comparedValue,
-    std::chrono::milliseconds maximumWaitTime
+    std::chrono::milliseconds patience
   ) {
     return waitOnAddressWithTimeout(
-      &waitVariable, &comparedValue, sizeof(std::uint8_t), maximumWaitTime
+      &waitVariable, &comparedValue, sizeof(std::uint8_t), patience
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<>
-  inline bool WindowsSyncApi::WaitOnAddress(
+  inline WindowsSyncApi::WaitResult WindowsSyncApi::WaitOnAddress(
     const volatile std::uint16_t &waitVariable,
     std::uint16_t comparedValue,
-    std::chrono::milliseconds maximumWaitTime
+    std::chrono::milliseconds patience
   ) {
     return waitOnAddressWithTimeout(
-      &waitVariable, &comparedValue, sizeof(std::uint16_t), maximumWaitTime
+      &waitVariable, &comparedValue, sizeof(std::uint16_t), patience
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<>
-  inline bool WindowsSyncApi::WaitOnAddress(
+  inline WindowsSyncApi::WaitResult WindowsSyncApi::WaitOnAddress(
     const volatile std::uint32_t &waitVariable,
     std::uint32_t comparedValue,
-    std::chrono::milliseconds maximumWaitTime
+    std::chrono::milliseconds patience
   ) {
     return waitOnAddressWithTimeout(
-      &waitVariable, &comparedValue, sizeof(std::uint32_t), maximumWaitTime
+      &waitVariable, &comparedValue, sizeof(std::uint32_t), patience
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<>
-  inline bool WindowsSyncApi::WaitOnAddress(
+  inline WindowsSyncApi::WaitResult WindowsSyncApi::WaitOnAddress(
     const volatile std::uint64_t &waitVariable,
     std::uint64_t comparedValue,
-    std::chrono::milliseconds maximumWaitTime
+    std::chrono::milliseconds patience
   ) {
     return waitOnAddressWithTimeout(
-      &waitVariable, &comparedValue, sizeof(std::uint64_t), maximumWaitTime
+      &waitVariable, &comparedValue, sizeof(std::uint64_t), patience
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<>
-  inline bool WindowsSyncApi::WaitOnAddress(
+  inline WindowsSyncApi::WaitResult WindowsSyncApi::WaitOnAddress(
     const volatile std::uint8_t &waitVariable,
     std::uint8_t comparedValue
   ) {
@@ -237,7 +254,7 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   template<>
-  inline bool WindowsSyncApi::WaitOnAddress(
+  inline WindowsSyncApi::WaitResult WindowsSyncApi::WaitOnAddress(
     const volatile std::uint16_t &waitVariable,
     std::uint16_t comparedValue
   ) {
@@ -249,7 +266,7 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   template<>
-  inline bool WindowsSyncApi::WaitOnAddress(
+  inline WindowsSyncApi::WaitResult WindowsSyncApi::WaitOnAddress(
     const volatile std::uint32_t &waitVariable,
     std::uint32_t comparedValue
   ) {
@@ -261,7 +278,7 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   template<>
-  inline bool WindowsSyncApi::WaitOnAddress(
+  inline WindowsSyncApi::WaitResult WindowsSyncApi::WaitOnAddress(
     const volatile std::uint64_t &waitVariable,
     std::uint64_t comparedValue
   ) {
