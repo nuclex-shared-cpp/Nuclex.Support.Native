@@ -49,19 +49,33 @@ namespace Nuclex { namespace Support { namespace Threading {
   ///     without having the setup time exceed the gains.
   ///   </para>
   ///   <para>
-  ///     Do not use the thread pool for general purpose tasks or waiting on mutexes. It would
-  ///     immediately prevent the thread pool from performing work for 1 or more CPU cores due
-  ///     to the threads being stuck on the wait.
+  ///     Optimally, only use the thread pool if you have real number crunching that can be
+  ///     parallelized to as many CPU cores as the system can provide. Performing a single task
+  ///     in the background or doing something time consuming (like disk accesses) should
+  ///     be done with std::async or std::thread instead.
   ///   </para>
   ///   <para>
-  ///     Only use the thread pool if you have real number crunching that can be parallelized
-  ///     to as many CPU cores as the system can provide. Performing a single task in
-  ///     the background or doing something time consuming (like disk accesses) should always
-  ///     be done with std::async or std::thread.
+  ///     Ideally, your tasks would be split into a large number of packages that can each run
+  ///     in just a few milliseconds, allowing them to be distributed over many cores and only
+  ///     encounter a small period of reduced concurrency at the end when tasks run out.
   ///   </para>
   ///   <para>
-  ///     Ideally, your tasks would be split into packages that can be done in a millisecond
-  ///     or less, allowing even
+  ///     You should not use this thread pool for general purpose tasks or waiting on mutexes,
+  ///     at least not with the default thread limits from its default constructor. It would
+  ///     quickly clog the thread pool's available threads and render it unable to complete any
+  ///     work because just a handful of waiting tasks would fully occupy all the threads.
+  ///   </para>
+  ///   <para>
+  ///     However, it is possible to specify an arbitrarily high maximum thread count and use
+  ///     this thread pool for general-purpose work, including long idle waits. Threads will be
+  ///     created as needed. In such cases, the use case mentioned earlier (with a large number
+  ///     of small work packages) becomes a problem, however, because the thread pool would
+  ///     create a silly number of threads and try to run everything at once.
+  ///   </para>
+  ///   <para>
+  ///     In summary, this thread pool has the same caveats as any other thread pool
+  ///     implementation. It merely uses defaults that are suitable for number churning rather
+  ///     than as a general purpose thread supermarket. In short: know what you're doing :)
   ///   </para>
   /// </remarks>
   class NUCLEX_SUPPORT_TYPE ThreadPool {
