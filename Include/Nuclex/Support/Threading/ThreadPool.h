@@ -26,7 +26,7 @@ License along with this library
 // Currently, the thread pool only has implementations for Linux and Windows
 //
 // The Linux version may be fully or nearly Posix-compatible, so feel free to
-// remove this check and give it a try.
+// remove this check and give it a try if your system is Posix but not Linux...
 #if defined(NUCLEX_SUPPORT_LINUX) || defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <cstddef> // for std::size_t
