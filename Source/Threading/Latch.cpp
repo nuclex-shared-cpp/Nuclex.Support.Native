@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2021 Nuclex Development Labs
+Copyright (C) 2002-2023 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -602,7 +602,6 @@ namespace Nuclex { namespace Support { namespace Threading {
         static_cast<std::uint32_t>(0), // wait while wait variable is 0 (== gate closed)
         remainingTickCount
       );
-
       if(unlikely(result == Platform::WindowsSyncApi::WaitResult::TimedOut)) {
         return false;
       }

@@ -342,13 +342,11 @@
     <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\lightweightsemaphore.h" />
     <ClCompile Include="Source\Threading\Latch.cpp" />
     <ClCompile Include="Source\Threading\Gate.cpp" />
-    <ClCompile Include="Source\Threading\MoodyCamelQueue.cpp" />
-    <ClInclude Include="Source\Threading\MoodyCamelQueue.h" />
     <ClCompile Include="Source\Threading\Process.Linux.cpp" />
     <ClCompile Include="Source\Threading\Process.Windows.cpp" />
     <ClCompile Include="Source\Threading\Semaphore.cpp" />
     <ClCompile Include="Source\Threading\Thread.cpp" />
-    <ClCompile Include="Source\Threading\ThreadPool.Linux.cpp" />
+    <ClCompile Include="Source\Threading\ThreadPool.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.Windows.cpp" />
     <ClCompile Include="Source\Threading\ThreadPoolConfig.cpp" />
     <ClInclude Include="Source\Threading\ThreadPoolConfig.h" />
@@ -399,7 +397,6 @@
     <ClCompile Include="Tests\Text\UnicodeHelperTest.cpp" />
     <ClCompile Include="Tests\Threading\LatchTest.cpp" />
     <ClCompile Include="Tests\Threading\GateTest.cpp" />
-    <ClCompile Include="Tests\Threading\MoodyCamelQueueTest.cpp" />
     <ClCompile Include="Tests\Threading\ProcessTest.cpp" />
     <ClCompile Include="Tests\Threading\SemaphoreBenchmark.cpp" />
     <ClCompile Include="Tests\Threading\SemaphoreTest.cpp" />

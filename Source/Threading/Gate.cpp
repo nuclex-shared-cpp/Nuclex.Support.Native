@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2021 Nuclex Development Labs
+Copyright (C) 2002-2023 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -330,7 +330,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0) // wait while wait variable is 0 (== gate closed)
       );
-      if(likely(result != Platform::WindowsSyncApi::WaitResult::TimedOut)) {
+      if(likely(result == Platform::WindowsSyncApi::WaitResult::ValueChanged)) {
         safeWaitValue = impl.WaitWord; // std::atomic_load(...);
         if(likely(safeWaitValue != 0)) {
           return; // Value was not 0, so gate is now open

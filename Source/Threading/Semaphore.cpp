@@ -1,7 +1,7 @@
 #pragma region CPL License
 /*
 Nuclex Native Framework
-Copyright (C) 2002-2021 Nuclex Development Labs
+Copyright (C) 2002-2023 Nuclex Development Labs
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the IBM Common Public License as
@@ -432,16 +432,16 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the wait value has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      bool result = Platform::WindowsSyncApi::WaitOnAddress(
+      Platform::WindowsSyncApi::WaitResult result = Platform::WindowsSyncApi::WaitOnAddress(
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0) // wait while wait variable is 0 (== gate closed)
       );
-      if(likely(result)) {
+      if(likely(result == Platform::WindowsSyncApi::WaitResult::ValueChanged)) {
 
         // At this point the thread has woken up because of either
         // - a signal (EINTR)
         // - the futex word changed (EAGAIN)
-        // - an explicit wake from the Post() method (result == 0)
+        // - an explicit wake from the Post() method
         //
         // In all cases, we recheck the ticket counter and try to either obtain
         // a ticket or go back to sleep using the same method as before.
@@ -575,11 +575,10 @@ namespace Nuclex { namespace Support { namespace Threading {
         return false;
       }
 
-
       // At this point the thread has woken up because of either
       // - a signal (EINTR)
       // - the futex word changed (EAGAIN)
-      // - an explicit wake from the Post() method (result == 0)
+      // - an explicit wake from the Post() method
       //
       // In all cases, we recheck the ticket counter and try to either obtain
       // a ticket or go back to sleep using the same method as before.
@@ -665,23 +664,23 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // This sends the thread to sleep for as long as the wait value has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      bool result = Platform::WindowsSyncApi::WaitOnAddress(
+      Platform::WindowsSyncApi::WaitResult result = Platform::WindowsSyncApi::WaitOnAddress(
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0), // wait while wait variable is 0 (== gate closed)
         remainingTickCount
       );
-      if(likely(result)) { // Value was not 0, so gate is now open
-
-        // At this point the thread has woken up because of either
-        // - a signal (EINTR)
-        // - the futex word changed (EAGAIN)
-        // - an explicit wake from the Post() method (result == 0)
-        //
-        // In all cases, we recheck the ticket counter and try to either obtain
-        // a ticket or go back to sleep using the same method as before.
-        initialAdmitCounter = impl.AdmitCounter.load(std::memory_order_consume);
-
+      if(unlikely(result == Platform::WindowsSyncApi::WaitResult::TimedOut)) {
+        return false;
       }
+
+      // At this point the thread has woken up because of either
+      // - a signal (EINTR)
+      // - the futex word changed (EAGAIN)
+      // - an explicit wake from the Post() method (result == 0)
+      //
+      // In all cases, we recheck the ticket counter and try to either obtain
+      // a ticket or go back to sleep using the same method as before.
+      initialAdmitCounter = impl.AdmitCounter.load(std::memory_order_consume);
 
     } // for(;;)
   }
