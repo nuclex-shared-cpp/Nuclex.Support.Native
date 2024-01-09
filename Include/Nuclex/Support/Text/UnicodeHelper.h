@@ -36,37 +36,41 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   <para>
   ///     Short overview of unicode: the &quot;unicode consortium&quot; has taken symbols from
   ///     all languages of the world and put them into a giant table. Said table is defined
-  ///     with finite room for about 1,1 million symbols, but only some 140,000 symbols have
-  ///     been filled so far. Nominally, the table is divided into 17 &quot;planes&quot; of
-  ///     65,536 characters each, separating latin-based languages from asian ones and from
-  ///     funny poop symbols but that's only important for font designers.
+  ///     with room for about 1.1 million symbols, but only some 140,000 symbols have been
+  ///     filled so far. Nominally, the table is divided into 17 &quot;planes&quot; of
+  ///     65,536 characters each, separating latin-based languages from asian language and
+  ///     from funny poop emojis, but that part is only important for font designers.
   ///   </para>
   ///   <para>
-  ///     An index in the unicode table is called a &quot;code point&quot;. To store text using
-  ///     unicode, each code point has to be stored. The easiest way to do that would be to just
-  ///     save a stream of 32 bit integers indicating code points. And that's what UTF-32 is.
-  ///     While simple to deal with, its downsides are wasted space and endian issues.
+  ///     An index into the unicode table is called a &quot;code point&quot;. So what used to
+  ///     be a characters in an ASCII string are now code points in a unicode string.
+  ///     The easiest way to store them would be to just keep an array of 32 bit integers,
+  ///     each sufficient to hold one code point. That's precisely what UTF-32 is. While easy
+  ///     to deal with, its downsides are wasted space and endian issues.
   ///   </para>
   ///   <para>
-  ///     That's why UTF-8 became the global standard. It is a variable-length encoding where
-  ///     the upper bits of the leading byte indicate the number of bytes that form one
-  ///     code point. ASCII code points use only one UTF-8 byte (in fact, they map 1:1),
-  ///     other latin letters and most asian ones use two bytes and only rarely does
-  ///     a code point require 3 or 4 bytes in UTF-8.
+  ///     Enter UTF-8. It is a variable-length encoding where the first byte tells the number
+  ///     of bytes that follow, up to 3. Amusingly, if the first byte's uppermost bit is unset,
+  ///     this indicates a single-byte code point using 7 bits which happen to be mapped to
+  ///     ASCII in a 1:1 fashion, in other words, any 7-bit ASCII string is a valid UTF-8
+  ///     string. Consisting of only bytes, it isn't prone to endian issues.
   ///   </para>
   ///   <para>
-  ///     UTF-16 combines the worst of both, endian issues and wasted space. So naturally
-  ///     Microsoft used it for unicode in Windows. A code point is represented by one or two
-  ///     16 bit integers, again using the leading integer's high bits to indicate whether
+  ///     UTF-16 combines the worst of both: endian issues and wasted space. So naturally
+  ///     Microsoft used it for all unicode in Windows. A code point is represented by one or
+  ///     two 16 bit integers, again using the leading integer's high bits to indicate whether
   ///     the code point is complete or formed together with the 16 bit integer that follows.
+  ///     Lots of Windows software, holds the opinion that one 16 bit integer, aka one wchar_t,
+  ///     is one glyph, which tends to work until you localize to Asian languages.
   ///   </para>
   ///   <para>
-  ///     Now one last confusing thing: where I write that UTF-8 encodes unicode code points
+  ///     One last confusing thing: whenever I write that UTF-8 encodes unicode code points
   ///     as 1-4 bytes, UTF-16 as one or two 16 bit integers and UTF-32 as a 32 bit integer,
-  ///     the correct term to use would be &quot;characters&quot;. That's why in C++ the new
-  ///     data types are <code>char8_t</code>, <code>char16_t</code> and <code>char32_t</code>.
-  ///     So &quot;character&quot; has been defined to mean &quot;encoding unit&quot; and is
-  ///     not always enough to represent a full letter (aka code point).
+  ///     the correct term in place of &quot;bytes&quot; and &quot;integers&quot; would be
+  ///     &quot;characters&quot;. That's why in C++ the new data types are
+  ///     <code>char8_t</code>, <code>char16_t</code> and <code>char32_t</code>.
+  ///     So &quot;character&quot; has been (re-?)defined to mean &quot;encoding atom&quot;
+  ///     and it is not always enough to represent an entire letter (aka code point).
   ///   </para>
   ///   <para>
   ///     A series of characters encoding a unicode code point is called a sequence.
