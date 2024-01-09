@@ -56,7 +56,15 @@ namespace Nuclex { namespace Support { namespace Text {
   ///     string. Consisting of only bytes, it isn't prone to endian issues.
   ///   </para>
   ///   <para>
-  ///     UTF-16 combines the worst of both: endian issues and wasted space. So naturally
+  ///     Cool fact: in UTF-8 code points requiring 2, 3 or 4 bytes to encode, all of
+  ///     the bytes have their highest bit set. That means that no single byte will intrude
+  ///     into the 7-bit ASCII range. So if, for example, the byte 0x2f, '/', a path separator,
+  ///     appears in the bytes of an UTF-8 string, it *is* the path separator since no
+  ///     follow-up-byte in a 2, 3 or 4 byte code point can ever use the values 0x00-0x7f.
+  ///     This allows UTF-8 to harmlessly pass through a lot of old software and/or code.
+  ///   </para>
+  ///   <para>
+  ///     UTF-16 combines the worst of either: endian issues and wasted space. So naturally
   ///     Microsoft used it for all unicode in Windows. A code point is represented by one or
   ///     two 16 bit integers, again using the leading integer's high bits to indicate whether
   ///     the code point is complete or formed together with the 16 bit integer that follows.
