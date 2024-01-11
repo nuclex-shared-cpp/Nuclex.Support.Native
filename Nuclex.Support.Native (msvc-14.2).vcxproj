@@ -269,6 +269,7 @@
     <ClCompile Include="Source\Events\Delegate.cpp" />
     <ClCompile Include="Source\Events\Event.cpp" />
     <ClCompile Include="Source\Platform\LinuxFileApi.cpp" />
+    <ClInclude Include="Include\Nuclex\Support\Text\StringHelper.h" />
     <ClInclude Include="Source\Platform\LinuxFileApi.h" />
     <ClCompile Include="Source\Platform\LinuxFutexApi.cpp" />
     <ClInclude Include="Source\Platform\LinuxFutexApi.h" />
@@ -334,6 +335,7 @@
     <ClCompile Include="Source\Text\RollingLogger.cpp" />
     <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
+    <ClCompile Include="Source\Text\StringHelper.cpp" />
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClCompile Include="Source\Text\UnicodeHelper.cpp" />
     <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\concurrentqueue.h" />

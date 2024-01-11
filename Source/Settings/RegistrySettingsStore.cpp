@@ -219,7 +219,7 @@ namespace {
       }
     }
 
-    // Either the caller hinted at a learger size or the value turned out to be larger
+    // Either the caller hinted at a larger size or the value turned out to be larger
     // Try a heap-allocated buffer with the hinted or known size.
     for(;;) {
       std::unique_ptr<std::uint8_t[]> heapValue(new std::uint8_t[valueSize]);
@@ -407,7 +407,7 @@ namespace {
     } // propertyName scope
 
     if(unlikely(result != ERROR_SUCCESS)) {
-      std::string message(u8"Could not store setting '", 35);
+      std::string message(u8"Could not store setting '", 25);
       message.append(propertyName);
       message.append(u8"' in registry", 13);
       Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(message, result);

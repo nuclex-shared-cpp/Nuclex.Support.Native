@@ -54,7 +54,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// </summary>
     /// <param name="keyHandle">Handle of the key whose direct children will be queried</param>
     /// <returns>A list containing the names of all child keys</returns>
-    public: static std::vector<std::string> WindowsRegistryApi::GetAllSubKeyNames(
+    public: static std::vector<std::string> GetAllSubKeyNames(
       ::HKEY keyHandle
     );
 
@@ -64,7 +64,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// </summary>
     /// <param name="keyHandle">Handle of the key whose values will be queried</param>
     /// <returns>A list containing the names of all value below the key</returns>
-    public: static std::vector<std::string> WindowsRegistryApi::GetAllValueNames(
+    public: static std::vector<std::string> GetAllValueNames(
       ::HKEY keyHandle
     );
 
@@ -86,6 +86,17 @@ namespace Nuclex { namespace Support { namespace Platform {
     public: static ::HKEY OpenOrCreateSubKey(
       ::HKEY parentKeyHandle, const std::string &subKeyName
     );
+
+    /// <summary>Deletes the specified registry and all subkeys and values in it</summary>
+    /// <param name="parentKeyHandle">
+    ///   Handle of the key below which the key that will be deleted is located
+    /// </param>
+    /// <param name="subKeyName">
+    ///   Name and or path of a subkey that will be deleted (if a path is specified,
+    ///   it's the bottommost key in the path that will be deleted)
+    /// </param>
+    /// <returns>True if the key existed and was deleted, false if it didn't exist</returns>
+    public: static bool DeleteTree(::HKEY parentKeyHandle, const std::string &subKeyName);
 
   };
 

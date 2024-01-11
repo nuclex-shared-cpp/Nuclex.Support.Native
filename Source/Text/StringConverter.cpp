@@ -106,7 +106,7 @@ namespace Nuclex { namespace Support { namespace Text {
       // Let's assume 1 UTF-16/UTF-32 character maps to 2 UTF-16 characters. For ASCII
       // strings, we'll allocate twice as much as we need, for international string it will
       // be exactly right, old egyptians and celts may need another allocation along the way.
-      result.resize(wideString.length() * 2);
+      result.resize(wideString.length() * 2 + 2);
 
       my_char8_t *write = reinterpret_cast<my_char8_t *>(result.data());
       my_char8_t *writeEnd = write + result.length();

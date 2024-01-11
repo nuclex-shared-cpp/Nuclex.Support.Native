@@ -49,7 +49,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///     <code>
   ///       logger.Inform(u8"Saving configuration {");
   ///       {
-  ///         Logger::IndentationScope configurationLogScope(logger);
+  ///         Logger::IndentationScope indentConfigurationScope(logger);
   ///
   ///         logger.Append(u8"ResolutionX = ");
   ///         logger.Append(1920);
@@ -105,8 +105,8 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <returns>True if the log messages are processed in any way, false otherwise</returns>
     /// <remarks>
     ///   Forming the log message strings may be non-trivial and cause memory allocations, too,
-    ///   so by checking this method just once, you can skip all logging if they would be
-    ///   discarded anyway.
+    ///   so by checking this method just once, you can skip all logging in case your messages
+    ///   would be discarded anyway.
     /// </remarks>
     public: NUCLEX_SUPPORT_API bool IsLogging() const override;
 

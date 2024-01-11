@@ -25,7 +25,8 @@ License along with this library
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "Nuclex/Support/Text/StringConverter.h"
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
+#include "Nuclex/Support/Text/UnicodeHelper.h" // for UnicodeHelper
 
 #include <cassert> // for assert()
 
@@ -116,6 +117,58 @@ namespace {
         stringToChange[index] = L'\\';
       }
     }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::wstring wideFromUtf8AndUseBackwardSlashes(const std::string &utf8String) {
+    using Nuclex::Support::Text::UnicodeHelper;
+
+    std::wstring result;
+    {
+      const UnicodeHelper::char8_t *read = (
+        reinterpret_cast<const UnicodeHelper::char8_t *>(utf8String.c_str())
+      );
+      const UnicodeHelper::char8_t *readEnd = read + utf8String.length();
+
+      // Let's assume 1 UTF-8 characters maps to 1 UTF-16 character. For ASCII strings,
+      // this will be an exact fit, for asian languages, it's probably twice what we need.
+      // In any case, it will never come up short, so we don't have to worry about running
+      // out of space when writing transcoded UTF characters into the string.
+      result.resize(utf8String.length());
+
+      // Variant for 16 bit wchar_t as established by Windows compilers
+      if constexpr(sizeof(wchar_t) == sizeof(char16_t)) {
+        char16_t *write = reinterpret_cast<char16_t *>(result.data());
+
+        while(read < readEnd) {
+          char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
+          if(unlikely(codePoint == U'/')) {
+            UnicodeHelper::WriteCodePoint(U'\\', write);
+          } else {
+            UnicodeHelper::WriteCodePoint(codePoint, write);
+          }
+        }
+
+        result.resize(write - reinterpret_cast<char16_t *>(result.data()));
+      } else { // Variant for 32 bit wchar_t used everywhere except Windows
+        char32_t *write = reinterpret_cast<char32_t *>(result.data());
+
+        while(read < readEnd) {
+          char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
+          if(unlikely(codePoint == U'/')) {
+            *write = U'\\';
+          } else {
+            *write = UnicodeHelper::ReadCodePoint(read, readEnd);
+          }
+          ++write;
+        }
+
+        result.resize(write - reinterpret_cast<char32_t *>(result.data()));
+      }
+    }
+
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -215,7 +268,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         &longestSubKeyLength, nullptr, nullptr, nullptr,
         nullptr, nullptr, nullptr
       );
-      if(result != ERROR_SUCCESS) {
+      if(unlikely(result != ERROR_SUCCESS)) {
         Platform::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not query number of subkeys from registry key", result
         );
@@ -227,7 +280,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(subKeyCount > 0) {
       results.reserve(subKeyCount);
 
-      std::vector<WCHAR> keyName(longestSubKeyLength, 0);
+      std::wstring keyName(longestSubKeyLength, std::wstring::value_type(0));
       DWORD keyNameLength = longestSubKeyLength;
 
       // This is how subkeys are collected, by querying them one by one. Combined with
@@ -248,34 +301,31 @@ namespace Nuclex { namespace Support { namespace Platform {
             &keyNameLength,
             nullptr, nullptr, nullptr, nullptr
           );
-          if(result == ERROR_MORE_DATA) {
+          if(likely(result != ERROR_MORE_DATA)) {
+            break;
+          } else {
             longestSubKeyLength += 256;
             keyName.resize(longestSubKeyLength);
             keyNameLength = longestSubKeyLength;
-          } else {
-            break;
           }
         }
-        if(result == ERROR_NO_MORE_ITEMS) {
+        if(unlikely(result == ERROR_NO_MORE_ITEMS)) {
           break; // end reached
-        } else if(result != ERROR_SUCCESS) {
+        } else if(unlikely(result != ERROR_SUCCESS)) {
           Platform::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not query name of subkey from registry key", result
           );
         }
 
-        // TODO: Instead of Utf8FromWide, manually do the conversion here to avoid a copy
-
         // The registry API is, like any Windows API, bogged down with Microsoft's
         // poor choice of using UTF-16. So we need to convert everything returned by
         // said method into UTF-8 ourselves.
-        results.push_back(
-          Text::StringConverter::Utf8FromWide(
-            std::wstring(keyName.data(), keyNameLength)
-          )
-        );
-      }
-    }
+        keyName.resize(keyNameLength);
+        results.push_back(Text::StringConverter::Utf8FromWide(keyName));
+        keyName.resize(longestSubKeyLength);
+
+      } // for each enumerated registry subkey
+    } // if at least one subkey present
 
     return results;
   }
@@ -293,7 +343,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         nullptr, nullptr, &valueCount, &longestValueNameLength,
         nullptr, nullptr, nullptr
       );
-      if(result != ERROR_SUCCESS) {
+      if(unlikely(result != ERROR_SUCCESS)) {
         Platform::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not query number of values in registry key", result
         );
@@ -305,7 +355,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(valueCount > 0) {
       results.reserve(valueCount);
 
-      std::vector<WCHAR> valueName(longestValueNameLength, 0);
+      std::wstring valueName(longestValueNameLength, std::wstring::value_type(0));
       DWORD valueNameLength = longestValueNameLength;
 
       // This is how values are collected, by querying them one by one. Combined with
@@ -326,34 +376,31 @@ namespace Nuclex { namespace Support { namespace Platform {
             &valueNameLength,
             nullptr, nullptr, nullptr, nullptr
           );
-          if(result == ERROR_MORE_DATA) {
+          if(likely(result != ERROR_MORE_DATA)) {
+            break;
+          } else {
             longestValueNameLength += 256;
             valueName.resize(longestValueNameLength);
             valueNameLength = longestValueNameLength;
-          } else {
-            break;
           }
         }
-        if(result == ERROR_NO_MORE_ITEMS) {
+        if(unlikely(result == ERROR_NO_MORE_ITEMS)) {
           break; // end reached
-        } else if(result != ERROR_SUCCESS) {
+        } else if(unlikely(result != ERROR_SUCCESS)) {
           Platform::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not query name of registry value", result
           );
         }
 
-        // TODO: Instead of Utf8FromWide, manually do the conversion here to avoid a copy
-
         // The registry API is, like any Windows API, bogged down with Microsoft's
         // poor choice of using UTF-16. So we need to convert everything returned by
         // said method into UTF-8 ourselves.
-        results.push_back(
-          Text::StringConverter::Utf8FromWide(
-            std::wstring(valueName.data(), valueNameLength)
-          )
-        );
-      }
-    }
+        valueName.resize(valueNameLength);
+        results.push_back(Text::StringConverter::Utf8FromWide(valueName));
+        valueName.resize(longestValueNameLength);
+
+      } // for each enumerated registry value
+    }  // if at least one value present
 
     return results;
   }
@@ -424,7 +471,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         &openedSubKey,
         nullptr // disposition - tells whether new key was created - we don't care
       );
-      if(result != ERROR_SUCCESS) {
+      if(unlikely(result != ERROR_SUCCESS)) {
         Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not open or create registry subkey for read/write access", result
         );
@@ -432,6 +479,24 @@ namespace Nuclex { namespace Support { namespace Platform {
     }
 
     return openedSubKey;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool WindowsRegistryApi::DeleteTree(::HKEY parentKeyHandle, const std::string &subKeyName) {
+    std::wstring subKeyNameUtf16 = Text::StringConverter::WideFromUtf8(subKeyName);
+
+    ::LSTATUS result = ::RegDeleteTreeW(parentKeyHandle, subKeyNameUtf16.c_str());
+    if(result == ERROR_FILE_NOT_FOUND) {
+      return false;
+    } else if(unlikely(result != ERROR_SUCCESS)) {
+      std::string message(u8"Could not delete registry tree at '", 35);
+      message.append(subKeyName);
+      message.append(u8"'", 1);
+      Platform::WindowsApi::ThrowExceptionForSystemError(message, result);
+    }
+
+    return true;
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -173,6 +173,23 @@ namespace Nuclex { namespace Support { namespace Text {
       const char8_t *&current, const char8_t *end
     );
 
+    /// <summary>Reads a code point from a variable-length UTF-8 sequence</summary>
+    /// <param name="current">
+    ///   Address of the UTF-8 lead character, will be updated to the next lead
+    ///   character if the read succeeds.
+    /// </param>
+    /// <param name="end">Character at which the UTF-8 string ends</param>
+    /// <returns>The unicode code point index, identical to UTF-32.</returns>
+    /// <remarks>
+    ///   If the end is reached or if the character is incomplete or invalid, this method
+    ///   returns char32_t(-1) to indicate failure. You should check the position of your
+    ///   read pointer before calling to distinguish between a normal end of the string and
+    ///   bad UTF-8 data.
+    /// </returns>
+    public: NUCLEX_SUPPORT_API static char32_t ReadCodePoint(
+      char8_t *&current, const char8_t *end
+    );
+
     /// <summary>Reads a code point from a variable-length UTF-16 sequence</summary>
     /// <param name="current">
     ///   Address of the UTF-16 lead character, will be updated to the next lead
@@ -188,6 +205,23 @@ namespace Nuclex { namespace Support { namespace Text {
     /// </returns>
     public: NUCLEX_SUPPORT_API static char32_t ReadCodePoint(
       const char16_t *&current, const char16_t *end
+    );
+
+    /// <summary>Reads a code point from a variable-length UTF-16 sequence</summary>
+    /// <param name="current">
+    ///   Address of the UTF-16 lead character, will be updated to the next lead
+    ///   character if the read succeeds.
+    /// </param>
+    /// <param name="end">Character at which the UTF-16 string ends</param>
+    /// <returns>The unicode code point index, identical to UTF-32.</returns>
+    /// <remarks>
+    ///   If the end is reached or if the character is incomplete or invalid, this method
+    ///   returns char32_t(-1) to indicate failure. You should check the position of your
+    ///   read pointer before calling to distinguish between a normal end of the string and
+    ///   bad UTF-16 data.
+    /// </returns>
+    public: NUCLEX_SUPPORT_API static char32_t ReadCodePoint(
+      char16_t *&current, const char16_t *end
     );
 
     /// <summary>Encodes the specified code point into UTF-8 characters</summary>
@@ -380,7 +414,109 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  // Note: This is a copy & paste of the above const version of this function.
+  // There are a few alternatives (concept templates, const_cast wrapper methods,
+  // entirely different method designs, but this is supposed to be a low level helper...
+  inline char32_t UnicodeHelper::ReadCodePoint(char8_t *&current, const char8_t *end) {
+    assert((current < end) && u8"At least one byte of input must be available");
+
+    char8_t leadCharacter = *current;
+    if(leadCharacter < 128) {
+      ++current;
+      return static_cast<char32_t>(leadCharacter);
+    } else if((leadCharacter & 0xE0) == 0xC0) {
+      if(current + 1 < end) {
+        char8_t secondCharacter = *(current + 1);
+        if((secondCharacter & 0xC0) == 0x80) {
+          current += 2;
+          return (
+            (static_cast<char32_t>(leadCharacter & 0x1F) << 6) |
+            (static_cast<char32_t>(secondCharacter & 0x3F))
+          );
+        }
+      }
+    } else if((leadCharacter & 0xF0) == 0xE0) {
+      if(current + 2 < end) {
+        char8_t secondCharacter = *(current + 1);
+        char8_t thirdCharacter = *(current + 2);
+        bool allCharactersValid = (
+          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80)
+        );
+        if(allCharactersValid) {
+          current += 3;
+          return (
+            (static_cast<char32_t>(leadCharacter & 0x0F) << 12) |
+            (static_cast<char32_t>(secondCharacter & 0x3F) << 6) |
+            (static_cast<char32_t>(thirdCharacter & 0x3F))
+          );
+        }
+      }
+    } else if((leadCharacter & 0xF8) == 0xF0) {
+      if(current + 3 < end) {
+        char8_t secondCharacter = *(current + 1);
+        char8_t thirdCharacter = *(current + 2);
+        char8_t fourthCharacter = *(current + 3);
+        bool allCharactersValid = (
+          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(fourthCharacter & 0xC0) == 0x80)
+        );
+        if(allCharactersValid) {
+          current += 4;
+          return (
+            (static_cast<char32_t>(leadCharacter & 0x07) << 18) |
+            (static_cast<char32_t>(secondCharacter & 0x3F) << 12) |
+            (static_cast<char32_t>(thirdCharacter & 0x3F) << 6) |
+            (static_cast<char32_t>(fourthCharacter & 0x3F))
+          );
+        }
+      }
+    }
+
+    // Invalid character encountered oder ran out of input
+    return char32_t(-1);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   inline char32_t UnicodeHelper::ReadCodePoint(const char16_t *&current, const char16_t *end) {
+    assert((current < end) && u8"At least one byte of input must be available");
+
+    char16_t leadCharacter = *current;
+    if(leadCharacter < char16_t(0xD800)) {
+      ++current;
+      return static_cast<char32_t>(leadCharacter);
+    } else if(leadCharacter >= char16_t(0xE000)) {
+      ++current;
+      return static_cast<char32_t>(leadCharacter);
+    } else if(leadCharacter < char16_t(0xDC00)) {
+      if(current + 1 < end) {
+        char16_t trailCharacter = *(current + 1);
+        bool allCharactersValid = (
+          (static_cast<char16_t>(leadCharacter & 0xFC00) == 0xD800) &&
+          (static_cast<char16_t>(trailCharacter & 0xFC00) == 0xDC00)
+        );
+        if(allCharactersValid) {
+          current += 2;
+          return char32_t(65536) + (
+            (static_cast<char32_t>(leadCharacter & 0x03FF) << 10) |
+            (static_cast<char32_t>(trailCharacter & 0x03FF))
+          );
+        }
+      }
+    }
+
+    // Invalid character encountered or ran out of input
+    return char32_t(-1);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  // Note: This is a copy & paste of the above const version of this function.
+  // There are a few alternatives (concept templates, const_cast wrapper methods,
+  // entirely different method designs, but this is supposed to be a low level helper...
+  inline char32_t UnicodeHelper::ReadCodePoint(char16_t *&current, const char16_t *end) {
     assert((current < end) && u8"At least one byte of input must be available");
 
     char16_t leadCharacter = *current;

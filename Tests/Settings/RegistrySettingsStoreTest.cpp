@@ -83,7 +83,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(RegistrySettingsStoreTest, AttemptsCreationOfNonExistentKey) {
+  TEST(RegistrySettingsStoreTest, AttemptsCreationOfNonExistingKey) {
     // The behavior is different in writable mode. The user expects to be able to store
     // settings in the registry, so if the key doesn't exist, it's immediately created
     // and when that isn't possible (bad path or privilege issue), an error gets thrown.
