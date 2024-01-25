@@ -113,6 +113,12 @@
     <ClCompile Include="Benchmarks\BenchmarkMain.cpp">
       <Filter>Benchmark</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Text\StringHelper.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Benchmark\Text\StringHelperBenchmark.cpp">
+      <Filter>Benchmark\Text</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h">
@@ -273,6 +279,9 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\StringHelper.h">
+      <Filter>Include\Text</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

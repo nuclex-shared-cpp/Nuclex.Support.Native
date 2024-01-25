@@ -24,6 +24,7 @@ License along with this library
 #include "Nuclex/Support/Text/UnicodeHelper.h"
 
 #include <algorithm> // for std::lower_bound()
+#include <utility> // for std::add_const()
 
 #if defined(NUCLEX_SUPPORT_ENABLE_INTERNAL_TESTS)
 #if !defined(NDEBUG)
@@ -493,9 +494,139 @@ namespace {
 #endif // defined(NUCLEX_SUPPORT_ENABLE_INTERNAL_TESTS)
   // ------------------------------------------------------------------------------------------- //
 
+  template<typename TConstOrNonConstChar8>
+  inline char32_t readCodePointUtf8(
+    TConstOrNonConstChar8 *&current,
+    typename std::add_const<TConstOrNonConstChar8>::type *end
+  ) {
+    typedef Nuclex::Support::Text::UnicodeHelper::char8_t char8_t;
+
+    assert((current < end) && u8"At least one byte of input must be available");
+
+    char8_t leadCharacter = *current;
+    if(leadCharacter < 128) {
+      ++current;
+      return static_cast<char32_t>(leadCharacter);
+    } else if((leadCharacter & 0xE0) == 0xC0) {
+      if(current + 1 < end) {
+        char8_t secondCharacter = *(current + 1);
+        if((secondCharacter & 0xC0) == 0x80) {
+          current += 2;
+          return (
+            (static_cast<char32_t>(leadCharacter & 0x1F) << 6) |
+            (static_cast<char32_t>(secondCharacter & 0x3F))
+          );
+        }
+      }
+    } else if((leadCharacter & 0xF0) == 0xE0) {
+      if(current + 2 < end) {
+        char8_t secondCharacter = *(current + 1);
+        char8_t thirdCharacter = *(current + 2);
+        bool allCharactersValid = (
+          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80)
+        );
+        if(allCharactersValid) {
+          current += 3;
+          return (
+            (static_cast<char32_t>(leadCharacter & 0x0F) << 12) |
+            (static_cast<char32_t>(secondCharacter & 0x3F) << 6) |
+            (static_cast<char32_t>(thirdCharacter & 0x3F))
+          );
+        }
+      }
+    } else if((leadCharacter & 0xF8) == 0xF0) {
+      if(current + 3 < end) {
+        char8_t secondCharacter = *(current + 1);
+        char8_t thirdCharacter = *(current + 2);
+        char8_t fourthCharacter = *(current + 3);
+        bool allCharactersValid = (
+          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(fourthCharacter & 0xC0) == 0x80)
+        );
+        if(allCharactersValid) {
+          current += 4;
+          return (
+            (static_cast<char32_t>(leadCharacter & 0x07) << 18) |
+            (static_cast<char32_t>(secondCharacter & 0x3F) << 12) |
+            (static_cast<char32_t>(thirdCharacter & 0x3F) << 6) |
+            (static_cast<char32_t>(fourthCharacter & 0x3F))
+          );
+        }
+      }
+    }
+
+    // Invalid character encountered oder ran out of input
+    return char32_t(-1);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TConstOrNonConstChar16>
+  inline char32_t readCodePointUtf16(
+    TConstOrNonConstChar16 *&current,
+    typename std::add_const<TConstOrNonConstChar16>::type *end
+  ) {
+    assert((current < end) && u8"At least one UTF-16 character of input must be available");
+
+    char16_t leadCharacter = *current;
+    if(leadCharacter < char16_t(0xD800)) {
+      ++current;
+      return static_cast<char32_t>(leadCharacter);
+    } else if(leadCharacter >= char16_t(0xE000)) {
+      ++current;
+      return static_cast<char32_t>(leadCharacter);
+    } else if(leadCharacter < char16_t(0xDC00)) {
+      if(current + 1 < end) {
+        char16_t trailCharacter = *(current + 1);
+        bool allCharactersValid = (
+          (static_cast<char16_t>(leadCharacter & 0xFC00) == 0xD800) &&
+          (static_cast<char16_t>(trailCharacter & 0xFC00) == 0xDC00)
+        );
+        if(allCharactersValid) {
+          current += 2;
+          return char32_t(65536) + (
+            (static_cast<char32_t>(leadCharacter & 0x03FF) << 10) |
+            (static_cast<char32_t>(trailCharacter & 0x03FF))
+          );
+        }
+      }
+    }
+
+    // Invalid character encountered or ran out of input
+    return char32_t(-1);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Text {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char32_t UnicodeHelper::ReadCodePoint(const char8_t *&current, const char8_t *end) {
+    return readCodePointUtf8(current, end);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char32_t UnicodeHelper::ReadCodePoint(char8_t *&current, const char8_t *end) {
+    return readCodePointUtf8(current, end);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char32_t UnicodeHelper::ReadCodePoint(const char16_t *&current, const char16_t *end) {
+    return readCodePointUtf16(current, end);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  char32_t UnicodeHelper::ReadCodePoint(char16_t *&current, const char16_t *end) {
+    return readCodePointUtf16(current, end);
+  }
 
   // ------------------------------------------------------------------------------------------- //
 

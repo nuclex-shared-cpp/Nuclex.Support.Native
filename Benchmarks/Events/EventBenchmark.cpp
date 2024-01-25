@@ -38,50 +38,68 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Dummy callback that does absolutely nothing</summary>
+  /// <param name="value">
+  ///   Value that will be processed in a way that prevents the compiler from optimizing
+  ///   the entire call away
+  /// </param>
   void doNothingCallback(int value) {
     celero::DoNotOptimizeAway(value);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Another dummy callback that does absolutely nothing</summary>
+  /// <param name="value">
+  ///   Value that will be processed in a way that prevents the compiler from optimizing
+  ///   the entire call away
+  /// </param>
   void doMoreNothingCallback(int value) {
     celero::DoNotOptimizeAway(value);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Test fixture that takes care of subscribing and unsubscribing an event</summary>
   class Event2Fixture : public celero::TestFixture {
 
+		/// <summary>Called before the benchmark runs to subscribe to an event</summary>
 		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
       this->testEvent.Subscribe<&doNothingCallback>();
       this->testEvent.Subscribe<&doMoreNothingCallback>();
     }
 
+		/// <summary>Called after the benchmark completes to unsubscribe from the event</summary>
     public: void tearDown() override {
       this->testEvent.Unsubscribe<&doMoreNothingCallback>();
       this->testEvent.Unsubscribe<&doNothingCallback>();
     }
 
+    /// <summary>Test event that will have tw subscriptions</summary>
     protected: Nuclex::Support::Events::Event<void(int)> testEvent;
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Test fixture that takes care of subscribing and unsubscribing an event</summary>
   class Event50Fixture : public celero::TestFixture {
 
+		/// <summary>Called before the benchmark runs to subscribe to an event</summary>
 		public: void setUp(const celero::TestFixture::ExperimentValue &) override {
       for(std::size_t index = 0; index < 50; ++index) {
         this->testEvent.Subscribe<&doNothingCallback>();
       }
     }
 
+		/// <summary>Called after the benchmark completes to unsubscribe from the event</summary>
     public: void tearDown() override {
       for(std::size_t index = 0; index < 50; ++index) {
         this->testEvent.Unsubscribe<&doNothingCallback>();
       }
     }
 
+    /// <summary>Test event that will have tw subscriptions</summary>
     protected: Nuclex::Support::Events::Event<void(int)> testEvent;
 
   };

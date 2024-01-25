@@ -83,7 +83,9 @@ namespace Nuclex { namespace Support { namespace Text {
       char32_t codePoint
     );
 
-    /// <summary>Checks if an UTF-8 string is either blank or contains only whitespace</summary
+    /// <summary>Checks if an UTF-8 string is either empty or contains only whitespace</summary>
+    /// <param name="text">String that will be checked for being blank or empty</param>
+    /// <returns>True if th string was empty or contained only whitespace</returns>
     public: NUCLEX_SUPPORT_API static bool IsBlankOrEmpty(const std::string &text);
 
     /// <summary>

@@ -235,6 +235,7 @@
     <ClInclude Include="Include\Nuclex\Support\Text\RollingLogger.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StatusObserver.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\StringHelper.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\UnicodeHelper.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Latch.h" />
@@ -336,6 +337,7 @@
     <ClCompile Include="Source\Text\RollingLogger.cpp" />
     <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
+    <ClCompile Include="Source\Text\StringHelper.cpp" />
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClCompile Include="Source\Text\UnicodeHelper.cpp" />
     <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\concurrentqueue.h" />
@@ -393,6 +395,7 @@
     <ClCompile Include="Tests\Text\QuantityFormatterTest.cpp" />
     <ClCompile Include="Tests\Text\RollingLoggerTest.cpp" />
     <ClCompile Include="Tests\Text\StringConverterTest.cpp" />
+    <ClCompile Include="Tests\Text\StringHelperTest.cpp" />
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp" />
     <ClCompile Include="Tests\Text\UnicodeHelperTest.cpp" />
     <ClCompile Include="Tests\Threading\LatchTest.cpp" />

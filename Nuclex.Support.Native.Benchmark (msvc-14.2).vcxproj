@@ -247,6 +247,7 @@
     <ClInclude Include="Include\Nuclex\Support\Text\RollingLogger.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StatusObserver.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h" />
+    <ClInclude Include="Include\Nuclex\Support\Text\StringHelper.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\UnicodeHelper.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Latch.h" />
@@ -264,6 +265,7 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Benchmark\Text\StringHelperBenchmark.cpp" />
     <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentCollection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
@@ -348,6 +350,7 @@
     <ClCompile Include="Source\Text\RollingLogger.cpp" />
     <ClCompile Include="Source\Text\StatusObserver.cpp" />
     <ClCompile Include="Source\Text\StringConverter.cpp" />
+    <ClCompile Include="Source\Text\StringHelper.cpp" />
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
     <ClCompile Include="Source\Text\UnicodeHelper.cpp" />
     <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\concurrentqueue.h" />

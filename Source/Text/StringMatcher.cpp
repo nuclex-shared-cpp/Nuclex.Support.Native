@@ -200,7 +200,7 @@ namespace {
     assert((haystack != nullptr) && u8"Haystack must not be a NULL pointer");
     assert((needle != nullptr) && u8"Needle must not be a NULL pointer");
 
-    // We treat a zero-lenght needle as an immediate match to anything.
+    // We treat a zero-length needle as an immediate match to anything.
     if(needle >= needleEnd) {
       return haystack;
     }

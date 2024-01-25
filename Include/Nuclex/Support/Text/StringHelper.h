@@ -46,16 +46,36 @@ namespace Nuclex { namespace Support { namespace Text {
       std::wstring &wideString, bool alsoTrim = true
     );
 
-    /// <summary>Removes any whitespace characters that follow other whitespace</summary>
-    /// <param name="utf8String">String in which duplicate whitespace will be collapsed</param>
-    /// <param name="alsoTrim">Whether to also remove leading and trailing whitespace</param>
+    /// <summary>Removes all occurrences of a substring from the master string</summary>
+    /// <param name="master">
+    ///   String from which all occurrences of the specified substring will be removed
+    /// </param>
+    /// <param name="substringToRemove">
+    ///   Substring that will be removed from the master string
+    /// </param>
+    /// <remarks>
+    ///   This method is guaranteed to not remove occurrences recursively. For example,
+    ///   removing "<startend>" from the string "Test<start<startend>end>" will produce
+    ///   the string "Test<startend>" (i.e. it will only remove the substring where it
+    ///   was present initially, not where it was formed as an effect of the removal).
+    /// </remarks>
     public: NUCLEX_SUPPORT_API static void EraseSubstrings(
       std::string &utf8String, const std::string &victim
     );
 
-    /// <summary>Removes any whitespace characters that follow other whitespace</summary>
-    /// <param name="utf8String">String in which duplicate whitespace will be collapsed</param>
-    /// <param name="alsoTrim">Whether to also remove leading and trailing whitespace</param>
+    /// <summary>Removes all occurrences of a substring from the master string</summary>
+    /// <param name="master">
+    ///   String from which all occurrences of the specified substring will be removed
+    /// </param>
+    /// <param name="substringToRemove">
+    ///   Substring that will be removed from the master string
+    /// </param>
+    /// <remarks>
+    ///   This method is guaranteed to not remove occurrences recursively. For example,
+    ///   removing "<startend>" from the string "Test<start<startend>end>" will produce
+    ///   the string "Test<startend>" (i.e. it will only remove the substring where it
+    ///   was present initially, not where it was formed as an effect of the removal).
+    /// </remarks>
     public: NUCLEX_SUPPORT_API static void EraseSubstrings(
       std::wstring &wideString, const std::wstring &victim
     );

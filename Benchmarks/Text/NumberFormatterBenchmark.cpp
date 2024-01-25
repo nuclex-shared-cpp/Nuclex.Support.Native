@@ -90,12 +90,16 @@ namespace {
   /// <summary>Uniform distribution to make the output cover all possible integers</summary>
   std::uniform_int_distribution<std::uint64_t> randomNumberDistribution64;
 
+  /// <summary>Distribution for floats in a normalized -1.0 .. +1.0 range</summary>
   std::uniform_real_distribution<float> smallRandomNumberDistributionFloat(-1.0f, +1.0f);
+  /// <summary>Distribution for floats using half of their entire numeric range</summary>
   std::uniform_real_distribution<float> largeRandomNumberDistributionFloat(
     std::numeric_limits<float>::lowest() / 2.1f, std::numeric_limits<float>::max() / 2.1f
   );
 
+  /// <summary>Distribution for doubles in a normalized -1.0 .. +1.0 range</summary>
   std::uniform_real_distribution<double> smallRandomNumberDistributionDouble(-1.0f, +1.0f);
+  /// <summary>Distribution for doubles using half of their entire numeric range</summary>
   std::uniform_real_distribution<double> largeRandomNumberDistributionDouble(
     std::numeric_limits<double>::lowest() / 2.1, std::numeric_limits<double>::max() / 2.1
   );
@@ -202,7 +206,6 @@ namespace Nuclex { namespace Support { namespace Text {
       )
     );
   }
-
 
   // ------------------------------------------------------------------------------------------- //
 
