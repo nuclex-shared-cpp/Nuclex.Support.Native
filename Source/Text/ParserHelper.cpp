@@ -111,8 +111,8 @@ namespace Nuclex { namespace Support { namespace Text {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
 
+#if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
   template<>
   std::optional<std::uint32_t> ParserHelper::ParseNumber(
     const std::uint8_t *&start, const std::uint8_t *end

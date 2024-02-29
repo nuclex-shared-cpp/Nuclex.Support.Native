@@ -25,24 +25,97 @@ License along with this library
 
 #include "Nuclex/Support/Text/UnicodeHelper.h"
 #include "Nuclex/Support/Text/ParserHelper.h"
+#include "Nuclex/Support/Errors/CorruptStringError.h"
 
-namespace Nuclex { namespace Support { namespace Text {
+namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void StringHelper::CollapseDuplicateWhitespace(
-    std::string &utf8String, bool alsoTrim /* = true */
+  template<typename StringType, typename CharType>
+  void collapseDuplicateWhitespace(
+    StringType &targetString, bool alsoTrim /* = true */
   ) {
-    UnicodeHelper::char8_t *read = reinterpret_cast<UnicodeHelper::char8_t *>(
-      utf8String.data()
-    );
-    UnicodeHelper::char8_t *end = read + utf8String.length();
-    UnicodeHelper::char8_t *write = read;
+    using Nuclex::Support::Text::UnicodeHelper;
+    using Nuclex::Support::Text::ParserHelper;
 
-    // Step through the string, one code point after another, to scan for whitespace.
-    bool previousWasWhitespace = alsoTrim;
-    while(read < end) {
-      char32_t codePoint = UnicodeHelper::ReadCodePoint(read, end);
+    CharType *read = reinterpret_cast<CharType *>(targetString.data());
+    CharType *end = read + targetString.length();
+
+    // For the scan loop: if a whitespace is encountered while this is set,
+    // the shift loop which moves the string to the left to erase spaces is entered.
+    // For the shift loop: if a non-whitespace is encountered while this is set,
+    // a single whitespace will be emitted (in place of any number of prior whitespaces).
+    bool previousWasWhitespace = (!alsoTrim);
+
+    // Scan loop. Skips over as much of the string as possible until reaching a point where
+    // duplicate whitespace was encountered and the string needs to be changed
+    char32_t codePoint;
+    {
+      bool trimmed = alsoTrim;
+      for(;;) {
+
+        // If the end of the string is reached in this loop, then nothing needs to be changed.
+        // This will not be an issue if 'alsoTrim' is set and the string does start with
+        // a whitespace (which will send us right out of the loop after encountering it).
+        if(read >= end) {
+          return;
+        }
+
+        // Read the next code point
+        if constexpr(sizeof(CharType) == sizeof(char32_t)) {
+          codePoint = *read;
+        } else {
+          codePoint = UnicodeHelper::ReadCodePoint(read, end);
+        }
+
+        // If invalid characters are encountered, the string is broken
+        if(unlikely(codePoint == char32_t(-1))) {
+          throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+        }
+
+        // We only need to act when a whitespace is encountered, otherwise we'll just
+        // breeze through the string in this small loop, hoping there is no work to do.
+        if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
+          if(unlikely(trimmed && previousWasWhitespace)) {
+            break; // Successive whitespace encountered
+          }
+
+          previousWasWhitespace = true;
+        } else {
+          trimmed = true; // we skipped any potential initial whit
+          previousWasWhitespace = false;
+        }
+
+      } // for (scan loop)
+    } // beauty + variable lifetime scope
+
+#if defined(WORK_IN_PROGRESS__)
+    // If this point is reached, either the scan loop above encountered a repeated whitespace
+    // or the first character was a whitespace and 'alsoTrim' was set.
+    if()
+
+    // Shift loop: If this point is reached, the current character is a repeated whitespace
+    // (or the string begins with a whitespace and 'alsoTrim' is set). In either case,
+    // we're now required to shift the string to the left for any removed whitespaces.
+    CharType *write = read;
+    for(;;) {
+
+      // If the end of the string is reached, we can exit right away.
+      if(read >= end) {
+        if(previousWasWhitespace && !alsoTrim) {
+          
+          // Append lastmost space because it still needs to be appended?
+        }
+        return;
+      }
+
+      // Read the next code point
+      char32_t codePoint;
+      if constexpr(sizeof(CharType) == sizeof(char32_t)) {
+        codePoint = *read;
+      } else {
+        codePoint = UnicodeHelper::ReadCodePoint(read, end);
+      }
 
       if(ParserHelper::IsWhitespace(codePoint)) {
         if(!previousWasWhitespace) {
@@ -54,7 +127,11 @@ namespace Nuclex { namespace Support { namespace Text {
           //break; // From this point on, we need to re-write the string to move it left
         }
       } else {
-        UnicodeHelper::WriteCodePoint(codePoint, write);
+        if constexpr(sizeof(CharType) == sizeof(char32_t)) { //constexpr(std::is_same<CharType, char32_t>::value) {
+          *write = codePoint;
+        } else {
+          UnicodeHelper::WriteCodePoint(codePoint, write);
+        }
         previousWasWhitespace = false;
       }
     }
@@ -88,10 +165,22 @@ namespace Nuclex { namespace Support { namespace Text {
     }
 */
     --write;
+    targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
+#endif
+  }
 
-    utf8String.resize(
-      write - reinterpret_cast<UnicodeHelper::char8_t *>(utf8String.data())
-    );
+  // ------------------------------------------------------------------------------------------- //
+
+} // anonymous namespace
+
+namespace Nuclex { namespace Support { namespace Text {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void StringHelper::CollapseDuplicateWhitespace(
+    std::string &utf8String, bool alsoTrim /* = true */
+  ) {
+    collapseDuplicateWhitespace<std::string, UnicodeHelper::char8_t>(utf8String, alsoTrim);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -99,7 +188,7 @@ namespace Nuclex { namespace Support { namespace Text {
   void StringHelper::CollapseDuplicateWhitespace(
     std::wstring &wideString, bool alsoTrim /* = true */
   ) {
-
+    collapseDuplicateWhitespace<std::wstring, std::wstring::value_type>(wideString, alsoTrim);
   }
 
   // ------------------------------------------------------------------------------------------- //

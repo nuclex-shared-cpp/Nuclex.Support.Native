@@ -100,8 +100,17 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  //TEST(ParserHelperTest, CanParseUInt32) {
-  //}
+  TEST(ParserHelperTest, CanDetectBlankAndEmptyStrings) {
+    EXPECT_TRUE(ParserHelper::IsBlankOrEmpty(std::string()));
+    EXPECT_TRUE(ParserHelper::IsBlankOrEmpty(std::string(u8" ")));
+    EXPECT_TRUE(ParserHelper::IsBlankOrEmpty(std::string(u8"\t")));
+    EXPECT_TRUE(ParserHelper::IsBlankOrEmpty(std::string(u8" \t\t ")));
+
+    EXPECT_FALSE(ParserHelper::IsBlankOrEmpty(std::string(u8" ? ")));
+    EXPECT_FALSE(ParserHelper::IsBlankOrEmpty(std::string(u8"\t a")));
+    EXPECT_FALSE(ParserHelper::IsBlankOrEmpty(std::string(u8"a \t")));
+    EXPECT_FALSE(ParserHelper::IsBlankOrEmpty(std::string(u8"Hello")));
+  }
 
   // ------------------------------------------------------------------------------------------- //
 

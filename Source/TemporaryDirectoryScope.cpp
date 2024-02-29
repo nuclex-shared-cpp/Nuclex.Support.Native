@@ -27,7 +27,7 @@ License along with this library
 #include "Platform/WindowsApi.h" // for WindowsApi
 #include "Platform/WindowsPathApi.h" // for WindowsPathApi
 #include "Platform/WindowsFileApi.h" // for WindowsFileApi
-#include "Nuclex/Support/Text//StringConverter.h"
+#include "Nuclex/Support/Text/StringConverter.h"
 #else
 #include "Platform/PosixApi.h" // for PosixApi
 #include "Platform/PosixPathApi.h" // for PosixPathApi
