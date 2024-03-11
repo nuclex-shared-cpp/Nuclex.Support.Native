@@ -56,7 +56,11 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   be an std::u8string using this character type to unambiguously indicate that
     ///   the contents of the string are supposed to be UTF-8 encoded.
     /// </remarks>
-    public: typedef unsigned char char8_t;
+#if defined(__cpp_char8_t)
+    public: typedef char8_t Char8Type;
+#else
+    public: typedef unsigned char Char8Type;
+#endif
 
     /// <summary>Checks whether the specified character is a whitespace</summary>
     /// <param name="utf8Byte">
@@ -71,7 +75,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   than parsing data from the web or another application.
     /// </remarks>
     public: NUCLEX_SUPPORT_API static constexpr bool IsWhitespace(
-      char8_t utf8Character
+      Char8Type utf8Character
     );
 
     /// <summary>Checks whether the specified character is a whitespace</summary>
@@ -95,7 +99,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="start">Start pointer from which on whitespace will be skipped</param>
     /// <param name="end">End pointer that may not be overrun</param>
     public: NUCLEX_SUPPORT_API static void SkipWhitespace(
-      const char8_t *&start, const char8_t *end
+      const Char8Type *&start, const Char8Type *end
     );
 
 #if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
@@ -119,7 +123,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline constexpr bool ParserHelper::IsWhitespace(char8_t utf8Character) {
+  inline constexpr bool ParserHelper::IsWhitespace(Char8Type utf8Character) {
     return (
       (
         (utf8Character >= std::uint8_t(0x09)) && // (see below)

@@ -111,13 +111,30 @@ namespace {
     // Backshifting loop
     {
       std::size_t successiveWhitespaceCount = 0;
+      char32_t whitespaceCodePoint = codePoint;
       while(read < end) {
-
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
         if(codePoint == char32_t(-1)) {
           throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
         }
 
+        if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
+          whitespaceCodePoint = codePoint;
+          ++successiveWhitespaceCount;
+        } else {
+          if(successiveWhitespaceCount >= 2) { // Normalize multiple whitespaces into one
+            UnicodeHelper::WriteCodePoint(write, U' ');
+          } else if(successiveWhitespaceCount == 1) { // Pass through single whitespace
+            UnicodeHelper::WriteCodePoint(write, whitespaceCodePoint);
+          }
+          UnicodeHelper::WriteCodePoint(write, codePoint);
+          successiveWhitespaceCount = 0;
+        }
+
+        if(read >= end) {
+          targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
+          return;
+        }
       }
     }
   }
@@ -135,7 +152,11 @@ namespace Nuclex { namespace Support { namespace Text {
   void StringHelper::CollapseDuplicateWhitespace(
     std::string &utf8String, bool alsoTrim /* = true */
   ) {
-    //collapseDuplicateWhitespace<std::string, UnicodeHelper::char8_t>(utf8String, alsoTrim);
+    if(alsoTrim) {
+      collapseDuplicateWhitespaceAndTrim<std::string, UnicodeHelper::Char8Type>(utf8String);
+    } else {
+      
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -143,7 +164,15 @@ namespace Nuclex { namespace Support { namespace Text {
   void StringHelper::CollapseDuplicateWhitespace(
     std::wstring &wideString, bool alsoTrim /* = true */
   ) {
-    //collapseDuplicateWhitespace<std::wstring, std::wstring::value_type>(wideString, alsoTrim);
+    if(alsoTrim) {
+      if constexpr(sizeof(std::wstring::value_type) == sizeof(char32_t)) {
+        collapseDuplicateWhitespaceAndTrim<std::wstring, char32_t>(wideString);
+      } else {
+        collapseDuplicateWhitespaceAndTrim<std::wstring, char16_t>(wideString);
+      }
+    } else {
+      
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

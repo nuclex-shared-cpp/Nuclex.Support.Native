@@ -75,8 +75,8 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   bool ParserHelper::IsBlankOrEmpty(const std::string &text) {
-    const char8_t *current = reinterpret_cast<const char8_t *>(text.c_str());
-    const char8_t *end = current + text.length();
+    const Char8Type *current = reinterpret_cast<const Char8Type *>(text.c_str());
+    const Char8Type *end = current + text.length();
 
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
@@ -94,8 +94,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void ParserHelper::SkipWhitespace(const char8_t *&start, const char8_t *end) {
-    const char8_t *current = start;
+  void ParserHelper::SkipWhitespace(const Char8Type *&start, const Char8Type *end) {
+    const Char8Type *current = start;
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
       if(codePoint == char32_t(-1)) {
