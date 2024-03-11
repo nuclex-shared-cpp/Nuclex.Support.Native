@@ -113,8 +113,8 @@ namespace Nuclex { namespace Support { namespace Text {
     ASSERT_STREQ(test.c_str(), expected.c_str());
 
     std::string expected2(u8"", 0);
-    StringHelper::CollapseDuplicateWhitespace(test, true);
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    StringHelper::CollapseDuplicateWhitespace(test2, true);
+    ASSERT_STREQ(test2.c_str(), expected2.c_str());
   }
 
   // ------------------------------------------------------------------------------------------- //

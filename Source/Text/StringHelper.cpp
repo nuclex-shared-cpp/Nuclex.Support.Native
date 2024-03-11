@@ -31,6 +31,14 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>
+  ///   Collapses any instance of two or more consecutive whitespaces into a single whitespace
+  /// </summary>
+  /// <typeparam name="StringType">Type of string the method will be working on</typeparam>
+  /// <typeparam name="CharType">
+  ///   Type of the UTF characters in the string, must be char8_t, char16_t or char32_t
+  /// </typeparam>
+  /// <param name="targetString">String in which whitespace will be collapsed</param>
   template<typename StringType, typename CharType>
   void collapseDuplicateWhitespaceAndTrim(StringType &targetString) {
     using Nuclex::Support::Text::UnicodeHelper;
@@ -58,10 +66,6 @@ namespace {
       std::size_t successiveWhitespaceCount = 1;
       for(;;) {
         if(read >= end) {
-          //if(successiveWhitespaceCount >= 2) {
-          //  UnicodeHelper::WriteCodePoint(write, U' ');
-          //  targetString.resize(1);
-          //}
           targetString.resize(0); // Only whitespace + trim = string becomes empty
           return;
         }
@@ -76,8 +80,8 @@ namespace {
         } else {
           break; // Exit without updating write pointer since we're trimming
         }
-      }
-    } else {
+      } // for ever
+    } else { // initial character is not a whitespace
       std::size_t successiveWhitespaceCount = 0;
       for(;;) {
         if(read >= end) {
@@ -100,7 +104,7 @@ namespace {
           successiveWhitespaceCount = 0;
         }
       } // for ever
-    } // if 
+    } // if initial character whitespace / not whitespace
 
     // At this point:
     // - 'read' is on a non-whitespace character
@@ -130,16 +134,99 @@ namespace {
           UnicodeHelper::WriteCodePoint(write, codePoint);
           successiveWhitespaceCount = 0;
         }
+      } // while read characters remain
 
-        if(read >= end) {
-          targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
-          return;
-        }
-      }
-    }
+      targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
+    } // beauty scope
   }
 
   // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>
+  ///   Collapses any instance of two or more consecutive whitespaces into a single whitespace
+  /// </summary>
+  /// <typeparam name="StringType">Type of string the method will be working on</typeparam>
+  /// <typeparam name="CharType">
+  ///   Type of the UTF characters in the string, must be char8_t, char16_t or char32_t
+  /// </typeparam>
+  /// <param name="targetString">String in which whitespace will be collapsed</param>
+  template<typename StringType, typename CharType>
+  void collapseDuplicateWhitespaceWithoutTrim(StringType &targetString) {
+    using Nuclex::Support::Text::UnicodeHelper;
+    using Nuclex::Support::Text::ParserHelper;
+
+    CharType *read = reinterpret_cast<CharType *>(targetString.data());
+    CharType *write = read; // 'write' tracks the shift target position
+    CharType *end = read + targetString.length();
+
+    char32_t codePoint;
+
+    std::size_t successiveWhitespaceCount = 0;
+    for(;;) {
+      if(read >= end) {
+        if(successiveWhitespaceCount >= 2) {
+          UnicodeHelper::WriteCodePoint(write, U' ');
+          targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
+        } // Otherwise, even if final character was single whitespace, string is fine.
+
+        return;
+      }
+
+      codePoint = UnicodeHelper::ReadCodePoint(read, end);
+      if(codePoint == char32_t(-1)) {
+        throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+      }
+
+      if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
+        ++successiveWhitespaceCount;
+      } else if(successiveWhitespaceCount >= 2) {
+        UnicodeHelper::WriteCodePoint(write, U' ');
+        break; // From here on out, we need to backshift the string
+      } else {
+        write = read; // Write pointer keeps tracking last non-whitespace character
+        successiveWhitespaceCount = 0;
+      }
+    } // for ever
+    
+    // At this point:
+    // - 'read' is on a non-whitespace character
+    // - 'write' is at the current backshifting target position
+    // - 'codePoint' contains one code point that yet needs to be backshifted
+    UnicodeHelper::WriteCodePoint(write, codePoint);
+
+    // Backshifting loop
+    {
+      std::size_t successiveWhitespaceCount = 0;
+      char32_t whitespaceCodePoint = codePoint;
+      while(read < end) {
+        codePoint = UnicodeHelper::ReadCodePoint(read, end);
+        if(codePoint == char32_t(-1)) {
+          throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+        }
+
+        if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
+          whitespaceCodePoint = codePoint;
+          ++successiveWhitespaceCount;
+        } else {
+          if(successiveWhitespaceCount >= 2) { // Normalize multiple whitespaces into one
+            UnicodeHelper::WriteCodePoint(write, U' ');
+          } else if(successiveWhitespaceCount == 1) { // Pass through single whitespace
+            UnicodeHelper::WriteCodePoint(write, whitespaceCodePoint);
+          }
+          UnicodeHelper::WriteCodePoint(write, codePoint);
+          successiveWhitespaceCount = 0;
+        }
+      } // while read characters remain
+
+      if(successiveWhitespaceCount >= 2) { // Normalize multiple whitespaces into one
+        UnicodeHelper::WriteCodePoint(write, U' ');
+      } else if(successiveWhitespaceCount == 1) { // Pass through single whitespace
+        UnicodeHelper::WriteCodePoint(write, whitespaceCodePoint);
+      }
+
+      targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
+    } // beauty scope
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -155,7 +242,7 @@ namespace Nuclex { namespace Support { namespace Text {
     if(alsoTrim) {
       collapseDuplicateWhitespaceAndTrim<std::string, UnicodeHelper::Char8Type>(utf8String);
     } else {
-      
+      collapseDuplicateWhitespaceWithoutTrim<std::string, UnicodeHelper::Char8Type>(utf8String);
     }
   }
 
@@ -171,7 +258,11 @@ namespace Nuclex { namespace Support { namespace Text {
         collapseDuplicateWhitespaceAndTrim<std::wstring, char16_t>(wideString);
       }
     } else {
-      
+      if constexpr(sizeof(std::wstring::value_type) == sizeof(char32_t)) {
+        collapseDuplicateWhitespaceWithoutTrim<std::wstring, char32_t>(wideString);
+      } else {
+        collapseDuplicateWhitespaceWithoutTrim<std::wstring, char16_t>(wideString);
+      }
     }
   }
 
