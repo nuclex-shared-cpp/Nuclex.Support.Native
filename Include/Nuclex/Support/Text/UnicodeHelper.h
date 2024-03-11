@@ -404,6 +404,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   inline char32_t UnicodeHelper::ReadCodePoint(const char32_t *&current, const char32_t *end) {
     assert((current < end) && u8"At least one UTF-32 character of input must be available");
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(end);
 
     char32_t codePoint = *current;
     ++current;
@@ -414,6 +415,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   inline char32_t UnicodeHelper::ReadCodePoint(char32_t *&current, const char32_t *end) {
     assert((current < end) && u8"At least one UTF-32 character of input must be available");
+    NUCLEX_SUPPORT_NDEBUG_UNUSED(end);
 
     char32_t codePoint = *current;
     ++current;
@@ -483,6 +485,7 @@ namespace Nuclex { namespace Support { namespace Text {
   inline std::size_t UnicodeHelper::WriteCodePoint(char32_t *&target, char32_t codePoint) {
     *target = codePoint;
     ++target;
+    return 1;
   }
 
   // ------------------------------------------------------------------------------------------- //
