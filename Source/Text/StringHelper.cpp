@@ -46,7 +46,7 @@ namespace {
 
     CharType *read = reinterpret_cast<CharType *>(targetString.data());
     CharType *write = read; // 'write' tracks the shift target position
-    CharType *end = read + targetString.length();
+    const CharType *end = read + targetString.length();
 
     // If the string is of zero length, we don't need to do anything
     if(read == end) {
@@ -157,7 +157,7 @@ namespace {
 
     CharType *read = reinterpret_cast<CharType *>(targetString.data());
     CharType *write = read; // 'write' tracks the shift target position
-    CharType *end = read + targetString.length();
+    const CharType *end = read + targetString.length();
 
     char32_t codePoint;
 
@@ -230,6 +230,90 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Erases all first-level occurrences of the specified victim string</summary>
+  /// <typeparam name="StringType">Type of string the method will be working on</typeparam>
+  /// <typeparam name="CharType">
+  ///   Type of the UTF characters in the string, must be char8_t, char16_t or char32_t
+  /// </typeparam>
+  /// <param name="targetString">String in which victims will be erased</param>
+  /// <param name="victim">String that will be erased from the target string</param>
+  template<typename StringType, typename CharType>
+  void eraseSubstrings(StringType &targetString, const StringType &victim) {
+    using Nuclex::Support::Text::UnicodeHelper;
+    using Nuclex::Support::Text::ParserHelper;
+
+    // Gather some pointers for moving around in the substring for comparison
+    const CharType *victimFromSecondCodePoint = (
+      reinterpret_cast<const CharType *>(victim.c_str())
+    );
+    const CharType *victimEnd = (
+      victimFromSecondCodePoint + victim.length()
+    );
+    if(victimFromSecondCodePoint >= victimEnd) {
+      return; // victim is empty, we were asked to remove nothing, so we do nothing
+    }
+    char32_t firstCodePointOfVictim = UnicodeHelper::ReadCodePoint(
+      victimFromSecondCodePoint, victimEnd
+    );
+
+    // CHECK: Should we optimize this to stop comparison when master < substring?
+    //   If there aren't enough characters left to fit the substring even once,
+    //   it cannot occur any more. But our expected typical use case is removal of
+    //   short tokens, so the additional check might even make things slower overall
+
+    // We also need pointers into the master string so we can scan it for
+    // occurrences of the substring and move characters to the left after removal.
+    CharType *read = reinterpret_cast<CharType *>(targetString.data());
+    CharType *write = read;
+    const CharType *end = read + targetString.length();
+    while(read < end) {
+      char32_t currentCodePoint = UnicodeHelper::ReadCodePoint(read, end);
+
+      // Once we encounter a character that matches the first character of the substring,
+      // start comparing the rest of the substring to see if we have a match.
+      if(currentCodePoint == firstCodePointOfVictim) {
+        CharType *readForComparison = read;
+        const CharType *victimCurrent = victimFromSecondCodePoint;
+        while(victimCurrent < victimEnd) {
+          if(readForComparison >= end) {
+            break; // master string ended before full substring was compared
+          }
+
+          char32_t masterCodePoint = UnicodeHelper::ReadCodePoint(readForComparison, end);
+          char32_t victimCodePoint = UnicodeHelper::ReadCodePoint(
+            victimCurrent, victimEnd
+          );
+          if(masterCodePoint != victimCodePoint) {
+            break; // we found a difference, it doesn't match the full substring
+          }
+        }
+
+        // If the full substring was matched
+        if(victimCurrent == victimEnd) {
+          read = readForComparison; // Skip over the substring
+        } else { // Substring not matched, write character as normal
+          UnicodeHelper::WriteCodePoint(write, currentCodePoint);
+        }
+      } else { // Character was not the start of the substring, write it as normal
+        UnicodeHelper::WriteCodePoint(write, currentCodePoint);
+      }
+    }
+
+    // Since the above loop keeps going until the end of the master string is reached,
+    // in case substrings were found and skipped, it will already have moved all
+    // of the remaining characters to the left, so the string contents are all in place.
+
+    // We merely may need to tell the master string its new length in case it changed.
+    if(read != write) {
+      targetString.resize(
+        write - reinterpret_cast<CharType *>(targetString.data())
+      );
+    }
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Text {
@@ -271,77 +355,7 @@ namespace Nuclex { namespace Support { namespace Text {
   void StringHelper::EraseSubstrings(
     std::string &utf8String, const std::string &victim
   ) {
-
-    // Gather some pointers for moving around in the substring for comparison
-    const UnicodeHelper::Char8Type *substringFromSecondCharacter = (
-      reinterpret_cast<const UnicodeHelper::Char8Type *>(victim.c_str())
-    );
-    const UnicodeHelper::Char8Type *substringEnd = (
-      substringFromSecondCharacter + victim.length()
-    );
-    if(substringFromSecondCharacter >= substringEnd) {
-      return; // substring is empty, we were asked to remove nothing, so we do nothing
-    }
-    char32_t firstCharacterOfSubstring = UnicodeHelper::ReadCodePoint(
-      substringFromSecondCharacter, substringEnd
-    );
-
-    // CHECK: Should we optimize this to stop comparison when master < substring?
-    //   If there aren't enough characters left to fit the substring even once,
-    //   it cannot occur any more. But our expected typical use case is removal of
-    //   short tokens, so the additional check might even make things slower overall
-
-    // We also need pointers into the master string so we can scan it for
-    // occurrences of the substring and move characters to the left after removal.
-    UnicodeHelper::Char8Type *read = (
-      reinterpret_cast<UnicodeHelper::Char8Type *>(utf8String.data())
-    );
-    UnicodeHelper::Char8Type *write = read;
-    const UnicodeHelper::Char8Type *end = read + utf8String.length();
-    while(read < end) {
-      char32_t currentCharacter = UnicodeHelper::ReadCodePoint(read, end);
-
-      // Once we encounter a character that matches the first character of the substring,
-      // start comparing the rest of the substring to see if we have a match.
-      if(currentCharacter == firstCharacterOfSubstring) {
-        UnicodeHelper::Char8Type *readForComparison = read;
-        const UnicodeHelper::Char8Type *substringCurrent = substringFromSecondCharacter;
-        while(substringCurrent < substringEnd) {
-          if(readForComparison >= end) {
-            break; // master string ended before full substring was compared
-          }
-
-          char32_t masterCharacter = UnicodeHelper::ReadCodePoint(readForComparison, end);
-          char32_t substringCharacter = UnicodeHelper::ReadCodePoint(
-            substringCurrent, substringEnd
-          );
-          if(masterCharacter != substringCharacter) {
-            break; // we found a difference, it doesn't match the full substring
-          }
-        }
-
-        // If the full substring was matched
-        if(substringCurrent == substringEnd) {
-          read = readForComparison; // Skip over the substring
-        } else { // Substring not matched, write character as normal
-          UnicodeHelper::WriteCodePoint(write, currentCharacter);
-        }
-      } else { // Character was not the start of the substring, write it as normal
-        UnicodeHelper::WriteCodePoint(write, currentCharacter);
-      }
-    }
-
-    // Since the above loop keeps going until the end of the master string is reached,
-    // in case substrings were found and skipped, it will already have moved all
-    // of the remaining characters to the left, so the string contents are all in place.
-
-    // We merely may need to tell the master string its new length in case it changed.
-    if(read != write) {
-      utf8String.resize(
-        write - reinterpret_cast<UnicodeHelper::Char8Type *>(utf8String.data())
-      );
-    }
-
+    eraseSubstrings<std::string, UnicodeHelper::Char8Type>(utf8String, victim);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -349,7 +363,11 @@ namespace Nuclex { namespace Support { namespace Text {
   void StringHelper::EraseSubstrings(
     std::wstring &wideString, const std::wstring &victim
   ) {
-
+    if constexpr(sizeof(std::wstring::value_type) == sizeof(char32_t)) {
+      eraseSubstrings<std::wstring, char32_t>(wideString, victim);
+    } else {
+      eraseSubstrings<std::wstring, char16_t>(wideString, victim);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
