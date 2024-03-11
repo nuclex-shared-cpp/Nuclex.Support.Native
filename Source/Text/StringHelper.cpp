@@ -82,6 +82,7 @@ namespace {
         }
       } // for ever
     } else { // initial character is not a whitespace
+      write = read;
       std::size_t successiveWhitespaceCount = 0;
       for(;;) {
         if(read >= end) {

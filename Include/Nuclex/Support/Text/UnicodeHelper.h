@@ -299,7 +299,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   The number of characters that have been encoded or std::size_t(-1) if
     ///   you specified an invalid code point.
     /// </returns>
-    public: NUCLEX_SUPPORT_API static inline std::size_t WriteCodePoint(
+    public: NUCLEX_SUPPORT_API static std::size_t WriteCodePoint(
       char32_t *&target, char32_t codePoint
     );
 

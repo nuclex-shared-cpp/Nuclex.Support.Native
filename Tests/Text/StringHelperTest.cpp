@@ -129,4 +129,17 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StringHelperTest, SingleCharacterSurvivesWhitespaceCollapse) {
+    std::string test(u8"d", 1);
+    std::string expected(u8"d", 1);
+
+    StringHelper::CollapseDuplicateWhitespace(test, false);
+    ASSERT_STREQ(test.c_str(), expected.c_str());
+
+    StringHelper::CollapseDuplicateWhitespace(test, true);
+    ASSERT_STREQ(test.c_str(), expected.c_str());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text
