@@ -91,7 +91,11 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   be an std::u8string using this character type to unambiguously indicate that
     ///   the contents of the string are supposed to be UTF-8 encoded.
     /// </remarks>
-    public: typedef unsigned char char8_t;
+#if defined(__cpp_char8_t)
+    public: typedef char8_t Char8Type;
+#else
+    public: typedef unsigned char Char8Type;
+#endif
 
     /// <summary>The symbol used to indicate a code point is invalid or corrupted</summary>
     public: static const constexpr char32_t ReplacementCodePoint = char32_t(0xFFFD);
@@ -113,7 +117,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   This method can be used to figure out if a character is the lead character, too.
     /// </remarks>
     public: NUCLEX_SUPPORT_API static constexpr std::size_t GetSequenceLength(
-      char8_t leadCharacter
+      Char8Type leadCharacter
     );
 
     /// <summary>
@@ -169,7 +173,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   bad UTF-8 data.
     /// </returns>
     public: NUCLEX_SUPPORT_API static char32_t ReadCodePoint(
-      const char8_t *&current, const char8_t *end
+      const Char8Type *&current, const Char8Type *end
     );
 
     /// <summary>Reads a code point from a variable-length UTF-8 sequence</summary>
@@ -186,7 +190,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   bad UTF-8 data.
     /// </returns>
     public: NUCLEX_SUPPORT_API static char32_t ReadCodePoint(
-      char8_t *&current, const char8_t *end
+      Char8Type *&current, const Char8Type *end
     );
 
     /// <summary>Reads a code point from a variable-length UTF-16 sequence</summary>
@@ -223,6 +227,40 @@ namespace Nuclex { namespace Support { namespace Text {
       char16_t *&current, const char16_t *end
     );
 
+    /// <summary>Reads a code point from a UTF-32 character</summary>
+    /// <param name="current">
+    ///   Address of the UTF-32 character, will be updated to the next character
+    ///   if the read succeeds.
+    /// </param>
+    /// <param name="end">Character at which the UTF-32 string ends</param>
+    /// <returns>The unicode code point index, identical to UTF-32.</returns>
+    /// <remarks>
+    ///   If the end is reached or if the character is incomplete or invalid, this method
+    ///   returns char32_t(-1) to indicate failure. You should check the position of your
+    ///   read pointer before calling to distinguish between a normal end of the string and
+    ///   bad UTF-16 data.
+    /// </returns>
+    public: NUCLEX_SUPPORT_API static char32_t ReadCodePoint(
+      const char32_t *&current, const char32_t *end
+    );
+
+    /// <summary>Reads a code point from a UTF-32 character</summary>
+    /// <param name="current">
+    ///   Address of the UTF-32 character, will be updated to the next character
+    ///   if the read succeeds.
+    /// </param>
+    /// <param name="end">Character at which the UTF-32 string ends</param>
+    /// <returns>The unicode code point index, identical to UTF-32.</returns>
+    /// <remarks>
+    ///   If the end is reached or if the character is incomplete or invalid, this method
+    ///   returns char32_t(-1) to indicate failure. You should check the position of your
+    ///   read pointer before calling to distinguish between a normal end of the string and
+    ///   bad UTF-16 data.
+    /// </returns>
+    public: NUCLEX_SUPPORT_API static char32_t ReadCodePoint(
+      char32_t *&current, const char32_t *end
+    );
+
     /// <summary>Encodes the specified code point into UTF-8 characters</summary>
     /// <param name="codePoint">Code point that will be encoded as UTF-8</param>
     /// <param name="target">
@@ -234,7 +272,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   you specified an invalid code point.
     /// </returns>
     public: NUCLEX_SUPPORT_API static std::size_t WriteCodePoint(
-      char32_t codePoint, char8_t *&target
+      Char8Type *&target, char32_t codePoint
     );
 
     /// <summary>Encodes the specified code point into UTF-16 characters</summary>
@@ -248,7 +286,21 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   you specified an invalid code point.
     /// </returns>
     public: NUCLEX_SUPPORT_API static std::size_t WriteCodePoint(
-      char32_t codePoint, char16_t *&target
+      char16_t *&target, char32_t codePoint
+    );
+
+    /// <summary>Encodes the specified code point into UTF-32 characters</summary>
+    /// <param name="codePoint">Code point that will be encoded as UTF-32</param>
+    /// <param name="target">
+    ///   Address at which the UTF-16 characters will be deposited. Needs to have at
+    ///   least 4 bytes of usable space and will be moved to after the encoded characters
+    /// </param>
+    /// <returns>
+    ///   The number of characters that have been encoded or std::size_t(-1) if
+    ///   you specified an invalid code point.
+    /// </returns>
+    public: NUCLEX_SUPPORT_API static inline std::size_t WriteCodePoint(
+      char32_t *&target, char32_t codePoint
     );
 
     /// <summary>Converts the specified Unicode code point to folded lowercase</summary>
@@ -292,7 +344,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline constexpr std::size_t UnicodeHelper::GetSequenceLength(char8_t leadCharacter) {
+  inline constexpr std::size_t UnicodeHelper::GetSequenceLength(Char8Type leadCharacter) {
     if(leadCharacter < 128) {
       return 1;
     } else if((leadCharacter & 0xE0) == 0xC0) {
@@ -350,33 +402,53 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline std::size_t UnicodeHelper::WriteCodePoint(char32_t codePoint, char8_t *&target) {
+  inline char32_t UnicodeHelper::ReadCodePoint(const char32_t *&current, const char32_t *end) {
+    assert((current < end) && u8"At least one UTF-32 character of input must be available");
+
+    char32_t codePoint = *current;
+    ++current;
+    return codePoint;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  inline char32_t UnicodeHelper::ReadCodePoint(char32_t *&current, const char32_t *end) {
+    assert((current < end) && u8"At least one UTF-32 character of input must be available");
+
+    char32_t codePoint = *current;
+    ++current;
+    return codePoint;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  inline std::size_t UnicodeHelper::WriteCodePoint(Char8Type *&target, char32_t codePoint) {
     if(codePoint < 128) {
-      *target = static_cast<char8_t>(codePoint);
+      *target = static_cast<Char8Type>(codePoint);
       ++target;
       return 1;
     } else if(codePoint < 2048) {
-      *target = char8_t(0xC0) | static_cast<char8_t>(codePoint >> 6);
+      *target = Char8Type(0xC0) | static_cast<Char8Type>(codePoint >> 6);
       ++target;
-      *target = char8_t(0x80) | static_cast<char8_t>(codePoint & 0x3F);
+      *target = Char8Type(0x80) | static_cast<Char8Type>(codePoint & 0x3F);
       ++target;
       return 2;
     } else if(codePoint < 65536) {
-      *target = char8_t(0xE0) | static_cast<char8_t>(codePoint >> 12);
+      *target = Char8Type(0xE0) | static_cast<Char8Type>(codePoint >> 12);
       ++target;
-      *target = char8_t(0x80) | static_cast<char8_t>((codePoint >> 6) & 0x3F);
+      *target = Char8Type(0x80) | static_cast<Char8Type>((codePoint >> 6) & 0x3F);
       ++target;
-      *target = char8_t(0x80) | static_cast<char8_t>(codePoint & 0x3F);
+      *target = Char8Type(0x80) | static_cast<Char8Type>(codePoint & 0x3F);
       ++target;
       return 3;
     } else if(codePoint < 1114111) {
-      *target = char8_t(0xF0) | static_cast<char8_t>(codePoint >> 18);
+      *target = Char8Type(0xF0) | static_cast<Char8Type>(codePoint >> 18);
       ++target;
-      *target = char8_t(0x80) | static_cast<char8_t>((codePoint >> 12) & 0x3F);
+      *target = Char8Type(0x80) | static_cast<Char8Type>((codePoint >> 12) & 0x3F);
       ++target;
-      *target = char8_t(0x80) | static_cast<char8_t>((codePoint >> 6) & 0x3F);
+      *target = Char8Type(0x80) | static_cast<Char8Type>((codePoint >> 6) & 0x3F);
       ++target;
-      *target = char8_t(0x80) | static_cast<char8_t>(codePoint & 0x3F);
+      *target = Char8Type(0x80) | static_cast<Char8Type>(codePoint & 0x3F);
       ++target;
       return 4;
     } else {
@@ -386,7 +458,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline std::size_t UnicodeHelper::WriteCodePoint(char32_t codePoint, char16_t *&target) {
+  inline std::size_t UnicodeHelper::WriteCodePoint(char16_t *&target, char32_t codePoint) {
     if(codePoint < 65536) {
       assert(
         ((codePoint < 0xDC00) || (codePoint >= 0xE000)) &&
@@ -404,6 +476,13 @@ namespace Nuclex { namespace Support { namespace Text {
     } else {
       return std::size_t(-1);
     }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  inline std::size_t UnicodeHelper::WriteCodePoint(char32_t *&target, char32_t codePoint) {
+    *target = codePoint;
+    ++target;
   }
 
   // ------------------------------------------------------------------------------------------- //

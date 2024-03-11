@@ -494,22 +494,27 @@ namespace {
 #endif // defined(NUCLEX_SUPPORT_ENABLE_INTERNAL_TESTS)
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Reads a code point from one to four UTF-8 characters</summary>
+  /// <typeparam name="TConstOrNonConstChar">Either char8_t or const char8_t</typeparam>
+  /// <param name="current">Pointer from which to start reading</param>
+  /// <param name="end">Pointer one past the end of the string</param>
+  /// <returns>The code point that has been read or -1 on corruption or string end</returns>
   template<typename TConstOrNonConstChar8>
   inline char32_t readCodePointUtf8(
     TConstOrNonConstChar8 *&current,
     typename std::add_const<TConstOrNonConstChar8>::type *end
   ) {
-    typedef Nuclex::Support::Text::UnicodeHelper::char8_t char8_t;
+    typedef Nuclex::Support::Text::UnicodeHelper::Char8Type Char8Type;
 
     assert((current < end) && u8"At least one byte of input must be available");
 
-    char8_t leadCharacter = *current;
+    Char8Type leadCharacter = *current;
     if(leadCharacter < 128) {
       ++current;
       return static_cast<char32_t>(leadCharacter);
     } else if((leadCharacter & 0xE0) == 0xC0) {
       if(current + 1 < end) {
-        char8_t secondCharacter = *(current + 1);
+        Char8Type secondCharacter = *(current + 1);
         if((secondCharacter & 0xC0) == 0x80) {
           current += 2;
           return (
@@ -520,11 +525,11 @@ namespace {
       }
     } else if((leadCharacter & 0xF0) == 0xE0) {
       if(current + 2 < end) {
-        char8_t secondCharacter = *(current + 1);
-        char8_t thirdCharacter = *(current + 2);
+        Char8Type secondCharacter = *(current + 1);
+        Char8Type thirdCharacter = *(current + 2);
         bool allCharactersValid = (
-          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
-          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80)
+          (static_cast<Char8Type>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<Char8Type>(thirdCharacter & 0xC0) == 0x80)
         );
         if(allCharactersValid) {
           current += 3;
@@ -537,13 +542,13 @@ namespace {
       }
     } else if((leadCharacter & 0xF8) == 0xF0) {
       if(current + 3 < end) {
-        char8_t secondCharacter = *(current + 1);
-        char8_t thirdCharacter = *(current + 2);
-        char8_t fourthCharacter = *(current + 3);
+        Char8Type secondCharacter = *(current + 1);
+        Char8Type thirdCharacter = *(current + 2);
+        Char8Type fourthCharacter = *(current + 3);
         bool allCharactersValid = (
-          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
-          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80) &&
-          (static_cast<char8_t>(fourthCharacter & 0xC0) == 0x80)
+          (static_cast<Char8Type>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<Char8Type>(thirdCharacter & 0xC0) == 0x80) &&
+          (static_cast<Char8Type>(fourthCharacter & 0xC0) == 0x80)
         );
         if(allCharactersValid) {
           current += 4;
@@ -563,6 +568,11 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Reads a code point from one or two UTF-16 characters</summary>
+  /// <typeparam name="TConstOrNonConstChar">Either char16_t or const char16_t</typeparam>
+  /// <param name="current">Pointer from which to start reading</param>
+  /// <param name="end">Pointer one past the end of the string</param>
+  /// <returns>The code point that has been read or -1 on corruption or string end</returns>
   template<typename TConstOrNonConstChar16>
   inline char32_t readCodePointUtf16(
     TConstOrNonConstChar16 *&current,
@@ -606,13 +616,13 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char32_t UnicodeHelper::ReadCodePoint(const char8_t *&current, const char8_t *end) {
+  char32_t UnicodeHelper::ReadCodePoint(const Char8Type *&current, const Char8Type *end) {
     return readCodePointUtf8(current, end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  char32_t UnicodeHelper::ReadCodePoint(char8_t *&current, const char8_t *end) {
+  char32_t UnicodeHelper::ReadCodePoint(Char8Type *&current, const Char8Type *end) {
     return readCodePointUtf8(current, end);
   }
 

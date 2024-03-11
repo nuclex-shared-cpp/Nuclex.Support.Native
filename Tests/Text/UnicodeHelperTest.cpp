@@ -83,89 +83,89 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(UnicodeHelperTest, TellsSequenceLengthFromUtf8LeadCharacter) {
-    using my_char8_t = UnicodeHelper::char8_t;
+    using Char8Type = UnicodeHelper::Char8Type;
 
     const char *ascii = u8"A";
     EXPECT_EQ(
-      UnicodeHelper::GetSequenceLength(*reinterpret_cast<const my_char8_t *>(ascii)), 1U
+      UnicodeHelper::GetSequenceLength(*reinterpret_cast<const Char8Type *>(ascii)), 1U
     );
 
     const char *cents = u8"¢";
     EXPECT_EQ(
-      UnicodeHelper::GetSequenceLength(*reinterpret_cast<const my_char8_t *>(cents)), 2U
+      UnicodeHelper::GetSequenceLength(*reinterpret_cast<const Char8Type *>(cents)), 2U
     );
 
     const char *euros = u8"€";
     EXPECT_EQ(
-      UnicodeHelper::GetSequenceLength(*reinterpret_cast<const my_char8_t *>(euros)), 3U
+      UnicodeHelper::GetSequenceLength(*reinterpret_cast<const Char8Type *>(euros)), 3U
     );
 
     const char *gothic = u8"𐍈";
     EXPECT_EQ(
-      UnicodeHelper::GetSequenceLength(*reinterpret_cast<const my_char8_t *>(gothic)), 4U
+      UnicodeHelper::GetSequenceLength(*reinterpret_cast<const Char8Type *>(gothic)), 4U
     );
 
     EXPECT_EQ(
-      UnicodeHelper::GetSequenceLength(UnicodeHelper::char8_t(0x80)), std::size_t(-1)
+      UnicodeHelper::GetSequenceLength(Char8Type(0x80)), std::size_t(-1)
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(UnicodeHelperTest, ReadsCodePointFromUtf8) {
-    using my_char8_t = UnicodeHelper::char8_t;
+    using Char8Type = UnicodeHelper::Char8Type;
 
     {
       const char ascii[] = u8"A";
-      const my_char8_t *start = reinterpret_cast<const my_char8_t *>(ascii);
-      const my_char8_t *end = reinterpret_cast<const my_char8_t *>(ascii) + sizeof(ascii);
+      const Char8Type *start = reinterpret_cast<const Char8Type *>(ascii);
+      const Char8Type *end = reinterpret_cast<const Char8Type *>(ascii) + sizeof(ascii);
       char32_t codePoint = UnicodeHelper::ReadCodePoint(start, end);
       EXPECT_EQ(codePoint, U'A');
-      EXPECT_EQ(start, reinterpret_cast<const my_char8_t *>(ascii) + 1);
+      EXPECT_EQ(start, reinterpret_cast<const Char8Type *>(ascii) + 1);
     }
 
     {
       const char cents[] = u8"¢";
-      const my_char8_t *start = reinterpret_cast<const my_char8_t *>(cents);
-      const my_char8_t *end = reinterpret_cast<const my_char8_t *>(cents) + sizeof(cents);
+      const Char8Type *start = reinterpret_cast<const Char8Type *>(cents);
+      const Char8Type *end = reinterpret_cast<const Char8Type *>(cents) + sizeof(cents);
       char32_t codePoint = UnicodeHelper::ReadCodePoint(start, end);
       EXPECT_EQ(codePoint, U'¢');
-      EXPECT_EQ(start, reinterpret_cast<const my_char8_t *>(cents) + 2);
+      EXPECT_EQ(start, reinterpret_cast<const Char8Type *>(cents) + 2);
     }
 
     {
       const char euros[] = u8"€";
-      const my_char8_t *start = reinterpret_cast<const my_char8_t *>(euros);
-      const my_char8_t *end = reinterpret_cast<const my_char8_t *>(euros) + sizeof(euros);
+      const Char8Type *start = reinterpret_cast<const Char8Type *>(euros);
+      const Char8Type *end = reinterpret_cast<const Char8Type *>(euros) + sizeof(euros);
       char32_t codePoint = UnicodeHelper::ReadCodePoint(start, end);
       EXPECT_EQ(codePoint, U'€');
-      EXPECT_EQ(start, reinterpret_cast<const my_char8_t *>(euros) + 3);
+      EXPECT_EQ(start, reinterpret_cast<const Char8Type *>(euros) + 3);
     }
 
     {
       const char gothic[] = u8"𐍈";
-      const my_char8_t *start = reinterpret_cast<const my_char8_t *>(gothic);
-      const my_char8_t *end = reinterpret_cast<const my_char8_t *>(gothic) + sizeof(gothic);
+      const Char8Type *start = reinterpret_cast<const Char8Type *>(gothic);
+      const Char8Type *end = reinterpret_cast<const Char8Type *>(gothic) + sizeof(gothic);
       char32_t codePoint = UnicodeHelper::ReadCodePoint(start, end);
       EXPECT_EQ(codePoint, U'𐍈');
-      EXPECT_EQ(start, reinterpret_cast<const my_char8_t *>(gothic) + 4);
+      EXPECT_EQ(start, reinterpret_cast<const Char8Type *>(gothic) + 4);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(UnicodeHelperTest, ReadingInvalidCodePointFromUtf8Fails) {
-    using my_char8_t = UnicodeHelper::char8_t;
+    using Char8Type = UnicodeHelper::Char8Type;
 
     // Invalid second byte should be detected
     {
       char invalid[] = u8"𐍈";
       *reinterpret_cast<std::uint8_t *>(&invalid[1]) = 0xC0; // 0b11xxxxxx
-      const my_char8_t *start = reinterpret_cast<const my_char8_t *>(invalid);
-      const my_char8_t *end = reinterpret_cast<const my_char8_t *>(invalid) + sizeof(invalid);
+      const Char8Type *start = reinterpret_cast<const Char8Type *>(invalid);
+      const Char8Type *end = reinterpret_cast<const Char8Type *>(invalid) + sizeof(invalid);
       char32_t codePoint = UnicodeHelper::ReadCodePoint(start, end);
       EXPECT_EQ(codePoint, char32_t(-1));
-      EXPECT_EQ(start, reinterpret_cast<const my_char8_t *>(invalid));
+      EXPECT_EQ(start, reinterpret_cast<const Char8Type *>(invalid));
     }
 
     // Invalid length (5 bytes, possible by encoding, but always invalid since
@@ -173,11 +173,11 @@ namespace Nuclex { namespace Support { namespace Text {
     {
       char invalid[] = u8"𐍈";
       *reinterpret_cast<std::uint8_t *>(&invalid[0]) = 0xF8; // 0b11111000
-      const my_char8_t *start = reinterpret_cast<const my_char8_t *>(invalid);
-      const my_char8_t *end = reinterpret_cast<const my_char8_t *>(invalid) + sizeof(invalid);
+      const Char8Type *start = reinterpret_cast<const Char8Type *>(invalid);
+      const Char8Type *end = reinterpret_cast<const Char8Type *>(invalid) + sizeof(invalid);
       char32_t codePoint = UnicodeHelper::ReadCodePoint(start, end);
       EXPECT_EQ(codePoint, char32_t(-1));
-      EXPECT_EQ(start, reinterpret_cast<const my_char8_t *>(invalid));
+      EXPECT_EQ(start, reinterpret_cast<const Char8Type *>(invalid));
     }
 
   }
@@ -243,50 +243,50 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(UnicodeHelperTest, EncodesCodePointsToUtf8) {
-    using my_char8_t = UnicodeHelper::char8_t;
+    using Char8Type = UnicodeHelper::Char8Type;
 
     {
-      my_char8_t ascii[4] = { 255, 255, 255, 255 };
-      my_char8_t *start = reinterpret_cast<my_char8_t *>(ascii);
-      std::size_t count = UnicodeHelper::WriteCodePoint(U'A', start);
+      Char8Type ascii[4] = { 255, 255, 255, 255 };
+      Char8Type *start = reinterpret_cast<Char8Type *>(ascii);
+      std::size_t count = UnicodeHelper::WriteCodePoint(start, U'A');
       EXPECT_EQ(count, 1U);
-      EXPECT_EQ(start, reinterpret_cast<my_char8_t *>(ascii) + 1);
+      EXPECT_EQ(start, reinterpret_cast<Char8Type *>(ascii) + 1);
       EXPECT_EQ(ascii[0], u8'A');
     }
 
     {
-      my_char8_t cent[4] = { 255, 255, 255, 255 };
-      my_char8_t *start = reinterpret_cast<my_char8_t *>(cent);
-      std::size_t count = UnicodeHelper::WriteCodePoint(U'¢', start);
+      Char8Type cent[4] = { 255, 255, 255, 255 };
+      Char8Type *start = reinterpret_cast<Char8Type *>(cent);
+      std::size_t count = UnicodeHelper::WriteCodePoint(start, U'¢');
       EXPECT_EQ(count, 2U);
-      EXPECT_EQ(start, reinterpret_cast<my_char8_t *>(cent) + 2);
+      EXPECT_EQ(start, reinterpret_cast<Char8Type *>(cent) + 2);
 
-      const my_char8_t expected[] = u8"¢";
+      const Char8Type expected[] = u8"¢";
       EXPECT_EQ(cent[0], expected[0]);
       EXPECT_EQ(cent[1], expected[1]);
     }
 
     {
-      my_char8_t euro[4] = { 255, 255, 255, 255 };
-      my_char8_t *start = reinterpret_cast<my_char8_t *>(euro);
-      std::size_t count = UnicodeHelper::WriteCodePoint(U'€', start);
+      Char8Type euro[4] = { 255, 255, 255, 255 };
+      Char8Type *start = reinterpret_cast<Char8Type *>(euro);
+      std::size_t count = UnicodeHelper::WriteCodePoint(start, U'€');
       EXPECT_EQ(count, 3U);
-      EXPECT_EQ(start, reinterpret_cast<my_char8_t *>(euro) + 3);
+      EXPECT_EQ(start, reinterpret_cast<Char8Type *>(euro) + 3);
 
-      const my_char8_t expected[] = u8"€";
+      const Char8Type expected[] = u8"€";
       EXPECT_EQ(euro[0], expected[0]);
       EXPECT_EQ(euro[1], expected[1]);
       EXPECT_EQ(euro[2], expected[2]);
     }
 
     {
-      my_char8_t gothic[4] = { 255, 255, 255, 255 };
-      my_char8_t *start = reinterpret_cast<my_char8_t *>(gothic);
-      std::size_t count = UnicodeHelper::WriteCodePoint(U'𐍈', start);
+      Char8Type gothic[4] = { 255, 255, 255, 255 };
+      Char8Type *start = reinterpret_cast<Char8Type *>(gothic);
+      std::size_t count = UnicodeHelper::WriteCodePoint(start, U'𐍈');
       EXPECT_EQ(count, 4U);
-      EXPECT_EQ(start, reinterpret_cast<my_char8_t *>(gothic) + 4);
+      EXPECT_EQ(start, reinterpret_cast<Char8Type *>(gothic) + 4);
 
-      const my_char8_t expected[] = u8"𐍈";
+      const Char8Type expected[] = u8"𐍈";
       EXPECT_EQ(gothic[0], expected[0]);
       EXPECT_EQ(gothic[1], expected[1]);
       EXPECT_EQ(gothic[2], expected[2]);
@@ -300,7 +300,7 @@ namespace Nuclex { namespace Support { namespace Text {
     {
       char16_t ascii[2] = { 65535, 65535};
       char16_t *start = reinterpret_cast<char16_t *>(ascii);
-      std::size_t count = UnicodeHelper::WriteCodePoint(U'A', start);
+      std::size_t count = UnicodeHelper::WriteCodePoint(start, U'A');
       EXPECT_EQ(count, 1U);
       EXPECT_EQ(start, reinterpret_cast<char16_t *>(ascii) + 1);
       EXPECT_EQ(ascii[0], u'A');
@@ -309,7 +309,7 @@ namespace Nuclex { namespace Support { namespace Text {
     {
       char16_t cent[4] = { 255, 255, 255, 255 };
       char16_t *start = reinterpret_cast<char16_t *>(cent);
-      std::size_t count = UnicodeHelper::WriteCodePoint(U'¢', start);
+      std::size_t count = UnicodeHelper::WriteCodePoint(start, U'¢');
       EXPECT_EQ(count, 1U);
       EXPECT_EQ(start, reinterpret_cast<char16_t *>(cent) + 1);
 
@@ -320,7 +320,7 @@ namespace Nuclex { namespace Support { namespace Text {
     {
       char16_t euro[4] = { 255, 255, 255, 255 };
       char16_t *start = reinterpret_cast<char16_t *>(euro);
-      std::size_t count = UnicodeHelper::WriteCodePoint(U'€', start);
+      std::size_t count = UnicodeHelper::WriteCodePoint(start, U'€');
       EXPECT_EQ(count, 1U);
       EXPECT_EQ(start, reinterpret_cast<char16_t *>(euro) + 1);
 
@@ -331,7 +331,7 @@ namespace Nuclex { namespace Support { namespace Text {
     {
       char16_t gothic[4] = { 255, 255, 255, 255 };
       char16_t *start = reinterpret_cast<char16_t *>(gothic);
-      std::size_t count = UnicodeHelper::WriteCodePoint(U'𐍈', start);
+      std::size_t count = UnicodeHelper::WriteCodePoint(start, U'𐍈');
       EXPECT_EQ(count, 2U);
       EXPECT_EQ(start, reinterpret_cast<char16_t *>(gothic) + 2);
 

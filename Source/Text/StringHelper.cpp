@@ -32,142 +32,97 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   template<typename StringType, typename CharType>
-  void collapseDuplicateWhitespace(
-    StringType &targetString, bool alsoTrim /* = true */
-  ) {
+  void collapseDuplicateWhitespaceAndTrim(StringType &targetString) {
     using Nuclex::Support::Text::UnicodeHelper;
     using Nuclex::Support::Text::ParserHelper;
 
     CharType *read = reinterpret_cast<CharType *>(targetString.data());
+    CharType *write = read; // 'write' tracks the shift target position
     CharType *end = read + targetString.length();
 
-    // For the scan loop: if a whitespace is encountered while this is set,
-    // the shift loop which moves the string to the left to erase spaces is entered.
-    // For the shift loop: if a non-whitespace is encountered while this is set,
-    // a single whitespace will be emitted (in place of any number of prior whitespaces).
-    bool previousWasWhitespace = (!alsoTrim);
+    // If the string is of zero length, we don't need to do anything
+    if(read == end) {
+      return;
+    }
 
-    // Scan loop. Skips over as much of the string as possible until reaching a point where
-    // duplicate whitespace was encountered and the string needs to be changed
-    char32_t codePoint;
-    {
-      bool trimmed = alsoTrim;
+    // Read the first character. This variant does trimming, so the first character
+    // decides if we can even run the scan-only loop (and doing the check outside of
+    // the loop simplifies the conditions that need to be checked inside the loop)
+    char32_t codePoint = UnicodeHelper::ReadCodePoint(read, end);
+    if(codePoint == char32_t(-1)) {
+      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+    }
+
+    // If it was not a whitespace, we can fast-forward until we find a duplicate whitespace
+    if(ParserHelper::IsWhitespace(codePoint)) {
+      std::size_t successiveWhitespaceCount = 1;
       for(;;) {
-
-        // If the end of the string is reached in this loop, then nothing needs to be changed.
-        // This will not be an issue if 'alsoTrim' is set and the string does start with
-        // a whitespace (which will send us right out of the loop after encountering it).
         if(read >= end) {
+          //if(successiveWhitespaceCount >= 2) {
+          //  UnicodeHelper::WriteCodePoint(write, U' ');
+          //  targetString.resize(1);
+          //}
+          targetString.resize(0); // Only whitespace + trim = string becomes empty
           return;
         }
 
-        // Read the next code point
-        if constexpr(sizeof(CharType) == sizeof(char32_t)) {
-          codePoint = *read;
-        } else {
-          codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        }
-
-        // If invalid characters are encountered, the string is broken
-        if(unlikely(codePoint == char32_t(-1))) {
+        codePoint = UnicodeHelper::ReadCodePoint(read, end);
+        if(codePoint == char32_t(-1)) {
           throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
         }
 
-        // We only need to act when a whitespace is encountered, otherwise we'll just
-        // breeze through the string in this small loop, hoping there is no work to do.
         if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
-          if(unlikely(trimmed && previousWasWhitespace)) {
-            break; // Successive whitespace encountered
-          }
-
-          previousWasWhitespace = true;
+          ++successiveWhitespaceCount;
         } else {
-          trimmed = true; // we skipped any potential initial whit
-          previousWasWhitespace = false;
+          break; // Exit without updating write pointer since we're trimming
         }
-
-      } // for (scan loop)
-    } // beauty + variable lifetime scope
-
-#if defined(WORK_IN_PROGRESS__)
-    // If this point is reached, either the scan loop above encountered a repeated whitespace
-    // or the first character was a whitespace and 'alsoTrim' was set.
-    if()
-
-    // Shift loop: If this point is reached, the current character is a repeated whitespace
-    // (or the string begins with a whitespace and 'alsoTrim' is set). In either case,
-    // we're now required to shift the string to the left for any removed whitespaces.
-    CharType *write = read;
-    for(;;) {
-
-      // If the end of the string is reached, we can exit right away.
-      if(read >= end) {
-        if(previousWasWhitespace && !alsoTrim) {
-          
-          // Append lastmost space because it still needs to be appended?
-        }
-        return;
       }
+    } else {
+      std::size_t successiveWhitespaceCount = 0;
+      for(;;) {
+        if(read >= end) {
+          targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
+          return;
+        }
 
-      // Read the next code point
-      char32_t codePoint;
-      if constexpr(sizeof(CharType) == sizeof(char32_t)) {
-        codePoint = *read;
-      } else {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-      }
-
-      if(ParserHelper::IsWhitespace(codePoint)) {
-        if(!previousWasWhitespace) {
-          *write = u8' ';
-          ++write;
-          previousWasWhitespace = true;
-
-          // Conditions need to be better checked. 
-          //break; // From this point on, we need to re-write the string to move it left
+        if(codePoint == char32_t(-1)) {
+          throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
         }
-      } else {
-        if constexpr(sizeof(CharType) == sizeof(char32_t)) { //constexpr(std::is_same<CharType, char32_t>::value) {
-          *write = codePoint;
-        } else {
-          UnicodeHelper::WriteCodePoint(codePoint, write);
-        }
-        previousWasWhitespace = false;
-      }
-    }
 
-    /*
-    // Step through the string, one code point after another, to scan for whitespace,
-    // but also move the string contents to the left since we removed at least one
-    while(read < end) {
-      char32_t codePoint = UnicodeHelper::ReadCodePoint(read, end);
-
-      if(ParserHelper::IsWhitespace(codePoint)) {
-        if(!previousWasWhitespace) {
-          *write = u8' ';
-          ++write;
-          previousWasWhitespace = true;
+        if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
+          ++successiveWhitespaceCount;
+        } else if(successiveWhitespaceCount >= 2) { // String will need backshifting
+          UnicodeHelper::WriteCodePoint(write, U' ');
+          break;
+        } else { // Single whitespace can be skipped
+          write = read; // write pointer tracks last non-whitespace
+          successiveWhitespaceCount = 0;
         }
-      } else {
-        UnicodeHelper::WriteCodePoint(codePoint, write);
-        previousWasWhitespace = false;
+      } // for ever
+    } // if 
+
+    // At this point:
+    // - 'read' is on a non-whitespace character
+    // - 'write' is at the current backshifting target position
+    // - 'codePoint' contains one code point that yet needs to be backshifted
+    UnicodeHelper::WriteCodePoint(write, codePoint);
+
+    // Backshifting loop
+    {
+      std::size_t successiveWhitespaceCount = 0;
+      while(read < end) {
+
+        codePoint = UnicodeHelper::ReadCodePoint(read, end);
+        if(codePoint == char32_t(-1)) {
+          throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+        }
+
       }
     }
-    */
-
-    if(!previousWasWhitespace || alsoTrim) {
-      --write;
-    }
-/*
-    if(previousWasWhitespace && !alsoTrim) {
-      *write = u8' ';
-      ++write;
-    }
-*/
-    --write;
-    targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
-#endif
   }
+
+  // ------------------------------------------------------------------------------------------- //
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -180,7 +135,7 @@ namespace Nuclex { namespace Support { namespace Text {
   void StringHelper::CollapseDuplicateWhitespace(
     std::string &utf8String, bool alsoTrim /* = true */
   ) {
-    collapseDuplicateWhitespace<std::string, UnicodeHelper::char8_t>(utf8String, alsoTrim);
+    //collapseDuplicateWhitespace<std::string, UnicodeHelper::char8_t>(utf8String, alsoTrim);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -188,7 +143,7 @@ namespace Nuclex { namespace Support { namespace Text {
   void StringHelper::CollapseDuplicateWhitespace(
     std::wstring &wideString, bool alsoTrim /* = true */
   ) {
-    collapseDuplicateWhitespace<std::wstring, std::wstring::value_type>(wideString, alsoTrim);
+    //collapseDuplicateWhitespace<std::wstring, std::wstring::value_type>(wideString, alsoTrim);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -198,10 +153,10 @@ namespace Nuclex { namespace Support { namespace Text {
   ) {
 
     // Gather some pointers for moving around in the substring for comparison
-    const UnicodeHelper::char8_t *substringFromSecondCharacter = (
-      reinterpret_cast<const UnicodeHelper::char8_t *>(victim.c_str())
+    const UnicodeHelper::Char8Type *substringFromSecondCharacter = (
+      reinterpret_cast<const UnicodeHelper::Char8Type *>(victim.c_str())
     );
-    const UnicodeHelper::char8_t *substringEnd = (
+    const UnicodeHelper::Char8Type *substringEnd = (
       substringFromSecondCharacter + victim.length()
     );
     if(substringFromSecondCharacter >= substringEnd) {
@@ -218,19 +173,19 @@ namespace Nuclex { namespace Support { namespace Text {
 
     // We also need pointers into the master string so we can scan it for
     // occurrences of the substring and move characters to the left after removal.
-    UnicodeHelper::char8_t *read = (
-      reinterpret_cast<UnicodeHelper::char8_t *>(utf8String.data())
+    UnicodeHelper::Char8Type *read = (
+      reinterpret_cast<UnicodeHelper::Char8Type *>(utf8String.data())
     );
-    UnicodeHelper::char8_t *write = read;
-    const UnicodeHelper::char8_t *end = read + utf8String.length();
+    UnicodeHelper::Char8Type *write = read;
+    const UnicodeHelper::Char8Type *end = read + utf8String.length();
     while(read < end) {
       char32_t currentCharacter = UnicodeHelper::ReadCodePoint(read, end);
 
       // Once we encounter a character that matches the first character of the substring,
       // start comparing the rest of the substring to see if we have a match.
       if(currentCharacter == firstCharacterOfSubstring) {
-        UnicodeHelper::char8_t *readForComparison = read;
-        const UnicodeHelper::char8_t *substringCurrent = substringFromSecondCharacter;
+        UnicodeHelper::Char8Type *readForComparison = read;
+        const UnicodeHelper::Char8Type *substringCurrent = substringFromSecondCharacter;
         while(substringCurrent < substringEnd) {
           if(readForComparison >= end) {
             break; // master string ended before full substring was compared
@@ -249,10 +204,10 @@ namespace Nuclex { namespace Support { namespace Text {
         if(substringCurrent == substringEnd) {
           read = readForComparison; // Skip over the substring
         } else { // Substring not matched, write character as normal
-          UnicodeHelper::WriteCodePoint(currentCharacter, write);
+          UnicodeHelper::WriteCodePoint(write, currentCharacter);
         }
       } else { // Character was not the start of the substring, write it as normal
-        UnicodeHelper::WriteCodePoint(currentCharacter, write);
+        UnicodeHelper::WriteCodePoint(write, currentCharacter);
       }
     }
 
@@ -263,7 +218,7 @@ namespace Nuclex { namespace Support { namespace Text {
     // We merely may need to tell the master string its new length in case it changed.
     if(read != write) {
       utf8String.resize(
-        write - reinterpret_cast<UnicodeHelper::char8_t *>(utf8String.data())
+        write - reinterpret_cast<UnicodeHelper::Char8Type *>(utf8String.data())
       );
     }
 

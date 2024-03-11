@@ -65,11 +65,65 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, DuplicateWhitespaceCanBeCollapsedWithTrim) {
-    std::string test(u8" This  is   an example ", 23);
+    std::string test(u8"  This  is   an example ", 24);
     std::string expected(u8"This is an example", 18);
 
     StringHelper::CollapseDuplicateWhitespace(test, true);
 
+    ASSERT_STREQ(test.c_str(), expected.c_str());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringHelperTest, EmptyStringCanBeWhitespaceCollapsed) {
+    std::string test(u8"", 0);
+    std::string test2(test);
+    std::string expected(u8"", 0);
+
+    StringHelper::CollapseDuplicateWhitespace(test, false);
+    ASSERT_STREQ(test.c_str(), expected.c_str());
+
+    StringHelper::CollapseDuplicateWhitespace(test2, true);
+    ASSERT_STREQ(test2.c_str(), expected.c_str());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringHelperTest, SingleSpaceCanBeWhitespaceCollapsed) {
+    std::string test(u8" ", 1);
+    std::string test2(test);
+
+    std::string expected(u8" ", 1);
+    StringHelper::CollapseDuplicateWhitespace(test, false);
+    ASSERT_STREQ(test.c_str(), expected.c_str());
+
+    std::string expected2(u8"", 0);
+    StringHelper::CollapseDuplicateWhitespace(test2, true);
+    ASSERT_STREQ(test2.c_str(), expected2.c_str());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringHelperTest, SpacesOnlyCanBeWhitespaceCollapsed) {
+    std::string test(u8"   ", 3);
+    std::string test2(test);
+
+    std::string expected(u8" ", 1);
+    StringHelper::CollapseDuplicateWhitespace(test, false);
+    ASSERT_STREQ(test.c_str(), expected.c_str());
+
+    std::string expected2(u8"", 0);
+    StringHelper::CollapseDuplicateWhitespace(test, true);
+    ASSERT_STREQ(test.c_str(), expected.c_str());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringHelperTest, StringEndingInWhitespaceCanBeCollapsedWithTrim) {
+    std::string test(u8"Hello World ", 12);
+    std::string expected(u8"Hello World", 11);
+
+    StringHelper::CollapseDuplicateWhitespace(test, true);
     ASSERT_STREQ(test.c_str(), expected.c_str());
   }
 

@@ -79,7 +79,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
         while(read < readEnd) {
           char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
-          UnicodeHelper::WriteCodePoint(codePoint, write);
+          UnicodeHelper::WriteCodePoint(write, codePoint);
         }
 
         result.resize(write - reinterpret_cast<char16_t *>(result.data()));
@@ -118,7 +118,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
         while(read < readEnd) {
           char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
-          UnicodeHelper::WriteCodePoint(codePoint, write);
+          UnicodeHelper::WriteCodePoint(write, codePoint);
 
           if(unlikely(write + 4 >= writeEnd)) {
             std::string::size_type writeIndex = (
@@ -137,7 +137,7 @@ namespace Nuclex { namespace Support { namespace Text {
         const char32_t *readEnd = read + wideString.length();
 
         while(read < readEnd) {
-          UnicodeHelper::WriteCodePoint(*read, write);
+          UnicodeHelper::WriteCodePoint(write, *read);
           ++read;
 
           if(unlikely(write + 4 >= writeEnd)) {
@@ -175,7 +175,7 @@ namespace Nuclex { namespace Support { namespace Text {
       char16_t *write = result.data();
       while(read < readEnd) {
         char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
-        UnicodeHelper::WriteCodePoint(codePoint, write);
+        UnicodeHelper::WriteCodePoint(write, codePoint);
       }
 
       result.resize(write - result.data());
@@ -202,7 +202,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
       while(read < readEnd) {
         char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
-        UnicodeHelper::WriteCodePoint(codePoint, write);
+        UnicodeHelper::WriteCodePoint(write, codePoint);
 
         if(unlikely(write + 4 >= writeEnd)) {
           std::string::size_type writeIndex = (
@@ -264,7 +264,7 @@ namespace Nuclex { namespace Support { namespace Text {
       const char32_t *readEnd = read + utf32String.length();
 
       while(read < readEnd) {
-        UnicodeHelper::WriteCodePoint(*read, write);
+        UnicodeHelper::WriteCodePoint(write, *read);
         ++read;
 
         if(unlikely(write + 4 >= writeEnd)) {
@@ -303,7 +303,7 @@ namespace Nuclex { namespace Support { namespace Text {
       while(current < end) {
         char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
         codePoint = UnicodeHelper::ToFoldedLowercase(codePoint);
-        UnicodeHelper::WriteCodePoint(codePoint, target);
+        UnicodeHelper::WriteCodePoint(target, codePoint);
       }
 
       // Remove the excess characters in case the string became shorter
