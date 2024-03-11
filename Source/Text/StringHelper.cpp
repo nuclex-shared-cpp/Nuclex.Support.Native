@@ -49,7 +49,7 @@ namespace {
     const CharType *end = read + targetString.length();
 
     // If the string is of zero length, we don't need to do anything
-    if(read == end) {
+    if(unlikely(read == end)) {
       return;
     }
 
@@ -57,27 +57,24 @@ namespace {
     // decides if we can even run the scan-only loop (and doing the check outside of
     // the loop simplifies the conditions that need to be checked inside the loop)
     char32_t codePoint = UnicodeHelper::ReadCodePoint(read, end);
-    if(codePoint == char32_t(-1)) {
+    if(unlikely(codePoint == char32_t(-1))) {
       throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
     }
 
     // If it was not a whitespace, we can fast-forward until we find a duplicate whitespace
     if(ParserHelper::IsWhitespace(codePoint)) {
-      std::size_t successiveWhitespaceCount = 1;
       for(;;) {
-        if(read >= end) {
+        if(unlikely(read >= end)) {
           targetString.resize(0); // Only whitespace + trim = string becomes empty
           return;
         }
 
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        if(codePoint == char32_t(-1)) {
+        if(unlikely(codePoint == char32_t(-1))) {
           throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
         }
 
-        if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
-          ++successiveWhitespaceCount;
-        } else {
+        if(likely(!ParserHelper::IsWhitespace(codePoint))) {
           break; // Exit without updating write pointer since we're trimming
         }
       } // for ever
@@ -85,22 +82,22 @@ namespace {
       write = read;
       std::size_t successiveWhitespaceCount = 0;
       for(;;) {
-        if(read >= end) {
+        if(unlikely(read >= end)) {
           targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
           return;
         }
 
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        if(codePoint == char32_t(-1)) {
+        if(unlikely(codePoint == char32_t(-1))) {
           throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
         }
 
         if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
           ++successiveWhitespaceCount;
-        } else if(successiveWhitespaceCount >= 2) { // String will need backshifting
+        } else if(unlikely(successiveWhitespaceCount >= 2)) { // String will need backshifting
           UnicodeHelper::WriteCodePoint(write, U' ');
           break;
-        } else { // Single whitespace can be skipped
+        } else { // Character after single whitespace (which we'll just skip over)
           write = read; // write pointer tracks last non-whitespace
           successiveWhitespaceCount = 0;
         }
@@ -117,9 +114,9 @@ namespace {
     {
       std::size_t successiveWhitespaceCount = 0;
       char32_t whitespaceCodePoint = codePoint;
-      while(read < end) {
+      while(likely(read < end)) {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        if(codePoint == char32_t(-1)) {
+        if(unlikely(codePoint == char32_t(-1))) {
           throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
         }
 
@@ -127,9 +124,9 @@ namespace {
           whitespaceCodePoint = codePoint;
           ++successiveWhitespaceCount;
         } else {
-          if(successiveWhitespaceCount >= 2) { // Normalize multiple whitespaces into one
+          if(unlikely(successiveWhitespaceCount >= 2)) { // Normalize multiple whitespaces into one
             UnicodeHelper::WriteCodePoint(write, U' ');
-          } else if(successiveWhitespaceCount == 1) { // Pass through single whitespace
+          } else if(unlikely(successiveWhitespaceCount == 1)) { // Pass through single whitespace
             UnicodeHelper::WriteCodePoint(write, whitespaceCodePoint);
           }
           UnicodeHelper::WriteCodePoint(write, codePoint);
@@ -164,8 +161,8 @@ namespace {
 
     std::size_t successiveWhitespaceCount = 0;
     for(;;) {
-      if(read >= end) {
-        if(successiveWhitespaceCount >= 2) {
+      if(unlikely(read >= end)) {
+        if(unlikely(successiveWhitespaceCount >= 2)) {
           UnicodeHelper::WriteCodePoint(write, U' ');
           targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
         } // Otherwise, even if final character was single whitespace, string is fine.
@@ -174,13 +171,13 @@ namespace {
       }
 
       codePoint = UnicodeHelper::ReadCodePoint(read, end);
-      if(codePoint == char32_t(-1)) {
+      if(unlikely(codePoint == char32_t(-1))) {
         throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
       }
 
       if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
         ++successiveWhitespaceCount;
-      } else if(successiveWhitespaceCount >= 2) {
+      } else if(unlikely(successiveWhitespaceCount >= 2)) {
         UnicodeHelper::WriteCodePoint(write, U' ');
         break; // From here on out, we need to backshift the string
       } else {
@@ -199,9 +196,9 @@ namespace {
     {
       std::size_t successiveWhitespaceCount = 0;
       char32_t whitespaceCodePoint = codePoint;
-      while(read < end) {
+      while(likely(read < end)) {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        if(codePoint == char32_t(-1)) {
+        if(unlikely(codePoint == char32_t(-1))) {
           throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
         }
 
@@ -209,9 +206,9 @@ namespace {
           whitespaceCodePoint = codePoint;
           ++successiveWhitespaceCount;
         } else {
-          if(successiveWhitespaceCount >= 2) { // Normalize multiple whitespaces into one
+          if(unlikely(successiveWhitespaceCount >= 2)) { // Normalize multiple whitespaces
             UnicodeHelper::WriteCodePoint(write, U' ');
-          } else if(successiveWhitespaceCount == 1) { // Pass through single whitespace
+          } else if(unlikely(successiveWhitespaceCount == 1)) { // Pass through single whitespace
             UnicodeHelper::WriteCodePoint(write, whitespaceCodePoint);
           }
           UnicodeHelper::WriteCodePoint(write, codePoint);
@@ -219,9 +216,9 @@ namespace {
         }
       } // while read characters remain
 
-      if(successiveWhitespaceCount >= 2) { // Normalize multiple whitespaces into one
+      if(unlikely(successiveWhitespaceCount >= 2)) { // Normalize multiple whitespaces into one
         UnicodeHelper::WriteCodePoint(write, U' ');
-      } else if(successiveWhitespaceCount == 1) { // Pass through single whitespace
+      } else if(unlikely(successiveWhitespaceCount == 1)) { // Pass through single whitespace
         UnicodeHelper::WriteCodePoint(write, whitespaceCodePoint);
       }
 
@@ -256,6 +253,9 @@ namespace {
     char32_t firstCodePointOfVictim = UnicodeHelper::ReadCodePoint(
       victimFromSecondCodePoint, victimEnd
     );
+    if(unlikely(firstCodePointOfVictim == char32_t(-1))) {
+      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+    }
 
     // CHECK: Should we optimize this to stop comparison when master < substring?
     //   If there aren't enough characters left to fit the substring even once,
@@ -267,23 +267,32 @@ namespace {
     CharType *read = reinterpret_cast<CharType *>(targetString.data());
     CharType *write = read;
     const CharType *end = read + targetString.length();
-    while(read < end) {
+    while(likely(read < end)) {
       char32_t currentCodePoint = UnicodeHelper::ReadCodePoint(read, end);
+      if(unlikely(currentCodePoint == char32_t(-1))) {
+        throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+      }
 
       // Once we encounter a character that matches the first character of the substring,
       // start comparing the rest of the substring to see if we have a match.
-      if(currentCodePoint == firstCodePointOfVictim) {
+      if(unlikely(currentCodePoint == firstCodePointOfVictim)) {
         CharType *readForComparison = read;
         const CharType *victimCurrent = victimFromSecondCodePoint;
-        while(victimCurrent < victimEnd) {
+        while(likely(victimCurrent < victimEnd)) {
           if(readForComparison >= end) {
             break; // master string ended before full substring was compared
           }
 
           char32_t masterCodePoint = UnicodeHelper::ReadCodePoint(readForComparison, end);
+          if(unlikely(masterCodePoint == char32_t(-1))) {
+            throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+          }
           char32_t victimCodePoint = UnicodeHelper::ReadCodePoint(
             victimCurrent, victimEnd
           );
+          if(unlikely(victimCodePoint == char32_t(-1))) {
+            throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+          }
           if(masterCodePoint != victimCodePoint) {
             break; // we found a difference, it doesn't match the full substring
           }
