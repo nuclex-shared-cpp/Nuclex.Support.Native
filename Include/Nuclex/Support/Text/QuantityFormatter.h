@@ -41,7 +41,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   Whether to output KiB, GiB and TiB, each being 1024 of the next lower unit rather
     ///   than decimal SI units with KB, GB and TB being 1000 of the next lower unit each.
     /// </param>
-    public: NUCLEX_SUPPORT_API static std::string stringFromByteCount(
+    public: NUCLEX_SUPPORT_API static std::string StringFromByteCount(
       std::uint64_t byteCount, bool useBinaryMagnitudes = true
     );
 
@@ -56,7 +56,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   This is a simple helper with no localization. While the strings generated
     ///   should be universally, they will use English terms for the units.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static std::string stringFromDuration(
+    public: NUCLEX_SUPPORT_API static std::string StringFromDuration(
       std::chrono::seconds duration, bool useSimpleFormat = true
     );
 

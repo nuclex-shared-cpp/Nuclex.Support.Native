@@ -60,7 +60,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string QuantityFormatter::stringFromByteCount(
+  std::string QuantityFormatter::StringFromByteCount(
     std::uint64_t byteCount, bool useBinaryMagnitudes /* = true */
   ) {
     std::string result;
@@ -154,7 +154,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string QuantityFormatter::stringFromDuration(
+  std::string QuantityFormatter::StringFromDuration(
     std::chrono::seconds duration, bool useSimpleFormat /* = true */
   ) {
     std::string result;
