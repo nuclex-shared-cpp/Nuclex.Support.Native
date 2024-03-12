@@ -53,6 +53,17 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StringHelperTest, WholeStringCanMatchSubstring) {
+    std::string test(u8"Test", 4);
+    std::string expected(u8"", 0);
+
+    StringHelper::EraseSubstrings(test, u8"Test");
+
+    ASSERT_STREQ(test.c_str(), expected.c_str());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(StringHelperTest, DuplicateWhitespaceCanBeCollapsedWithoutTrim) {
     std::string test(u8" This  is   an example  ", 24);
     std::string expected(u8" This is an example ", 20);

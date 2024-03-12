@@ -4,7 +4,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Generate (CMake)",
+      "label": "Generate",
       "group": {
         "kind": "build",
         "isDefault": true
@@ -13,7 +13,8 @@
       "command": "cmake",
       "args": [
         "-B", "obj/cmake-Debug",
-        "-DCMAKE_BUILD_TYPE=Debug"
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DBUILD_UNIT_TESTS=ON"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
@@ -21,8 +22,8 @@
       "problemMatcher": "$gcc"
     },
     {
-      "label": "Build (CMake)",
-      "dependsOn": [ "Generate (CMake)" ],
+      "label": "Build",
+      "dependsOn": [ "Generate" ],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -40,8 +41,8 @@
       "problemMatcher": "$gcc"
     },
     {
-      "label": "Install (CMake)",
-      "dependsOn": [ "Build (CMake)" ],
+      "label": "Install",
+      "dependsOn": [ "Build" ],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -58,8 +59,8 @@
       "problemMatcher": "$gcc"
     },
     {
-      "label": "Run Tests (CMake)",
-      "dependsOn": [ "Install (CMake)" ],
+      "label": "Run Tests",
+      "dependsOn": [ "Install" ],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -73,8 +74,8 @@
       "problemMatcher": "$gcc"
     },
     {
-      "label": "Run Benchmarks (CMake)",
-      "dependsOn": [ "Install (CMake)" ],
+      "label": "Run Benchmarks",
+      "dependsOn": [ "Install" ],
       "group": {
         "kind": "build",
         "isDefault": true

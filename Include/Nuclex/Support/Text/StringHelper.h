@@ -35,6 +35,12 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <summary>Removes any whitespace characters that follow other whitespace</summary>
     /// <param name="utf8String">String in which duplicate whitespace will be collapsed</param>
     /// <param name="alsoTrim">Whether to also remove leading and trailing whitespace</param>
+    /// <remarks>
+    ///   This method considers all whitespace characters defined by unicode. It will leave
+    ///   single whitespace characters intact, but consecutive whitespace characters will
+    ///   be replaced with a single ascii whitespace. A string consisting of only whitspace
+    ///   will result either in a single whitespace remaining or nothing if trim is enabled.
+    /// </remarks>
     public: NUCLEX_SUPPORT_API static void CollapseDuplicateWhitespace(
       std::string &utf8String, bool alsoTrim = true
     );
@@ -42,6 +48,12 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <summary>Removes any whitespace characters that follow other whitespace</summary>
     /// <param name="utf8String">String in which duplicate whitespace will be collapsed</param>
     /// <param name="alsoTrim">Whether to also remove leading and trailing whitespace</param>
+    /// <remarks>
+    ///   This method considers all whitespace characters defined by unicode. It will leave
+    ///   single whitespace characters intact, but consecutive whitespace characters will
+    ///   be replaced with a single ascii whitespace. A string consisting of only whitspace
+    ///   will result either in a single whitespace remaining or nothing if trim is enabled.
+    /// </remarks>
     public: NUCLEX_SUPPORT_API static void CollapseDuplicateWhitespace(
       std::wstring &wideString, bool alsoTrim = true
     );
