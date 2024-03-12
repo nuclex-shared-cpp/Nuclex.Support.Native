@@ -4,13 +4,13 @@ Nuclex.Support.Native
 This library aims to be your trusty toolbox of supporting code for
 problems that come up in any type of project. It consists of carefully
 chosen and well-designed pieces that aid you in dealing with UTF-8
-strings, settings storage, threading, signalling and service management.
+strings, signalling, synchronizing threads, storing settings and more.
 
 There are unit tests for the whole library, so everything is verifiably
 working on all platforms tested (Linux, Windows, Raspberry).
 
 **Text**
-* Iterate over, read and write UTF-8 and UTF-16
+* Iterate over, read and write UTF-8, UTF-16 and UTF-32
 * Case-insensitive UTF-8 string comparison
 * UTF-8 wildcard matching
 * Locale-independent string/number conversion
@@ -28,7 +28,8 @@ working on all platforms tested (Linux, Windows, Raspberry).
 
 **Helpers**
 * A modern ScopeGuard plus a transactional variant
-* Fast and lightweight signal/slot implementation
+* Fast and lightweight signal/slot implementation for single threads
+* Fast and efficient signal/slot implementation for multiple threads
 * Lean dependency injector with automatic constructor detection
 * Scoped temporary file and directory classes
 
@@ -224,6 +225,21 @@ You can find some benchmarks on my blog:
 I'm naming these *events* rather than *signals* because the term *signal*
 is taken by `std::signal` for something entirely different and and least
 in Microsoft land, the term *event* is pretty common for this concept.
+
+For usage in multi-threaded scenarios, the `ConcurrentEvent` class supports
+subscription and unsubscription as well as signalling in any arbitrary thread
+constellation calling into it.
+
+```cpp
+void test() {
+  std::cout << "You called?" << std::endl;
+}
+int main() {
+  Nuclex::Support::Events::ConcurrentEvent<void()> event;
+  event.Subscribe<test>();
+  event();
+}
+```
 
 
 Dependency Injector
