@@ -30,15 +30,15 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(ParserHelperTest, CanDetectSingleSingleByteWhitespace) {
-    EXPECT_TRUE(ParserHelper::IsWhitespace(std::uint8_t(' ')));
-    EXPECT_TRUE(ParserHelper::IsWhitespace(std::uint8_t('\t')));
-    EXPECT_TRUE(ParserHelper::IsWhitespace(std::uint8_t('\r')));
-    EXPECT_TRUE(ParserHelper::IsWhitespace(std::uint8_t('\n')));
+    EXPECT_TRUE(ParserHelper::IsWhitespace(char(' ')));
+    EXPECT_TRUE(ParserHelper::IsWhitespace(char('\t')));
+    EXPECT_TRUE(ParserHelper::IsWhitespace(char('\r')));
+    EXPECT_TRUE(ParserHelper::IsWhitespace(char('\n')));
 
-    EXPECT_FALSE(ParserHelper::IsWhitespace(std::uint8_t('a')));
-    EXPECT_FALSE(ParserHelper::IsWhitespace(std::uint8_t('?')));
-    EXPECT_FALSE(ParserHelper::IsWhitespace(std::uint8_t('\'')));
-    EXPECT_FALSE(ParserHelper::IsWhitespace(std::uint8_t(0)));
+    EXPECT_FALSE(ParserHelper::IsWhitespace(char('a')));
+    EXPECT_FALSE(ParserHelper::IsWhitespace(char('?')));
+    EXPECT_FALSE(ParserHelper::IsWhitespace(char('\'')));
+    EXPECT_FALSE(ParserHelper::IsWhitespace(char(0)));
   }
 
   // ------------------------------------------------------------------------------------------- //

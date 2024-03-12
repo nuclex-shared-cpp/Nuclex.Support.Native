@@ -141,7 +141,9 @@ namespace Nuclex { namespace Support { namespace Settings {
             parseMalformedLine();
           } else {
             if(this->parsePosition > this->lineStart) {
-              previousWasSpace = Text::ParserHelper::IsWhitespace(*(this->parsePosition - 1));
+              previousWasSpace = Text::ParserHelper::IsWhitespace(
+                static_cast<char>(*(this->parsePosition - 1))
+              );
             }
             if(previousWasSpace) {
               ++this->paddedAssignments;
@@ -178,7 +180,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         // Other character, parse as section name, property name or property value
         default: {
           previousWasCR = (current == '\r');
-          previousWasSpace = Text::ParserHelper::IsWhitespace(std::uint8_t(current));
+          previousWasSpace = Text::ParserHelper::IsWhitespace(static_cast<char>(current));
           encounteredNonBlankCharacter |= (!previousWasSpace);
 
           if(previousWasSpace) {
@@ -308,7 +310,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
           // Other characters without special meaning
           default: {
-            if(!Text::ParserHelper::IsWhitespace(std::uint8_t(current))) {
+            if(!Text::ParserHelper::IsWhitespace(static_cast<char>(current))) {
               if(quoteEncountered) { // Characters after quote? -> line is malformed
                 parseMalformedLine();
                 return;
@@ -387,7 +389,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
           // Other characters without special meaning
           default: {
-            if(!Text::ParserHelper::IsWhitespace(std::uint8_t(current))) {
+            if(!Text::ParserHelper::IsWhitespace(static_cast<char>(current))) {
               if(quoteEncountered) { // Characters after quote? -> line is malformed
                 parseMalformedLine();
                 return;

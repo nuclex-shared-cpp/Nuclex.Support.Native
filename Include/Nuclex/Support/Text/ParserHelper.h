@@ -63,8 +63,8 @@ namespace Nuclex { namespace Support { namespace Text {
 #endif
 
     /// <summary>Checks whether the specified character is a whitespace</summary>
-    /// <param name="utf8Byte">
-    ///   UTF-8 byte or single-byte character that will be checked for being a whitespace
+    /// <param name="asciiCharacter">
+    ///   Single-byte ASCII character that will be checked for being a whitespace
     /// </param>
     /// <returns>True if the character was a whitespace, false otherwise</returns>
     /// <remarks>
@@ -75,7 +75,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   than parsing data from the web or another application.
     /// </remarks>
     public: NUCLEX_SUPPORT_API static constexpr bool IsWhitespace(
-      Char8Type utf8Character
+      char asciiCharacter
     );
 
     /// <summary>Checks whether the specified character is a whitespace</summary>
@@ -123,20 +123,20 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline constexpr bool ParserHelper::IsWhitespace(Char8Type utf8Character) {
+  inline constexpr bool ParserHelper::IsWhitespace(char asciiCharacter) {
     return (
       (
-        (utf8Character >= std::uint8_t(0x09)) && // (see below)
-        (utf8Character < std::uint8_t(0x0e))
+        (asciiCharacter >= char(0x09)) && // (see below)
+        (asciiCharacter < char(0x0e))
       ) ||
-      (utf8Character == std::uint8_t(0x20)) // space
+      (asciiCharacter == char(0x20)) // space
     );
     // Covered via range:
-    // (utf8Character == std::uint8_t(0x09)) || // tab
-    // (utf8Character == std::uint8_t(0x0a)) || // line feed
-    // (utf8Character == std::uint8_t(0x0b)) || // line tabulation
-    // (utf8Character == std::uint8_t(0x0c)) || // form feed
-    // (utf8Character == std::uint8_t(0x0d)) || // carriage return
+    // (utf8Character == char(0x09)) || // tab
+    // (utf8Character == char(0x0a)) || // line feed
+    // (utf8Character == char(0x0b)) || // line tabulation
+    // (utf8Character == char(0x0c)) || // form feed
+    // (utf8Character == char(0x0d)) || // carriage return
   }
 
   // ------------------------------------------------------------------------------------------- //
