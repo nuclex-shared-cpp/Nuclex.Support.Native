@@ -123,13 +123,12 @@ namespace {
 
   std::wstring wideFromUtf8AndUseBackwardSlashes(const std::string &utf8String) {
     using Nuclex::Support::Text::UnicodeHelper;
+    typedef UnicodeHelper::Char8Type Char8Type;
 
     std::wstring result;
     {
-      const UnicodeHelper::char8_t *read = (
-        reinterpret_cast<const UnicodeHelper::char8_t *>(utf8String.c_str())
-      );
-      const UnicodeHelper::char8_t *readEnd = read + utf8String.length();
+      const Char8Type *read = reinterpret_cast<const Char8Type *>(utf8String.c_str());
+      const Char8Type *readEnd = read + utf8String.length();
 
       // Let's assume 1 UTF-8 characters maps to 1 UTF-16 character. For ASCII strings,
       // this will be an exact fit, for asian languages, it's probably twice what we need.
@@ -144,9 +143,9 @@ namespace {
         while(read < readEnd) {
           char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
           if(unlikely(codePoint == U'/')) {
-            UnicodeHelper::WriteCodePoint(U'\\', write);
+            UnicodeHelper::WriteCodePoint(write, U'\\');
           } else {
-            UnicodeHelper::WriteCodePoint(codePoint, write);
+            UnicodeHelper::WriteCodePoint(write, codePoint);
           }
         }
 

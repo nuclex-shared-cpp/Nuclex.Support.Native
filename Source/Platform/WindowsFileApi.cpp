@@ -92,11 +92,12 @@ namespace {
     // of 2 usually (depending on the standard library implementation)
     {
       using Nuclex::Support::Text::UnicodeHelper;
+      typedef UnicodeHelper::Char8Type Char8Type;
 
-      const UnicodeHelper::char8_t *current = reinterpret_cast<const UnicodeHelper::char8_t *>(
+      const Char8Type *current = reinterpret_cast<const Char8Type *>(
         utf8Path.c_str()
       );
-      const UnicodeHelper::char8_t *end = current + utf8Path.length();
+      const Char8Type *end = current + utf8Path.length();
 
       utf16Path.resize(utf8Path.length() + 4);
 
@@ -104,7 +105,7 @@ namespace {
       while(current < end) {
         char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
         requireValidCodePoint(codePoint);
-        UnicodeHelper::WriteCodePoint(codePoint, write);
+        UnicodeHelper::WriteCodePoint(write, codePoint);
       }
 
       utf16Path.resize(write - reinterpret_cast<char16_t *>(utf16Path.data()));

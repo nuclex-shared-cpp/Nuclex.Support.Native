@@ -157,9 +157,9 @@ namespace {
     CharType *write = read; // 'write' tracks the shift target position
     const CharType *end = read + targetString.length();
 
+    std::size_t successiveWhitespaceCount = 0;
     char32_t codePoint;
 
-    std::size_t successiveWhitespaceCount = 0;
     for(;;) {
       if(unlikely(read >= end)) {
         if(unlikely(successiveWhitespaceCount >= 2)) {
@@ -179,6 +179,7 @@ namespace {
         ++successiveWhitespaceCount;
       } else if(unlikely(successiveWhitespaceCount >= 2)) {
         UnicodeHelper::WriteCodePoint(write, U' ');
+        successiveWhitespaceCount = 0;
         break; // From here on out, we need to backshift the string
       } else {
         write = read; // Write pointer keeps tracking last non-whitespace character
@@ -194,7 +195,6 @@ namespace {
 
     // Backshifting loop
     {
-      std::size_t successiveWhitespaceCount = 0;
       char32_t whitespaceCodePoint = codePoint;
       while(likely(read < end)) {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
