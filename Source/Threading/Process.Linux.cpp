@@ -36,6 +36,7 @@ License along with this library
 #include <cstring> // for ::strsignal()
 
 #include <sys/wait.h> // for ::waitpid()
+#include <sys/ioctl.h> // for ::ioctl()
 #include <unistd.h> // for ::fork()
 #include <signal.h> // for ::sigemptyset(), sigaddset(), etc.
 
@@ -623,7 +624,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       return; // Should we throw an exception here?
     }
 
-    const ::size_t BatchSize = 16384;
+    const ::size_t BatchSize = 65536; // default pipe buffer size in Linux
     this->buffer.resize(BatchSize);
 
     int fileNumbers[] = { impl.StdoutFileNumber, impl.StderrFileNumber };
@@ -631,22 +632,45 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       for(;;) {
 
+        // Try to figure out the amount of data waiting in the pipe's input buffer
+        int waitingByteCount = 0;
+        {
+          int result = ::ioctl(fileNumbers[pipeIndex], FIONREAD, &waitingByteCount);
+          if(unlikely(result == -1)) {
+            int errorNumber = errno;
+            if(errorNumber == EINTR) {
+              continue; // A signal interrupted us, just try again
+            } else if(pipeIndex == 0) {
+              Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+                u8"Failed to query number of bytes waiting in process' stdout", errorNumber
+              );
+            } else {
+              Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+                u8"Failed to query number of bytes waiting in process' stderr", errorNumber
+              );
+            }
+          }
+        }
+
         // Try to read data up to our buffer size from the pipe
-        ::ssize_t readByteCount = ::read(fileNumbers[pipeIndex], this->buffer.data(), BatchSize);
-        if(readByteCount == -1) {
-          int errorNumber = errno;
-          if(errorNumber == EINTR) {
-            continue; // A signal interrupted us, just try again
-          } else if(errorNumber == EAGAIN) {
-            break; // There was no data waiting in the pipe
-          } else if(pipeIndex == 0) {
-            Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-              u8"Failed to read pipe buffer for stdout", errorNumber
-            );
-          } else {
-            Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-              u8"Failed to read pipe buffer for stderr", errorNumber
-            );
+        ::ssize_t readByteCount = 0;
+        if(waitingByteCount >= 1) {
+          readByteCount = ::read(fileNumbers[pipeIndex], this->buffer.data(), BatchSize);
+          if(unlikely(readByteCount == -1)) {
+            int errorNumber = errno;
+            if(errorNumber == EINTR) {
+              continue; // A signal interrupted us, just try again
+            } else if(errorNumber == EAGAIN) {
+              break; // There was no data waiting in the pipe
+            } else if(pipeIndex == 0) {
+              Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+                u8"Failed to read pipe buffer for stdout", errorNumber
+              );
+            } else {
+              Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+                u8"Failed to read pipe buffer for stderr", errorNumber
+              );
+            }
           }
         }
 
