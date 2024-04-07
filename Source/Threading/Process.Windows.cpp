@@ -476,7 +476,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     // Close the parent process ends of the stdin, stdout and stderr pipes
-    {
+    if(this->interceptStdErr) {
       BOOL result = ::CloseHandle(impl.StderrHandle);
       if(result == FALSE) {
         DWORD lastErrorCode = ::GetLastError();
@@ -485,7 +485,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         );
       }
     }
-    {
+    if(this->interceptStdOut) {
       BOOL result = ::CloseHandle(impl.StdoutHandle);
       if(result == FALSE) {
         DWORD lastErrorCode = ::GetLastError();
@@ -519,6 +519,12 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     HANDLE handles[] = { impl.StdoutHandle, impl.StderrHandle };
     for(std::size_t pipeIndex = 0; pipeIndex < 2; ++pipeIndex) {
+      if(!this->interceptStdOut && (pipeIndex == 0)) {
+        continue;
+      }
+      if(!this->interceptStdErr && (pipeIndex == 1)) {
+        continue;
+      }
 
       // Check how many bytes are available from the pipe. We need to do this before calling
       // ReadFile() because ReadFile() would block if there are no bytes available.
