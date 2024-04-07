@@ -227,9 +227,10 @@ namespace Nuclex { namespace Support { namespace Threading {
     );
 
     /// <summary>Fetches data from the stdout and stderr streams</summary>
+    /// <returns>True if data was pulled from either stdout or stderr</returns>
     /// <remarks>
     ///   <para>
-    ///     All console output of the external process is redirected into pipes. These pipes
+    ///     If console output of the external process is redirected into pipes, these pipes
     ///     have a limited buffer. Once the buffer is full, the external process will block
     ///     until the pipe's buffer has been emptied.
     ///   </para>
@@ -243,8 +244,14 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///     buffers adequately, but if you just let the instance linger in the background,
     ///     be sure to have some mechanism that calls PumpOutputStreams() regularly.
     ///   </para>
+    ///   <para>
+    ///     The <see cref="StdOut" /> and <see cref="StdErr" /> events will be synchronously
+    ///     invoked from the thread calling this method. You can use the return value to decide
+    ///     whether to immediately check for more data or whether to pause for a few milliseconds
+    ///     to give the CPU idle cycles when there's no output being generated.
+    ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API void PumpOutputStreams() const;
+    public: NUCLEX_SUPPORT_API bool PumpOutputStreams() const;
 
     // Useful? I'd like to keep this class tight and focused rather then turning
     // it into a general-purpose grabbag for all your child process needs.

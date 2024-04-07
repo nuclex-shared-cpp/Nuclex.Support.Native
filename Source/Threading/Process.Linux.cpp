@@ -500,7 +500,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         // Pump the stdout and stderr pipes first. If the process ended before Wait() was
         // called, this may be the only chance to obtain its output before ::waitpid() reaps
         // the zombie process (sending the pipe buffers to the afterlife).
-        PumpOutputStreams();
+        bool wasOutputGenerated = PumpOutputStreams();
 
         // Check if the child process our caller is interested in has already exited
         {
@@ -534,7 +534,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
         // Wait until SIGCHLD is signaled. This indicates that /some/ child process
         // has terminated and it may be the one we're waiting for.
-        {
+        if(!wasOutputGenerated) {
           int result = ::sigtimedwait(&sigChild.GetSignalSet(), nullptr, &waitTime);
           if(unlikely(result == -1)) {
             int errorNumber = errno;
@@ -654,11 +654,13 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void Process::PumpOutputStreams() const {
+  bool Process::PumpOutputStreams() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
-      return; // Should we throw an exception here?
+      return false; // Should we throw an exception here?
     }
+
+    bool wasOutputGenerated = false;
 
     const ::size_t BatchSize = 65536; // default pipe buffer size in Linux
     this->buffer.resize(BatchSize);
@@ -718,6 +720,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
         // If we got any data, deliver it to any possible subscribers.
         if(readByteCount > 0) {
+          wasOutputGenerated = true;
+
           if(pipeIndex == 0) {
             this->StdOut.Emit(this->buffer.data(), readByteCount);
           } else {
@@ -736,6 +740,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       } // for(;;)
 
     } // for(pipeIndex)
+
+    return wasOutputGenerated;
   }
 
   // ------------------------------------------------------------------------------------------- //
