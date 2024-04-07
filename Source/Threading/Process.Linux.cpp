@@ -183,7 +183,7 @@ namespace {
       if(result == -1) {
         int errorNumber = errno;
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
-          u8"Could change working directory", errorNumber
+          u8"Could not change working directory", errorNumber
         );
       }
     }
