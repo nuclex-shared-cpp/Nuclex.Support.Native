@@ -95,6 +95,16 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <param name="executablePath">
     ///   Executable that should be run, optionally including its path
     /// </param>
+    /// <param name="interceptStdErr">
+    ///   Whether to intercept the child process' stderr. Setting this to false will render
+    ///   the StdErr event inoperable and cause all stderr output to land in the calling
+    ///   parent process' stderr.
+    /// </param>
+    /// <param name="interceptStdOut">
+    ///   Whether to intercept the child process' stdout. Setting this to false will render
+    ///   the StdOut event inoperable and cause all stdout output to land in the calling
+    ///   parent process' stdout.
+    /// </param>
     /// <remarks>
     ///   <para>
     ///     If the specified executable name doesn't contain a path (or is specified with
@@ -112,7 +122,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///     application, specifying the full path is the fastest and safest approach.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API Process(const std::string &executablePath);
+    public: NUCLEX_SUPPORT_API Process(
+      const std::string &executablePath,
+      bool interceptStdErr = true,
+      bool interceptStdOut = true
+    );
     /// <summary>Kills the external process and waits until it is gone</summary>
     public: NUCLEX_SUPPORT_API ~Process();
 
@@ -137,9 +151,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </summary>
     /// <param name="arguments">Arguments that will be passed to the external process</param>
     /// <param name="prependExecutableName">
-    ///   By convention, the first argument passed is normally the name of the executable
-    ///   itself. Leaving this set to 'true' will automatically prepend the executable name
-    ///   to the argument list.
+    ///   Whether to make the first argument the path to the executable. Most applications
+    ///   expect this and some even require it (like Linux' busybox, which decides to act as
+    ///   different programs depending on the name it's invoked through).
     /// </param>
     /// <remarks>
     ///   There's a major difference to how arguments are passed to a process between Linux
@@ -246,6 +260,10 @@ namespace Nuclex { namespace Support { namespace Threading {
     private: std::string workingDirectory;
     /// <summary>Pipe buffer (uses round-robin to flush stdout and stderr)</summary>
     private: mutable std::vector<char> buffer;
+    /// <summary>Whether the stdout of the child process is intercepted</summary>
+    private: bool interceptStdOut;
+    /// <summary>Whether the stderr of the child process is intercepted</summary>
+    private: bool interceptStdErr;
 
     /// <summary>Structure to hold platform dependent process and file handles</summary>
     private: struct PlatformDependentImplementationData;

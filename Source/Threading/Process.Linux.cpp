@@ -34,6 +34,7 @@ License along with this library
 
 #include <exception> // for std::terminate()
 #include <cstring> // for ::strsignal()
+#include <optional> // for std::optional
 
 #include <sys/wait.h> // for ::waitpid()
 #include <sys/ioctl.h> // for ::ioctl()
@@ -250,8 +251,16 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  Process::Process(const std::string &executablePath) :
+  Process::Process(
+    const std::string &executablePath,
+    bool interceptStdErr /* = true */,
+    bool interceptStdOut /* = true */
+  ) :
     executablePath(executablePath),
+    workingDirectory(),
+    buffer(),
+    interceptStdOut(interceptStdOut),
+    interceptStdErr(interceptStdErr),
     implementationData(nullptr) {
 
     // If this assert hits, the buffer size assumed by the header was too small.
@@ -330,7 +339,14 @@ namespace Nuclex { namespace Support { namespace Threading {
       );
     }
 
-    Pipe stdinPipe, stdoutPipe, stderrPipe;
+    Pipe stdinPipe;
+    std::optional<Pipe> stdoutPipe, stderrPipe;
+    if(interceptStdOut) {
+      stdoutPipe.emplace();
+    }
+    if(interceptStdErr) {
+      stderrPipe.emplace();
+    }
 
     // Calling fork() will clone the current process' main thread (no other threads).
     // The original process will have the process id of the child process in the return
@@ -348,36 +364,56 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // Close the unwanted ends of each pipe
       stdinPipe.CloseOneEnd(0);
-      stdoutPipe.CloseOneEnd(1);
-      stderrPipe.CloseOneEnd(1);
+      if(interceptStdOut) {
+        stdoutPipe.value().CloseOneEnd(1);
+      }
+      if(interceptStdErr) {
+        stderrPipe.value().CloseOneEnd(1);
+      }
 
       stdinPipe.SetEndNonBlocking(1); // Don't block when writing to stdin either
-      stdoutPipe.SetEndNonBlocking(0);
-      stderrPipe.SetEndNonBlocking(0);
+      if(interceptStdOut) {
+        stdoutPipe.value().SetEndNonBlocking(0);
+      }
+      if(interceptStdErr) {
+        stderrPipe.value().SetEndNonBlocking(0);
+      }
 
       // And take hold of the wanted ends of each pipe
       PlatformDependentImplementationData &impl = getImplementationData();
       impl.ChildProcessId = childOrZeroPid;
       impl.StdinFileNumber = stdinPipe.ReleaseOneEnd(1);
-      impl.StdoutFileNumber = stdoutPipe.ReleaseOneEnd(0);
-      impl.StderrFileNumber = stderrPipe.ReleaseOneEnd(0);
+      if(interceptStdOut) {
+        impl.StdoutFileNumber = stdoutPipe.value().ReleaseOneEnd(0);
+      }
+      if(interceptStdErr) {
+        impl.StderrFileNumber = stderrPipe.value().ReleaseOneEnd(0);
+      }
 
     } else { // No we're the child process
 
       // Close the unwanted ends of each pipe (these are the opposite ends from
       // the ones the parent process closes)
       stdinPipe.CloseOneEnd(1);
-      stdoutPipe.CloseOneEnd(0);
-      stderrPipe.CloseOneEnd(0);
+      if(interceptStdOut) {
+        stdoutPipe.value().CloseOneEnd(0);
+      }
+      if(interceptStdErr) {
+        stderrPipe.value().CloseOneEnd(0);
+      }
 
       // Remap stdin, stdout and stderr to the pipes (by duplicating each file),
       // then close the original files, too, since the duplicates are enough.
       replaceStandardFile(u8"stdin", STDIN_FILENO, stdinPipe.GetOneEnd(0));
       stdinPipe.CloseOneEnd(0);
-      replaceStandardFile(u8"stdout", STDOUT_FILENO, stdoutPipe.GetOneEnd(1));
-      stdoutPipe.CloseOneEnd(1);
-      replaceStandardFile(u8"stderr", STDERR_FILENO, stderrPipe.GetOneEnd(1));
-      stderrPipe.CloseOneEnd(1);
+      if(interceptStdOut) {
+        replaceStandardFile(u8"stdout", STDOUT_FILENO, stdoutPipe.value().GetOneEnd(1));
+        stdoutPipe.value().CloseOneEnd(1);
+      }
+      if(interceptStdErr) {
+        replaceStandardFile(u8"stderr", STDERR_FILENO, stderrPipe.value().GetOneEnd(1));
+        stderrPipe.value().CloseOneEnd(1);
+      }
 
       // Load a new executable image, completely replacing this (child) process.
       executeChildProcess(
@@ -540,13 +576,13 @@ namespace Nuclex { namespace Support { namespace Threading {
     impl.Finished = false;
 
     // Close the parent process ends of the stdin, stdout and stderr pipes
-    if(impl.StderrFileNumber != -1) {
+    if(this->interceptStdErr && impl.StderrFileNumber != -1) {
       int result = ::close(impl.StderrFileNumber);
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result == 0) && u8"Pipe forwarding stderr could be closed");
       impl.StderrFileNumber = -1;
     }
-    if(impl.StdoutFileNumber != -1) {
+    if(this->interceptStdOut && impl.StdoutFileNumber != -1) {
       int result = ::close(impl.StdoutFileNumber);
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result == 0) && u8"Pipe forwarding stdout could be closed");
@@ -629,6 +665,12 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     int fileNumbers[] = { impl.StdoutFileNumber, impl.StderrFileNumber };
     for(std::size_t pipeIndex = 0; pipeIndex < 2; ++pipeIndex) {
+      if((pipeIndex == 0) && (!this->interceptStdOut)) {
+        continue;
+      }
+      if((pipeIndex == 1) && (!this->interceptStdErr)) {
+        continue;
+      }
 
       for(;;) {
 
