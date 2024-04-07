@@ -4,6 +4,7 @@
     "files.exclude": {
         "*.vcxproj": true,
         "*.vcxproj.filters": true,
+        "*.vcxproj.user": true,
         "build.cmd": true,
         "build.sh": true,
         "build-clang15.sh": true,
