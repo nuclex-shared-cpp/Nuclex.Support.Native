@@ -182,7 +182,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     // cut these off so we have a single-line error message
     std::string::size_type length = utf8ErrorMessage.length();
     while(length > 0) {
-      if(!Text::ParserHelper::IsWhitespace(std::uint8_t(utf8ErrorMessage[length - 1]))) {
+      if(!Text::ParserHelper::IsWhitespace(char(utf8ErrorMessage[length - 1]))) {
         break;
       }
       --length;

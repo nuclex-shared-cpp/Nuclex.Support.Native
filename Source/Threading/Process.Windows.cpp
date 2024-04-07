@@ -32,6 +32,7 @@ License along with this library
 #include <exception> // for std::terminate()
 #include <cassert> // for assert()
 #include <algorithm> // for std::min()
+#include <optional> // for std::optional
 
 // https://docs.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
 
@@ -105,8 +106,16 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  Process::Process(const std::string &executablePath) :
+  Process::Process(
+    const std::string &executablePath,
+    bool interceptStdErr /* = true */,
+    bool interceptStdOut /* = true */
+  ) :
     executablePath(executablePath),
+    workingDirectory(),
+    buffer(),
+    interceptStdOut(interceptStdOut),
+    interceptStdErr(interceptStdErr),
     implementationData(nullptr) {
 
     // If this assert hits, the buffer size assumed by the header was too small.
@@ -182,19 +191,45 @@ namespace Nuclex { namespace Support { namespace Threading {
     Nuclex::Support::Platform::Pipe stdinPipe(pipeSecurityAttributes);
     stdinPipe.SetEndNonInheritable(1);
     stdinPipe.SetEndNonBlocking(1);
-    Nuclex::Support::Platform::Pipe stdoutPipe(pipeSecurityAttributes);
-    stdoutPipe.SetEndNonInheritable(0);
-    Nuclex::Support::Platform::Pipe stderrPipe(pipeSecurityAttributes);
-    stderrPipe.SetEndNonInheritable(0);
+
+    std::optional<Nuclex::Support::Platform::Pipe> stdoutPipe, stderrPipe;
+    if(this->interceptStdOut) {
+      stdoutPipe.emplace(pipeSecurityAttributes);
+      stdoutPipe.value().SetEndNonInheritable(0);
+    }
+    if(this->interceptStdErr) {
+      stderrPipe.emplace(pipeSecurityAttributes);
+      stderrPipe.value().SetEndNonInheritable(0);
+    }
 
     ::PROCESS_INFORMATION childProcessInfo = {0};
     {
-      STARTUPINFOW childProcessStartupSettings = {0};
+      ::STARTUPINFOW childProcessStartupSettings = {0};
       childProcessStartupSettings.cb = sizeof(childProcessStartupSettings);
       childProcessStartupSettings.dwFlags = STARTF_USESTDHANDLES;
       childProcessStartupSettings.hStdInput = stdinPipe.GetOneEnd(0);
-      childProcessStartupSettings.hStdOutput = stdoutPipe.GetOneEnd(1);
-      childProcessStartupSettings.hStdError = stderrPipe.GetOneEnd(1);
+      if(this->interceptStdOut) {
+        childProcessStartupSettings.hStdOutput = stdoutPipe.value().GetOneEnd(1);
+      } else {
+        childProcessStartupSettings.hStdOutput = ::GetStdHandle(STD_OUTPUT_HANDLE);
+        if(childProcessStartupSettings.hStdOutput == nullptr) {
+          DWORD lastErrorCode = ::GetLastError();
+          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not obtain the handle stdout via GetStdHandle()", lastErrorCode
+          );          
+        }
+      }
+      if(this->interceptStdErr) {
+        childProcessStartupSettings.hStdError = stderrPipe.value().GetOneEnd(1);
+      } else {
+        childProcessStartupSettings.hStdError = ::GetStdHandle(STD_OUTPUT_HANDLE);
+        if(childProcessStartupSettings.hStdError == nullptr) {
+          DWORD lastErrorCode = ::GetLastError();
+          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+            u8"Could not obtain the handle stderr via GetStdHandle()", lastErrorCode
+          );          
+        }
+      }
 
       // Launch the new process. We're using the UTF-16 version (and convert everything
       // from UTF-8 to UTF-16) to ensure we can deal with unicode paths and executable names.
@@ -256,8 +291,12 @@ namespace Nuclex { namespace Support { namespace Threading {
     // One end from each of the 3 pipes was inherited to the child process.
     // Here we close our copy of those ends as we're not going to be needing those.
     stdinPipe.CloseOneEnd(0);
-    stdoutPipe.CloseOneEnd(1);
-    stderrPipe.CloseOneEnd(1);
+    if(this->interceptStdOut) {
+      stdoutPipe.value().CloseOneEnd(1);
+    }
+    if(this->interceptStdErr) {
+      stderrPipe.value().CloseOneEnd(1);
+    }
 
     // We don't need the handle to the main thread, but have ownership,
     // so be a good citizen and close it.
@@ -282,8 +321,26 @@ namespace Nuclex { namespace Support { namespace Threading {
     // of the pipe ends (up until this point, the Pipe class would have destroyed them)
     impl.ChildProcessHandle = childProcessInfo.hProcess;
     impl.StdinHandle = stdinPipe.ReleaseOneEnd(1);
-    impl.StdoutHandle = stdoutPipe.ReleaseOneEnd(0);
-    impl.StderrHandle = stderrPipe.ReleaseOneEnd(0);
+    if(this->interceptStdOut) {
+      impl.StdoutHandle = stdoutPipe.value().ReleaseOneEnd(0);
+    } else {
+      impl.StdoutHandle = ::GetStdHandle(STD_OUTPUT_HANDLE);
+      if(impl.StdoutHandle == nullptr) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not obtain the handle stdout via GetStdHandle()", lastErrorCode
+        );          
+      }
+    }
+    if(this->interceptStdErr) {
+      impl.StderrHandle = stderrPipe.value().ReleaseOneEnd(0);
+      if(impl.StderrHandle == nullptr) {
+        DWORD lastErrorCode = ::GetLastError();
+        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          u8"Could not obtain the handle stderr via GetStdHandle()", lastErrorCode
+        );          
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -452,11 +509,13 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void Process::PumpOutputStreams() const {
+  bool Process::PumpOutputStreams() const {
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
-      return; // Should we throw an exception here?
+      return false; // Should we throw an exception here?
     }
+
+    bool wasOutputGenerated = false;
 
     HANDLE handles[] = { impl.StdoutHandle, impl.StderrHandle };
     for(std::size_t pipeIndex = 0; pipeIndex < 2; ++pipeIndex) {
@@ -487,6 +546,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       // If there are bytes available, read them into our reusable buffer and emit
       // the appropriate events to let this instance's owner process the output.
       if(availableByteCount > 0) {
+        wasOutputGenerated = true;
+
         const DWORD BatchSize = 16384;
 
         this->buffer.resize(std::min(availableByteCount, BatchSize));
@@ -529,6 +590,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       }
 
     } // for(pipeIndex)
+
+    return wasOutputGenerated;
   }
 
   // ------------------------------------------------------------------------------------------- //

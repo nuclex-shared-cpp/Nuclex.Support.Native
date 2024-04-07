@@ -746,9 +746,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Nuclex.Support.Native.def">
-      <Filter>Resources</Filter>
-    </None>
     <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf">
       <Filter>Documents</Filter>
     </None>
@@ -774,5 +771,8 @@
       <Filter>Documents</Filter>
     </None>
     <None Include="ReadMe.md" />
+    <None Include="Nuclex.Support.Native.def">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
 </Project>
