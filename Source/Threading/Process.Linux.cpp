@@ -576,13 +576,13 @@ namespace Nuclex { namespace Support { namespace Threading {
     impl.Finished = false;
 
     // Close the parent process ends of the stdin, stdout and stderr pipes
-    if(this->interceptStdErr && impl.StderrFileNumber != -1) {
+    if(this->interceptStdErr && (impl.StderrFileNumber != -1)) {
       int result = ::close(impl.StderrFileNumber);
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result == 0) && u8"Pipe forwarding stderr could be closed");
       impl.StderrFileNumber = -1;
     }
-    if(this->interceptStdOut && impl.StdoutFileNumber != -1) {
+    if(this->interceptStdOut && (impl.StdoutFileNumber != -1)) {
       int result = ::close(impl.StdoutFileNumber);
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result == 0) && u8"Pipe forwarding stdout could be closed");
