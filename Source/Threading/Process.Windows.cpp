@@ -454,8 +454,9 @@ namespace Nuclex { namespace Support { namespace Threading {
           );
         }
 
+        PumpOutputStreams();
       }
-    }
+    } // for(;;)
 
     // Pump the stdout and stderr pipes first. If the process ended before Join() was
     // called, this may be the only chance to obtain its output. As far as I can tell,
