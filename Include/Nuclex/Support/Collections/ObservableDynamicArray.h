@@ -32,10 +32,17 @@ namespace Nuclex { namespace Support { namespace Collections {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Dynamic array that sends out change notifications</summary>
+  /// <typename name="TValue">Type of values contained in the dynamic array</typeparam>
   /// <remarks>
-  ///   This collection sends out notifications to any interested party when its contents
-  ///   change (items being reordered, added or removed). It has no way of knowing when
-  ///   internal changes to an item itself occur.
+  ///   <para>
+  ///     This collection sends out notifications to any interested party when its contents
+  ///     change (items being reordered, added or removed). It has no way of knowing when
+  ///     internal changes to an item itself occur.
+  ///   </para>
+  ///   <para>
+  ///     It is both a useful container for small numbers of items and a demonstration case
+  ///     on how to implement the interfaces and events defined by the Nuclex::Support library.
+  ///   </para>
   /// </remarks>
   template<typename TValue>
   class ObservableDynamicArray :
