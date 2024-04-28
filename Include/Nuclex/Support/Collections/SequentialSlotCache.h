@@ -24,8 +24,9 @@ License along with this library
 #include "Nuclex/Support/Config.h"
 
 #include "Nuclex/Support/Collections/Cache.h" // for Cache
+#include "Nuclex/Support/Errors/KeyNotFoundError.h" // for KeyNotFoundError
 
-#include <memory> // for std::unique_ptr
+#include <cstdint> // for std::uint8_t
 
 namespace Nuclex { namespace Support { namespace Collections {
 
@@ -42,7 +43,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     public: SequentialSlotCache(std::size_t slotCount);
 
     /// <summary>Frees all memory used by the sequential slot cache</summary>
-    public: virtual ~SequentialSlotCache() = default;
+    public: virtual ~SequentialSlotCache();
 
     /// <summary>Stores a value in the map</summary>
     /// <param name="key">Key under which the value can be looked up later</param>
@@ -138,12 +139,44 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     #pragma endregion // struct SlotState
 
+    /// <summary>
+    ///   Moves the specified slot state to the top of the most recently used list
+    /// </summary>
+    /// <param name="slotState">Slot that will become the most recently used</param>
+    private: void makeMostRecentlyUsed(SlotState &slotState) const; // <- in mutable state
+
+    /// <summary>Removes the specified slot state from the most recently used list</summary>
+    /// <param name="slotState">Slot state that will be removed from the MRU list</param>
+    private: void unlinkMostRecentlyUsed(SlotState &slotState) const; // <- in mutable state
+
+    /// <summary>
+    ///   Calculates the amount of memory needed for buffer holding both the slot states
+    ///   and the values that can be stored in the cache
+    /// </summary>
+    /// <param name="slotCount">Number of slots for which the memory is calculated</param>
+    /// <returns>The required memory to store slots and values with alignment</returns>
+    private: constexpr static std::size_t getRequiredMemory(std::size_t slotCount) {
+      return (
+        (sizeof(SlotState[2]) * slotCount / 2) +
+        (sizeof(TValue[2]) * slotCount / 2) +
+        (alignof(SlotState) - 1) + // for initial alignment padding if needed
+        (
+          alignof(TValue) > alignof(SlotState) ?
+            (alignof(TValue) - alignof(SlotState)) : 0
+        )
+      );
+    }
+
     /// <summary>Number of slots currently filled in the cache</summary>
     private: std::size_t count;
-    /// <summary>Keeps track of the state of each individual slot</summary>
-    private: std::unique_ptr<SlotState[]> states;
+    /// <summary>Memory allocated to store the slot states and values</summary>
+    private: std::uint8_t *memory;
     /// <summary>Values stored in each of the slots</summary>
-    private: std::unique_ptr<TValue[]> values;
+    private: TValue *values;
+    /// <summary>Keeps track of the state of each individual slot</summary>
+    private: mutable SlotState *states;
+    /// <summary>Pointer to the state of the least recently used slot</summary>
+    private: mutable SlotState *leastRecentlyUsed;
 
   };
 
@@ -152,56 +185,165 @@ namespace Nuclex { namespace Support { namespace Collections {
   template<typename TKey, typename TValue>
   SequentialSlotCache<TKey, TValue>::SequentialSlotCache(std::size_t slotCount) :
     count(0),
-    states(new SlotState[slotCount]),
-    values(new TValue[slotCount]) {}
+    memory(new std::uint8_t[getRequiredMemory(slotCount)]),
+    values(),
+    states(),
+    leastRecentlyUsed(nullptr) {
+
+    // Calculate the aligned memory address where slot states will be stored
+    {
+      std::size_t misalignment = (
+        reinterpret_cast<std::uintptr_t>(this->memory) % alignof(SlotState)
+      );
+      if(misalignment > 0) {
+        this->states = reinterpret_cast<SlotState *>(
+          this->memory + alignof(SlotState) - misalignment
+        );
+      } else {
+        this->states = reinterpret_cast<SlotState *>(this->memory);
+      }
+    }
+
+    // Place the values directly behind the slot state array, with alignment padding
+    // if the type of values used has greater alignment requirements
+    this->values = reinterpret_cast<TValue *>(
+      reinterpret_cast<std::uint8_t *>(this->states) +
+      (sizeof(SlotState[2]) * slotCount / 2) +
+      (
+        alignof(TValue) > alignof(SlotState) ?
+          (alignof(TValue) - alignof(SlotState)) : 0
+      )
+    );
+
+    // Initialize all IsOccupied values to false so we don't accidentally try to destroy
+    // values that weren't present (but where the uninitialized memory in which we built
+    // the slot state array happened to have the appropriate bits set to make IsOccupied true).
+    for(std::size_t index = 0; index < slotCount; ++index) {
+      this->states[index].IsOccupied = false;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TKey, typename TValue>
+  SequentialSlotCache<TKey, TValue>::~SequentialSlotCache() {
+    Clear();
+    delete[] this->memory;
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
   bool SequentialSlotCache<TKey, TValue>::Insert(const TKey &key, const TValue &value) {
-    return false;
+    SlotState &state = this->states[key];
+    if(state.IsOccupied) {
+      TValue *address = this->values + key;
+      address->~TValue();
+      new(address) TValue(value);
+      makeMostRecentlyUsed(state);
+      return false;
+    } else {
+      new(this->values + key) TValue(value);
+      state.IsOccupied = true;
+      ++this->count;
+      makeMostRecentlyUsed(state);
+      return true;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
   bool SequentialSlotCache<TKey, TValue>::TryInsert(const TKey &key, const TValue &value) {
-    return false;
+    SlotState &state = this->states[key];
+    if(state.IsOccupied) {
+      return false;
+    } else {
+      new(this->values + key) TValue(value);
+      state.IsOccupied = true;
+      ++this->count;
+      makeMostRecentlyUsed(state);
+      return true;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
   const TValue &SequentialSlotCache<TKey, TValue>::Get(const TKey &key) const {
-    throw -1;
+    SlotState &state = this->states[key];
+    if(state.IsOccupied) {
+      makeMostRecentlyUsed(state);
+      return this->values[key];
+    } else {
+      throw Errors::KeyNotFoundError(std::string(u8"Requested cache slot is empty", 29));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
   bool SequentialSlotCache<TKey, TValue>::TryGet(const TKey &key, TValue &value) const {
-    throw -1;
+    SlotState &state = this->states[key];
+    if(state.IsOccupied) {
+      makeMostRecentlyUsed(state);
+      value = this->values[key];
+      return true;
+    } else {
+      return false;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
   bool SequentialSlotCache<TKey, TValue>::TryTake(const TKey &key, TValue &value) {
-    throw -1;
+    SlotState &state = this->states[key];
+    if(state.IsOccupied) {
+      TValue *address = this->values + key;
+      value = *address;
+      address->~TValue();
+      state.IsOccupied = false;
+      unlinkMostRecentlyUsed(state);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
   bool SequentialSlotCache<TKey, TValue>::TryRemove(const TKey &key) {
-    throw -1;
+    SlotState &state = this->states[key];
+    if(state.IsOccupied) {
+      TValue *address = this->values + key;
+      address->~TValue();
+      state.IsOccupied = false;
+      unlinkMostRecentlyUsed(state);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
   void SequentialSlotCache<TKey, TValue>::Clear() {
-    throw -1;
+    SlotState *current = this->leastRecentlyUsed;
+    while(current != nullptr) {
+      std::ptrdiff_t index = current - this->states;
+      index /= (sizeof(SlotState[2]) / 2);
+
+      this->values[index].~TValue();
+      current->IsOccupied = false;
+
+      current = current->MoreRecentlyUsed;
+    }
+
+    this->count = 0;
+    this->leastRecentlyUsed = nullptr;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -232,6 +374,22 @@ namespace Nuclex { namespace Support { namespace Collections {
   template<typename TKey, typename TValue>
   bool SequentialSlotCache<TKey, TValue>::IsEmpty() const {
     return (this->count == 0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TKey, typename TValue>
+  void SequentialSlotCache<TKey, TValue>::makeMostRecentlyUsed(SlotState &slotState) const {
+    // fuck.
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TKey, typename TValue>
+  void SequentialSlotCache<TKey, TValue>::unlinkMostRecentlyUsed(SlotState &slotState) const {
+    // fuck.
+
   }
 
   // ------------------------------------------------------------------------------------------- //

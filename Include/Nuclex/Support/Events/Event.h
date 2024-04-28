@@ -306,7 +306,7 @@ namespace Nuclex { namespace Support { namespace Events {
       const static std::size_t initialCapacity = BuiltInSubscriberCount * 8;
       std::uint8_t *initialBuffer = new std::uint8_t[
         sizeof(DelegateType[2]) * initialCapacity / 2
-      ];
+      ]; // CHECK: Do we risk alignment issues here?
 
       std::copy_n(
         this->stackMemory,
@@ -323,7 +323,7 @@ namespace Nuclex { namespace Support { namespace Events {
       std::size_t newCapacity = this->heapMemory.ReservedSubscriberCount * 2;
       std::uint8_t *newBuffer = new std::uint8_t[
         sizeof(DelegateType[2]) * newCapacity / 2
-      ];
+      ]; // CHECK: Do we risk alignment issues here?
 
       std::copy_n(
         this->heapMemory.Buffer,
@@ -361,7 +361,7 @@ namespace Nuclex { namespace Support { namespace Events {
       /// <summary>Number of subscribers for which space has been reserved on the heap</summary>
       public: std::size_t ReservedSubscriberCount;
       /// <summary>Dynamically allocated memory the subscribers are stored in</summary>
-      public: std::uint8_t *Buffer;
+      public: alignas(DelegateType) std::uint8_t *Buffer;
 
     };
 
