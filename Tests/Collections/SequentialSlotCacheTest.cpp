@@ -113,4 +113,75 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(SequentialSlotCacheTest, RetrievalCanIgnoreMissingItems) {
+    SequentialSlotCache<std::size_t, int> test(32);
+
+    int obtainedValue = 0;
+    bool wasObtained = test.TryGet(12, obtainedValue);
+    EXPECT_FALSE(wasObtained);
+    EXPECT_EQ(obtainedValue, 0);
+
+    bool wasInserted = test.TryInsert(12, 20384);
+    EXPECT_TRUE(wasInserted);
+    EXPECT_EQ(test.Count(), 1U);
+
+    wasObtained = test.TryGet(12, obtainedValue);
+    EXPECT_TRUE(wasObtained);
+    EXPECT_EQ(obtainedValue, 20384);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(SequentialSlotCacheTest, ItemsCanBeTaken) {
+    SequentialSlotCache<std::size_t, int> test(32);
+
+    bool wasInserted = test.TryInsert(30, 53345);
+    EXPECT_TRUE(wasInserted);
+    EXPECT_EQ(test.Count(), 1U);
+
+    int takenValue = 0;
+    bool wasTaken = test.TryTake(30, takenValue);
+    EXPECT_TRUE(wasTaken);
+    EXPECT_EQ(takenValue, 53345);
+    EXPECT_EQ(test.Count(), 0U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(SequentialSlotCacheTest, TakingWontThrowOnMissingKeys) {
+    SequentialSlotCache<std::size_t, int> test(32);
+
+    int takenValue = 0;
+    bool wasTaken = test.TryTake(23, takenValue);
+    EXPECT_FALSE(wasTaken);
+    EXPECT_EQ(takenValue, 0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(SequentialSlotCacheTest, EvictKeepsRecentlyAccessedItems) {
+    SequentialSlotCache<std::size_t, int> test(32);
+
+    test.Insert(2, 202);
+    test.Insert(4, 404);
+    test.Insert(6, 606);
+    test.Insert(8, 808);
+    test.Insert(10, 999);
+
+    test.Get(4); // Move item 4 back to top of most recently accessed
+
+    EXPECT_EQ(test.Count(), 5U);
+    test.EvictDownTo(3);
+    EXPECT_EQ(test.Count(), 3U);
+
+    int obtainedValue;
+    EXPECT_FALSE(test.TryGet(2, obtainedValue));
+    EXPECT_TRUE(test.TryGet(4, obtainedValue));
+    EXPECT_FALSE(test.TryGet(6, obtainedValue));
+    EXPECT_TRUE(test.TryGet(8, obtainedValue));
+    EXPECT_TRUE(test.TryGet(10, obtainedValue));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Collections

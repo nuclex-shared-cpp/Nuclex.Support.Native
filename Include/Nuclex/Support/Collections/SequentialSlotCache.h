@@ -312,6 +312,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       address->~TValue();
       state.IsOccupied = false;
       unlinkMostRecentlyUsed(state);
+      --this->count;
       return true;
     } else {
       return false;
@@ -328,6 +329,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       address->~TValue();
       state.IsOccupied = false;
       unlinkMostRecentlyUsed(state);
+      --this->count;
       return true;
     } else {
       return false;
@@ -341,7 +343,6 @@ namespace Nuclex { namespace Support { namespace Collections {
     SlotState *current = this->mostRecentlyUsed;
     while(current != nullptr) {
       std::ptrdiff_t index = current - this->states;
-      index /= (sizeof(SlotState[2]) / 2);
 
       this->values[index].~TValue();
       current->IsOccupied = false;
@@ -357,7 +358,26 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   template<typename TKey, typename TValue>
   void SequentialSlotCache<TKey, TValue>::EvictDownTo(std::size_t itemCount) {
-    throw -1;
+    SlotState *current = this->leastRecentlyUsed;
+    while(current != nullptr) {
+      if(itemCount >= this->count) {
+        break;
+      }
+
+      std::ptrdiff_t index = current - this->states;
+      this->values[index].~TValue();
+      current->IsOccupied = false;
+      --this->count;
+
+      current = current->MoreRecentlyUsed;
+    }
+
+    if(current == nullptr) {
+      this->leastRecentlyUsed = this->mostRecentlyUsed = nullptr;
+    } else {
+      current->LessRecentlyUsed = nullptr;
+      this->leastRecentlyUsed = current;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -366,7 +386,7 @@ namespace Nuclex { namespace Support { namespace Collections {
   void SequentialSlotCache<TKey, TValue>::EvictWhere(
     const Events::Delegate<bool(const TValue &)> &policyCallback
   ) {
-    throw -1;
+    throw std::runtime_error(u8"Not implemented yet");
   }
 
   // ------------------------------------------------------------------------------------------- //
