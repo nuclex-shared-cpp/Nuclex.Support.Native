@@ -145,6 +145,10 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="slotState">Slot that will become the most recently used</param>
     private: void makeMostRecentlyUsed(SlotState &slotState) const; // <- in mutable state
 
+    /// <summary>Integrates the specified slot state into the most recently used list</summary>
+    /// <param name="slotState">Slot state that will be integratedf into the MRU list</param>
+    private: void linkMostRecentlyUsed(SlotState &slotState) const; // <- in mutable state
+
     /// <summary>Removes the specified slot state from the most recently used list</summary>
     /// <param name="slotState">Slot state that will be removed from the MRU list</param>
     private: void unlinkMostRecentlyUsed(SlotState &slotState) const; // <- in mutable state
@@ -175,6 +179,8 @@ namespace Nuclex { namespace Support { namespace Collections {
     private: TValue *values;
     /// <summary>Keeps track of the state of each individual slot</summary>
     private: mutable SlotState *states;
+    /// <summary>Pointer to the state of the most recently used slot</summary>
+    private: mutable SlotState *mostRecentlyUsed;
     /// <summary>Pointer to the state of the least recently used slot</summary>
     private: mutable SlotState *leastRecentlyUsed;
 
@@ -188,6 +194,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     memory(new std::uint8_t[getRequiredMemory(slotCount)]),
     values(),
     states(),
+    mostRecentlyUsed(nullptr),
     leastRecentlyUsed(nullptr) {
 
     // Calculate the aligned memory address where slot states will be stored
@@ -246,7 +253,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       new(this->values + key) TValue(value);
       state.IsOccupied = true;
       ++this->count;
-      makeMostRecentlyUsed(state);
+      linkMostRecentlyUsed(state);
       return true;
     }
   }
@@ -262,7 +269,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       new(this->values + key) TValue(value);
       state.IsOccupied = true;
       ++this->count;
-      makeMostRecentlyUsed(state);
+      linkMostRecentlyUsed(state);
       return true;
     }
   }
@@ -331,7 +338,7 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   template<typename TKey, typename TValue>
   void SequentialSlotCache<TKey, TValue>::Clear() {
-    SlotState *current = this->leastRecentlyUsed;
+    SlotState *current = this->mostRecentlyUsed;
     while(current != nullptr) {
       std::ptrdiff_t index = current - this->states;
       index /= (sizeof(SlotState[2]) / 2);
@@ -339,11 +346,11 @@ namespace Nuclex { namespace Support { namespace Collections {
       this->values[index].~TValue();
       current->IsOccupied = false;
 
-      current = current->MoreRecentlyUsed;
+      current = current->LessRecentlyUsed;
     }
 
     this->count = 0;
-    this->leastRecentlyUsed = nullptr;
+    this->leastRecentlyUsed = this->mostRecentlyUsed = nullptr;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -380,16 +387,54 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   template<typename TKey, typename TValue>
   void SequentialSlotCache<TKey, TValue>::makeMostRecentlyUsed(SlotState &slotState) const {
-    // fuck.
+
+    // Only do something if the slot in question isn't already the most recent used one
+    if(slotState.MoreRecentlyUsed != nullptr) {
+      slotState.MoreRecentlyUsed->LessRecentlyUsed = slotState.LessRecentlyUsed;
+      if(slotState.LessRecentlyUsed == nullptr) {
+        this->leastRecentlyUsed = slotState.MoreRecentlyUsed;
+      } else {
+        slotState.LessRecentlyUsed->MoreRecentlyUsed = slotState.MoreRecentlyUsed;
+      }
+
+      slotState.LessRecentlyUsed = this->mostRecentlyUsed;
+      slotState.MoreRecentlyUsed = nullptr;
+      this->mostRecentlyUsed->MoreRecentlyUsed = &slotState;
+      this->mostRecentlyUsed = &slotState;
+    }
 
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
-  void SequentialSlotCache<TKey, TValue>::unlinkMostRecentlyUsed(SlotState &slotState) const {
-    // fuck.
+  void SequentialSlotCache<TKey, TValue>::linkMostRecentlyUsed(SlotState &slotState) const {
+    if(this->mostRecentlyUsed == nullptr) {
+      slotState.LessRecentlyUsed = slotState.MoreRecentlyUsed = nullptr;
+      this->leastRecentlyUsed = this->mostRecentlyUsed = &slotState;
+    } else {
+      slotState.LessRecentlyUsed = this->mostRecentlyUsed;
+      slotState.MoreRecentlyUsed = nullptr;
+      this->mostRecentlyUsed->MoreRecentlyUsed = &slotState;
+      this->mostRecentlyUsed = &slotState;
+    }
+  }
 
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TKey, typename TValue>
+  void SequentialSlotCache<TKey, TValue>::unlinkMostRecentlyUsed(SlotState &slotState) const {
+    if(slotState.LessRecentlyUsed == nullptr) {
+      this->leastRecentlyUsed = slotState.MoreRecentlyUsed;
+    } else {
+      slotState.LessRecentlyUsed->MoreRecentlyUsed = slotState.MoreRecentlyUsed;
+    }
+    
+    if(slotState.MoreRecentlyUsed == nullptr) {
+      this->mostRecentlyUsed = slotState.LessRecentlyUsed;
+    } else {
+      slotState.MoreRecentlyUsed->LessRecentlyUsed = slotState.LessRecentlyUsed;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

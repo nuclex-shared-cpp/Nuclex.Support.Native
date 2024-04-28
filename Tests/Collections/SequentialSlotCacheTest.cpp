@@ -49,6 +49,7 @@ namespace Nuclex { namespace Support { namespace Collections {
   TEST(SequentialSlotCacheTest, ItemsCanBeInserted) {
     SequentialSlotCache<std::size_t, int> test(32);
     EXPECT_EQ(test.Count(), 0U);
+
     bool wasFirstKeyUsage = test.Insert(15, 23897);
     EXPECT_TRUE(wasFirstKeyUsage);
     EXPECT_EQ(test.Count(), 1U);
@@ -80,6 +81,34 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     int retrievedValue = test.Get(20);
     EXPECT_EQ(retrievedValue, 54321);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(SequentialSlotCacheTest, ItemsCanBeInsertedWithoutOverwriting) {
+    SequentialSlotCache<std::size_t, int> test(32);
+    EXPECT_EQ(test.Count(), 0U);
+
+    bool wasInserted = test.TryInsert(5, 45096);
+    EXPECT_TRUE(wasInserted);
+    EXPECT_EQ(test.Count(), 1U);
+
+    wasInserted = test.TryInsert(5, 33412);
+    EXPECT_FALSE(wasInserted);
+    EXPECT_EQ(test.Count(), 1U);
+
+    int retrievedValue = test.Get(5);
+    EXPECT_EQ(retrievedValue, 45096);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(SequentialSlotCacheTest, RetrievingMissingKeyThrowsException) {
+    SequentialSlotCache<std::size_t, int> test(32);
+    EXPECT_THROW(
+      int value = test.Get(25),
+      Errors::KeyNotFoundError
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
