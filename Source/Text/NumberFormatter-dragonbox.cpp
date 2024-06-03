@@ -101,7 +101,7 @@ namespace {
     2'814'749'768, // magnitude 1e5
     2'251'799'815, // magnitude 1e6
     3'602'879'703, // magnitude 1e7
-    2'882'303'762, // magnitude 1d8
+    2'882'303'762, // magnitude 1e8
     2'305'843'010, // magnitude 1e9
   };
 

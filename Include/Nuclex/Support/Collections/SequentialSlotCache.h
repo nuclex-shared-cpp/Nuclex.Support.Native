@@ -35,6 +35,16 @@ namespace Nuclex { namespace Support { namespace Collections {
   /// <summary>Caches items that can be addressed through a linear, zero-based index</summary>
   /// <typeparam name="TKey">Type of the key the cache uses, must be an integer</typeparam>
   /// <typeparam name="TValue">Type of values that are stored in the cache</typeparam>
+  /// <remarks>
+  ///   <para>
+  ///     This type of cache is ideal if you have a fixed number of items (for example,
+  ///     files in a directory or frames in a video) that can be addressed through a simple
+  ///     integer index.
+  ///   </para>
+  ///   <para>
+  ///     
+  ///   </para>
+  /// </remarks>
   template<typename TKey, typename TValue>
   class SequentialSlotCache : public Cache<TKey, TValue> {
 
@@ -386,7 +396,20 @@ namespace Nuclex { namespace Support { namespace Collections {
   void SequentialSlotCache<TKey, TValue>::EvictWhere(
     const Events::Delegate<bool(const TValue &)> &policyCallback
   ) {
-    throw std::runtime_error(u8"Not implemented yet");
+    SlotState *current = this->leastRecentlyUsed;
+    while(current != nullptr) {
+      std::ptrdiff_t index = current - this->states;
+
+      bool evict = policyCallback(this->values[index]);
+      if(evict) {
+        unlinkMostRecentlyUsed(*current);
+        this->values[index].~TValue();
+        current->IsOccupied = false;
+        --this->count;
+      }
+
+      current = current->MoreRecentlyUsed;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
