@@ -106,7 +106,7 @@ namespace Nuclex { namespace Support { namespace Collections {
   TEST(SequentialSlotCacheTest, RetrievingMissingKeyThrowsException) {
     SequentialSlotCache<std::size_t, int> test(32);
     EXPECT_THROW(
-      int value = test.Get(25),
+      test.Get(25),
       Errors::KeyNotFoundError
     );
   }

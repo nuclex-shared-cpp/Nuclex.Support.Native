@@ -1,0 +1,21 @@
+NuclexSupportNativeConfig.cmake
+
+# Visual Studio Codium
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Visual Studio
+.vs/
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Artifacts
+[Bb]in/
+[Oo]bj/
