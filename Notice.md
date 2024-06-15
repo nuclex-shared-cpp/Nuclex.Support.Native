@@ -1,33 +1,32 @@
-Nuclex.Support.Native License
-=============================
+Nuclex.Support.Native Attribution
+=================================
 
-This library is licensed under the IBM Common Public License (CPL) v1.0,
-https://www.ibm.com/developerworks/library/os-cpl.html
+This library is licensed under the Apache License 2.0,
+http://www.apache.org/licenses/
 
-Not to be mistaken for the GNU Public License (GPL).
 
 You can:
 --------
 
-- Use this library in commercial applications.
-- Use this library in closed-source applications.
-
+- Use this library in closed source and commercial applications.
 - Distribute this library's unmodified source code.
 - Distribute binaries compiled from the unmodified source code.
 
-- Modify the source code of this library and keep the changes to yourself
-  so long as you also keep the compiled binaries to yourself.
+- Modify the source code of this library and keep the changes to yourself.
+- Modify the source code of this library and publish the changes,
+  so long as you make it very clear that, and how, you changed the code.
+
 
 You can not:
 ------------
 
-- Make changes to this library and then publish the compiled binaries
-  without also sharing the changes you made to this library's source code.
+- Put this library under a different license or
+- Sell access to this library's code
 
 - Sue anyone for issues you have with this code.
 
-- Pretend that you wrote this or use the names of any of this library's
-  authors to promote your own work.
+- Pretend that you wrote this
+- Use the names of any of this library's authors to promote your own work.
 
 
 Attribution
@@ -45,8 +44,8 @@ Example Attribution Text
 ------------------------
 
 Uses supporting code from the Nuclex.Support.Native library, written by
-Markus Ewald and licensed under the terms of the IBM Common Public License
-(https://opensource.org/licenses/cpl1.0.php)
+Markus Ewald and licensed under the terms of the Apache License 2.0
+(http://www.apache.org/licenses/)
 
 Nuclex.Support.Native also embeds additional libraries, belonging to their
 respective owners and used according to their respective licenses:
@@ -75,7 +74,7 @@ If you distribute binaries compiled from this library, you do not have to
 do anything, but an acknowledgement of the original author would be nice.
 
 
-DragonBox: Apache 2.0 License
+DragonBox: Apache License 2.0
 -----------------------------
 
 Uses code from Junekey Jeon's DragonBox reference implementation to convert
@@ -86,7 +85,7 @@ If you distribute binaries compiled from this library, you do not have to
 do anything, but an acknowledgement of the original author would be nice.
 
 
-Ryu String to Float Parser: Apache 2.0 License
+Ryu String to Float Parser: Apache License 2.0
 ----------------------------------------------
 
 Code from the Ryu library is used to convert strings to floating point values

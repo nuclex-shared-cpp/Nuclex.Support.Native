@@ -23,5 +23,5 @@ or another application that uses this library).
 
 The dependencies of the code itself are rather tame, or rather, zero:
 
-    gtest (optional, if unit tests are built)
-    celero (optional, if benchmarks are built)
+  * gtest (optional, if unit tests are built)
+  * celero (optional, if benchmarks are built)
