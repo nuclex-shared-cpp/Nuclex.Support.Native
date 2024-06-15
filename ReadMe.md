@@ -1,3 +1,9 @@
+  - **Status:** Stable and mature. Several projects are using this library,
+    and it has received extensive testing on Linux and Windows.
+
+  - **Platforms:** Cross-platform, developed on Linux but also tested and
+    working without any known issues on Windows.
+
 Nuclex.Support.Native
 =====================
 
