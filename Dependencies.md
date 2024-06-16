@@ -1,7 +1,11 @@
 Nuclex.Support.Native Dependencies
 ===================================
 
-This library is intended to be placed into a project using submodules to replicate
+
+To Compile the Library
+----------------------
+
+This library is intended to be placed into a source tree using submodules to replicate
 the following directory layout:
 
     root/
@@ -18,10 +22,22 @@ the following directory layout:
             nuclex-celero/          <-- Git: nuclex-builds/nuclex-ceelero
                 CMakeLists.txt
 
-If that's a bit overwhelming, try cloning (with `--recurse-submodules` my "frame fixer"
-or another application that uses this library).
+If that's a bit overwhelming, try cloning (with `--recurse-submodules`) my "frame fixer"
+or another application that uses this library to get that directory tree.
 
-The dependencies of the code itself are rather tame, or rather, zero:
+The dependencies of the code itself are very tame, or rather, zero:
 
   * gtest (optional, if unit tests are built)
   * celero (optional, if benchmarks are built)
+
+
+To Use this Library as a Binary
+-------------------------------
+
+Either use the included `CMakeLists.txt` (it still requires the `build-system` directory)
+or, more directly:
+
+  * Add `Nuclex.Support.Native/Include` to your include directory
+  * Link `libNuclexSupportNative.so` (or `Nuclex.Support.Native.lib` on Windows)
+  * Copy the `.so` file (or `.dll` file on Windows) to your output directory
+
