@@ -28,7 +28,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(StopSourceTest, IsConstructedViaConstructorMethod) {
+  TEST(StopSourceTest, IsConstructedViaFactoryMethod) {
     EXPECT_NO_THROW(
       std::shared_ptr<StopSource> source = StopSource::Create();
     );

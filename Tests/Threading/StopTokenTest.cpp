@@ -28,7 +28,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(StopTokenTest, TriggerProvidesWatcher) {
+  TEST(StopTokenTest, SourceProvidesToken) {
     std::shared_ptr<StopSource> source = StopSource::Create();
     std::shared_ptr<const StopToken> token = source->GetToken();
     EXPECT_NE(token.get(), nullptr);
@@ -36,7 +36,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(StopTokenTest, WatcherIsSignalledByTrigger) {
+  TEST(StopTokenTest, TokenIsSignalledBySource) {
     std::shared_ptr<StopSource> source = StopSource::Create();
     std::shared_ptr<const StopToken> token = source->GetToken();
     EXPECT_FALSE(token->IsCanceled());
@@ -46,7 +46,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(StopTokenTest, WatcherCanLifePastTrigger) {
+  TEST(StopTokenTest, TokenCanLifePastSource) {
     std::shared_ptr<const StopToken> token;
     {
       std::shared_ptr<StopSource> source = StopSource::Create();
@@ -60,7 +60,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(StopTokenTest, WatcherThrowsCanceledErrorWhenCanceled) {
+  TEST(StopTokenTest, TokenThrowsCanceledErrorWhenCanceled) {
     std::shared_ptr<StopSource> source = StopSource::Create();
     std::shared_ptr<const StopToken> token = source->GetToken();
     source->Cancel();
