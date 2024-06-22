@@ -218,6 +218,9 @@
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Text\StringHelper.h">
+      <Filter>Include\Text</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
@@ -234,6 +237,12 @@
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\Semaphore.h">
+      <Filter>Include\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Threading\StopSource.h">
+      <Filter>Include\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Threading\StopToken.h">
       <Filter>Include\Threading</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\Thread.h">
@@ -262,9 +271,6 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Text\StringHelper.h">
-      <Filter>Include\Text</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -526,6 +532,9 @@
     <ClCompile Include="Source\Text\StringConverter.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Text\StringHelper.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Text\StringMatcher.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
@@ -551,6 +560,12 @@
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Source\Threading\Semaphore.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\StopSource.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\StopToken.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Source\Threading\Thread.cpp">
@@ -594,12 +609,6 @@
     </ClCompile>
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\StringHelper.cpp">
-      <Filter>Source\Text</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\Text\StringHelperTest.cpp">
-      <Filter>Tests\Text</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -699,6 +708,9 @@
     <ClCompile Include="Tests\Text\StringConverterTest.cpp">
       <Filter>Tests\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\Text\StringHelperTest.cpp">
+      <Filter>Tests\Text</Filter>
+    </ClCompile>
     <ClCompile Include="Tests\Text\StringMatcherTest.cpp">
       <Filter>Tests\Text</Filter>
     </ClCompile>
@@ -718,6 +730,12 @@
       <Filter>Tests\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Threading\SemaphoreTest.cpp">
+      <Filter>Tests\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Threading\StopSourceTest.cpp">
+      <Filter>Tests\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\Threading\StopTokenTest.cpp">
       <Filter>Tests\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Tests\Threading\ThreadPoolTaskPoolTest.cpp">
@@ -758,9 +776,6 @@
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf">
       <Filter>Documents</Filter>
     </None>
-    <Text Include="Documents\Copyright.md">
-      <Filter>Documents</Filter>
-    </Text>
     <Text Include="Documents\EventBenchmark.md">
       <Filter>Documents</Filter>
     </Text>
@@ -770,9 +785,14 @@
     <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf">
       <Filter>Documents</Filter>
     </None>
-    <None Include="ReadMe.md" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Nuclex.Support.Native.def">
       <Filter>Resources</Filter>
     </None>
+    <Text Include="ReadMe.md" />
+    <Text Include="Notice.md" />
+    <Text Include="License.md" />
+    <Text Include="Dependencies.md" />
   </ItemGroup>
 </Project>

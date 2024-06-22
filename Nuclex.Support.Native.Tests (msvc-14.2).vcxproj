@@ -242,6 +242,8 @@
     <ClInclude Include="Include\Nuclex\Support\Threading\Gate.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Process.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Semaphore.h" />
+    <ClInclude Include="Include\Nuclex\Support\Threading\StopSource.h" />
+    <ClInclude Include="Include\Nuclex\Support\Threading\StopToken.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Thread.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\ThreadPool.h" />
     <ClInclude Include="Include\Nuclex\Support\BitTricks.h" />
@@ -347,6 +349,8 @@
     <ClCompile Include="Source\Threading\Process.Linux.cpp" />
     <ClCompile Include="Source\Threading\Process.Windows.cpp" />
     <ClCompile Include="Source\Threading\Semaphore.cpp" />
+    <ClCompile Include="Source\Threading\StopSource.cpp" />
+    <ClCompile Include="Source\Threading\StopToken.cpp" />
     <ClCompile Include="Source\Threading\Thread.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.Windows.cpp" />
@@ -403,6 +407,8 @@
     <ClCompile Include="Tests\Threading\ProcessTest.cpp" />
     <ClCompile Include="Tests\Threading\SemaphoreBenchmark.cpp" />
     <ClCompile Include="Tests\Threading\SemaphoreTest.cpp" />
+    <ClCompile Include="Tests\Threading\StopSourceTest.cpp" />
+    <ClCompile Include="Tests\Threading\StopTokenTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadPoolTaskPoolTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadPoolTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadTest.cpp" />
@@ -413,7 +419,6 @@
     <ClCompile Include="Tests\VariantTests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Documents\Copyright.md" />
     <None Include="Documents\Adam Morrison - Fast Concurrent queues for x86 Processors.pdf" />
     <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf" />
     <Text Include="Documents\EventBenchmark.md" />
@@ -421,10 +426,13 @@
     <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf" />
     <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf" />
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
-    <None Include="ReadMe.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Nuclex.Support.Native.def" />
+    <Text Include="ReadMe.md" />
+    <Text Include="Notice.md" />
+    <Text Include="License.md" />
+    <Text Include="Dependencies.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

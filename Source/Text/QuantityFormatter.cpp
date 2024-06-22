@@ -32,7 +32,7 @@ namespace {
   /// <summary>Appends a number treating the last digit as behind a decimal point</summary>
   /// <param name="target">String to which the number will be appended</param>
   /// <param name="numberTimesTen">Number that will be appended</param>
-  void appendWithOneDecimalDigit(std::string &target, std::size_t numberTimesTen) {
+  void appendWithOneDecimalDigit(std::string &target, std::uint64_t numberTimesTen) {
     Nuclex::Support::Text::lexical_append(target, numberTimesTen / 10);
     target.push_back(u8'.');
     Nuclex::Support::Text::lexical_append(target, numberTimesTen % 10);
@@ -43,7 +43,7 @@ namespace {
   /// <summary>Appends a number with a leading '0' if it is less than two digits long</summary>
   /// <param name="target">String to which the number will be appended</param>
   /// <param name="number">Number that will be appended to the string</param>
-  void appendAsTwoDigits(std::string &target, std::size_t number) {
+  void appendAsTwoDigits(std::string &target, std::uint64_t number) {
     if(number < 10) {
       target.push_back(u8'0');
     }

@@ -197,18 +197,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Benchmarks\Events\BoostSignalsBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\Events\EventBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\Events\LSignalBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\Events\NanoSignalSlotBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\Text\AmdnItoaBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\Text\IntegerToStringBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\Text\JeaiiiItoaBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\Text\JeaiiiLutItoaBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\Text\NumberFormatterBenchmark.cpp" />
-    <ClCompile Include="Benchmarks\BenchmarkMain.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
@@ -254,6 +242,8 @@
     <ClInclude Include="Include\Nuclex\Support\Threading\Gate.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Process.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Semaphore.h" />
+    <ClInclude Include="Include\Nuclex\Support\Threading\StopSource.h" />
+    <ClInclude Include="Include\Nuclex\Support\Threading\StopToken.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Thread.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\ThreadPool.h" />
     <ClInclude Include="Include\Nuclex\Support\BitTricks.h" />
@@ -265,7 +255,6 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Benchmark\Text\StringHelperBenchmark.cpp" />
     <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentCollection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
@@ -360,6 +349,8 @@
     <ClCompile Include="Source\Threading\Process.Linux.cpp" />
     <ClCompile Include="Source\Threading\Process.Windows.cpp" />
     <ClCompile Include="Source\Threading\Semaphore.cpp" />
+    <ClCompile Include="Source\Threading\StopSource.cpp" />
+    <ClCompile Include="Source\Threading\StopToken.cpp" />
     <ClCompile Include="Source\Threading\Thread.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.cpp" />
     <ClCompile Include="Source\Threading\ThreadPool.Windows.cpp" />
@@ -376,7 +367,19 @@
     <ClCompile Include="Source\VariantType.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Documents\Copyright.md" />
+    <ClCompile Include="Benchmarks\Events\BoostSignalsBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Events\EventBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Events\LSignalBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Events\NanoSignalSlotBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\AmdnItoaBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\IntegerToStringBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\JeaiiiItoaBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\JeaiiiLutItoaBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\NumberFormatterBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\Text\StringHelperBenchmark.cpp" />
+    <ClCompile Include="Benchmarks\BenchmarkMain.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Documents\Adam Morrison - Fast Concurrent queues for x86 Processors.pdf" />
     <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf" />
     <Text Include="Documents\EventBenchmark.md" />
@@ -384,10 +387,13 @@
     <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf" />
     <None Include="Documents\Marc Andrysco - Printing Floating-Point Numbers, An Always Correct Method.pdf" />
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
-    <None Include="ReadMe.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Nuclex.Support.Native.def" />
+    <Text Include="ReadMe.md" />
+    <Text Include="Notice.md" />
+    <Text Include="License.md" />
+    <Text Include="Dependencies.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
