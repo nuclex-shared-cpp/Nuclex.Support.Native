@@ -61,13 +61,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </suimmary>
     /// <returns>The new stop source</returns>
     public: NUCLEX_SUPPORT_API static std::shared_ptr<StopSource> Create() {
-      struct ConstructibleCancellationTrigger : public StopSource {
-        ConstructibleCancellationTrigger() = default;
-        virtual ~ConstructibleCancellationTrigger() override = default;
+      struct ConstructibleStopSource : public StopSource {
+        ConstructibleStopSource() = default;
+        virtual ~ConstructibleStopSource() override = default;
       };
-      std::shared_ptr<StopSource> result(
-        std::make_shared<ConstructibleCancellationTrigger>()
-      );
+      std::shared_ptr<StopSource> result = std::make_shared<ConstructibleStopSource>();
 
       #if 0
       // This seems to be a spot where compilers may report an error.
@@ -75,7 +73,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // std::static_pointer_cast() does not have access to protected members of
       // this class, and that includes the protected base class, unfortunately.
       result->watcher = (
-        std::static_pointer_cast<CancellationWatcher, StopSource>(result)
+        std::static_pointer_cast<StopToken, StopSource>(result)
       );
       #else
       // This is pure shared_ptr villainy, but for single-inheritance,
