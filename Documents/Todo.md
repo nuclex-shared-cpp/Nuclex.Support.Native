@@ -25,25 +25,3 @@ command line arguments directly or for building a getopt()-style library.
   * Parse command line from argc, argv
   * Windows and Linux style argument passing
   * Build command line by appending arguments
-
-
-Windows Thread Pool
--------------------
-
-Microsoft's thread pool is over-engineered, slow and its concept of shutting down
-is missing vital notification capabilities, meaning I still couldn't verify that
-a shutdown under load is bullet proof.
-
- * Delete Win32 API based thread pool, port Linux thread pool to Windows
-
-
-Semaphore, Gate, Latch on Windows
----------------------------------
-
-Using Futexes via syscalls on Linux worked wonders for the performance of
-the Semaphore class.
-
-Windows has a similar capability via WaitOnAddress(), allowing potentially
-much faster threading primitives than using the lame Win32 API calls.
-
- * Benchmark and implement Semaphore, Gate and Latch via WaitOnAddress()
