@@ -1,0 +1,142 @@
+#pragma region Apache License 2.0
+/*
+Nuclex Native Framework
+Copyright (C) 2002-2024 Markus Ewald / Nuclex Development Labs
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+#pragma endregion // Apache License 2.0
+
+#ifndef NUCLEX_SUPPORT_THREADING_CONCURRENTJOB_H
+#define NUCLEX_SUPPORT_THREADING_CONCURRENTJOB_H
+
+#include "Nuclex/Support/Config.h"
+
+#include <exception> // for std::exception
+#include <optional> // for std::optional
+#include <thread> // for std::thread
+#include <mutex> // for std::mutex
+#include <condition_variable> // for std::condition_variable
+#include <atomic> // for std::atomic
+
+namespace Nuclex { namespace Support { namespace Threading {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  class ThreadPool;
+  class StopToken;
+
+  // ------------------------------------------------------------------------------------------- //
+
+}}} // namespace Nuclex::Support::Threading
+
+namespace Nuclex { namespace Support { namespace Threading {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>
+  ///   Job running in a background thread that can be run, restarted and canceled
+  /// </summary>
+  /// <remarks>
+  ///   <para>
+  ///     This is a repeatable job. You can use it as a base class for things that need to
+  ///     happen in the background and even expose it under some interface (or wrap it) in
+  ///     order to let callers start, cancel or restart the operation freely.
+  ///   </para>
+  ///   <para>
+  ///     The ConcurrentJob class is designed for higher-level tasks, for example to run
+  ///     a printing or exporting job in the background while the UI thread keeps servicing
+  ///     the UI. Calling <see cref="StartOrRestart" /> blocks until the thread to actually
+  ///     starts executing to ensure the next thing the calling thread will see is a truthful
+  ///     <see cref="IsRunning" /> flag set to true and it catches exceptions and re-throws
+  ///     them when you join with the background thread.
+  ///   </para>
+  /// </remarks>
+  class ConcurrentJob {
+
+    /// <summary>Initializes a new concurrent job</summary>
+    public: ConcurrentJob();
+    /// <summary>Initializes a new concurrent job using a thread pool thread</summary>
+    /// <param name="threadPool">Thread pool in which the concurrent job will run</param>
+    public: ConcurrentJob(ThreadPool &threadPool);
+
+    /// <summary>Cancels the thread if running and frees all resources</summary>
+    public: virtual ~ConcurrentJob() = default;
+
+    /// <summary>Whether the background job is current running</summary>
+    /// <remarks>
+    ///   Don't use this to make decisions, use it to display a progress spinner in your UI
+    ///   or somthing similarly inconsequential.
+    /// </remarks>
+    public: bool IsRunning() const;
+
+    /// <summary>Cancels the background job</summary>
+    public: void Cancel();
+
+    /// <summary>
+    ///   Waits for the thread to exit and re-throws any exception that occurred
+    /// </summary>
+    protected: void Join();
+
+    /// <summary>Starts or restarts the background job</summary>
+    /// <remarks>
+    ///   If the background job was already running, this cancels it, then lifts
+    ///   the cancellation and starts it over.
+    /// </remarks>
+    protected: void StartOrRestart();
+
+    /// <summary>Called in the background thread to perform the actual work</summary>
+    /// <param name="canceller">Token by which the operation can be signalled to cancel</param>
+    /// <remarks>
+    ///   If the work being performed takes more than a few milliseconds, you should regularly
+    ///   check if the job has been cancelled. If the job is cancelled, this method should just
+    ///   return. When a restart or another execution is scheduled, the <see cref="DoWork" />
+    ///   method will run on the same thread again right away.
+    /// </remarks>
+    protected: virtual void DoWork(const std::shared_ptr<const StopToken> &canceller) = 0;
+
+    /// <summary>Called in the background thread when <see cref="DoWork" /> exits</summary>
+    /// <remarks>
+    ///   This is fired regardless of whether the <see cref="DoWork" /> method completed
+    ///   normally or exited due to an exception. What you likely want to to here is notify
+    ///   your UI thread to call <see cref="Join" /> in order to either pick up the result
+    ///   or receive the exception, handle it and display an appropriate message to the user.
+    /// </remarks>
+    protected: virtual void WorkFinished() {}
+
+    /// <summary>Thread that is running in the background</summary>
+    /// <remarks>
+    ///   This is used if concurrent job is constructed without a thread pool
+    /// </remarks>
+    private: std::thread backgroundThread;
+    /// <summary>Needs to be be held when changing the state of the thread</summary>
+    private: std::mutex stateMutex;
+    /// <summary>Whether the current thread is still running</summary>
+    private: std::atomic<int> status;
+    /// <summary>Used to wait for the thread to start running</summary>
+    /// <remarks>
+    ///   The <see cref="StartOrRestart" /> method waits until the thread is actually running
+    ///   and has the <see cref="status" /> flag set before returning. That ensures there
+    ///   is no confusion about the state if two threads call <see cref="StartOrRestart" />.
+    /// </remarks>
+    private: std::condition_variable statusChangedCondition;
+    /// <summary>Records any exception that has happened in the background thread</summary>
+    private: std::exception_ptr error;
+
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+}}} // namespace Nuclex::Support::Threading
+
+#endif // NUCLEX_SUPPORT_THREADING_CONCURRENTJOB_H
