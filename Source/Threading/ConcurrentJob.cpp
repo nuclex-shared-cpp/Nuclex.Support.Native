@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Threading/ConcurrentJob.h"
 #include "Nuclex/Support/Threading/StopSource.h"
+#include "Nuclex/Support/Threading/ThreadPool.h"
 
 namespace {
 
@@ -50,6 +51,29 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
   
+  /// <summary>Manages calling the DoWork() method of a concurrent job</summary>
+  /// <param name="self">This pointer of the concurrent job instance</param>
+  /// <param name="doWorkMethod">Pointer to the DoWork() method</param>
+  /// <param name="status">Atomic integer maintaining the concurrent job's status</param>
+  /// <param name="stateMutex">Mutex that must be held when changing the job's state</param>
+  /// <param name="stopTrigger">Souce of stop tokens, changes after each cancel</param>
+  /// <param name="statusChangedCondition">
+  ///   Condition variable by which users of the concurrent job can wait for completion
+  /// </param>
+  /// <param name="error">Records any error that happens in the worker thread</param>
+  /// <remarks>
+  ///   <para>
+  ///     This could as well be a private method, possible with a private static method to
+  ///     call it, but I wanted to keep this part of the implementation out of the public
+  ///     header. There's a lot going on here, including re-running jobs and handling precise
+  ///     state transitions the way the concurrent job class expects them.
+  ///   </para>
+  ///   <para>
+  ///     This kind of implementation is pretty efficient, but it's only feasible for code
+  ///     like this, which provides a set-in-stone helper class that doesn't need to keep
+  ///     evolving and updating its design.
+  ///   </para>
+  /// </remarks>
   void callDoWorkOnConcurrentJob(
     Nuclex::Support::Threading::ConcurrentJob *self,
     void (Nuclex::Support::Threading::ConcurrentJob::*doWorkMethod)(
@@ -159,6 +183,18 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   ConcurrentJob::ConcurrentJob() :
     backgroundThread(),
+    threadPool(nullptr),
+    status(static_cast<int>(Status::Stopped)),
+    stateMutex(),
+    stopTrigger(), // leave empty until needed
+    statusChangedCondition(),
+    error() {}
+
+  // ------------------------------------------------------------------------------------------- //
+
+  ConcurrentJob::ConcurrentJob(ThreadPool &threadPool) :
+    backgroundThread(),
+    threadPool(&threadPool),
     status(static_cast<int>(Status::Stopped)),
     stateMutex(),
     stopTrigger(), // leave empty until needed
@@ -240,21 +276,34 @@ namespace Nuclex { namespace Support { namespace Threading {
     // If, at the time we were holding the lock, no worker was running or
     // scheduled to run, start a new one here.
     if(startNewWorker) {
-      std::thread callDoWorkThread(
-        &callDoWorkOnConcurrentJob,
-        this,
-        &ConcurrentJob::DoWork,
-        &this->status,
-        &this->stateMutex,
-        &this->stopTrigger,
-        &this->statusChangedCondition,
-        &this->error
-      );
+      if(this->threadPool == nullptr) {
+        std::thread callDoWorkThread(
+          &callDoWorkOnConcurrentJob,
+          this,
+          &ConcurrentJob::DoWork,
+          &this->status,
+          &this->stateMutex,
+          &this->stopTrigger,
+          &this->statusChangedCondition,
+          &this->error
+        );
 
-      // If any prior thread was being held, it will be destroyed here.
-      this->backgroundThread.swap(callDoWorkThread);
-      if(callDoWorkThread.joinable()) {
-        callDoWorkThread.join();
+        // If any prior thread was being held, it will be destroyed here.
+        this->backgroundThread.swap(callDoWorkThread);
+        if(callDoWorkThread.joinable()) {
+          callDoWorkThread.join();
+        }
+      } else {
+        this->threadPool->Schedule(
+          &callDoWorkOnConcurrentJob,
+          this,
+          &ConcurrentJob::DoWork,
+          &this->status,
+          &this->stateMutex,
+          &this->stopTrigger,
+          &this->statusChangedCondition,
+          &this->error
+        );
       }
     }
   }

@@ -155,6 +155,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   This is used if concurrent job is constructed without a thread pool
     /// </remarks>
     private: std::thread backgroundThread;
+    /// <summary>If set, the concurrent job uses the thread pool to run workers</summary>
+    private: ThreadPool *threadPool;
     /// <summary>Whether the current thread is still running</summary>
     private: std::atomic<int> status;
     /// <summary>Needs to be be held when changing the state of the thread</summary>

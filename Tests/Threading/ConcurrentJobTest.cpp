@@ -23,6 +23,7 @@ limitations under the License.
 #include "Nuclex/Support/Threading/ConcurrentJob.h"
 #include "Nuclex/Support/Threading/Latch.h"
 #include "Nuclex/Support/Threading/StopToken.h"
+#include "Nuclex/Support/Threading/ThreadPool.h"
 
 #include <gtest/gtest.h>
 
@@ -36,6 +37,16 @@ namespace {
     /// <summary>Initializes a new example job</summary>
     public: ExampleJob() :
       ConcurrentJob(),
+      RunCount(0),
+      WasCanceled(false),
+      ThrowException(false),
+      WaitLatch(0),
+      RunLatch(1) {}
+
+    /// <summary>Initializes a new example job</summary>
+    /// <param name="threadPool">Thread pool the workers will run in</param>
+    public: ExampleJob(Nuclex::Support::Threading::ThreadPool &threadPool) :
+      ConcurrentJob(threadPool),
       RunCount(0),
       WasCanceled(false),
       ThrowException(false),
@@ -172,6 +183,25 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
     EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentJobTest, CanUseTheadPool) {
+    ThreadPool threadPool(1, 2);
+    {
+      ExampleJob test(threadPool);
+      test.ThrowException.store(true, std::memory_order::memory_order_release);
+
+      test.StartOrRestart();
+      EXPECT_THROW(
+        test.Join(),
+        std::length_error
+      );
+
+      EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
+      EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
