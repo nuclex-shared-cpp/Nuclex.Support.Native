@@ -90,6 +90,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       void(const char *, std::size_t)
     > StdErr;
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Initializes a new process without starting it</summary>
     /// <param name="executablePath">
     ///   Executable that should be run, optionally including its path
@@ -129,6 +131,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Kills the external process and waits until it is gone</summary>
     public: NUCLEX_SUPPORT_API ~Process();
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Sets the working directory the child process will start in</summary>
     /// <param name="newWorkingDirectory">
     ///   Initial working directory the child process will use. Set to an empty string
@@ -164,6 +168,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       const std::vector<std::string> &arguments = std::vector<std::string>(),
       bool prependExecutableName = true
     );
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Checks whether the process is still running</summary>
     /// <returns>True if the process was still running, false otherwise</returns>
@@ -212,6 +218,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: NUCLEX_SUPPORT_API void Kill(
       std::chrono::milliseconds patience = std::chrono::milliseconds(5000)
     );
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Sends input to the running process' stdin</summary>
     /// <param name="characters">Characters that will be sent to the process' stdin</param>

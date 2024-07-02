@@ -40,6 +40,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Frees all resources owned by the stop token</summary>
     public: NUCLEX_SUPPORT_API virtual ~StopToken() = default;
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Checks whether a cancellation has occured</summary>
     public: NUCLEX_SUPPORT_API bool IsCanceled() const {
       return this->Canceled.load(std::memory_order::memory_order_relaxed);
@@ -52,6 +54,8 @@ namespace Nuclex { namespace Support { namespace Threading {
         throw Nuclex::Support::Errors::CanceledError(this->CancellationReason);
       }
     }
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Cancellation reason, doubles are cancellation flag if set</summary>
     protected: std::atomic<bool> Canceled;

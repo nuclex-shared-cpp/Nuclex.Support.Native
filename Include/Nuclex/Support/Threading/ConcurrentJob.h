@@ -27,7 +27,7 @@ limitations under the License.
 #include <mutex> // for std::mutex
 #include <condition_variable> // for std::condition_variable
 #include <atomic> // for std::atomic
-#include <chrono> // for std::chrono::milliseconds
+#include <chrono> // for std::chrono::microseconds
 #include <memory> // for std::shared_ptr
 
 namespace Nuclex { namespace Support { namespace Threading {
@@ -98,6 +98,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Cancels the thread if running and frees all resources</summary>
     public: NUCLEX_SUPPORT_API virtual ~ConcurrentJob();
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Whether the background job is current running</summary>
     /// <remarks>
     ///   Don't use this to make decisions, use it to display a progress spinner in your UI
@@ -131,6 +133,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       std::chrono::microseconds patience = std::chrono::microseconds()
     );
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Called in the background thread to perform the actual work</summary>
     /// <param name="canceler">Token by which the operation can be signalled to cancel</param>
     /// <remarks>
@@ -153,6 +157,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     protected: virtual void WorkFinished() {}
 #endif
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Thread that is running in the background</summary>
     /// <remarks>

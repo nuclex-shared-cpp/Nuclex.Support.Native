@@ -60,33 +60,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   Builds a new stop source, required to prevent stack allocations
     /// </suimmary>
     /// <returns>The new stop source</returns>
-    public: NUCLEX_SUPPORT_API static std::shared_ptr<StopSource> Create() {
-      struct ConstructibleStopSource : public StopSource {
-        ConstructibleStopSource() = default;
-        virtual ~ConstructibleStopSource() override = default;
-      };
-      std::shared_ptr<StopSource> result = std::make_shared<ConstructibleStopSource>();
-
-      #if 0
-      // This seems to be a spot where compilers may report an error.
-      // The reason being that, unlike the StopSource::Create() method,
-      // std::static_pointer_cast() does not have access to protected members of
-      // this class, and that includes the protected base class, unfortunately.
-      result->watcher = (
-        std::static_pointer_cast<StopToken, StopSource>(result)
-      );
-      #else
-      // This is pure shared_ptr villainy, but for single-inheritance,
-      // the pointer to base and derived will be at the same address
-      // on all supported compilers, so we can do this and avoid having
-      // to declare the base class as public (which would suck!)
-      //
-      // Make a weak_ptr to a stop token that's actually us in disguise
-      result->watcher = *reinterpret_cast<std::shared_ptr<StopToken> *>(&result);
-      #endif
-
-      return result;
-    }
+    public: NUCLEX_SUPPORT_API static std::shared_ptr<StopSource> Create();
 
     /// <summary>Initializes a new stop source</summary>
     protected: NUCLEX_SUPPORT_API StopSource() = default;
@@ -94,11 +68,15 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Frees all resources used by the stop source</summary>
     public: NUCLEX_SUPPORT_API virtual ~StopSource() override = default;
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Returns the source's stop token</summary>
     /// <returns>The stop token responding to the source</returns>
     public: NUCLEX_SUPPORT_API std::shared_ptr<const StopToken> GetToken() const {
       return this->watcher.lock();
     }
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Triggers the cancellation, signaling the stop token</summary>
     /// <param name="reason">
@@ -113,6 +91,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       this->Canceled.store(true, std::memory_order::memory_order_relaxed);
     }
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Watcher handed out by the <see cref="GetToken" /> method</summary>
     /// <remarks>
     ///   This is actually a weak_ptr to this instance itself under its base class.
@@ -122,6 +102,36 @@ namespace Nuclex { namespace Support { namespace Threading {
     private: std::weak_ptr<StopToken> watcher;
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  inline std::shared_ptr<StopSource> StopSource::Create() {
+    struct ConstructibleStopSource : public StopSource {
+      ConstructibleStopSource() = default;
+      virtual ~ConstructibleStopSource() override = default;
+    };
+    std::shared_ptr<StopSource> result = std::make_shared<ConstructibleStopSource>();
+
+    #if 0
+    // This seems to be a spot where compilers may report an error.
+    // The reason being that, unlike the StopSource::Create() method,
+    // std::static_pointer_cast() does not have access to protected members of
+    // this class, and that includes the protected base class, unfortunately.
+    result->watcher = (
+      std::static_pointer_cast<StopToken, StopSource>(result)
+    );
+    #else
+    // This is pure shared_ptr villainy, but for single-inheritance,
+    // the pointer to base and derived will be at the same address
+    // on all supported compilers, so we can do this and avoid having
+    // to declare the base class as public (which would suck!)
+    //
+    // Make a weak_ptr to a stop token that's actually us in disguise
+    result->watcher = *reinterpret_cast<std::shared_ptr<StopToken> *>(&result);
+    #endif
+
+    return result;
+  }
 
   // ------------------------------------------------------------------------------------------- //
 

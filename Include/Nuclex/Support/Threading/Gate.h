@@ -59,6 +59,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: NUCLEX_SUPPORT_API ~Gate();
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Opens the gate, letting any currently and future threads through</summary>
     public: NUCLEX_SUPPORT_API void Open();
 
@@ -68,6 +70,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Sets the state of the gate to opened or closed</summary>
     /// <param name-"opened">Whether the gate will be opened (true) or closed (false)</param>
     public: NUCLEX_SUPPORT_API void Set(bool opened);
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>
     ///   Waits for the gate to open. Returns immediately if it already is open.
@@ -84,6 +88,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: NUCLEX_SUPPORT_API bool WaitFor(const std::chrono::microseconds &patience) const;
 
     //public: void WaitUntil(const std::chrono::time_point< &patience);
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Structure to hold platform dependent process and file handles</summary>
     private: struct PlatformDependentImplementationData;

@@ -56,6 +56,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: NUCLEX_SUPPORT_API ~Latch();
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Increments the latch, blocking any threads from going through</summary>
     /// <param name="count">Number of times the latch will be incremented</param>
     public: NUCLEX_SUPPORT_API void Post(std::size_t count = 1);
@@ -63,6 +65,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Decrements the latch counter</summary>
     /// <param name="count">Number of times the latch will be decremented</param>
     public: NUCLEX_SUPPORT_API void CountDown(std::size_t count = 1);
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Waits until the latch's count has reached zero</summary>
     /// <remarks>
@@ -89,6 +93,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     ) const;
 
     //public: void WaitUntil(const std::chrono::time_point< &patience);
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Structure to hold platform dependent process and file handles</summary>
     private: struct PlatformDependentImplementationData;

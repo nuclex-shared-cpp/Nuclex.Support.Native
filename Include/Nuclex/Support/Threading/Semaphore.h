@@ -62,9 +62,13 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: NUCLEX_SUPPORT_API ~Semaphore();
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Increments the semaphore, letting one more thread through</summary>
     /// <param name="count">Number of times the semaphore will be incremented</param>
     public: NUCLEX_SUPPORT_API void Post(std::size_t count = 1);
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>
     ///   Waits until the semaphore has a count above zero, then decrements the count
@@ -95,6 +99,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     );
 
     //public: void WaitUntilThenDecrement(const std::chrono::time_point< &patience);
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Structure to hold platform dependent process and file handles</summary>
     private: struct PlatformDependentImplementationData;

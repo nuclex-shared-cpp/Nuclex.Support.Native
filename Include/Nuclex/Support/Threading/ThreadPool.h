@@ -104,6 +104,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <returns>The default maximum number of threads for new thread pools</returns>
     public: NUCLEX_SUPPORT_API static std::size_t GetDefaultMaximumThreadCount();
 
+    // ----------------------------------------------------------------------------------------- //
+
     /// <summary>Initializes a new thread pool</summary>
     /// <param name="minimumThreadCount">
     ///   Number of threads that will be created up-front and always stay active
@@ -118,6 +120,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Stops all threads and frees all resources used</summary>
     public: NUCLEX_SUPPORT_API ~ThreadPool();
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Schedules a task to be executed on a worker thread</summary>
     /// <typeparam name="TMethod">
@@ -171,6 +175,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: template<typename TMethod, typename... TArguments>
     inline std::future<typename std::invoke_result<TMethod, TArguments...>::type>
     Schedule(TMethod &&method, TArguments &&... arguments);
+
+    // ----------------------------------------------------------------------------------------- //
 
     /// <summary>
     ///   Creates (or fetches from the pool) a task with the specified payload size
