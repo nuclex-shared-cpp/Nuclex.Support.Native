@@ -87,23 +87,23 @@ namespace Nuclex { namespace Support { namespace Threading {
   ///     your <see cref="DoWork" /> override stores upon finishing.
   ///   </para>
   /// </remarks>
-  class ConcurrentJob {
+  class NUCLEX_SUPPORT_TYPE ConcurrentJob {
 
     /// <summary>Initializes a new concurrent job</summary>
-    public: ConcurrentJob();
+    public: NUCLEX_SUPPORT_API ConcurrentJob();
     /// <summary>Initializes a new concurrent job using a thread pool thread</summary>
     /// <param name="threadPool">Thread pool in which the concurrent job will run</param>
-    public: ConcurrentJob(ThreadPool &threadPool);
+    public: NUCLEX_SUPPORT_API ConcurrentJob(ThreadPool &threadPool);
 
     /// <summary>Cancels the thread if running and frees all resources</summary>
-    public: virtual ~ConcurrentJob();
+    public: NUCLEX_SUPPORT_API virtual ~ConcurrentJob();
 
     /// <summary>Whether the background job is current running</summary>
     /// <remarks>
     ///   Don't use this to make decisions, use it to display a progress spinner in your UI
     ///   or somthing similarly inconsequential.
     /// </remarks>
-    public: bool IsRunning() const;
+    public: NUCLEX_SUPPORT_API bool IsRunning() const;
 
     /// <summary>Starts or restarts the background job</summary>
     /// <remarks>
@@ -112,10 +112,10 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   <see cref="Join" />, it will continue to block until the background job
     ///   ends without having a restart scheduled.
     /// </remarks>
-    protected: void StartOrRestart();
+    protected: NUCLEX_SUPPORT_API void StartOrRestart();
 
     /// <summary>Cancels the background job</summary>
-    protected: void Cancel();
+    protected: NUCLEX_SUPPORT_API void Cancel();
 
     /// <summary>
     ///   Waits for the thread to exit and re-throws any exception that occurred
@@ -127,7 +127,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   the threading doing the work in the background, it will be re-thrown from this
     ///   method. It is fine to not call Join() at all.
     /// </remarks>
-    protected: bool Join(std::chrono::microseconds patience = std::chrono::microseconds());
+    protected: NUCLEX_SUPPORT_API bool Join(
+      std::chrono::microseconds patience = std::chrono::microseconds()
+    );
 
     /// <summary>Called in the background thread to perform the actual work</summary>
     /// <param name="canceler">Token by which the operation can be signalled to cancel</param>
@@ -137,7 +139,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   return. When a restart or another execution is scheduled, the <see cref="DoWork" />
     ///   method will run on the same thread again right away.
     /// </remarks>
-    protected: virtual void DoWork(const std::shared_ptr<const StopToken> &canceler) = 0;
+    protected: NUCLEX_SUPPORT_API virtual void DoWork(
+      const std::shared_ptr<const StopToken> &canceler
+    ) = 0;
 
 #if 0 // Could be useful if the inherited class wants to signal something with an event
     /// <summary>Called in the background thread when <see cref="DoWork" /> exits</summary>

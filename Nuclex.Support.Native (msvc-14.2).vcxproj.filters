@@ -197,6 +197,9 @@
     <ClInclude Include="Include\Nuclex\Support\Text\UnicodeHelper.h">
       <Filter>Include\Text</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Threading\ConcurrentJob.h">
+      <Filter>Include\Threading</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Threading\Latch.h">
       <Filter>Include\Threading</Filter>
     </ClInclude>
@@ -241,9 +244,6 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Threading\ConcurrentJob.h">
-      <Filter>Include\Threading</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -520,6 +520,9 @@
     <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\lightweightsemaphore.h">
       <Filter>Source\Threading\cameron314-concurrentqueue-1.0.4</Filter>
     </ClInclude>
+    <ClCompile Include="Source\Threading\ConcurrentJob.cpp">
+      <Filter>Source\Threading</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Threading\Latch.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
@@ -582,9 +585,6 @@
     </ClCompile>
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Threading\ConcurrentJob.cpp">
-      <Filter>Source\Threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
