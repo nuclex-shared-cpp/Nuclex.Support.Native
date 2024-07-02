@@ -225,18 +225,17 @@ namespace Nuclex { namespace Support { namespace Threading {
           static_cast<int>(Status::CancelingWithRestart),
           std::memory_order::memory_order_release
         );
-      } else if(currentStatus >= 0) { // If the worker was stopped
+      } else if(currentStatus >= 0) { // If the worker was not running, start a new one
         this->status.store(
           static_cast<int>(Status::Scheduled),
           std::memory_order::memory_order_release
         );
+        if(!static_cast<bool>(this->stopTrigger)) {
+          this->stopTrigger = StopSource::Create();
+        }
         startNewWorker = true;
       }
-
-      if(startNewWorker && !static_cast<bool>(this->stopTrigger)) {
-        this->stopTrigger = StopSource::Create();
-      }
-    }
+    } // mutex lock
 
     // If, at the time we were holding the lock, no worker was running or
     // scheduled to run, start a new one here.

@@ -38,9 +38,9 @@ namespace {
       ConcurrentJob(),
       RunCount(0),
       WasCanceled(false),
+      ThrowException(false),
       WaitLatch(0),
-      RunLatch(1),
-      ThrowException(false) {}
+      RunLatch(1) {}
 
     public: using ConcurrentJob::StartOrRestart;
     public: using ConcurrentJob::Join;
@@ -70,7 +70,7 @@ namespace {
           this->WasCanceled.store(true, std::memory_order::memory_order_release);
           break;
         }
-        this->WaitLatch.WaitFor(std::chrono::microseconds(250));
+        this->WaitLatch.WaitFor(std::chrono::microseconds(2500));
       }
     }
 
@@ -128,10 +128,12 @@ namespace Nuclex { namespace Support { namespace Threading {
     test.WaitLatch.Post(); // lock the latch
 
     test.StartOrRestart();
-    bool wasRunning = test.RunLatch.WaitFor(std::chrono::microseconds(300));
+    bool wasRunning = test.RunLatch.WaitFor(std::chrono::microseconds(25000));
     test.Cancel();
     test.Join();
 
+    // If this fails with wasRunning==false, RunCount==0, then the background job didn't
+    // start within the 25 milliseconds given for it to launch.
     EXPECT_TRUE(wasRunning);
     EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
     EXPECT_TRUE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
@@ -144,11 +146,13 @@ namespace Nuclex { namespace Support { namespace Threading {
     test.WaitLatch.Post(); // lock the latch
 
     test.StartOrRestart();
-    bool wasRunning = test.RunLatch.WaitFor(std::chrono::microseconds(300));
+    bool wasRunning = test.RunLatch.WaitFor(std::chrono::microseconds(25000));
     test.StartOrRestart();
     test.WaitLatch.CountDown();
     test.Join();
 
+    // If this fails with wasRunning==false, RunCount==0, then the background job didn't
+    // start within the 25 milliseconds given for it to launch.
     EXPECT_TRUE(wasRunning);
     EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 2U);
     EXPECT_TRUE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
