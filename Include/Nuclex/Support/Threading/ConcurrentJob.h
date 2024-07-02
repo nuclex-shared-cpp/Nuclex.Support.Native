@@ -96,7 +96,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: ConcurrentJob(ThreadPool &threadPool);
 
     /// <summary>Cancels the thread if running and frees all resources</summary>
-    public: virtual ~ConcurrentJob() = default;
+    public: virtual ~ConcurrentJob();
 
     /// <summary>Whether the background job is current running</summary>
     /// <remarks>
@@ -127,17 +127,17 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   the threading doing the work in the background, it will be re-thrown from this
     ///   method. It is fine to not call Join() at all.
     /// </remarks>
-    protected: bool Join(std::chrono::milliseconds patience = std::chrono::milliseconds());
+    protected: bool Join(std::chrono::microseconds patience = std::chrono::microseconds());
 
     /// <summary>Called in the background thread to perform the actual work</summary>
-    /// <param name="canceller">Token by which the operation can be signalled to cancel</param>
+    /// <param name="canceler">Token by which the operation can be signalled to cancel</param>
     /// <remarks>
     ///   If the work being performed takes more than a few milliseconds, you should regularly
     ///   check if the job has been cancelled. If the job is cancelled, this method should just
     ///   return. When a restart or another execution is scheduled, the <see cref="DoWork" />
     ///   method will run on the same thread again right away.
     /// </remarks>
-    protected: virtual void DoWork(const std::shared_ptr<const StopToken> &canceller) = 0;
+    protected: virtual void DoWork(const std::shared_ptr<const StopToken> &canceler) = 0;
 
 #if 0 // Could be useful if the inherited class wants to signal something with an event
     /// <summary>Called in the background thread when <see cref="DoWork" /> exits</summary>

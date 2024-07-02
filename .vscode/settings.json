@@ -4,6 +4,7 @@
     "files.exclude": {
         "bin": true,
         "obj": true,
+        ".vs": true,
         "*.vcxproj": true,
         "*.vcxproj.filters": true,
         "*.vcxproj.user": true,

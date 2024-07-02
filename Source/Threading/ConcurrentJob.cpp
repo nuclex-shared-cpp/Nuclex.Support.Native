@@ -167,6 +167,36 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
+  ConcurrentJob::~ConcurrentJob() {
+    Cancel();
+
+    // Wait until the background thread has finished. We could use Join() here,
+    // but we don't want an exception to be re-thrown in the destructor.    
+    for(;;) {
+
+      // Mutex lock scope
+      {
+        std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
+
+        int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+        if(currentStatus >= 0) {
+          break;
+        }
+
+        this->statusChangedCondition.wait(stateMutexScope);
+      }
+
+    } // for(;;)
+
+    // Finally, if the background thread was running, join it to prevent
+    // the platform's standard C++ library from calling std::terminate() out of frustration.
+    if(this->backgroundThread.joinable()) {
+      this->backgroundThread.join();
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   bool ConcurrentJob::IsRunning() const {
     int currentStatus = this->status.load(std::memory_order::memory_order_relaxed);
     return (currentStatus < 0);
@@ -202,6 +232,10 @@ namespace Nuclex { namespace Support { namespace Threading {
         );
         startNewWorker = true;
       }
+
+      if(startNewWorker && !static_cast<bool>(this->stopTrigger)) {
+        this->stopTrigger = StopSource::Create();
+      }
     }
 
     // If, at the time we were holding the lock, no worker was running or
@@ -219,8 +253,10 @@ namespace Nuclex { namespace Support { namespace Threading {
       );
 
       // If any prior thread was being held, it will be destroyed here.
-      // The thread wasn't running, so 
       this->backgroundThread.swap(callDoWorkThread);
+      if(callDoWorkThread.joinable()) {
+        callDoWorkThread.join();
+      }
     }
   }
 
@@ -251,7 +287,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   bool ConcurrentJob::Join(
-    std::chrono::milliseconds patience /* = std::chrono::milliseconds() */
+    std::chrono::microseconds patience /* = std::chrono::microseconds() */
   ) {
     std::chrono::time_point end = std::chrono::steady_clock::now() + patience;
     for(;;) {
@@ -297,6 +333,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       } // mutex scope
 
     } // for(;;)
+
+    // Could call thread::join() here, but another thread might have called StartOrRestaty()
+    // already and we'd be sitting here until the whole operation is done...
   }
 
   // ------------------------------------------------------------------------------------------- //
