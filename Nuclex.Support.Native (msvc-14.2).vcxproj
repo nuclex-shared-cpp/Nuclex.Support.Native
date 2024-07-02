@@ -235,6 +235,7 @@
     <ClInclude Include="Include\Nuclex\Support\Text\StringConverter.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\StringMatcher.h" />
     <ClInclude Include="Include\Nuclex\Support\Text\UnicodeHelper.h" />
+    <ClInclude Include="Include\Nuclex\Support\Threading\ConcurrentJob.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Latch.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Gate.h" />
     <ClInclude Include="Include\Nuclex\Support\Threading\Process.h" />
@@ -342,6 +343,7 @@
     <ClCompile Include="Source\Text\UnicodeHelper.cpp" />
     <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\concurrentqueue.h" />
     <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\lightweightsemaphore.h" />
+    <ClCompile Include="Source\Threading\ConcurrentJob.cpp" />
     <ClCompile Include="Source\Threading\Latch.cpp" />
     <ClCompile Include="Source\Threading\Gate.cpp" />
     <ClCompile Include="Source\Threading\Process.Linux.cpp" />

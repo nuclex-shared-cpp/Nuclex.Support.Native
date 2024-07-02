@@ -251,6 +251,9 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Threading\ConcurrentJob.h">
+      <Filter>Include\Threading</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Collection.cpp">
@@ -582,6 +585,9 @@
     </ClCompile>
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Threading\ConcurrentJob.cpp">
+      <Filter>Source\Threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
