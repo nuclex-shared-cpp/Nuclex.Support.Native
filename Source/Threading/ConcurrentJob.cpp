@@ -32,18 +32,19 @@ namespace {
 
     /// <summary>Concurrent job is stopped</summary>
     Stopped = 0,
-    /// <summary>Concurrent job is waiting to run</summary>
-    Scheduled,
-    /// <summary>Concurrent job is currently executing</summary>
-    Running,
-    /// <summayr>Concurrent job is executing and was signaled to cancel</summary>
-    Canceled,
-    /// <summayr>Concurrent job is executing, canceled and should restart immediately</summary>
-    CanceledWithRestart,
     /// <summary>Concurrent job encountered an error and stopped</summary>
-    Failed,
+    Failed = 1,
     /// <summary>Concurrent job ran and completed without encountering an error</summary>
-    Succeeded
+    Succeeded = 2,
+
+    /// <summary>Concurrent job is waiting to run</summary>
+    Scheduled = -1,
+    /// <summary>Concurrent job is currently executing</summary>
+    Running = -2,
+    /// <summayr>Concurrent job is executing and was signaled to cancel</summary>
+    Canceling = -3,
+    /// <summayr>Concurrent job is executing, canceled and should restart immediately</summary>
+    CancelingWithRestart = -4
 
   };
 
@@ -55,22 +56,96 @@ namespace {
       const std::shared_ptr<const Nuclex::Support::Threading::StopToken> &stopToken
     ),
     std::atomic<int> *status,
+    std::mutex *stateMutex,
+    std::shared_ptr<Nuclex::Support::Threading::StopSource> *stopTrigger,
     std::condition_variable *statusChangedCondition,
     std::exception_ptr *error
   ) {
-    std::shared_ptr<Nuclex::Support::Threading::StopSource> stopSource(
-      Nuclex::Support::Threading::StopSource::Create()
-    );
 
-    status->store(true, std::memory_order::memory_order_release);
-    statusChangedCondition->notify_all();
-    try {
-      (self->*doWorkMethod)(stopSource->GetToken());
-    }
-    catch(const std::exception &) {
-      *error = std::current_exception();
-    }
-    status->store(false, std::memory_order::memory_order_release);
+    // Update the job's state to 'Running' and pick up the currently valid
+    // stop token (it will be replaced by a new one if cancellation was used).
+    std::shared_ptr<const Nuclex::Support::Threading::StopToken> stopToken;
+    {
+      bool notifyAllAndReturn = false;
+      {
+        std::unique_lock<std::mutex> stateMutexScope(*stateMutex);
+
+        int currentStatus = status->load(std::memory_order::memory_order_consume);
+        if(currentStatus == static_cast<int>(Status::Canceling)) {
+          status->store(
+            static_cast<int>(Status::Stopped),
+            std::memory_order::memory_order_release
+          );
+          notifyAllAndReturn = true;
+        } else {
+          status->store(
+            static_cast<int>(Status::Running),
+            std::memory_order::memory_order_release
+          );
+
+          stopToken = stopTrigger->get()->GetToken();
+        }
+      } // mutex lock
+
+      if(notifyAllAndReturn) {
+        statusChangedCondition->notify_all();
+        return;
+      }
+    } // scope for notifyAllAndReturn
+
+    // We run the status wrangling and DoWork() invocation in a loop because it may be
+    // restarted any number of times and we handle this here to reduce the complexity
+    // (and chance for mistakes) of the user's overriden DoWork() implementation.
+    for(;;) {
+
+      // Invoke the DoWork() method to let the derived class do its background work.
+      std::exception_ptr currentError;
+      try {
+        (self->*doWorkMethod)(stopToken);
+      }
+      catch(const std::exception &) {
+        currentError = std::current_exception();
+      }
+
+      // The DoWork() method returned, one way or another. If a restart was pending,
+      // we'll just clear the cancel status and run it again right away. Otherwise,
+      // a transition to either the succeeded or failed state is needed.
+      {
+        std::unique_lock<std::mutex> stateMutexScope(*stateMutex);
+
+        int currentStatus = status->load(std::memory_order::memory_order_consume);
+        if(currentStatus == static_cast<int>(Status::CancelingWithRestart)) {
+          status->store(
+            static_cast<int>(Status::Running),
+            std::memory_order::memory_order_release
+          );
+
+          // If the status was 'Canceling' or 'CancelingWithRestart', a new stop source
+          // will have been created to provide a fresh, uncanceled stop token
+          stopToken = stopTrigger->get()->GetToken();
+          continue;
+        }
+
+        // The DoWork() method exited and no restart was scheduled, so the concurrent job
+        // is now done and remains in either the failed or succeeded state.
+        if(static_cast<bool>(currentError)) {
+          *error = currentError;
+          status->store(
+            static_cast<int>(Status::Failed),
+            std::memory_order::memory_order_release
+          );
+        } else {
+          status->store(
+            static_cast<int>(Status::Succeeded),
+            std::memory_order::memory_order_release
+          );
+        }
+
+        break;
+      } // mutex lock
+
+    } // for(;;)
+
     statusChangedCondition->notify_all();
   }
 
@@ -84,8 +159,9 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   ConcurrentJob::ConcurrentJob() :
     backgroundThread(),
-    stateMutex(),
     status(static_cast<int>(Status::Stopped)),
+    stateMutex(),
+    stopTrigger(), // leave empty until needed
     statusChangedCondition(),
     error() {}
 
@@ -93,26 +169,134 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   bool ConcurrentJob::IsRunning() const {
     int currentStatus = this->status.load(std::memory_order::memory_order_relaxed);
-    return (
-      (currentStatus == static_cast<int>(Status::Scheduled)) ||
-      (currentStatus == static_cast<int>(Status::Running)) ||
-      (currentStatus == static_cast<int>(Status::Canceled)) ||
-      (currentStatus == static_cast<int>(Status::CanceledWithRestart))
-    );
+    return (currentStatus < 0);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void ConcurrentJob::StartOrRestart() {
-    std::thread callDoWorkThread(
-      &callDoWorkOnConcurrentJob,
-      this,
-      &ConcurrentJob::DoWork,
-      &this->status,
-      &this->statusChangedCondition,
-      &this->error
-    );
-    this->backgroundThread.swap(callDoWorkThread);
+
+    // Figure out if we can order the already running worker to cancel and restart
+    // or whether we have to schedule a new execution of the worker.
+    bool startNewWorker = false;
+    {
+      std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
+
+      int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+      if(currentStatus == static_cast<int>(Status::Running)) {
+        this->status.store( // Currently running, cancel and repeat DoWork() call
+          static_cast<int>(Status::CancelingWithRestart),
+          std::memory_order::memory_order_release
+        );
+        this->stopTrigger->Cancel();
+        this->stopTrigger = StopSource::Create();
+      } else if(currentStatus == static_cast<int>(Status::Canceling)) {
+        this->status.store( // Already canceled, ask to repeat DoWork() call
+          static_cast<int>(Status::CancelingWithRestart),
+          std::memory_order::memory_order_release
+        );
+      } else if(currentStatus >= 0) { // If the worker was stopped
+        this->status.store(
+          static_cast<int>(Status::Scheduled),
+          std::memory_order::memory_order_release
+        );
+        startNewWorker = true;
+      }
+    }
+
+    // If, at the time we were holding the lock, no worker was running or
+    // scheduled to run, start a new one here.
+    if(startNewWorker) {
+      std::thread callDoWorkThread(
+        &callDoWorkOnConcurrentJob,
+        this,
+        &ConcurrentJob::DoWork,
+        &this->status,
+        &this->stateMutex,
+        &this->stopTrigger,
+        &this->statusChangedCondition,
+        &this->error
+      );
+
+      // If any prior thread was being held, it will be destroyed here.
+      // The thread wasn't running, so 
+      this->backgroundThread.swap(callDoWorkThread);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void ConcurrentJob::Cancel() {
+    std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
+
+    int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+    if(
+      (currentStatus == static_cast<int>(Status::Running)) ||
+      (currentStatus == static_cast<int>(Status::Scheduled))
+    ) {
+      this->status.store(
+        static_cast<int>(Status::Canceling),
+        std::memory_order::memory_order_release
+      );
+      this->stopTrigger->Cancel();
+      this->stopTrigger = StopSource::Create();
+    } else if(currentStatus == static_cast<int>(Status::CancelingWithRestart)) {
+      this->status.store(
+        static_cast<int>(Status::Canceling),
+        std::memory_order::memory_order_release
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool ConcurrentJob::Join(
+    std::chrono::milliseconds patience /* = std::chrono::milliseconds() */
+  ) {
+    std::chrono::time_point end = std::chrono::steady_clock::now() + patience;
+    for(;;) {
+      
+      // Extra scope for mutex so it is dropped and reacquired (needlessly?).
+      // The condition_variable::wait_until() will already make the mutex lockable
+      // for the background thread, but this feels less spooky to me.
+      {
+        std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
+
+        int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+        switch(currentStatus) {
+          case static_cast<int>(Status::Stopped): {
+            return true;
+          }
+          case static_cast<int>(Status::Succeeded): {
+            this->status.store(
+              static_cast<int>(Status::Stopped),
+              std::memory_order::memory_order_release
+            );
+            return true;
+          }
+          case static_cast<int>(Status::Failed): {
+            this->status.store(
+              static_cast<int>(Status::Stopped),
+              std::memory_order::memory_order_release
+            );
+            std::rethrow_exception(this->error);
+          }
+        }
+
+        // This will open the mutex for other threads to enter and wait until the condition
+        // variable is signaled. The worker thread signals the condition variable whenever
+        // a status change occurs that would be intersting to this specific line of code.
+        if(patience.count() == 0) {
+          this->statusChangedCondition.wait(stateMutexScope);
+        } else {
+          std::cv_status result = this->statusChangedCondition.wait_until(stateMutexScope, end);
+          if(result == std::cv_status::timeout) {
+            return false; // If the wait timed out, 
+          }
+        }
+      } // mutex scope
+
+    } // for(;;)
   }
 
   // ------------------------------------------------------------------------------------------- //

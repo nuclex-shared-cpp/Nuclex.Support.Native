@@ -23,17 +23,19 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 
 #include <exception> // for std::exception
-#include <optional> // for std::optional
 #include <thread> // for std::thread
 #include <mutex> // for std::mutex
 #include <condition_variable> // for std::condition_variable
 #include <atomic> // for std::atomic
+#include <chrono> // for std::chrono::milliseconds
+#include <memory> // for std::shared_ptr
 
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
   class ThreadPool;
+  class StopSource;
   class StopToken;
 
   // ------------------------------------------------------------------------------------------- //
@@ -61,6 +63,29 @@ namespace Nuclex { namespace Support { namespace Threading {
   ///     <see cref="IsRunning" /> flag set to true and it catches exceptions and re-throws
   ///     them when you join with the background thread.
   ///   </para>
+  ///   <para>
+  ///     The <see cref="StartOrRestart" />, <see cref="Cancel" /> and <see cref="Join" />
+  ///     methods are protected in this class. This is intentional to give you control over
+  ///     what methods will be exposed publicly in your inheriting class. If these methods
+  ///     are okay for your case to have in your inheriting class' public interface, simply
+  ///     write three using statements to expose them:
+  ///   <para>
+  ///   <example>
+  ///     <code>
+  ///       class MyBackgroundOperation : public ConcurrentJob {
+  ///         // ...
+  ///         public: using ConcurrentJob::StartOrRestart();
+  ///         public: using ConcurrentJob::Cancel();
+  ///         public: using ConcurrentJob::Join();
+  ///         // ..
+  ///       };
+  ///     </code>
+  ///   </example>
+  ///   <para>
+  ///     Though in any case where your background operation has a result it returns, you
+  ///     probably want to at least wrap <see cref="Join" /> with a custom return value that
+  ///     your <see cref="DoWork" /> override stores upon finishing.
+  ///   </para>
   /// </remarks>
   class ConcurrentJob {
 
@@ -80,20 +105,29 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: bool IsRunning() const;
 
+    /// <summary>Starts or restarts the background job</summary>
+    /// <remarks>
+    ///   If the background job was already running, this cancels it, then lifts
+    ///   the cancellation and starts over. If another thread is blocking on
+    ///   <see cref="Join" />, it will continue to block until the background job
+    ///   ends without having a restart scheduled.
+    /// </remarks>
+    protected: void StartOrRestart();
+
     /// <summary>Cancels the background job</summary>
-    public: void Cancel();
+    protected: void Cancel();
 
     /// <summary>
     ///   Waits for the thread to exit and re-throws any exception that occurred
     /// </summary>
-    protected: void Join();
-
-    /// <summary>Starts or restarts the background job</summary>
+    /// <param name="patience">Maximum amount of time to wait for the job to finish</param>
+    /// <returns>True if the job finished, false if the patience time was exceeded</returns>
     /// <remarks>
-    ///   If the background job was already running, this cancels it, then lifts
-    ///   the cancellation and starts it over.
+    ///   This method should only be called by one thread. If an exception happened inside
+    ///   the threading doing the work in the background, it will be re-thrown from this
+    ///   method. It is fine to not call Join() at all.
     /// </remarks>
-    protected: void StartOrRestart();
+    protected: bool Join(std::chrono::milliseconds patience = std::chrono::milliseconds());
 
     /// <summary>Called in the background thread to perform the actual work</summary>
     /// <param name="canceller">Token by which the operation can be signalled to cancel</param>
@@ -105,6 +139,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     protected: virtual void DoWork(const std::shared_ptr<const StopToken> &canceller) = 0;
 
+#if 0 // Could be useful if the inherited class wants to signal something with an event
     /// <summary>Called in the background thread when <see cref="DoWork" /> exits</summary>
     /// <remarks>
     ///   This is fired regardless of whether the <see cref="DoWork" /> method completed
@@ -113,16 +148,19 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   or receive the exception, handle it and display an appropriate message to the user.
     /// </remarks>
     protected: virtual void WorkFinished() {}
+#endif
 
     /// <summary>Thread that is running in the background</summary>
     /// <remarks>
     ///   This is used if concurrent job is constructed without a thread pool
     /// </remarks>
     private: std::thread backgroundThread;
-    /// <summary>Needs to be be held when changing the state of the thread</summary>
-    private: std::mutex stateMutex;
     /// <summary>Whether the current thread is still running</summary>
     private: std::atomic<int> status;
+    /// <summary>Needs to be be held when changing the state of the thread</summary>
+    private: std::mutex stateMutex;
+    /// <summary>Used to ask background worker to cancel when needed</summary>
+    private: std::shared_ptr<StopSource> stopTrigger;
     /// <summary>Used to wait for the thread to start running</summary>
     /// <remarks>
     ///   The <see cref="StartOrRestart" /> method waits until the thread is actually running
