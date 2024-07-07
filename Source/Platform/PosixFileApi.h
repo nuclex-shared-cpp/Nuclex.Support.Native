@@ -49,8 +49,9 @@ namespace Nuclex { namespace Support { namespace Platform {
 
     /// <summary>Creates or opens the specified file for exclusive writing</summary>
     /// <param name="path">Path of the file that will be opened</param>
+    /// <param name="truncate">Whether the existing file contents are truncated</param>
     /// <returns>A pointer representing the opened file</returns>
-    public: static FILE *OpenFileForWriting(const std::string &path);
+    public: static FILE *OpenFileForWriting(const std::string &path, bool truncate);
 
     /// <summary>Reads data from the specified file</summary>
     /// <param name="file">File from which data will be read</param>

@@ -53,7 +53,9 @@ namespace Nuclex { namespace Support { namespace Platform {
     TemporaryFileScope tempFile;
 
     {
-      ::FILE *filePointer = PosixFileApi::OpenFileForWriting(tempFile.GetPath().c_str());
+      ::FILE *filePointer = PosixFileApi::OpenFileForWriting(
+        tempFile.GetPath().c_str(), false
+      );
       ASSERT_NE(filePointer, nullptr);
       ON_SCOPE_EXIT {
         ::fclose(filePointer);
@@ -106,7 +108,9 @@ namespace Nuclex { namespace Support { namespace Platform {
     TemporaryFileScope tempFile;
 
     {
-      ::FILE *filePointer = PosixFileApi::OpenFileForWriting(tempFile.GetPath().c_str());
+      ::FILE *filePointer = PosixFileApi::OpenFileForWriting(
+        tempFile.GetPath().c_str(), false
+      );
       ASSERT_NE(filePointer, nullptr);
       ON_SCOPE_EXIT {
         ::fclose(filePointer);

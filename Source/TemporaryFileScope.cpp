@@ -25,14 +25,16 @@ limitations under the License.
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 #include "Nuclex/Support/ScopeGuard.h" // Closing opened files even if exceptions happen
 #include "Nuclex/Support/Text/StringConverter.h" // Conversion between UTF-8 and wide char
-#include "Platform/WindowsApi.h" // Minimalist Windows.h and error handling helpers
-#include "Platform/WindowsPathApi.h" // Basic path manipulation required to join directories
-#include "Platform/WindowsFileApi.h" // Opening files and reading/writing them
-#else
-#include "Platform/PosixApi.h" // Posix error handling
-#include "Platform/PosixPathApi.h" // Basic posix path manipulation for temp directory access
-#include "Platform/LinuxFileApi.h" // Opening files and reading/writing them
+#include "./Platform/WindowsApi.h" // Minimalist Windows.h and error handling helpers
+#include "./Platform/WindowsPathApi.h" // Basic path manipulation required to join directories
+#include "./Platform/WindowsFileApi.h" // Opening files and reading/writing them
+#elif defined(NUCLEX_SUPPORT_LINUX)
+#include "./Platform/LinuxFileApi.h" // Opening files and reading/writing them
+#endif
 
+#if !defined(NUCLEX_SUPPORT_WINDOWS)
+#include "./Platform/PosixApi.h" // Posix error handling
+#include "./Platform/PosixPathApi.h" // Basic posix path manipulation for temp directory access
 #include <unistd.h> // for ::write(), ::close(), ::unlink()
 #include <cstdlib> // for ::getenv(), ::mkdtemp()
 #endif
@@ -56,8 +58,8 @@ namespace {
       Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
 
       std::string::size_type length = path.size();
-      if(path[length -1] != '/') {
-        path.push_back('/');
+      if(path[length -1] != u8'/') {
+        path.push_back(u8'/');
       }
     }
 
@@ -162,7 +164,7 @@ namespace Nuclex { namespace Support {
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result != FALSE) && u8"Temporary file is successfully deleted after use");
     }
-#else
+#elif defined(NUCLEX_SUPPORT_LINUX)
     int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
 
     // Close the file so we don't leak handles
@@ -200,7 +202,7 @@ namespace Nuclex { namespace Support {
     Platform::WindowsFileApi::Write(fileHandle, contents, byteCount);
     Platform::WindowsFileApi::SetLengthToFileCursor(fileHandle);
     Platform::WindowsFileApi::FlushFileBuffers(fileHandle);
-#else
+#elif defined(NUCLEX_SUPPORT_LINUX)
     int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
     assert((fileDescriptor != 0) && u8"File is opened and accessible");
 

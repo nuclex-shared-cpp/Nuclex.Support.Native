@@ -32,6 +32,7 @@ limitations under the License.
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
 #include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
+#include <pthread.h> // for ::pthread_cond_init() etc.
 #endif
 
 #include <atomic> // for std::atomic
@@ -104,9 +105,9 @@ namespace Nuclex { namespace Support { namespace Threading {
   Latch::PlatformDependentImplementationData::PlatformDependentImplementationData(
     std::size_t initialCount
   ) :
-    Countdown(initialCount),
     Condition(),
-    Mutex() {
+    Mutex(),
+    Countdown(initialCount) {
 
     // Attribute necessary to use CLOCK_MONOTONIC for condition variable timeouts
     ::pthread_condattr_t *monotonicClockAttribute = (

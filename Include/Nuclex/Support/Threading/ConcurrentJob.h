@@ -22,6 +22,8 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
+#if defined(NUCLEX_SUPPORT_WINDOWS) || defined(NUCLEX_SUPPORT_LINUX)
+
 #include <exception> // for std::exception
 #include <thread> // for std::thread
 #include <mutex> // for std::mutex
@@ -188,5 +190,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading
+
+#endif // defined(NUCLEX_SUPPORT_WINDOWS) || defined(NUCLEX_SUPPORT_LINUX)
 
 #endif // NUCLEX_SUPPORT_THREADING_CONCURRENTJOB_H

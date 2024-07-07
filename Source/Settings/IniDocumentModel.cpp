@@ -150,17 +150,23 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void IniDocumentModel::Serialize(
+  std::size_t IniDocumentModel::Serialize(
     void *context, void write(void *context, const std::uint8_t *, std::size_t)
   ) const {
-    if(this->firstLine != nullptr) {
+    if(this->firstLine == nullptr) {
+      return 0;
+    } else {
       write(context, this->firstLine->Contents, this->firstLine->Length);
+      std::size_t bytesWritten = this->firstLine->Length;
 
       Line *nextLine = this->firstLine->Next;
       while(nextLine != this->firstLine) {
         write(context, nextLine->Contents, nextLine->Length);
+        bytesWritten += nextLine->Length;
         nextLine = nextLine->Next;
       }
+
+      return bytesWritten;
     }
   }
 

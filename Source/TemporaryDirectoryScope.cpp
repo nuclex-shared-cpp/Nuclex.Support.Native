@@ -331,7 +331,7 @@ namespace Nuclex { namespace Support {
       Platform::WindowsFileApi::Write(fileHandle, contents, byteCount);
       Platform::WindowsFileApi::FlushFileBuffers(fileHandle);
     }
-#else
+#elif defined(NUCLEX_SUPPORT_LINUX)
     {
       int fileDescriptor = Platform::LinuxFileApi::OpenFileForWriting(fullPath);
       ON_SCOPE_EXIT {
@@ -387,7 +387,7 @@ namespace Nuclex { namespace Support {
         }
       }
     }
-#else
+#elif defined(NUCLEX_SUPPORT_LINUX)
     {
       int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(fullPath);
       ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
@@ -449,7 +449,7 @@ namespace Nuclex { namespace Support {
         }
       }
     }
-#else
+#elif defined(NUCLEX_SUPPORT_LINUX)
     {
       int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(fullPath);
       ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };

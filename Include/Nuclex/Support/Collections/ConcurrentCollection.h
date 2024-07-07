@@ -50,6 +50,15 @@ limitations under the License.
 // https://github.com/cameron314/concurrentqueue
 //
 
+// DESIGN: I think this design isn't optimal.
+//   A multi-multi collection could be a stand-in for a single-single collection,
+//   but with this design, they're mutually exclusive. It might be better to
+//   inherit one from the other, so a ConcurrentCollection<SingleSingle> becomes
+//   the base class for a ConcurrentCollection<SingleMulti> which then is the base
+//   class to ConcurrentCollection<MultiMulti>.
+//
+// Can this be represented differently, with traits of concepts?
+
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
@@ -81,6 +90,8 @@ namespace Nuclex { namespace Support { namespace Collections {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Collection that can safely be used from multiple threads</summary>
+  /// <typeparam name="TElement">Type of elements stored in the collection</typeparam>
+  /// <typeparam name="accessBehavior">How the collection may be accesed by threads</typeparam>
   template<
     typename TElement,
     ConcurrentAccessBehavior accessBehavior = (

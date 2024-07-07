@@ -159,8 +159,11 @@ namespace Nuclex { namespace Support { namespace Settings {
       int fileDescriptor = Platform::LinuxFileApi::OpenFileForWriting(iniFilePath);
       ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
 
-      if(this->privateImplementationData != nullptr) {
-        reinterpret_cast<const IniDocumentModel *>(
+      std::size_t bytesWritten;
+      if(this->privateImplementationData == nullptr) {
+        bytesWritten = 0;
+      } else {
+        bytesWritten = reinterpret_cast<const IniDocumentModel *>(
           this->privateImplementationData
         )->Serialize(
           &fileDescriptor,
@@ -172,6 +175,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         );
       }
 
+      Platform::LinuxFileApi::SetLength(fileDescriptor, bytesWritten);
       Platform::LinuxFileApi::Flush(fileDescriptor);
     }
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
@@ -179,10 +183,8 @@ namespace Nuclex { namespace Support { namespace Settings {
       ::HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(iniFilePath);
       ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
 
-      if(this->privateImplementationData != nullptr) {
-        reinterpret_cast<const IniDocumentModel *>(
-          this->privateImplementationData
-        )->Serialize(
+      if(this->privateImplementationData == nullptr) {
+        reinterpret_cast<const IniDocumentModel *>(this->privateImplementationData)->Serialize(
           &fileHandle,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
             Platform::WindowsFileApi::Write(
@@ -192,15 +194,19 @@ namespace Nuclex { namespace Support { namespace Settings {
         );
       }
 
+      Platform::WindowsFileApi::SetLengthToFileCursor(fileHandle);
       Platform::WindowsFileApi::FlushFileBuffers(fileHandle);
     }
 #else
     {
-      ::FILE *file = Platform::PosixFileApi::OpenFileForWriting(iniFilePath);
+      ::FILE *file = Platform::PosixFileApi::OpenFileForWriting(iniFilePath, true);
       ON_SCOPE_EXIT { Platform::PosixFileApi::Close(file); };
 
-      if(this->privateImplementationData != nullptr) {
-        reinterpret_cast<const IniDocumentModel *>(
+      std::size_t bytesWritten;
+      if(this->privateImplementationData == nullptr) {
+        bytesWritten = 0;
+      } else {
+        bytesWritten = reinterpret_cast<const IniDocumentModel *>(
           this->privateImplementationData
         )->Serialize(
           file,
@@ -212,6 +218,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         );
       }
 
+      //Platform::PosixFileApi::SetLength(file, bytesWritten);
       Platform::PosixFileApi::Flush(file);
     }
 #endif

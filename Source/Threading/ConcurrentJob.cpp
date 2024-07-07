@@ -21,6 +21,9 @@ limitations under the License.
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Threading/ConcurrentJob.h"
+
+#if defined(NUCLEX_SUPPORT_WINDOWS) || defined(NUCLEX_SUPPORT_LINUX)
+
 #include "Nuclex/Support/Threading/StopSource.h"
 #include "Nuclex/Support/Threading/ThreadPool.h"
 
@@ -389,3 +392,5 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Threading
+
+#endif // defined(NUCLEX_SUPPORT_WINDOWS) || defined(NUCLEX_SUPPORT_LINUX)

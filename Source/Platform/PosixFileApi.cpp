@@ -61,8 +61,8 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  FILE *PosixFileApi::OpenFileForWriting(const std::string &path) {
-    static const char *fileMode = "w+b";
+  FILE *PosixFileApi::OpenFileForWriting(const std::string &path, bool truncate) {
+    static const char *fileMode = truncate ? "wb" : "w+b";
 
     FILE *file = ::fopen(path.c_str(), fileMode);
     if(unlikely(file == nullptr)) {

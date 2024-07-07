@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "../../Source/Platform/LinuxFileApi.h"
 
-#if !defined(NUCLEX_SUPPORT_WINDOWS)
+#if defined(NUCLEX_SUPPORT_LINUX)
 
 #include "Nuclex/Support/TemporaryFileScope.h"
 #include "Nuclex/Support/ScopeGuard.h"
@@ -152,4 +152,4 @@ namespace Nuclex { namespace Support { namespace Platform {
 
 }}} // namespace Nuclex::Support::Platform
 
-#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
+#endif // defined(NUCLEX_SUPPORT_LINUX)

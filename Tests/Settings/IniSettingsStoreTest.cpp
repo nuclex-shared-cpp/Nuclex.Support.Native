@@ -338,4 +338,16 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(IniSettingsStoreTest, ItIsntShit) {
+    IniSettingsStore settings;
+
+    settings.Store<std::string>(std::string(), u8"SomeValue", u8"A very long text that will get lost");
+    settings.Store<std::string>(std::string(), u8"SomeValue", u8"Short text");
+
+    settings.Save(u8"/tmp/bockmist.ini");
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Settings

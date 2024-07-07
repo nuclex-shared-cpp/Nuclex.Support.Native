@@ -79,8 +79,10 @@ namespace Nuclex { namespace Support { namespace Settings {
     public: std::vector<std::uint8_t> Serialize() const;
 
     /// <summary>Serializes the entire document model back into an .ini file</summary>
-    /// <param name="path">Path of the .ini file in to save the document model</param>
-    public: void Serialize(
+    /// <param name="context">Will be passed along to the write callback</param>
+    /// <param name="write">Will be invoked to write individual lines</param>
+    /// <returns>The total number of bytes that have been written</returns> 
+    public: std::size_t Serialize(
       void *context, void write(void *context, const std::uint8_t *, std::size_t)
     ) const;
 

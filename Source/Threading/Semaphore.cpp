@@ -32,6 +32,7 @@ limitations under the License.
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
 #include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
+#include <pthread.h> // for ::pthread_cond_init() etc.
 #endif
 
 #include <atomic> // for std::atomic
