@@ -39,12 +39,17 @@ limitations under the License.
 //   [[Yay]          -> Malformed, section
 //   Foo = Bar = Baz -> Malformed
 //   [Yay = Nay]     -> Malformed
-//   "Hello          -> Malformed
 //   Foo = [Bar]     -> Assignment, no section
 //   Foo = ]][Bar    -> Assignment
 //   "Foo" Bar = Baz -> Malformed
 //   Foo = "Bar" Baz -> Malformed
 //
+// allowMultilineStrings:
+//   "Hello          -> Malformed
+//
+// !allowMultilineStrings:
+//   "Hello
+//   world"          -> Assignment w/newline in value
 
 // Allocation schemes:
 //
@@ -100,6 +105,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     sectionFound(false),
     equalsSignFound(false),
     lineIsMalformed(false),
+    allowMultilineStrings(true),
     windowsLineBreaks(0),
     blankLines(0),
     paddedAssignments(0) {}
@@ -341,15 +347,18 @@ namespace Nuclex { namespace Support { namespace Settings {
       // When inside a quote, ignore everything but the closing quote
       // (or newline / end-of-file which are handled in all cases)
       if(isInQuote) {
-        valueEnd = this->parsePosition; // Quotes name includes anything until closing quote
+        valueEnd = this->parsePosition; // Quoted value includes anything until closing quote
         switch(current) {
           case '"': {
             isInQuote = false;
             break;
           }
           case '\n': { // Newline without closing quote? -> Line is malformed
-            this->lineIsMalformed = true;
-            return;
+            if(!this->allowMultilineStrings) {
+              this->lineIsMalformed = true;
+              return; // Stop parsing, consider the line malformed
+            }
+            break; // Continue parsing, treat the newline as part of the value
           }
         }
       } else { // Outside of quote
@@ -406,6 +415,17 @@ namespace Nuclex { namespace Support { namespace Settings {
 
       ++this->parsePosition;
     } // while parse position is before end of file
+
+    // At this point, we have reached the end of the file but were still inside
+    // of an unclosed quote. Our valueEnd tracks the position one before the last
+    // character processed (to cut off the closing quote). We'll increment it so
+    // the value contains the last character (which was not a closing quote), too.
+    //
+    // Also, the whole thing is malformed.
+    if(isInQuote) {
+      ++valueEnd;
+      this->lineIsMalformed = true;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

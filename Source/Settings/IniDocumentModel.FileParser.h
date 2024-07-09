@@ -58,17 +58,23 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// </param>
     public: void ParseInto(IniDocumentModel *documentModel);
 
+    /// <summary>Toggled whether quoted strings are allowed to span multiple lines</summary>
+    /// <param name="allow">True to allow multi-line quoted strings, false to disallow</param>
+    public: void AllowMultilineLines(bool allow = true) {
+      this->allowMultilineStrings = allow;
+    }
+
     /// <summary>Whether the parsed document used CR-LF line breaks (Windows type)</summary>
     /// <returns>True if the parsed document has Windows line breaks</returns>
-    public: bool UsesCarriageReturns() const { return (this->windowsLineBreaks > 0); }
+    public: bool UsesCarriageReturns() const { return (this->windowsLineBreaks >= 0); }
 
     /// <summary>Whether the parsed document had blank lines between properties</summary>
     /// <returns>True if the properties were padded with blank lines</returns>
-    public: bool UsesBlankLines() const { return (this->blankLines > 0); }
+    public: bool UsesBlankLines() const { return (this->blankLines >= 0); }
 
     /// <summary>Whether the parsed document has spaces around the equals sign</summary>
     /// <returns>True if the parsed document used spaces around the equals sign</returns>
-    public: bool UsesSpacesAroundAssignment() const { return (this->paddedAssignments > 0); }
+    public: bool UsesSpacesAroundAssignment() const { return (this->paddedAssignments >= 0); }
 
     /// <summary>Parses a comment, must be called on the comment start character</summary>
     private: void parseComment();
@@ -82,7 +88,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Parses an invalid line until the next line break</summary>
     private: void parseMalformedLine();
 
-    /// <summary>Submits was has been parsed so far as a line</summary>
+    /// <summary>Submits what has been parsed so far as a line</summary>
     private: void submitLine();
 
     /// <summary>Generates a line in which a property is declared</summary>
@@ -152,6 +158,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: bool equalsSignFound;
     /// <summary>Whether we encountered something that breaks the current line</summary>
     private: bool lineIsMalformed;
+    /// <summary>Whether string values in quotes can continue over multiple lines</summary>
+    private: bool allowMultilineStrings;
 
     /// <summary>Heuristic - if positive, document uses Windows line breaks</summary>
     private: int windowsLineBreaks;
