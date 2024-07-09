@@ -44,10 +44,10 @@ limitations under the License.
 //   "Foo" Bar = Baz -> Malformed
 //   Foo = "Bar" Baz -> Malformed
 //
-// allowMultilineStrings:
+// !allowMultilineStrings:
 //   "Hello          -> Malformed
 //
-// !allowMultilineStrings:
+// allowMultilineStrings:
 //   "Hello
 //   world"          -> Assignment w/newline in value
 
@@ -106,7 +106,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     equalsSignFound(false),
     lineIsMalformed(false),
     allowMultilineStrings(true),
-    windowsLineBreaks(0),
+    unixLineBreaks(0),
     blankLines(0),
     paddedAssignments(0) {}
 
@@ -165,9 +165,9 @@ namespace Nuclex { namespace Support { namespace Settings {
         // Line break, submits the current line to the document model
         case '\n': {
           if(previousWasCR) {
-            ++this->windowsLineBreaks;
+            --this->unixLineBreaks;
           } else {
-            --this->windowsLineBreaks;
+            ++this->unixLineBreaks;
           }
           submitLine();
 

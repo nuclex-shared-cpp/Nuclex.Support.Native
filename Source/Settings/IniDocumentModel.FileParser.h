@@ -66,7 +66,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     /// <summary>Whether the parsed document used CR-LF line breaks (Windows type)</summary>
     /// <returns>True if the parsed document has Windows line breaks</returns>
-    public: bool UsesCarriageReturns() const { return (this->windowsLineBreaks >= 0); }
+    public: bool UsesCarriageReturns() const { return (this->unixLineBreaks < 0); }
 
     /// <summary>Whether the parsed document had blank lines between properties</summary>
     /// <returns>True if the properties were padded with blank lines</returns>
@@ -161,8 +161,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Whether string values in quotes can continue over multiple lines</summary>
     private: bool allowMultilineStrings;
 
-    /// <summary>Heuristic - if positive, document uses Windows line breaks</summary>
-    private: int windowsLineBreaks;
+    /// <summary>Heuristic - if positive, document uses Unix line breaks</summary>
+    private: int unixLineBreaks;
     /// <summary>Heuristic - if positive, document has blank lines between properties</summary>
     private: int blankLines;
     /// <summary>Heuristic - if positive, document puts spaces around assignment</summary>
