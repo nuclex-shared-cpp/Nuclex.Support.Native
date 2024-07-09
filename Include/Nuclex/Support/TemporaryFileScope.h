@@ -70,6 +70,14 @@ namespace Nuclex { namespace Support {
     /// <returns>The absolute path of the temporary file as an UTF-8 string</returns>
     public: NUCLEX_SUPPORT_API const std::string &GetPath() const { return this->path; }
 
+    /// <summary>Reads the current contents of the file as a string</summary>
+    /// <returns>The current contents of the file as a string</returns>
+    public: NUCLEX_SUPPORT_API std::string GetFileContentsAsString() const;
+
+    /// <summary>Reads the current contents of the file as a vector</summary>
+    /// <returns>The current contents of the file as a vector</returns>
+    public: NUCLEX_SUPPORT_API std::vector<std::uint8_t> GetFileContentsAsVector() const;
+
     /// <summary>Replaces the file contents with the specified string</summary>
     /// <param name="text">String whose contents will be written into the file</param>
     public: NUCLEX_SUPPORT_API void SetFileContents(const std::string &text) {

@@ -24,6 +24,9 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
+// We allow this now.
+#define ALLOW_NEWLINES_IN_QUOTED_STRINGS 1
+
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
@@ -72,6 +75,17 @@ namespace {
     u8"GoodLine=2 3\n"
     u8"BadLine7=\"4\" 5\n"
     u8"BadLine7=6 \"7\"";
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>An .ini file with quoted strings continuing into the next line</summary>
+  const char MultilineStrings[] =
+    u8"Multiline = \"\n"
+    u8"  Hello World\n"
+    u8"\"\n"
+    u8"[Section]\n"
+    u8"MultilineWithComment = \"Hello # World\n"
+    u8"# Again\"\n";
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -206,11 +220,15 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     std::optional<std::string> value = dom.GetPropertyValue(u8"MoreStuff", u8"AlsoNoValue");
     ASSERT_TRUE(value.has_value());
-    ASSERT_EQ(value.value(), std::string());
+    EXPECT_STREQ(value.value().c_str(), u8"");
 
     value = dom.GetPropertyValue(u8"MoreStuff", u8"YetAgain");
+#if defined(ALLOW_NEWLINES_IN_QUOTED_STRINGS)
+    EXPECT_FALSE(value.has_value());
+#else
     ASSERT_TRUE(value.has_value());
-    ASSERT_EQ(value.value(), std::string());
+    EXPECT_STREQ(value.value().c_str(), u8"");
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -245,7 +263,17 @@ namespace Nuclex { namespace Support { namespace Settings {
       sizeof(EmptyAssignments) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(u8"MoreStuff", u8"WeirdOne");
+
+    // If allowing multi-line strings, the quote isn't being closed, so it's malformed
     EXPECT_FALSE(value.has_value());
+
+    // We can still check if the opened quote "ate" the next line (in case multi-line
+    // quoted strings are allowed) or if the next line was parsed on its own.
+#if defined(ALLOW_NEWLINES_IN_QUOTED_STRINGS)
+    EXPECT_FALSE(dom.GetPropertyValue(u8"MoreStuff", u8"YetAgain").has_value());
+#else
+    EXPECT_TRUE(dom.GetPropertyValue(u8"MoreStuff", u8"YetAgain").has_value());
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -395,6 +423,31 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     std::string fileContentsAsString(fileContents.begin(), fileContents.end());
     EXPECT_TRUE(fileContentsAsString.find(u8"Normal=Crazy\n") != std::string::npos);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniDocumentModelTest, QuotedStringsCanContainLineBreaks) {
+    IniDocumentModel dom(
+      reinterpret_cast<const std::uint8_t *>(MultilineStrings),
+      sizeof(MultilineStrings) - 1
+    );
+
+    std::optional<std::string> value = dom.GetPropertyValue(std::string(), u8"Multiline");
+#if defined(ALLOW_NEWLINES_IN_QUOTED_STRINGS)
+    ASSERT_TRUE(value.has_value());
+    EXPECT_STREQ(value.value().c_str(), u8"\n  Hello World\n");
+#else
+    EXPECT_FALSE(value.has_value());
+#endif
+
+    value = dom.GetPropertyValue(u8"Section", u8"MultilineWithComment");
+#if defined(ALLOW_NEWLINES_IN_QUOTED_STRINGS)
+    ASSERT_TRUE(value.has_value());
+    EXPECT_STREQ(value.value().c_str(), u8"Hello # World\n# Again");
+#else
+    EXPECT_FALSE(value.has_value());
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //

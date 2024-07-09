@@ -78,6 +78,61 @@ namespace {
   }
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_LINUX)
+  /// <summary>Reads the contents of a file into an std::string or std::vector</summary>
+  /// <param name="fileDescriptor">File number of the open file that will be read</param>
+  /// <param name="container">Container into which the file's contents will be written</param>
+  template<typename TVectorOrString>
+  void readFileIntoContainer(int fileDescriptor, TVectorOrString &container) {
+    using Nuclex::Support::Platform::LinuxFileApi;
+
+    LinuxFileApi::Seek(fileDescriptor, ::off_t(0), SEEK_SET);
+
+    container.resize(4096);
+
+    for(std::size_t offset = 0;;) {
+      std::uint8_t *data = reinterpret_cast<std::uint8_t *>(container.data());
+      std::size_t readByteCount = LinuxFileApi::Read(
+        fileDescriptor, data + offset, 4096
+      );
+      if(readByteCount == 0) { // 0 bytes are only returned at the end of the file
+        container.resize(offset);
+        break;
+      } else { // 1 or more bytes returned, increase buffer for another round
+        offset += readByteCount;
+        container.resize(offset + 4096); // extend so that 4k bytes are vailable again
+      }
+    }
+  }
+#endif // defined(NUCLEX_SUPPORT_LINUX)
+  // ------------------------------------------------------------------------------------------- //
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+  /// <summary>Reads the contents of a file into an std::string or std::vector</summary>
+  /// <param name="path">Path to the file that will be read}</param>
+  /// <param name="container">Container into which the file's contents will be written</param>
+  template<typename TVectorOrString>
+  void readFileIntoContainer(const std::string &path, TVectorOrString &container) {
+    using Nuclex::Support::Platform::WindowsFileApi;
+
+    HANDLE fileHandle = WindowsFileApi::OpenFileForReading(path);
+    ON_SCOPE_EXIT { WindowsFileApi::CloseFile(fileHandle); };
+
+    container.resize(4096);
+
+    for(std::size_t offset = 0;;) {
+      std::uint8_t *data = reinterpret_cast<std::uint8_t *>(container.data());
+      std::size_t readByteCount = WindowsFileApi::Read(fileHandle, data + offset, 4096);
+      offset += readByteCount;
+      if(readByteCount == 0) { // 0 bytes are only returned at the end of the file
+        container.resize(offset);
+        break;
+      } else { // 1 or more bytes returned, increase buffer for another round
+        container.resize(offset + 4096); // extend so that 4k bytes are vailable again
+      }
+    }
+  }
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
+  // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
@@ -183,6 +238,48 @@ namespace Nuclex { namespace Support {
       assert((result != -1) && u8"Temporary file is deleted successfully");
     }
 #endif
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string TemporaryFileScope::GetFileContentsAsString() const {
+    std::string contents;
+
+#if defined(NUCLEX_SUPPORT_LINUX)
+    {
+      int fileDescriptor = *reinterpret_cast<const int *>(this->privateImplementationData);
+      assert((fileDescriptor != 0) && u8"File is opened and accessible");
+
+      readFileIntoContainer(fileDescriptor, contents);
+    }
+#elif defined(NUCLEX_SUPPORT_WINDOWS)
+    {
+      readFileIntoContainer(this->path, contents);
+    }
+#endif
+
+    return contents;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::vector<std::uint8_t> TemporaryFileScope::GetFileContentsAsVector() const {
+    std::vector<std::uint8_t> contents;
+
+#if defined(NUCLEX_SUPPORT_LINUX)
+    {
+      int fileDescriptor = *reinterpret_cast<const int *>(this->privateImplementationData);
+      assert((fileDescriptor != 0) && u8"File is opened and accessible");
+
+      readFileIntoContainer(fileDescriptor, contents);
+    }
+#elif defined(NUCLEX_SUPPORT_WINDOWS)
+    {
+      readFileIntoContainer(this->path, contents);
+    }
+#endif
+
+    return contents;
   }
 
   // ------------------------------------------------------------------------------------------- //

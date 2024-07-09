@@ -183,7 +183,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       ::HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(iniFilePath);
       ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
 
-      if(this->privateImplementationData == nullptr) {
+      if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(this->privateImplementationData)->Serialize(
           &fileHandle,
           [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {

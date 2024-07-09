@@ -440,11 +440,11 @@ namespace Nuclex { namespace Support {
         std::size_t readByteCount = Platform::WindowsFileApi::Read(
           fileHandle, data + offset, 4096
         );
-        offset += readByteCount;
         if(readByteCount == 0) { // 0 bytes are only returned at the end of the file
           contents.resize(offset);
           break;
         } else { // 1 or more bytes returned, increase buffer for another round
+          offset += readByteCount;
           contents.resize(offset + 4096); // extend so that 4k bytes are vailable again
         }
       }
