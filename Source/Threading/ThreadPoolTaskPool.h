@@ -27,7 +27,7 @@ limitations under the License.
 // This is a lock-free, unbounded queue that works on Windows and Linux.
 // Its performance is at the top end of such queues. The header does a lot of stuff,
 // involving many other headers and preprocessor constants, so we include it last.
-#include "./cameron314-concurrentqueue-1.0.4/concurrentqueue.h"
+#include <concurrentqueue.h>
 
 namespace Nuclex { namespace Support { namespace Threading {
 

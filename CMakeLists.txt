@@ -47,6 +47,14 @@ include("../build-system/cmake/cplusplus.cmake")
 #   https://en.wikipedia.org/wiki/Pthreads
 find_package(Threads REQUIRED)
 
+# Add LibArchive as a sub-project, we use it to create and extract tar archives
+if(NOT (TARGET MoodyCamelQueue))
+	add_subdirectory(
+		${PROJECT_SOURCE_DIR}/../third-party/nuclex-moodycamelqueues
+		${CMAKE_BINARY_DIR}/nuclex-moodycamelqueues
+	)
+endif()
+
 message(STATUS "Enabled options for Nuclex.Support.Native:")
 message(STATUS "  ⚫ Build core library")
 
@@ -156,6 +164,7 @@ target_sources(
 target_link_libraries(
 	NuclexSupportNative
 	PRIVATE Threads::Threads
+	PRIVATE MoodyCamelQueues::Static
 )
 
 # On Windows, we want the shared library to be named Nuclex.Support.Native.dll
@@ -216,6 +225,7 @@ if(BUILD_UNIT_TESTS)
 		PRIVATE GoogleTest::Static
 		PRIVATE GoogleTest::Main
 		PRIVATE Threads::Threads
+		PRIVATE MoodyCamelQueues::Static
 	)
 
 	# On Windows, we want the executable to be named Nuclex.Support.Native.Tests.exe
@@ -291,8 +301,9 @@ if(BUILD_BENCHMARK)
 	# Also link against PThreads
 	target_link_libraries(
 		NuclexSupportNativeBenchmark
-		PRIVATE Celero
+		PRIVATE Celero::Static
 		PRIVATE Threads::Threads
+		PRIVATE MoodyCamelQueues::Static
 	)
 
 	# On Windows, we want the executable to be named Nuclex.Support.Native.Benchmark.exe

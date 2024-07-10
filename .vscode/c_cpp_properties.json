@@ -4,6 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/Include/**",
+                "${workspaceFolder}/../third-party/nuclex-moodycamelqueues/build-concurrentqueue/**",
                 "${workspaceFolder}/../third-party/nuclex-googletest/build/googletest/include/**",
                 "${workspaceFolder}/../third-party/nuclex-celero/build/include/**"
             ],
