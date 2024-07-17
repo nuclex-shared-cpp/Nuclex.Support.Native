@@ -262,6 +262,11 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <returns>True if the property value has to be surrounded with quotes</returns>
     private: static bool requiresQuotes(const std::string &propertyValue);
 
+    /// <summary>Calculates the serialized length of the property value</summary>
+    /// <param name="propertyValue">Value whose serialized length will be calculated</param>
+    /// <returns>The length the value will have when serialized into an .ini file</returns>
+    private: static std::string::size_type getSerializedLength(const std::string &propertyValue);
+
     /// <summary>Allocates memory for a single line</summary>
     /// <typeparam name="TLine">Type of line that will be allocated</typeparam>
     /// <param name="contents">The bytes this line consists of, including CR / CR-LF</param>

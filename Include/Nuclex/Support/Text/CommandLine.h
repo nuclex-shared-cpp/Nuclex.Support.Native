@@ -33,7 +33,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   This class can be used to prepare command lines when executing external programs
   ///   and to parse the command line passed to the running program by the operating system.
   ///   The command line is a simple parameter collection that can either be processed directly
-  ///   or be used to build more complex command line binding systems on top of.
+  ///   or be used to build more complex command line binding systems on top of it.
   /// </remarks>
   class CommandLine {
 

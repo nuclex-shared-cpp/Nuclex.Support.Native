@@ -452,4 +452,58 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(IniDocumentModelTest, EqualsSignCanBeUsedInValue) {
+    std::vector<std::uint8_t> serialized;
+    {
+      IniDocumentModel dom;
+      dom.SetPropertyValue(u8"Section", u8"Option", u8"Property=Name");
+      serialized = dom.Serialize();
+    }
+    {
+      IniDocumentModel dom(serialized.data(), serialized.size());
+
+      std::optional<std::string> value = dom.GetPropertyValue(u8"Section", u8"Option");
+      ASSERT_TRUE(value.has_value());
+      EXPECT_STREQ(value.value().c_str(), u8"Property=Name");
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniDocumentModelTest, BackslashCanBeUsedInValue) {
+    std::vector<std::uint8_t> serialized;
+    {
+      IniDocumentModel dom;
+      dom.SetPropertyValue(u8"Section", u8"Option", u8"Property\\Name");
+      serialized = dom.Serialize();
+    }
+    {
+      IniDocumentModel dom(serialized.data(), serialized.size());
+
+      std::optional<std::string> value = dom.GetPropertyValue(u8"Section", u8"Option");
+      ASSERT_TRUE(value.has_value());
+      EXPECT_STREQ(value.value().c_str(), u8"Property\\Name");
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(IniDocumentModelTest, QuotesCanBeUsedInValue) {
+    std::vector<std::uint8_t> serialized;
+    {
+      IniDocumentModel dom;
+      dom.SetPropertyValue(u8"Section", u8"Option", u8"Property\"Name");
+      serialized = dom.Serialize();
+    }
+    {
+      IniDocumentModel dom(serialized.data(), serialized.size());
+
+      std::optional<std::string> value = dom.GetPropertyValue(u8"Section", u8"Option");
+      ASSERT_TRUE(value.has_value());
+      EXPECT_STREQ(value.value().c_str(), u8"Property\"Name");
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Settings

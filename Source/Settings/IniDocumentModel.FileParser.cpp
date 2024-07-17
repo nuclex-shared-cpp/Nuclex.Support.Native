@@ -46,12 +46,13 @@ limitations under the License.
 //
 // !allowMultilineStrings:
 //   "Hello          -> Malformed
+//   world"          -> Malformed
 //
 // allowMultilineStrings:
-//   "Hello
+//   "Hello          ..
 //   world"          -> Assignment w/newline in value
 
-// Allocation schemes:
+// Considered allocation schemes:
 //
 //   By line                      -> lots of micro-allocations
 //   In blocks (custom allocator) -> I have to do reference counting to free anything
@@ -125,7 +126,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     bool previousWasSpace = false;
     bool encounteredNonBlankCharacter = false;
     bool previousLineWasEmpty = false;
-    //bool previousWasEqualsSign = false;
 
     // Go through the entire file contents byte-by-byte and select the correct parse
     // mode for the elements we encounter. All of these characters are in the ASCII range,
@@ -214,7 +214,6 @@ namespace Nuclex { namespace Support { namespace Settings {
     while(this->parsePosition < this->fileEnd) {
       std::uint8_t current = *this->parsePosition;
       if(current == '\n') {
-        //submitLine();
         break;
       } else { // Skip everything that isn't a newline character
         ++this->parsePosition;
@@ -340,6 +339,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   void IniDocumentModel::FileParser::parseValue() {
     bool isInQuote = false;
     bool quoteEncountered = false;
+    bool escapeMode = false;
 
     while(this->parsePosition < this->fileEnd) {
       std::uint8_t current = *this->parsePosition;
@@ -349,8 +349,13 @@ namespace Nuclex { namespace Support { namespace Settings {
       if(isInQuote) {
         valueEnd = this->parsePosition; // Quoted value includes anything until closing quote
         switch(current) {
+          case '\\': {
+            escapeMode = !escapeMode;
+          }
           case '"': {
-            isInQuote = false;
+            if(!escapeMode) {
+              isInQuote = false;
+            }
             break;
           }
           case '\n': { // Newline without closing quote? -> Line is malformed

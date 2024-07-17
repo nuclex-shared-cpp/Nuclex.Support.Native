@@ -703,7 +703,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
       for(std::string::size_type index = 0; index < length; ++index) {
         char current = propertyValue[index];
-        if((current == '"') || (current == '=')) {
+        if((current == '"') || (current == '=') || (current == '\n')) {
           return true;
         }
       }
@@ -712,6 +712,22 @@ namespace Nuclex { namespace Support { namespace Settings {
     return false;
   }
 
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string::size_type IniDocumentModel::getSerializedLength(const std::string &propertyValue) {
+    std::string::size_type serializedLength = 0;
+
+    std::string::size_type length = propertyValue.length();
+    for(std::string::size_type index = 0; index < length; ++index) {
+      switch(propertyValue[index]) {
+        case '\\':
+        case '"': { serializedLength += 2; break; }
+        default: { ++serializedLength; break; }
+      }
+    }
+
+    return serializedLength;
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
