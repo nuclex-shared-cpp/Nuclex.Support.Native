@@ -351,11 +351,13 @@ namespace Nuclex { namespace Support { namespace Settings {
         switch(current) {
           case '\\': {
             escapeMode = !escapeMode;
+            break;
           }
           case '"': {
             if(!escapeMode) {
               isInQuote = false;
             }
+            escapeMode = false;
             break;
           }
           case '\n': { // Newline without closing quote? -> Line is malformed
@@ -363,6 +365,7 @@ namespace Nuclex { namespace Support { namespace Settings {
               this->lineIsMalformed = true;
               return; // Stop parsing, consider the line malformed
             }
+            escapeMode = false;
             break; // Continue parsing, treat the newline as part of the value
           }
         }

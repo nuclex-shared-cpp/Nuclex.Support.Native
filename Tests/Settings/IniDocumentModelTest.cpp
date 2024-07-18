@@ -456,7 +456,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     std::vector<std::uint8_t> serialized;
     {
       IniDocumentModel dom;
-      dom.SetPropertyValue(u8"Section", u8"Option", u8"Property=Name");
+      dom.SetPropertyValue(u8"Section", u8"ChangedOption", u8"123");
+      dom.SetPropertyValue(u8"Section", u8"Option", u8"Property=Value");
+      dom.SetPropertyValue(u8"Section", u8"ChangedOption", u8"New=Value");
       serialized = dom.Serialize();
     }
     {
@@ -464,7 +466,11 @@ namespace Nuclex { namespace Support { namespace Settings {
 
       std::optional<std::string> value = dom.GetPropertyValue(u8"Section", u8"Option");
       ASSERT_TRUE(value.has_value());
-      EXPECT_STREQ(value.value().c_str(), u8"Property=Name");
+      EXPECT_STREQ(value.value().c_str(), u8"Property=Value");
+
+      value = dom.GetPropertyValue(u8"Section", u8"ChangedOption");
+      ASSERT_TRUE(value.has_value());
+      EXPECT_STREQ(value.value().c_str(), u8"New=Value");
     }
   }
 
@@ -474,7 +480,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     std::vector<std::uint8_t> serialized;
     {
       IniDocumentModel dom;
-      dom.SetPropertyValue(u8"Section", u8"Option", u8"Property\\Name");
+      dom.SetPropertyValue(u8"Section", u8"ChangedOption", u8"123");
+      dom.SetPropertyValue(u8"Section", u8"Option", u8"Property\\Value");
+      dom.SetPropertyValue(u8"Section", u8"ChangedOption", u8"New\\Value");
       serialized = dom.Serialize();
     }
     {
@@ -482,7 +490,11 @@ namespace Nuclex { namespace Support { namespace Settings {
 
       std::optional<std::string> value = dom.GetPropertyValue(u8"Section", u8"Option");
       ASSERT_TRUE(value.has_value());
-      EXPECT_STREQ(value.value().c_str(), u8"Property\\Name");
+      EXPECT_STREQ(value.value().c_str(), u8"Property\\Value");
+
+      value = dom.GetPropertyValue(u8"Section", u8"ChangedOption");
+      ASSERT_TRUE(value.has_value());
+      EXPECT_STREQ(value.value().c_str(), u8"New\\Value");
     }
   }
 
@@ -492,7 +504,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     std::vector<std::uint8_t> serialized;
     {
       IniDocumentModel dom;
-      dom.SetPropertyValue(u8"Section", u8"Option", u8"Property\"Name");
+      dom.SetPropertyValue(u8"Section", u8"ChangedOption", u8"123");
+      dom.SetPropertyValue(u8"Section", u8"Option", u8"Property\"Value");
+      dom.SetPropertyValue(u8"Section", u8"ChangedOption", u8"New\"Value");
       serialized = dom.Serialize();
     }
     {
@@ -500,7 +514,11 @@ namespace Nuclex { namespace Support { namespace Settings {
 
       std::optional<std::string> value = dom.GetPropertyValue(u8"Section", u8"Option");
       ASSERT_TRUE(value.has_value());
-      EXPECT_STREQ(value.value().c_str(), u8"Property\"Name");
+      EXPECT_STREQ(value.value().c_str(), u8"Property\"Value");
+
+      value = dom.GetPropertyValue(u8"Section", u8"ChangedOption");
+      ASSERT_TRUE(value.has_value());
+      EXPECT_STREQ(value.value().c_str(), u8"New\"Value");
     }
   }
 

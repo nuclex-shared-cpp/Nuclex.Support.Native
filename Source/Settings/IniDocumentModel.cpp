@@ -239,7 +239,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       } else { // Property exists
         PropertyLine *propertyLine = propertyIterator->second;
         if(propertyLine->ValueLength > 0) { // Is value present?
-          return std::string(
+          return unescape(
             propertyLine->Contents + propertyLine->ValueStartIndex,
             propertyLine->Contents + propertyLine->ValueStartIndex + propertyLine->ValueLength
           );
@@ -524,19 +524,13 @@ namespace Nuclex { namespace Support { namespace Settings {
   IniDocumentModel::PropertyLine *IniDocumentModel::createPropertyLine(
     const std::string &propertyName, const std::string &propertyValue
   ) {
-    bool requiresQuotes = false;
-    if(propertyValue.length() > 0) {
-      requiresQuotes = (
-        Text::ParserHelper::IsWhitespace(propertyValue[0]) ||
-        Text::ParserHelper::IsWhitespace(propertyValue[propertyValue.length() - 1])
-      );
-    }
+    bool requiresQuotes = IniDocumentModel::requiresQuotes(propertyValue);
 
     // Generate a new property declaration line
     PropertyLine *newPropertyLine = allocateLine<PropertyLine>(
       nullptr,
       (
-        propertyName.length() + propertyValue.length() +
+        propertyName.length() + getSerializedLength(propertyValue) +
         (this->hasSpacesAroundAssignment ? 3 : 1) +
         (this->usesCrLf ? 2 : 1) +
         (requiresQuotes ? 2 : 0)
@@ -570,11 +564,10 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
 
       newPropertyLine->ValueStartIndex = newPropertyLine->Length;
-      newPropertyLine->ValueLength = propertyValue.length();
-      std::copy_n(
+      newPropertyLine->ValueLength = escape(
+        newPropertyLine->Contents + newPropertyLine->Length,
         propertyValue.c_str(),
-        newPropertyLine->ValueLength,
-        newPropertyLine->Contents + newPropertyLine->Length
+        propertyValue.length()
       );
       newPropertyLine->Length += newPropertyLine->ValueLength;
 
@@ -657,8 +650,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         ++line->ValueStartIndex;
       }
 
-      std::copy_n(newValue.c_str(), newValue.length(), writeStart);
-      writeStart += newValue.length();
+      writeStart += escape(writeStart, newValue.c_str(), newValue.length());
 
       if(addQuotes) {
         *writeStart = '"';
@@ -666,6 +658,8 @@ namespace Nuclex { namespace Support { namespace Settings {
       }
     }
 
+    // Drag whatever was behind the old value along. Usually it's just the chosen newline
+    // character, but any spaces and comments will be likewise kept this way.
     std::copy_n(
       line->Contents + remainderStartIndex,
       remainderLength,
@@ -727,6 +721,71 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 
     return serializedLength;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string::size_type IniDocumentModel::escape(
+    std::uint8_t *target, const char *source, std::string::size_type length
+  ) {
+    std::string::size_type targetIndex = 0;
+
+    for(std::string::size_type sourceIndex = 0; sourceIndex < length; ++sourceIndex) {
+      switch(source[sourceIndex]) {
+        case '\\': {
+          target[targetIndex] = static_cast<std::uint8_t>('\\');
+          ++targetIndex;
+          target[targetIndex] = static_cast<std::uint8_t>('\\');
+          ++targetIndex;
+          break;
+        }
+        case '"': {
+          target[targetIndex] = static_cast<std::uint8_t>('\\');
+          ++targetIndex;
+          target[targetIndex] = static_cast<std::uint8_t>('\"');
+          ++targetIndex;
+          break;
+        }
+        default: {
+          target[targetIndex] = static_cast<std::uint8_t>(source[sourceIndex]);
+          ++targetIndex;
+          break;
+        }
+      } // switch on source character
+    } // for each source character
+
+    return targetIndex;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string IniDocumentModel::unescape(const std::uint8_t *begin, const std::uint8_t *end) {
+    std::string result;
+    result.reserve(end - begin); // Should be a very close guess for the line's length
+
+    bool escapeMode = false;
+    while(begin < end) {
+      if(escapeMode) {
+        result.push_back(*begin);
+        escapeMode = false;
+      } else if(*begin == '\\') {
+        escapeMode = true;
+      } else {
+        result.push_back(*begin);
+      }
+
+      ++begin;
+    }
+
+    // We'll treat an open-ended backslash at the end of an unquoted property value
+    // as a simple backslash. There is a convention to treat a backslash at the end of
+    // a line as a continuation (i.e. continue after line break), but I haven't ever
+    // seen that convention used in .ini files. Principle of least surprise and all.
+    if(escapeMode) {
+      result.push_back('\\');
+    }
+
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //

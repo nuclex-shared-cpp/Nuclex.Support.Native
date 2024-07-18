@@ -149,6 +149,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     this->privateImplementationData = reinterpret_cast<PrivateImplementationData *>(
       newDocumentModel.release()
     );
+    this->modified = false;
   }
 
   // ------------------------------------------------------------------------------------------- //

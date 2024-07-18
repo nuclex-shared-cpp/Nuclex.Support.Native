@@ -267,6 +267,21 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <returns>The length the value will have when serialized into an .ini file</returns>
     private: static std::string::size_type getSerializedLength(const std::string &propertyValue);
 
+    /// <summary>Copies the string, escaping any backslashes and quotes</summary>
+    /// <param name="target">Address that which the escaped string will be written</param>
+    /// <param name="source">Address at which the untouched string begins</param>
+    /// <param name="length">Length fo the untouched string</param>
+    /// <returns>The number of bytes written at the target address</returns>
+    private: static std::string::size_type escape(
+      std::uint8_t *target, const char *source, std::string::size_type length
+    );
+
+    /// <summary>Copies the string, unescaping any backslash-escaped characters</summary>
+    /// <param name="begin">First character that should be copied and unescaped</param>
+    /// <param name="end">One past the last character should be copied and unescaped</param>
+    /// <returns>A string with the unescaped characters from the specified range</returns>
+    private: static std::string unescape(const std::uint8_t *begin, const std::uint8_t *end);
+
     /// <summary>Allocates memory for a single line</summary>
     /// <typeparam name="TLine">Type of line that will be allocated</typeparam>
     /// <param name="contents">The bytes this line consists of, including CR / CR-LF</param>

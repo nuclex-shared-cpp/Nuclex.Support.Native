@@ -129,7 +129,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     /// <summary>Saves the settings into an .ini file that is created in memory</summary>
     /// <returns>A memory block holding the file contents of the .ini file</returns>
-    public: NUCLEX_SUPPORT_API std::vector<std::uint8_t> Save() const;
+    public: NUCLEX_SUPPORT_API [[nodiscard]] std::vector<std::uint8_t> Save() const;
 
     /// <summary>Checks if any settings have changed since the .ini file was loaded</summary>
     /// <returns>True if the settings were modified, false if no changes were made</returns>
