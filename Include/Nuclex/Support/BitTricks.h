@@ -72,7 +72,7 @@ namespace Nuclex { namespace Support {
     public: NUCLEX_SUPPORT_API static unsigned char CountBits(std::uint64_t value);
 
     /// <summary>Counts the number of leading zero bits in a value</summary>
-    /// <param name="value">Value in which the leading zero bits will be couned</param>
+    /// <param name="value">Value in which the leading zero bits will be counted</param>
     /// <returns>The number of leading zero bits in the value</returns>
     /// <remarks>
     ///   The result is undefined if the input value is 0
@@ -80,7 +80,7 @@ namespace Nuclex { namespace Support {
     public: NUCLEX_SUPPORT_API static unsigned char CountLeadingZeroBits(std::uint32_t value);
 
     /// <summary>Counts the number of leading zero bits in a value</summary>
-    /// <param name="value">Value in which the leading zero bits will be couned</param>
+    /// <param name="value">Value in which the leading zero bits will be counted</param>
     /// <returns>The number of leading zero bits in the value</returns>
     /// <remarks>
     ///   The result is undefined if the input value is 0
