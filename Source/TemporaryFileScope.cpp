@@ -172,7 +172,7 @@ namespace Nuclex { namespace Support {
       errorMessage.append(Text::StringConverter::Utf8FromWide(fullPath));
       errorMessage.append(u8"' for writing");
 
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      Platform::WindowsApi::ThrowExceptionForFileSystemError(errorMessage, errorCode);
     }
 
     // If we don't close the file, it cannot be accessed unless other code opens
@@ -199,7 +199,7 @@ namespace Nuclex { namespace Support {
       errorMessage.append(pathTemplate);
       errorMessage.append(u8"'");
 
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     // Store the file handle in the private implementation data block and

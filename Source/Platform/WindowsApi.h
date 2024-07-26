@@ -117,6 +117,23 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   Error message that should be included in the exception, will be prefixed to
     ///   the OS error message
     /// </param>
+    /// <param name="errorCode">
+    ///   Value that GetLastError() returned at the time of failure
+    /// </param>
+    /// <remarks>
+    ///   This variant is intended to be used with error codes returned by file sytem
+    ///   functions. It will throw a FileAccessError exception is the error is related
+    ///   to opening, reading or writing to files.
+    /// </remarks>
+    public: [[noreturn]] static void ThrowExceptionForFileSystemError(
+      const std::string &errorMessage, DWORD errorCode
+    );
+
+    /// <summary>Throws the appropriate exception for an error reported by the OS</summary>
+    /// <param name="errorMessage">
+    ///   Error message that should be included in the exception, will be prefixed to
+    ///   the OS error message
+    /// </param>
     /// <param name="resultHandle">HRESULT that was returned by the failed function</param>
     public: [[noreturn]] static void ThrowExceptionForHResult(
       const std::string &errorMessage, HRESULT resultHandle

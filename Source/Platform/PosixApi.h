@@ -50,6 +50,21 @@ namespace Nuclex { namespace Support { namespace Platform {
       const std::string &errorMessage, int errorNumber
     );
 
+    /// <summary>Throws the appropriate exception for an error reported by the OS</summary>
+    /// <param name="errorMessage">
+    ///   Error message that should be included in the exception, will be prefixed to
+    ///   the OS error message
+    /// </param>
+    /// <param name="errorNumber">Value that 'errno' had at the time of failure</param>
+    /// <remarks>
+    ///   This variant is intended to be used when encountered error results from
+    ///   calls that open, read or write files. It will transform certain permission
+    ///   denied errors into FileAccessError exceptions.
+    /// </remarks>
+    public: [[noreturn]] static void ThrowExceptionForFileAccessError(
+      const std::string &errorMessage, int errorNumber
+    );
+
   };
 
   // ------------------------------------------------------------------------------------------- //

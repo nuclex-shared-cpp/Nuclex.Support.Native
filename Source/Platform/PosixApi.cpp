@@ -25,6 +25,7 @@ limitations under the License.
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/Text/LexicalAppend.h"
+#include "Nuclex/Support/Errors/FileAccessError.h"
 
 #include <vector> // for std::vector
 #include <cstring> // string.h for strerror()
@@ -126,6 +127,53 @@ namespace Nuclex { namespace Support { namespace Platform {
     } // for(;;)
   }
 #endif
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void PosixApi::ThrowExceptionForFileAccessError(
+    const std::string &errorMessage, int errorNumber
+  ) {
+    std::string combinedErrorMessage(errorMessage);
+    combinedErrorMessage.append(u8" - ");
+    combinedErrorMessage.append(PosixApi::GetErrorMessage(errorNumber));
+
+    bool isFileAccessError = (
+      (errorNumber == EACCES) || // permission denied
+      (errorNumber == EBADF) || // bad file descriptor
+      (errorNumber == EBADFD) || // file descriptor in bad state
+      (errorNumber == EBUSY) || // device or resource busy
+      (errorNumber == EDQUOT) || // disk quota exceeded
+      (errorNumber == EEXIST) || // file already exists
+      (errorNumber == EFBIG) || // file too big
+      (errorNumber == EIO) || // I/O error
+      (errorNumber == EISDIR) || // directory with the same name exists
+      (errorNumber == EISNAM) || // is a named type file
+      (errorNumber == EMEDIUMTYPE) || // wrong medium type
+      (errorNumber == ENAMETOOLONG) || // file name too long
+      (errorNumber == ENFILE) || // too many open files
+      (errorNumber == ENODEV) || // no such device
+      (errorNumber == ENOENT) || // no such file or directory
+      (errorNumber == ENOLINK) || // link target is invalid
+      (errorNumber == ENOMEDIUM) || // medium not found
+      (errorNumber == ENOSPC) || // no space left on device
+      (errorNumber == ENOTBLK) || // block device required
+      (errorNumber == ENOTDIR) || // not a directory
+      (errorNumber == ENOTEMPTY) || // directory not empty
+      (errorNumber == EPERM) || // operation not permitted
+      (errorNumber == EROFS) || // read-only file system
+      (errorNumber == ESTALE) || // stale file handle
+      (errorNumber == ETXTBSY) // text file busy
+    );
+    if(isFileAccessError) {
+      throw Errors::FileAccessError(
+        std::error_code(errorNumber, std::system_category()), combinedErrorMessage
+      );
+    } else {
+      throw std::system_error(
+        std::error_code(errorNumber, std::system_category()), combinedErrorMessage
+      );
+    }
+  }
 
   // ------------------------------------------------------------------------------------------- //
 

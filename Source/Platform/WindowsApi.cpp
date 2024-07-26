@@ -24,13 +24,14 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include "Nuclex/Support/Errors/FileAccessError.h" // for FileAccessError
+
 #include "Nuclex/Support/Text/StringConverter.h" // to convert UTF-16 wholesome
 #include "Nuclex/Support/Text/ParserHelper.h" // to skip trailing whitespace
 #include "Nuclex/Support/Text/LexicalAppend.h" // to append error codes to strings
 #include "Nuclex/Support/Text/UnicodeHelper.h" // for UTF-16 <-> UTF-8 conversion
 
 #include <vector> // for std::vector
-#include <system_error> // for std::system_error
 
 namespace {
 
@@ -181,7 +182,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     // cut these off so we have a single-line error message
     std::string::size_type length = utf8ErrorMessage.length();
     while(length > 0) {
-      if(!Text::ParserHelper::IsWhitespace(char(utf8ErrorMessage[length - 1]))) {
+      if(!Text::ParserHelper::IsWhitespace(static_cast<char>(utf8ErrorMessage[length - 1]))) {
         break;
       }
       --length;
@@ -229,6 +230,81 @@ namespace Nuclex { namespace Support { namespace Platform {
     throw std::system_error(
       std::error_code(errorCode, std::system_category()), combinedErrorMessage
     );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void WindowsApi::ThrowExceptionForFileSystemError(
+    const std::string &errorMessage, DWORD errorCode
+  ) {
+    std::string combinedErrorMessage(errorMessage);
+    combinedErrorMessage.append(u8" - ");
+    combinedErrorMessage.append(WindowsApi::GetErrorMessage(errorCode));
+
+    // This is a good demonstration for why error codes are such a nasty mess...
+    bool isFileAccessError = (
+      (errorCode == ERROR_FILE_NOT_FOUND) || // file not found
+      (errorCode == ERROR_PATH_NOT_FOUND) || // path not found
+      (errorCode == ERROR_ACCESS_DENIED) || // access denied
+      (errorCode == ERROR_FILE_READ_ONLY) || // file is read-only
+      (errorCode == ERROR_INVALID_DRIVE) || // drive is invalid
+      (errorCode == ERROR_CURRENT_DIRECTORY) || // current directory cannot be removed
+      (errorCode == ERROR_NOT_SAME_DEVICE) || // file cannot be moved to a different disk
+      (errorCode == ERROR_WRITE_PROTECT) || // medium is write protected
+      (errorCode == ERROR_NOT_READY) || // device is not ready
+      (errorCode == ERROR_CRC) || // data checksum error
+      (errorCode == ERROR_SEEK) || // track or area cannot be located
+      (errorCode == ERROR_NOT_DOS_DISK) || // wrong or unknown file system
+      (errorCode == ERROR_SECTOR_NOT_FOUND) || // sector cannot be accessed
+      (errorCode == ERROR_WRITE_FAULT) || // cannot write to the specified device
+      (errorCode == ERROR_READ_FAULT) || // cannot read from the specified device
+      (errorCode == ERROR_SHARING_VIOLATION) || // file is being accessed by another process
+      (errorCode == ERROR_LOCK_VIOLATION) || // another proces has locked the file
+      (errorCode == ERROR_HANDLE_EOF) || // too many file handles
+      (errorCode == ERROR_HANDLE_DISK_FULL) || // disk is full
+      (errorCode == ERROR_BAD_NETPATH) || // invalid network path
+      (errorCode == ERROR_DEV_NOT_EXIST) || // device doesn't exist
+      (errorCode == ERROR_DISK_CHANGE) || // wrong diskette inserted
+      (errorCode == ERROR_DRIVE_LOCKED) || // drive is locked by another process
+      (errorCode == ERROR_OPEN_FAILED) || // system cannot open the file
+      (errorCode == ERROR_DISK_FULL) || // disk is full
+      (errorCode == ERROR_NEGATIVE_SEEK) || // seek offset invalid
+      (errorCode == ERROR_SEEK_ON_DEVICE) || // seeking not supported
+      (errorCode == ERROR_BUSY_DRIVE) || // drive is busy
+      (errorCode == ERROR_SAME_DRIVE) || // directory substitution on same drive
+      (errorCode == ERROR_IS_SUBST_PATH) || // path is being used as substitute
+      (errorCode == ERROR_IS_JOIN_PATH) || // not enough resources
+      (errorCode == ERROR_PATH_BUSY) || // specified path cannot be used at this time
+      (errorCode == ERROR_DIR_NOT_EMPTY) || // directory is not empty
+      (errorCode == ERROR_IS_SUBST_TARGET) || // cannot substitute to another substitute
+      (errorCode == ERROR_ALREADY_EXISTS) || // file or directory already exists
+      (errorCode == ERROR_FILE_CHECKED_OUT) || // another user is locking the file
+      (errorCode == ERROR_CHECKOUT_REQUIRED) || // file must be checked out for writing
+      (errorCode == ERROR_BAD_FILE_TYPE) || // file type not allowed
+      (errorCode == ERROR_FILE_TOO_LARGE) || // file size limit exceeded
+      (errorCode == ERROR_VIRUS_INFECTED) || // file contains a virus
+      (errorCode == ERROR_VIRUS_DELETED) || // file deleted because it contained a virus
+      (errorCode == ERROR_DIRECTORY) || // invalid directory name
+      (errorCode == ERROR_DISK_TOO_FRAGMENTED) || // volume is too fragmented
+      (errorCode == ERROR_DELETE_PENDING) || // file is scheduled for deletion
+      (errorCode == ERROR_DATA_CHECKSUM_ERROR) || // checksum error
+      (errorCode == ERROR_DEVICE_UNREACHABLE) || // device could not be reached
+      (errorCode == ERROR_DEVICE_NO_RESOURCES) || // device has no resources available
+      (errorCode == ERROR_BAD_DEVICE_PATH) || // device path is invalid
+      (errorCode == ERROR_COMPRESSED_FILE_NOT_SUPPORTED) || // not supported on compressed file
+      (errorCode == ERROR_FILE_CORRUPT) || // File is damaged
+      (errorCode == ERROR_DISK_CORRUPT) || // Drive is damaged
+      (errorCode == ERROR_NOT_ENOUGH_QUOTA) // Write too large for process working set
+    );
+    if(isFileAccessError) {
+      throw Errors::FileAccessError(
+        std::error_code(errorCode, std::system_category()), combinedErrorMessage
+      );
+    } else {
+      throw std::system_error(
+        std::error_code(errorCode, std::system_category()), combinedErrorMessage
+      );
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

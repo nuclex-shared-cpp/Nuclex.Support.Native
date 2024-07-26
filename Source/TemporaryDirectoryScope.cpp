@@ -116,7 +116,7 @@ namespace {
     if(searchHandle == INVALID_HANDLE_VALUE) {
       DWORD lastError = ::GetLastError();
       if(lastError != ERROR_FILE_NOT_FOUND) { // or ERROR_NO_MORE_FILES, ERROR_NOT_FOUND?
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForFileSystemError(
           u8"Could not start directory enumeration", lastError
         );
       }
@@ -146,7 +146,7 @@ namespace {
             BOOL result = ::DeleteFileW(filePath.c_str());
             if(result == FALSE) {
               DWORD lastError = ::GetLastError();
-              Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+              Nuclex::Support::Platform::WindowsApi::ThrowExceptionForFileSystemError(
                 u8"Could not delete temporary file", lastError
               );
             }
@@ -158,7 +158,7 @@ namespace {
         if(result == FALSE) {
           DWORD lastError = ::GetLastError();
           if(lastError != ERROR_NO_MORE_FILES) {
-            Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+            Nuclex::Support::Platform::WindowsApi::ThrowExceptionForFileSystemError(
               u8"Error during directory enumeration", lastError
             );
           }
@@ -172,7 +172,7 @@ namespace {
     BOOL result = ::RemoveDirectoryW(path.c_str());
     if(result == FALSE) {
       DWORD lastError = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForFileSystemError(
         u8"Could not remove nested temporary directory", lastError
       );
     }
@@ -215,7 +215,7 @@ namespace Nuclex { namespace Support {
       errorMessage.append(Text::StringConverter::Utf8FromWide(directoryPath));
       errorMessage.append(u8"'");
 
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      Platform::WindowsApi::ThrowExceptionForFileSystemError(errorMessage, errorCode);
     }
 
     // Everything worked out, remember the path and disarm the scope guard
@@ -237,7 +237,7 @@ namespace Nuclex { namespace Support {
       errorMessage.append(pathTemplate);
       errorMessage.append(u8"'");
 
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     // Store the full path to the temporary directory we just created
@@ -271,7 +271,7 @@ namespace Nuclex { namespace Support {
       errorMessage.append(this->path);
       errorMessage.append(u8"'");
 
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 #endif
   }

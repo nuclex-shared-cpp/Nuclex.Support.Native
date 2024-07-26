@@ -86,7 +86,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       errorMessage.append(path);
       errorMessage.append(u8"' for reading");
 
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return fileDescriptor;
@@ -107,7 +107,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       errorMessage.append(path);
       errorMessage.append(u8"' for writing");
 
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return fileDescriptor;
@@ -120,7 +120,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(absolutePosition == -1) {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not seek within file");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return static_cast<std::size_t>(absolutePosition);
@@ -135,7 +135,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(unlikely(result == static_cast<ssize_t>(-1))) {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not read data from file");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return static_cast<std::size_t>(result);
@@ -150,7 +150,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(unlikely(result == static_cast<ssize_t>(-1))) {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not write data to file");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return result;
@@ -163,7 +163,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(result == -1) {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not truncate/pad file to specified length");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
 
@@ -174,7 +174,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(unlikely(result == -1)) {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not flush file buffers");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
 
@@ -185,7 +185,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(throwOnError && unlikely(result == -1)) {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not close file");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
 
