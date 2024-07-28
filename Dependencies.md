@@ -29,7 +29,7 @@ or another application that uses this library to get that directory tree.
 
 The dependencies of the code itself are very tame:
 
-  * concurrentqueue by cameron314 (used internaly)
+  * concurrentqueue by cameron314 (used internally)
   * gtest (optional, if unit tests are built)
   * celero (optional, if benchmarks are built)
 

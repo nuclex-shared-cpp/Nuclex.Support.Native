@@ -29,18 +29,18 @@ Here's a summary explaining what this `.ini` file parser / writer can do:
   formatting are preserved (including within the lines being updated!)
 
   ```ini
-  # This section contains the settings for the 'example' something,
-  # for other settings relation to 'other thing', see different thing.
+  # This is an example comment on a section. It might explain something
+  # about the purpose of the section or its options.
   [ExampleSection]
 
   #      | World Values   | Hello Values   | Other Values
   # ---------------------------------------------------------
-  Value1 =                  "Hello" # Important!
+  Value1 =                  "Hello" # This comment is behind a value
   Value2 = "World"  
   ```
 
   The following call would non-destructively edit `Hello` into `Bonjour`,
-  keeping its indentation and the comment behind it.
+  preserving its indentation and the comment behind it.
 
   ```cpp
   ini.Store<std::string>(u8"ExampleSection", u8"Value1", u8"Bonjour");
@@ -134,16 +134,24 @@ interface, which the `IniSettingsStore` shares with
 the `RegistrySettingsStore` and the `MemorySettingsStore`.
 
 ```cpp
-template<typename TValue>
-std::optional<TValue> Retrieve(
-  const std::string &categoryName, const std::string &propertyName
-) const
+class SettingsStore {
 
-template<typename TValue>
-void Store(
-  const std::string &categoryName, const std::string &propertyName,
-  const TValue &value
-)
+  // ...
+
+  public: template<typename TValue>
+  std::optional<TValue> Retrieve(
+    const std::string &categoryName, const std::string &propertyName
+  ) const
+
+  public: template<typename TValue>
+  void Store(
+    const std::string &categoryName, const std::string &propertyName,
+    const TValue &value
+  )
+
+  // ...
+
+};
 ```
 
 If you want to write unit-testable code, or use different ways of storing your
@@ -185,9 +193,11 @@ Variant with checking:
 std::optional<std::uint32_t> screenWidth = ini.Retrieve<std::uint32_t>(
   u8"Resolution", u8"Width"
 );
+
 std::optional<std::uint32_t> screenHeight = ini.Retrieve<std::uint32_t>(
   u8"Resolution", u8"Height"
 );
+
 if(screenWidth.has_value() && screenHeight.has_value()) {
   changeResolution(screenWidth.value(), screenHeight.value());
 }
@@ -197,9 +207,10 @@ Variant with defaults:
 
 ```cpp
 std::uint32_t screenWidth = ini.Retrieve<std::uint32_t>(u8"Resolution", u8"Width")
-    .value_or_default(1920);
+    .value_or(1920);
+
 std::uint32_t screenHeight = ini.Retrieve<std::uint32_t>(u8"Resolution", u8"Height")
-    .value_or_default(1080);
+    .value_or(1080);
 
 changeResolution(screenWidth, screenHeight);
 ```

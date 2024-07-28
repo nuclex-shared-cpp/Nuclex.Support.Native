@@ -19,12 +19,12 @@ working on all platforms tested (Linux, Windows, Raspberry).
 * Iterate over, read and write UTF-8, UTF-16 and UTF-32
 * Case-insensitive UTF-8 string comparison
 * UTF-8 wildcard matching
-* Locale-independent string/number conversion
+* [Locale-independent string/number conversion](./Documents/Documentation-LexicalCasts.md)
 * Conversion between std::string and std::wstring
 
 **Settings**
 * Retrieve and store application settings in the registry (Windows-only)
-* Retrieve and store application settings in .ini files
+* [Retrieve and store application settings in .ini files](./Documents/Documentation-IniFiles.md)
 * Retrieve and store application settings in memory
 
 **Threading**
