@@ -16,7 +16,7 @@ There are unit tests for the whole library, so everything is verifiably
 working on all platforms tested (Linux, Windows, Raspberry).
 
 **Text**
-* Iterate over, read and write UTF-8, UTF-16 and UTF-32
+* [Iterate over, read and write UTF-8, UTF-16 and UTF-32](./Documents/Documentation-UnicodeHelper.md)
 * Case-insensitive UTF-8 string comparison
 * UTF-8 wildcard matching
 * [Locale-independent string/number conversion](./Documents/Documentation-LexicalCasts.md)
