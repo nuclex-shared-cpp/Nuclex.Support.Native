@@ -47,6 +47,13 @@ class ConcurrentJob {
 
   // ...
 
+  /// <summary>Starts the background job</summary>
+  /// <remarks>
+  ///   This will start the background job unless it is already running, in which
+  ///   case it will do nothing.
+  /// </remarks>
+  protected: void Start();
+
   /// <summary>Starts or restarts the background job</summary>
   /// <remarks>
   ///   If the background job was already running, this cancels it, then lifts
@@ -58,6 +65,18 @@ class ConcurrentJob {
 
   /// <summary>Cancels the background job</summary>
   protected: void Cancel();
+
+  /// <summary>Waits for the thread to exit</summary>
+  /// <param name="patience">Maximum amount of time to wait for the job to finish</param>
+  /// <returns>True if the job finished, false if the patience time was exceeded</returns>
+  /// <remarks>
+  ///   This method will only wait but not check for errors or do anything else. You
+  ///   can use it to wait for the background thread to finish in your destructor or
+  ///   if you're using alternative error handling methods.
+  /// </remarks>
+  protected: bool Wait(
+    std::chrono::microseconds patience = std::chrono::microseconds()
+  );
 
   /// <summary>
   ///   Waits for the thread to exit and re-throws any exception that occurred
