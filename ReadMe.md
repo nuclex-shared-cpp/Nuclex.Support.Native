@@ -30,6 +30,7 @@ working on all platforms tested (Linux, Windows, Raspberry).
 **Threading**
 * Thread pool for micro tasks with std::future
 * Portable, fast Semaphores, Latches and Gates
+* [Cancelable and restartable background jobs](./Documents/Documentation-ConcurrentJob.md)
 * Run child processes and intercept stdin/stdout/stderr
 
 **Helpers**

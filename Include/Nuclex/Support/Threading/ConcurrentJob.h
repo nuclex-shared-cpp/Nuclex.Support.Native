@@ -128,12 +128,15 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <returns>True if the job finished, false if the patience time was exceeded</returns>
     /// <remarks>
     ///   This method should only be called by one thread. If an exception happened inside
-    ///   the threading doing the work in the background, it will be re-thrown from this
-    ///   method. It is fine to not call Join() at all.
+    ///   the thread doing the work in the background, it will be re-thrown from this
+    ///   method. It is fine to not call Join() at all. Multiple calls are okay, too.
     /// </remarks>
     protected: NUCLEX_SUPPORT_API bool Join(
       std::chrono::microseconds patience = std::chrono::microseconds()
     );
+
+    // TODO: Add Wait() method that doesn't throw
+    // TODO: Add Start() method that doesn't restart
 
     // ----------------------------------------------------------------------------------------- //
 
