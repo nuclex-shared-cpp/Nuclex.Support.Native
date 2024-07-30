@@ -73,6 +73,25 @@ namespace Nuclex { namespace Support { namespace Text {
       const std::string &text, const std::string &beginning, bool caseSensitive = false
     );
 
+    /// <summary>Checks whether one UTF-8 string ends with another UTF-8 string</summary>
+    /// <param name="text">
+    ///   String whose ending will be compared with the searched-for string
+    /// </param>
+    /// <param name="ending">String with which the checked string must end</param>
+    /// <param name="caseSensitive">Whether the comparison will be case sensitive</param>
+    /// <returns>
+    ///   True if the 'haystack' string ends with the 'needle' string
+    /// </returns>
+    /// <remarks>
+    ///   This method uses some of the special properties of UTF-8 to avoid having to
+    ///   scan the entire 'haystack' string for the code point at which to begin
+    ///   comparing. If you feed it ANSI codepage strings with characters in the range
+    ///   of 0x80 - 0xbf (128 - 191), it will give wrong results.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static bool EndsWith(
+      const std::string &text, const std::string &ending, bool caseSensitive = false
+    );
+
     /// <summary>Checks whether a UTF-8 string matches a wildcard</summary>
     /// <param name="text">Text that will be matched against the wildcard</param>
     /// <param name="wildcard">Wildcard against which the text will be matched</param>

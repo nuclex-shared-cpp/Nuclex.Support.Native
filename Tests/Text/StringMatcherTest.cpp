@@ -105,8 +105,8 @@ namespace Nuclex { namespace Support { namespace Text {
     EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"hello"));
     EXPECT_FALSE(StringMatcher::StartsWith(u8"Hello World", u8"World"));
 
-    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"HellØ"));
-    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"hellø"));
+    EXPECT_TRUE(StringMatcher::StartsWith(u8"HellØ WØrld", u8"HellØ"));
+    EXPECT_TRUE(StringMatcher::StartsWith(u8"HellØ WØrld", u8"hellø"));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -122,14 +122,55 @@ namespace Nuclex { namespace Support { namespace Text {
     EXPECT_FALSE(StringMatcher::StartsWith(u8"Hello World", u8"hello", true));
     EXPECT_FALSE(StringMatcher::StartsWith(u8"Hello World", u8"World", true));
 
-    EXPECT_TRUE(StringMatcher::Contains(u8"HellØ WØrld", u8"HellØ", true));
-    EXPECT_FALSE(StringMatcher::Contains(u8"HellØ WØrld", u8"hellø", true));
+    EXPECT_TRUE(StringMatcher::StartsWith(u8"HellØ WØrld", u8"HellØ", true));
+    EXPECT_FALSE(StringMatcher::StartsWith(u8"HellØ WØrld", u8"hellø", true));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, StartsWithHandlesEmptyNeedleCaseSensitive) {
     EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"", true));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CanCheckIfStringEndsWithAnotherCaseInsensitive) {
+    EXPECT_TRUE(StringMatcher::EndsWith(u8"Hello World", u8"World"));
+    EXPECT_TRUE(StringMatcher::EndsWith(u8"Hello World", u8"world"));
+    EXPECT_FALSE(StringMatcher::EndsWith(u8"Hello World", u8"Hello"));
+
+    EXPECT_TRUE(StringMatcher::EndsWith(u8"HellØ WØrld", u8"WØrld"));
+    EXPECT_TRUE(StringMatcher::EndsWith(u8"HellØ WØrld", u8"wørld"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, EndsWithHandlesEmptyNeedleCaseInsensitive) {
+    EXPECT_TRUE(StringMatcher::EndsWith(u8"Hello World", u8""));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CanCheckIfStringEndsWithAnotherCaseSensitive) {
+    EXPECT_TRUE(StringMatcher::EndsWith(u8"Hello World", u8"World", true));
+    EXPECT_FALSE(StringMatcher::EndsWith(u8"Hello World", u8"world", true));
+    EXPECT_FALSE(StringMatcher::EndsWith(u8"Hello World", u8"Hello", true));
+
+    EXPECT_TRUE(StringMatcher::EndsWith(u8"HellØ WØrld", u8"WØrld", true));
+    EXPECT_FALSE(StringMatcher::EndsWith(u8"HellØ WØrld", u8"wørld", true));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, EndsWithHandlesEmptyNeedleCaseSensitive) {
+    EXPECT_TRUE(StringMatcher::EndsWith(u8"Hello World", u8"", true));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, EndsWithDetectsStartInsideCodepoint) {
+    EXPECT_FALSE(StringMatcher::EndsWith(u8"Hello Ɯorld", u8"world", true));
+    EXPECT_FALSE(StringMatcher::EndsWith(u8"Hello Ɯorld", u8"world", false));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -213,7 +254,6 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, CaseInsensitiveStringLessWorks) {
-    //std::less<std::string> lesser;
     CaseInsensitiveUtf8Less lesser;
 
     EXPECT_TRUE(lesser(u8"a", u8"b"));

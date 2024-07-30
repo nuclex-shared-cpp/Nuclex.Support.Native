@@ -1,13 +1,19 @@
 Lexical Casts
 =============
 
-A lexical cast is a cast that parses the contents of a string to obtain
-its numerical representation. This helper falls slightly out of line with
-the library's naming conventions because it tries to emulate existing
-`lexical_cast` methods, i.e. the one found in Boost.
+A lexical cast is a cast that interprets the contents of a string when
+converting between strings and numbers. Different functions for achieving
+exist in C++ as well, see `std::to_string()`, `std::stoi()` or `std::stof()`.
 
-It is intended for data conversion in serialization and will always use
-the English locale (meaning the decimal point is a point, not a comma).
+The `lexical_cast()` function does he same in a design similar to other C++
+casts such as `static_cast()` and `reinterpret_cast()`. This is also why
+this function's naming convention falls slightly out of line with the rest of
+Nuclex.Support.Native.
+
+There is, by design, no localization of number formats with `lexical_cast()`,
+it always uses the English locale (meaning the decimal point is a point, not
+a comma). It is intended for data conversion in serialization and will always
+use the English locale, no matter what the system, process or thread use.
 
 
 Usage example

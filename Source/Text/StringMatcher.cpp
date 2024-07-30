@@ -84,6 +84,173 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>C-style function that checks if a string starts with another string</summary>
+  /// <typeparam name="CaseSensitive">Whether the comparison will be case-sensitive</typeparam>
+  /// <param name="haystack">Text whose beginning will be checked for the other string</param>
+  /// <param name="haystackEnd">Address one past the end of the haystack string</param>
+  /// <param name="needle">Substring that will be searched for</param>
+  /// <param name="needleEnd">Address one past the end of the needle string</param>
+  /// <returns>True if the 'haystack' string starts with the 'needle' string</returns>
+  template<bool CaseSensitive>
+  bool checkStringMatchesWithUtf8(
+    const my_char8_t *haystack, const my_char8_t *haystackEnd,
+    const my_char8_t *needle, const my_char8_t *needleEnd
+  ) {
+    using Nuclex::Support::Text::UnicodeHelper;
+    assert((haystack != nullptr) && u8"Haystack must not be a NULL pointer");
+    assert((needle != nullptr) && u8"Needle must not be a NULL pointer");
+
+    for(;;) {
+      if(needle >= needleEnd) {
+        return (haystack >= haystackEnd); // Both must end at the same time
+      }
+      if(haystack >= haystackEnd) {
+        return false; // If the haystack was shorter, the needle wasn't found
+      }
+
+      // Fetch the next code points from both strings so we can compare them
+      char32_t haystackCodePoint = UnicodeHelper::ReadCodePoint(haystack, haystackEnd);
+      requireValidCodePoint(haystackCodePoint);
+      char32_t needleCodePoint = UnicodeHelper::ReadCodePoint(needle, needleEnd);
+      requireValidCodePoint(needleCodePoint);
+
+      if constexpr(!CaseSensitive) {
+        needleCodePoint = UnicodeHelper::ToFoldedLowercase(needleCodePoint);
+        haystackCodePoint = UnicodeHelper::ToFoldedLowercase(haystackCodePoint);
+      }
+      if(needleCodePoint != haystackCodePoint) {
+        return false;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>C-style function that checks if a string contains another string</summary>
+  /// <typeparam name="CaseSensitive">Whether the comparison will be case-sensitive</typeparam>
+  /// <param name="haystack">Text that will be scanned for the other string</param>
+  /// <param name="haystackEnd">Address one past the end of the haystack string</param>
+  /// <param name="needle">Substring that will be searched for</param>
+  /// <param name="needleEnd">Address one past the end of the needle string</param>
+  /// <returns>
+  ///   The address in the haystack string where the first match was found or a null pointer
+  ///   if no matches were found.
+  /// </returns>
+  template<bool CaseSensitive>
+  const my_char8_t *findSubstringUtf8(
+    const my_char8_t *haystack, const my_char8_t *haystackEnd,
+    const my_char8_t *needle, const my_char8_t *needleEnd
+  ) {
+    using Nuclex::Support::Text::UnicodeHelper;
+    assert((haystack != nullptr) && u8"Haystack must not be a NULL pointer");
+    assert((needle != nullptr) && u8"Needle must not be a NULL pointer");
+
+    // We treat a zero-length needle as an immediate match to anything.
+    if(needle >= needleEnd) {
+      return haystack;
+    }
+
+    // Get and keep the first code point. This speeds up our search since we only
+    // need to scan the haystack for appearances of this code point, then compare
+    // further if and when we find a match.
+    char32_t firstNeedleCodePoint = UnicodeHelper::ReadCodePoint(needle, needleEnd);
+    requireValidCodePoint(firstNeedleCodePoint);
+    if constexpr(!CaseSensitive) {
+      firstNeedleCodePoint = UnicodeHelper::ToFoldedLowercase(firstNeedleCodePoint);
+    }
+
+    // Go through the haystack and look for code points matching the first code point
+    // of the needle. Any matches are investigated further in a nested loop.
+    const my_char8_t *needleFromSecondCodePoint = needle;
+    while(haystack < haystackEnd) {
+      const my_char8_t *haystackAtStart = haystack;
+
+      // Fetch the next haystack code point to compare against the first needle code point
+      char32_t haystackCodePoint = UnicodeHelper::ReadCodePoint(haystack, haystackEnd);
+      requireValidCodePoint(haystackCodePoint);
+      if constexpr(!CaseSensitive) {
+        haystackCodePoint = UnicodeHelper::ToFoldedLowercase(haystackCodePoint);
+      }
+
+      // In the outer loop, scan only for the a match of the first needle codepoint.
+      // Keeping this loop tight allows the compiler to optimize it into a simple scan.
+      if(unlikely(haystackCodePoint == firstNeedleCodePoint)) {
+        const my_char8_t *haystackInner = haystack;
+        for(;;) {
+          if(needle >= needleEnd) { // Needle ended? We've got a full match!
+            return haystackAtStart;
+          }
+          if(haystackInner >= haystackEnd) {
+            break;
+          }
+
+          // We've got both another needle code point and another haystack code point,
+          // so see if these two are still equal
+          char32_t needleCodePoint = UnicodeHelper::ReadCodePoint(needle, needleEnd);
+          requireValidCodePoint(needleCodePoint);
+          haystackCodePoint = UnicodeHelper::ReadCodePoint(haystackInner, haystackEnd);
+          requireValidCodePoint(haystackCodePoint);
+          if constexpr(!CaseSensitive) {
+            needleCodePoint = UnicodeHelper::ToFoldedLowercase(needleCodePoint);
+            haystackCodePoint = UnicodeHelper::ToFoldedLowercase(haystackCodePoint);
+          }
+          if(needleCodePoint != haystackCodePoint) {
+            break;
+          }
+        }
+
+        // No match found. Reset the needle for the next scan.
+        needle = needleFromSecondCodePoint;
+      }
+    } // while not end of haystack reached
+
+    return nullptr;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Calculates the 32 bit murmur hash of a byte sequence</summary>
+  /// <param name="key">Data for which the murmur hash will be calculated</param>
+  /// <param name="length">Number of bytes to calculate the hash for</param>
+  /// <param name="seed">Seed value to base the hash on</param>
+  /// <returns>The murmur hash value of the specified byte sequence</returns>
+  std::uint32_t CalculateMurmur32(
+    const std::uint8_t *data, std::size_t length, std::uint32_t seed
+  ) {
+    const std::uint32_t mixFactor = 0x5bd1e995;
+    const int mixShift = 24;
+
+    std::uint32_t hash = seed ^ static_cast<std::uint32_t>(length * mixFactor);
+
+    while(length >= 4) {
+      std::uint32_t data32 = *reinterpret_cast<const std::uint32_t *>(data);
+
+      data32 *= mixFactor;
+      data32 ^= data32 >> mixShift;
+      data32 *= mixFactor;
+
+      hash *= mixFactor;
+      hash ^= data32;
+
+      data += 4;
+      length -= 4;
+    }
+
+    switch(length) {
+      case 3: { hash ^= std::uint32_t(data[2]) << 16; [[fallthrough]]; }
+      case 2: { hash ^= std::uint32_t(data[1]) << 8; [[fallthrough]]; }
+      case 1: { hash ^= std::uint32_t(data[0]); }
+    };
+
+    hash ^= hash >> 13;
+    hash *= mixFactor;
+    hash ^= hash >> 15;
+
+    return hash;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>C-style function that checks if a string matches a wild card</summary>
   /// <typeparam name="CaseSensitive">Whether the comparison will be case-sensitive</typeparam>
   /// <param name="text">Text that will be checked against the wild card</param>
@@ -180,173 +347,6 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>C-style function that checks if a string contains another string</summary>
-  /// <typeparam name="CaseSensitive">Whether the comparison will be case-sensitive</typeparam>
-  /// <param name="haystack">Text that will be scanned for the other string</param>
-  /// <param name="haystackEnd">Address one past the end of the haystack string</param>
-  /// <param name="needle">Substring that will be searched for</param>
-  /// <param name="needleEnd">Address one past the end of the needle string</param>
-  /// <returns>
-  ///   The address in the haystack string where the first match was found or a null pointer
-  ///   if no matches were found.
-  /// </returns>
-  template<bool CaseSensitive>
-  const my_char8_t *findSubstringUtf8(
-    const my_char8_t *haystack, const my_char8_t *haystackEnd,
-    const my_char8_t *needle, const my_char8_t *needleEnd
-  ) {
-    using Nuclex::Support::Text::UnicodeHelper;
-    assert((haystack != nullptr) && u8"Haystack must not be a NULL pointer");
-    assert((needle != nullptr) && u8"Needle must not be a NULL pointer");
-
-    // We treat a zero-length needle as an immediate match to anything.
-    if(needle >= needleEnd) {
-      return haystack;
-    }
-
-    // Get and keep the first code point. This speeds up our search since we only
-    // need to scan the haystack for appearances of this code point, then compare
-    // further if and when we find a match.
-    char32_t firstNeedleCodePoint = UnicodeHelper::ReadCodePoint(needle, needleEnd);
-    requireValidCodePoint(firstNeedleCodePoint);
-    if constexpr(!CaseSensitive) {
-      firstNeedleCodePoint = UnicodeHelper::ToFoldedLowercase(firstNeedleCodePoint);
-    }
-
-    // Go through the haystack and look for code points matching the first code point
-    // of the needle. Any matches are investigated further in a nested loop.
-    const my_char8_t *needleFromSecondCodePoint = needle;
-    while(haystack < haystackEnd) {
-      const my_char8_t *haystackAtStart = haystack;
-
-      // Fetch the next haystack code point to compare against the first needle code point
-      char32_t haystackCodePoint = UnicodeHelper::ReadCodePoint(haystack, haystackEnd);
-      requireValidCodePoint(haystackCodePoint);
-      if constexpr(!CaseSensitive) {
-        haystackCodePoint = UnicodeHelper::ToFoldedLowercase(haystackCodePoint);
-      }
-
-      // In the outer loop, scan only for the a match of the first needle codepoint.
-      // Keeping this loop tight allows the compiler to optimize it into a simple scan.
-      if(unlikely(haystackCodePoint == firstNeedleCodePoint)) {
-        const my_char8_t *haystackInner = haystack;
-        for(;;) {
-          if(needle >= needleEnd) { // Needle ended? We've got a full match!
-            return haystackAtStart;
-          }
-          if(haystackInner >= haystackEnd) {
-            break;
-          }
-
-          // We've got both another needle code point and another haystack code point,
-          // so see if these two are still equal
-          char32_t needleCodePoint = UnicodeHelper::ReadCodePoint(needle, needleEnd);
-          requireValidCodePoint(needleCodePoint);
-          haystackCodePoint = UnicodeHelper::ReadCodePoint(haystackInner, haystackEnd);
-          requireValidCodePoint(haystackCodePoint);
-          if constexpr(!CaseSensitive) {
-            needleCodePoint = UnicodeHelper::ToFoldedLowercase(needleCodePoint);
-            haystackCodePoint = UnicodeHelper::ToFoldedLowercase(haystackCodePoint);
-          }
-          if(needleCodePoint != haystackCodePoint) {
-            break;
-          }
-        }
-
-        // No match found. Reset the needle for the next scan.
-        needle = needleFromSecondCodePoint;
-      }
-    } // while not end of haystack reached
-
-    return nullptr;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>C-style function that checks if a string starts with another string</summary>
-  /// <typeparam name="CaseSensitive">Whether the comparison will be case-sensitive</typeparam>
-  /// <param name="haystack">Text whose beginning will be checked for the other string</param>
-  /// <param name="haystackEnd">Address one past the end of the haystack string</param>
-  /// <param name="needle">Substring that will be searched for</param>
-  /// <param name="needleEnd">Address one past the end of the needle string</param>
-  /// <returns>True if the 'haystack' string starts with the 'needle' string</returns>
-  template<bool CaseSensitive>
-  bool checkStringStartsWithUtf8(
-    const my_char8_t *haystack, const my_char8_t *haystackEnd,
-    const my_char8_t *needle, const my_char8_t *needleEnd
-  ) {
-    using Nuclex::Support::Text::UnicodeHelper;
-    assert((haystack != nullptr) && u8"Haystack must not be a NULL pointer");
-    assert((needle != nullptr) && u8"Needle must not be a NULL pointer");
-
-    for(;;) {
-      if(needle >= needleEnd) {
-        return true; // If the needle ends first (or is empty), we have a match
-      }
-      if(haystack >= haystackEnd) {
-        return false; // If the haystack ends first, the needle wasn't found
-      }
-
-      // Fetch the next code points from both strings so we can compare them
-      char32_t haystackCodePoint = UnicodeHelper::ReadCodePoint(haystack, haystackEnd);
-      requireValidCodePoint(haystackCodePoint);
-      char32_t needleCodePoint = UnicodeHelper::ReadCodePoint(needle, needleEnd);
-      requireValidCodePoint(needleCodePoint);
-
-      if constexpr(!CaseSensitive) {
-        needleCodePoint = UnicodeHelper::ToFoldedLowercase(needleCodePoint);
-        haystackCodePoint = UnicodeHelper::ToFoldedLowercase(haystackCodePoint);
-      }
-      if(needleCodePoint != haystackCodePoint) {
-        return false;
-      }
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Calculates the 32 bit murmur hash of a byte sequence</summary>
-  /// <param name="key">Data for which the murmur hash will be calculated</param>
-  /// <param name="length">Number of bytes to calculate the hash for</param>
-  /// <param name="seed">Seed value to base the hash on</param>
-  /// <returns>The murmur hash value of the specified byte sequence</returns>
-  std::uint32_t CalculateMurmur32(
-    const std::uint8_t *data, std::size_t length, std::uint32_t seed
-  ) {
-    const std::uint32_t mixFactor = 0x5bd1e995;
-    const int mixShift = 24;
-
-    std::uint32_t hash = seed ^ static_cast<std::uint32_t>(length * mixFactor);
-
-    while(length >= 4) {
-      std::uint32_t data32 = *reinterpret_cast<const std::uint32_t *>(data);
-
-      data32 *= mixFactor;
-      data32 ^= data32 >> mixShift;
-      data32 *= mixFactor;
-
-      hash *= mixFactor;
-      hash ^= data32;
-
-      data += 4;
-      length -= 4;
-    }
-
-    switch(length) {
-      case 3: { hash ^= std::uint32_t(data[2]) << 16; [[fallthrough]]; }
-      case 2: { hash ^= std::uint32_t(data[1]) << 8; [[fallthrough]]; }
-      case 1: { hash ^= std::uint32_t(data[0]); }
-    };
-
-    hash ^= hash >> 13;
-    hash *= mixFactor;
-    hash ^= hash >> 15;
-
-    return hash;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Calculates the 64 bit murmur hash of a byte sequence</summary>
   /// <param name="key">Data for which the murmur hash will be calculated</param>
   /// <param name="length">Number of bytes to calculate the hash for</param>
@@ -412,28 +412,16 @@ namespace Nuclex { namespace Support { namespace Text {
         return false;
       }
 
-      const my_char8_t *currentLeft = reinterpret_cast<const my_char8_t *>(left.c_str());
-      const my_char8_t *leftEnd = currentLeft + left.length();
+      const my_char8_t *leftStart = reinterpret_cast<const my_char8_t *>(left.c_str());
+      const my_char8_t *leftEnd = leftStart + left.length();
 
-      const my_char8_t *currentRight = reinterpret_cast<const my_char8_t *>(right.c_str());
-      const my_char8_t *rightEnd = currentRight + right.length();
+      const my_char8_t *rightStart = reinterpret_cast<const my_char8_t *>(right.c_str());
+      const my_char8_t *rightEnd = rightStart + right.length();
 
-      for(;;) {
-        if(currentLeft >= leftEnd) {
-          return (currentRight >= rightEnd); // Both must end at the same time
-        } else if(currentRight >= rightEnd) {
-          return false; // right ended before left
-        }
-
-        char32_t leftCodePoint = UnicodeHelper::ReadCodePoint(currentLeft, leftEnd);
-        char32_t rightCodePoint = UnicodeHelper::ReadCodePoint(currentRight, rightEnd);
-
-        leftCodePoint = UnicodeHelper::ToFoldedLowercase(leftCodePoint);
-        rightCodePoint = UnicodeHelper::ToFoldedLowercase(rightCodePoint);
-        if(leftCodePoint != rightCodePoint) {
-          return false;
-        }
-      }
+      return checkStringMatchesWithUtf8<false>(
+        leftStart, leftEnd,
+        rightStart, rightEnd
+      );
     }
   }
 
@@ -465,17 +453,62 @@ namespace Nuclex { namespace Support { namespace Text {
     const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
   ) {
     const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.c_str());
-    const my_char8_t *haystackEnd = haystackStart + haystack.length();
+    const my_char8_t *haystackEnd = haystackStart + needle.length();
 
     const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.c_str());
     const my_char8_t *needleEnd = needleStart + needle.length();
 
     if(caseSensitive) {
-      return checkStringStartsWithUtf8<true>(
+      return checkStringMatchesWithUtf8<true>(
         haystackStart, haystackEnd, needleStart, needleEnd
       );
     } else {
-      return checkStringStartsWithUtf8<false>(
+      return checkStringMatchesWithUtf8<false>(
+        haystackStart, haystackEnd, needleStart, needleEnd
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool StringMatcher::EndsWith(
+    const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
+  ) {
+    if(needle.length() > haystack.length()) {
+      return false;
+    }
+
+    // Pick the start in the haystack to begin the same number of bytes from
+    // its end as the 'needle' is long.
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.c_str());
+    const my_char8_t *haystackEnd = haystackStart + haystack.length();
+    haystackStart = haystackEnd - needle.length(); // safe, since we checked the length
+
+    // Since we don't know the contents of the 'haystack' string, the above
+    // math might have placed us in the middle of a UTF-8 sequence. Luckily,
+    // UTF-8 lets us detect that. In that situation, the strings are not a match.
+    //
+    // Note that we /could/ blindly compare the characters. If we started at a subsequent
+    // character in the 'haystack', it would be a guaranteed mismatch to the first character
+    // in the 'needle'. However, since we're actually decoding UTF-8 code points (in order to
+    // do case folding for case insensitive comparisons), we still have to check, otherwise
+    // UnicodeHelper::ReadCodePoint() would bail out with an 'illegal UTF-8 character' error.
+    bool isSubsequentCharacter = (
+      (static_cast<std::uint8_t>(*haystackStart) & 0xc0) == 0x80
+    );
+    if(isSubsequentCharacter) {
+      return false;
+    }
+
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.c_str());
+    const my_char8_t *needleEnd = needleStart + needle.length();
+
+    if(caseSensitive) {
+      return checkStringMatchesWithUtf8<true>(
+        haystackStart, haystackEnd, needleStart, needleEnd
+      );
+    } else {
+      return checkStringMatchesWithUtf8<false>(
         haystackStart, haystackEnd, needleStart, needleEnd
       );
     }
