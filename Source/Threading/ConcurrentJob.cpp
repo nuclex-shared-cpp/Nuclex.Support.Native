@@ -243,6 +243,68 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
+  void ConcurrentJob::Start() {
+
+    // Figure out if a worker is already running
+    bool startNewWorker = false;
+    {
+      std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
+
+      int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+      if(currentStatus == static_cast<int>(Status::Canceling)) {
+        this->status.store( // Already canceled, ask to repeat DoWork() call
+          static_cast<int>(Status::CancelingWithRestart),
+          std::memory_order::memory_order_release
+        );
+      } else if(currentStatus >= 0) { // If the worker was not running, start a new one
+        this->status.store(
+          static_cast<int>(Status::Scheduled),
+          std::memory_order::memory_order_release
+        );
+        if(!static_cast<bool>(this->stopTrigger)) {
+          this->stopTrigger = StopSource::Create();
+        }
+        startNewWorker = true;
+      }
+    } // mutex lock
+
+    // If, at the time we were holding the lock, no worker was running or
+    // scheduled to run, start a new one here.
+    if(startNewWorker) {
+      if(this->threadPool == nullptr) {
+        std::thread callDoWorkThread(
+          &callDoWorkOnConcurrentJob,
+          this,
+          &ConcurrentJob::DoWork,
+          &this->status,
+          &this->stateMutex,
+          &this->stopTrigger,
+          &this->statusChangedCondition,
+          &this->error
+        );
+
+        // If any prior thread was being held, it will be destroyed here.
+        this->backgroundThread.swap(callDoWorkThread);
+        if(callDoWorkThread.joinable()) {
+          callDoWorkThread.join();
+        }
+      } else {
+        this->threadPool->Schedule(
+          &callDoWorkOnConcurrentJob,
+          this,
+          &ConcurrentJob::DoWork,
+          &this->status,
+          &this->stateMutex,
+          &this->stopTrigger,
+          &this->statusChangedCondition,
+          &this->error
+        );
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   void ConcurrentJob::StartOrRestart() {
 
     // Figure out if we can order the already running worker to cancel and restart
@@ -333,6 +395,48 @@ namespace Nuclex { namespace Support { namespace Threading {
         std::memory_order::memory_order_release
       );
     }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool ConcurrentJob::Wait(
+    std::chrono::microseconds patience /* = std::chrono::microseconds() */
+  ) {
+    std::chrono::time_point end = std::chrono::steady_clock::now() + patience;
+    for(;;) {
+      
+      // Extra scope for mutex so it is dropped and reacquired (needlessly?).
+      // The condition_variable::wait_until() will already make the mutex lockable
+      // for the background thread, but this feels less spooky to me.
+      {
+        std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
+
+        int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+        switch(currentStatus) {
+          case static_cast<int>(Status::Stopped):
+          case static_cast<int>(Status::Succeeded):
+          case static_cast<int>(Status::Failed): {
+            return true;
+          }
+        }
+
+        // This will open the mutex for other threads to enter and wait until the condition
+        // variable is signaled. The worker thread signals the condition variable whenever
+        // a status change occurs that would be intersting to this specific line of code.
+        if(patience.count() == 0) {
+          this->statusChangedCondition.wait(stateMutexScope);
+        } else {
+          std::cv_status result = this->statusChangedCondition.wait_until(stateMutexScope, end);
+          if(result == std::cv_status::timeout) {
+            return false; // If the wait timed out, 
+          }
+        }
+      } // mutex scope
+
+    } // for(;;)
+
+    // Could call thread::join() here, but another thread might have called StartOrRestaty()
+    // already and we'd be sitting here until the whole operation is done...
   }
 
   // ------------------------------------------------------------------------------------------- //

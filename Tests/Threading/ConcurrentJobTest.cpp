@@ -56,9 +56,11 @@ namespace {
       WaitLatch(0),
       RunLatch(1) {}
 
+    public: using ConcurrentJob::Start;
     public: using ConcurrentJob::StartOrRestart;
-    public: using ConcurrentJob::Join;
     public: using ConcurrentJob::Cancel;
+    public: using ConcurrentJob::Wait;
+    public: using ConcurrentJob::Join;
 
     /// <summary>Called in the background thread to perform the actual work</summary>
     /// <param name="canceler">Token by which the operation can be signalled to cancel</param>
@@ -128,8 +130,19 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   TEST(ConcurrentJobTest, JobsCanBeExecuted) {
     ExampleJob test;
-    test.StartOrRestart();
+    test.Start();
     test.Join();
+    
+    EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
+    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ConcurrentJobTest, JobsCanBeWaitedOn) {
+    ExampleJob test;
+    test.Start();
+    test.Wait();
     
     EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
     EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
@@ -141,7 +154,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ExampleJob test;
     test.WaitLatch.Post(); // lock the latch
 
-    test.StartOrRestart();
+    test.Start();
     bool wasRunning = test.RunLatch.WaitFor(std::chrono::microseconds(25000));
     test.Cancel();
     test.Join();
@@ -174,11 +187,30 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(ConcurrentJobTest, StartingAlreadyRunningJobDoesNothing) {
+    ExampleJob test;
+    test.WaitLatch.Post(); // lock the latch
+
+    for(std::size_t index = 0; index < 5; ++index) {
+      test.Start();
+    }
+
+    test.WaitLatch.CountDown();
+    test.Join();
+
+    // If this fails with wasRunning==false, RunCount==0, then the background job didn't
+    // start within the 25 milliseconds given for it to launch.
+    EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
+    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   TEST(ConcurrentJobTest, ExceptionsAreRethrownInJoin) {
     ExampleJob test;
     test.ThrowException.store(true, std::memory_order::memory_order_release);
 
-    test.StartOrRestart();
+    test.Start();
     EXPECT_THROW(
       test.Join(),
       std::length_error
@@ -196,7 +228,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       ExampleJob test(threadPool);
       test.ThrowException.store(true, std::memory_order::memory_order_release);
 
-      test.StartOrRestart();
+      test.Start();
       EXPECT_THROW(
         test.Join(),
         std::length_error

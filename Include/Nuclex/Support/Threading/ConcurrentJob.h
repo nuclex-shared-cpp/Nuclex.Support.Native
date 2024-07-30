@@ -109,6 +109,13 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// </remarks>
     public: NUCLEX_SUPPORT_API bool IsRunning() const;
 
+    /// <summary>Starts the background job</summary>
+    /// <remarks>
+    ///   This will start the background job unless it is already running, in which
+    ///   case it will do nothing.
+    /// </remarks>
+    protected: NUCLEX_SUPPORT_API void Start();
+
     /// <summary>Starts or restarts the background job</summary>
     /// <remarks>
     ///   If the background job was already running, this cancels it, then lifts
@@ -120,6 +127,18 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Cancels the background job</summary>
     protected: NUCLEX_SUPPORT_API void Cancel();
+
+    /// <summary>Waits for the thread to exit</summary>
+    /// <param name="patience">Maximum amount of time to wait for the job to finish</param>
+    /// <returns>True if the job finished, false if the patience time was exceeded</returns>
+    /// <remarks>
+    ///   This method will only wait but not check for errors or do anything else. You
+    ///   can use it to wait for the background thread to finish in your destructor or
+    ///   if you're using alternative error handling methods.
+    /// </remarks>
+    protected: NUCLEX_SUPPORT_API bool Wait(
+      std::chrono::microseconds patience = std::chrono::microseconds()
+    );
 
     /// <summary>
     ///   Waits for the thread to exit and re-throws any exception that occurred
@@ -134,9 +153,6 @@ namespace Nuclex { namespace Support { namespace Threading {
     protected: NUCLEX_SUPPORT_API bool Join(
       std::chrono::microseconds patience = std::chrono::microseconds()
     );
-
-    // TODO: Add Wait() method that doesn't throw
-    // TODO: Add Start() method that doesn't restart
 
     // ----------------------------------------------------------------------------------------- //
 
