@@ -101,35 +101,35 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, CanCheckIfStringStartsWithAnotherCaseInsensitive) {
-    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"Hello"));
-    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"hello"));
-    EXPECT_FALSE(StringMatcher::StartsWith(u8"Hello World", u8"World"));
+    EXPECT_TRUE(StringMatcher::StartsWith<false>(u8"Hello World", u8"Hello"));
+    EXPECT_TRUE(StringMatcher::StartsWith<false>(u8"Hello World", u8"hello"));
+    EXPECT_FALSE(StringMatcher::StartsWith<false>(u8"Hello World", u8"World"));
 
-    EXPECT_TRUE(StringMatcher::StartsWith(u8"HellØ WØrld", u8"HellØ"));
-    EXPECT_TRUE(StringMatcher::StartsWith(u8"HellØ WØrld", u8"hellø"));
+    EXPECT_TRUE(StringMatcher::StartsWith<false>(u8"HellØ WØrld", u8"HellØ"));
+    EXPECT_TRUE(StringMatcher::StartsWith<false>(u8"HellØ WØrld", u8"hellø"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, StartsWithHandlesEmptyNeedleCaseInsensitive) {
-    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8""));
+    EXPECT_TRUE(StringMatcher::StartsWith<false>(u8"Hello World", u8""));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, CanCheckIfStringStartsWithAnotherCaseSensitive) {
-    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"Hello", true));
-    EXPECT_FALSE(StringMatcher::StartsWith(u8"Hello World", u8"hello", true));
-    EXPECT_FALSE(StringMatcher::StartsWith(u8"Hello World", u8"World", true));
+    EXPECT_TRUE(StringMatcher::StartsWith<true>(u8"Hello World", u8"Hello"));
+    EXPECT_FALSE(StringMatcher::StartsWith<true>(u8"Hello World", u8"hello"));
+    EXPECT_FALSE(StringMatcher::StartsWith<true>(u8"Hello World", u8"World"));
 
-    EXPECT_TRUE(StringMatcher::StartsWith(u8"HellØ WØrld", u8"HellØ", true));
-    EXPECT_FALSE(StringMatcher::StartsWith(u8"HellØ WØrld", u8"hellø", true));
+    EXPECT_TRUE(StringMatcher::StartsWith<true>(u8"HellØ WØrld", u8"HellØ"));
+    EXPECT_FALSE(StringMatcher::StartsWith<true>(u8"HellØ WØrld", u8"hellø"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, StartsWithHandlesEmptyNeedleCaseSensitive) {
-    EXPECT_TRUE(StringMatcher::StartsWith(u8"Hello World", u8"", true));
+    EXPECT_TRUE(StringMatcher::StartsWith<true>(u8"Hello World", u8""));
   }
 
   // ------------------------------------------------------------------------------------------- //

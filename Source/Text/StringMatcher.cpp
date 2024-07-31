@@ -418,24 +418,40 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool StringMatcher::StartsWith(
-    const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
+  template<> bool StringMatcher::StartsWith<false>(
+    const std::string &haystack, const std::string &needle
   ) {
     const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
-    const my_char8_t *haystackEnd = haystackStart + needle.length();
-
     const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
-    const my_char8_t *needleEnd = needleStart + needle.length();
 
-    if(caseSensitive) {
-      return areUtf8StringsEqual<true>(
-        haystackStart, haystackEnd, needleStart, needleEnd
-      );
-    } else {
-      return areUtf8StringsEqual<false>(
-        haystackStart, haystackEnd, needleStart, needleEnd
-      );
+    std::string::size_type needleLength = needle.length();
+    if(haystack.length() < needleLength) {
+      return false;
     }
+
+    return areUtf8StringsEqual<false>(
+      haystackStart, haystackStart + needleLength,
+      needleStart, needleStart + needleLength
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool StringMatcher::StartsWith<true>(
+    const std::string &haystack, const std::string &needle
+  ) {
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+
+    std::string::size_type needleLength = needle.length();
+    if(haystack.length() < needleLength) {
+      return false;
+    }
+
+    return areUtf8StringsEqual<true>(
+      haystackStart, haystackStart + needleLength,
+      needleStart, needleStart + needleLength
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //

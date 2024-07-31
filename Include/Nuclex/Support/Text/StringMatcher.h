@@ -61,24 +61,29 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Checks whether one UTF-8 string starts with another UTF-8 string</summary>
+    /// <typeparam name="CaseSensitive">
+    ///   Whether the comparison will be case sensitive
+    /// </typeparam>
     /// <param name="text">
     ///   String whose beginning will be compared with the searched-for string
     /// </param>
     /// <param name="beginning">String with which the checked string must begin</param>
-    /// <param name="caseSensitive">Whether the comparison will be case sensitive</param>
     /// <returns>
     ///   True if the 'haystack' string starts with the 'needle' string
     /// </returns>
-    public: NUCLEX_SUPPORT_API static bool StartsWith(
-      const std::string &text, const std::string &beginning, bool caseSensitive = false
+    public: template<bool CaseSensitive>
+    NUCLEX_SUPPORT_API static bool StartsWith(
+      const std::string &text, const std::string &beginning
     );
 
     /// <summary>Checks whether one UTF-8 string ends with another UTF-8 string</summary>
+    /// <typeparam name="CaseSensitive">
+    ///   Whether the comparison will be case sensitive
+    /// </typeparam>
     /// <param name="text">
     ///   String whose ending will be compared with the searched-for string
     /// </param>
     /// <param name="ending">String with which the checked string must end</param>
-    /// <param name="caseSensitive">Whether the comparison will be case sensitive</param>
     /// <returns>
     ///   True if the 'haystack' string ends with the 'needle' string
     /// </returns>
@@ -109,6 +114,18 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::StartsWith<false>(
+    const std::string &text, const std::string &beginning
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::StartsWith<true>(
+    const std::string &text, const std::string &beginning
+  );
 
   // ------------------------------------------------------------------------------------------- //
 
