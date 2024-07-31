@@ -440,14 +440,18 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool StringMatcher::EndsWith(
-    const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
+  template<> bool StringMatcher::EndsWith<false>(
+    const std::string &haystack, const std::string &needle
   ) {
-    if(caseSensitive) {
-      return doesUtf8StringEndWith<std::string, true>(haystack, needle);
-    } else {
-      return doesUtf8StringEndWith<std::string, false>(haystack, needle);
-    }
+    return doesUtf8StringEndWith<std::string, false>(haystack, needle);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool StringMatcher::EndsWith<true>(
+    const std::string &haystack, const std::string &needle
+  ) {
+    return doesUtf8StringEndWith<std::string, true>(haystack, needle);
   }
 
   // ------------------------------------------------------------------------------------------- //

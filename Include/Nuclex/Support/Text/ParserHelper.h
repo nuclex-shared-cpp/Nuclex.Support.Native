@@ -112,13 +112,21 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
 #if 0
-    public: NUCLEX_SUPPORT_API static std::string::size_type FindNextWord(
+    /// <summary>Searches for the next word (character surrounded by whitespace)</summary>
+    /// <param name="text">String in which the next word is searched</param>
+    /// <param name="startIndex">Index in the string at which to begin searchign</param>
+    /// <param name="trimWhitespace">
+    ///   Whether the word should be isolated without whitespace
+    /// </param>
+    /// <returns>
+    ///   A string_view containing either the next word alone (if whitespace trimming
+    ///   was enabled) or 
+    public: NUCLEX_SUPPORT_API static std::string_view FindNextWord(
       const std::string &text,
       std::string::size_type startIndex = 0,
       bool trimWhitespace = true
     );
 #endif
-
 #if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
     /// <summary>Attempts to parse the specified numeric type from the provided text</summary>
     /// <typeparam name="TScalar">

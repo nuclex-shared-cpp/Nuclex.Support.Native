@@ -88,8 +88,9 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   comparing. If you feed it ANSI codepage strings with characters in the range
     ///   of 0x80 - 0xbf (128 - 191), it will give wrong results.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static bool EndsWith(
-      const std::string &text, const std::string &ending, bool caseSensitive = false
+    public: template<bool CaseSensitive>
+    NUCLEX_SUPPORT_API static bool EndsWith(
+      const std::string &text, const std::string &ending
     );
 
     /// <summary>Checks whether a UTF-8 string matches a wildcard</summary>
@@ -108,6 +109,18 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::EndsWith<false>(
+    const std::string &text, const std::string &ending
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::EndsWith<true>(
+    const std::string &text, const std::string &ending
+  );
 
   // ------------------------------------------------------------------------------------------- //
 
