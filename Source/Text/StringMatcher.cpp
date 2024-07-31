@@ -92,7 +92,7 @@ namespace {
   /// <param name="needleEnd">Address one past the end of the needle string</param>
   /// <returns>True if the 'haystack' string starts with the 'needle' string</returns>
   template<bool CaseSensitive>
-  bool checkStringMatchesWithUtf8(
+  bool areUtf8StringsEqual(
     const my_char8_t *haystack, const my_char8_t *haystackEnd,
     const my_char8_t *needle, const my_char8_t *needleEnd
   ) {
@@ -126,6 +126,58 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Checks if a string ends with the specified UTF-8 sequence</summary>
+  /// <typeparam name="TString">Stirng type, either std::string or std::string_view</typeparam>
+  /// <typeparam name="CaseSensitive">Whether to compare case sensitive</typeparam>
+  /// <param name="haystack">String whose ending will be checked</param>
+  /// <param name="needle">String that the other string might end with</param>
+  /// <returns>True if the 'haystack' ended with the 'needle' string</returns>
+  template<typename TString, bool CaseSensitive>
+  bool doesUtf8StringEndWith(const TString &haystack, const std::string &needle) {
+    const my_char8_t *haystackStart, *haystackEnd;
+    const my_char8_t *needleStart, *needleEnd;
+    {
+      std::string::size_type needleLength = needle.length();
+      std::string::size_type haystackLength = haystack.length();
+
+      // If the haystack is too short to contain the needle, we don't even need to check
+      // Also required for the pointer math below to be safe.
+      if(needleLength > haystackLength) {
+        return false;
+      }
+
+      // Pick the start in the haystack to begin the same number of bytes from
+      // its end as the 'needle' is long.
+      haystackEnd = reinterpret_cast<const my_char8_t*>(haystack.data()) + haystackLength;
+      haystackStart = haystackEnd - needleLength; // safe, since we checked the length
+
+      needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+      needleEnd = needleStart + needleLength;
+    }
+
+    // Since we don't know the contents of the 'haystack' string, the above
+    // math might have placed us in the middle of a UTF-8 sequence. Luckily,
+    // UTF-8 lets us detect that. In that situation, the strings are not a match.
+    //
+    // Note that we /could/ blindly compare the characters. If we started at a subsequent
+    // character in the 'haystack', it would be a guaranteed mismatch to the first character
+    // in the 'needle'. However, since we're actually decoding UTF-8 code points (in order to
+    // do case folding for case insensitive comparisons), we still have to check, otherwise
+    // UnicodeHelper::ReadCodePoint() would bail out with an 'illegal UTF-8 character' error.
+    bool isTrailingCharacter = ((static_cast<std::uint8_t>(*haystackStart) & 0xc0) == 0x80);
+    if(isTrailingCharacter) {
+      return false;
+    }
+
+    // Now we know haystackStart is within the string and placed on the lead character
+    // of an UTF-8 code point, so from here on out, it's a simple string comparison.
+    return areUtf8StringsEqual<CaseSensitive>(
+      haystackStart, haystackEnd, needleStart, needleEnd
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>C-style function that checks if a string contains another string</summary>
   /// <typeparam name="CaseSensitive">Whether the comparison will be case-sensitive</typeparam>
   /// <param name="haystack">Text that will be scanned for the other string</param>
@@ -137,7 +189,7 @@ namespace {
   ///   if no matches were found.
   /// </returns>
   template<bool CaseSensitive>
-  const my_char8_t *findSubstringUtf8(
+  const my_char8_t *findUtf8Substring(
     const my_char8_t *haystack, const my_char8_t *haystackEnd,
     const my_char8_t *needle, const my_char8_t *needleEnd
   ) {
@@ -217,7 +269,7 @@ namespace {
   /// <param name="wildcardEnd">Address one past the end of the wildcard string</param>
   /// <returns>True if the text matches the wild card, false otherwise</returns>
   template<bool CaseSensitive>
-  bool matchWildcardUtf8(
+  bool matchUtf8Wildcard(
     const my_char8_t *text, const my_char8_t *textEnd,
     const my_char8_t *wildcard, const my_char8_t *wildcardEnd
   ) {
@@ -288,7 +340,7 @@ namespace {
     // Then retry the wildcard match skipping any number of characters from text
     // (the star can match anything from zero to all characters)
     while(text < textEnd) {
-      if(matchWildcardUtf8<CaseSensitive>(text, textEnd, wildcardAfterStar, wildcardEnd)) {
+      if(matchUtf8Wildcard<CaseSensitive>(text, textEnd, wildcardAfterStar, wildcardEnd)) {
         return true;
       }
 
@@ -317,17 +369,25 @@ namespace Nuclex { namespace Support { namespace Text {
     if(caseSensitive) {
       return (left == right);
     } else {
-      if(left.length() != right.length()) {
-        return false;
+      const my_char8_t *leftStart, *leftEnd;
+      const my_char8_t *rightStart, *rightEnd;
+      {
+        std::string::size_type leftLength = left.length();
+        std::string::size_type rightLength = right.length();
+
+        // If the strings have different lengths, they can't be equal
+        if(leftLength != rightLength) {
+          return false;
+        }
+
+        leftStart = reinterpret_cast<const my_char8_t *>(left.data());
+        leftEnd = leftStart + leftLength;
+
+        rightStart = reinterpret_cast<const my_char8_t *>(right.data());
+        rightEnd = rightStart + rightLength;
       }
 
-      const my_char8_t *leftStart = reinterpret_cast<const my_char8_t *>(left.c_str());
-      const my_char8_t *leftEnd = leftStart + left.length();
-
-      const my_char8_t *rightStart = reinterpret_cast<const my_char8_t *>(right.c_str());
-      const my_char8_t *rightEnd = rightStart + right.length();
-
-      return checkStringMatchesWithUtf8<false>(
+      return areUtf8StringsEqual<false>(
         leftStart, leftEnd,
         rightStart, rightEnd
       );
@@ -339,18 +399,18 @@ namespace Nuclex { namespace Support { namespace Text {
   bool StringMatcher::Contains(
     const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.c_str());
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
     const my_char8_t *haystackEnd = haystackStart + haystack.length();
 
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.c_str());
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
     const my_char8_t *needleEnd = needleStart + needle.length();
 
     if(caseSensitive) {
-      return findSubstringUtf8<true>(
+      return findUtf8Substring<true>(
         haystackStart, haystackEnd, needleStart, needleEnd
       ) != nullptr;
     } else {
-      return findSubstringUtf8<false>(
+      return findUtf8Substring<false>(
         haystackStart, haystackEnd, needleStart, needleEnd
       ) != nullptr;
     }
@@ -361,18 +421,18 @@ namespace Nuclex { namespace Support { namespace Text {
   bool StringMatcher::StartsWith(
     const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.c_str());
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
     const my_char8_t *haystackEnd = haystackStart + needle.length();
 
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.c_str());
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
     const my_char8_t *needleEnd = needleStart + needle.length();
 
     if(caseSensitive) {
-      return checkStringMatchesWithUtf8<true>(
+      return areUtf8StringsEqual<true>(
         haystackStart, haystackEnd, needleStart, needleEnd
       );
     } else {
-      return checkStringMatchesWithUtf8<false>(
+      return areUtf8StringsEqual<false>(
         haystackStart, haystackEnd, needleStart, needleEnd
       );
     }
@@ -383,43 +443,10 @@ namespace Nuclex { namespace Support { namespace Text {
   bool StringMatcher::EndsWith(
     const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
   ) {
-    if(needle.length() > haystack.length()) {
-      return false;
-    }
-
-    // Pick the start in the haystack to begin the same number of bytes from
-    // its end as the 'needle' is long.
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.c_str());
-    const my_char8_t *haystackEnd = haystackStart + haystack.length();
-    haystackStart = haystackEnd - needle.length(); // safe, since we checked the length
-
-    // Since we don't know the contents of the 'haystack' string, the above
-    // math might have placed us in the middle of a UTF-8 sequence. Luckily,
-    // UTF-8 lets us detect that. In that situation, the strings are not a match.
-    //
-    // Note that we /could/ blindly compare the characters. If we started at a subsequent
-    // character in the 'haystack', it would be a guaranteed mismatch to the first character
-    // in the 'needle'. However, since we're actually decoding UTF-8 code points (in order to
-    // do case folding for case insensitive comparisons), we still have to check, otherwise
-    // UnicodeHelper::ReadCodePoint() would bail out with an 'illegal UTF-8 character' error.
-    bool isSubsequentCharacter = (
-      (static_cast<std::uint8_t>(*haystackStart) & 0xc0) == 0x80
-    );
-    if(isSubsequentCharacter) {
-      return false;
-    }
-
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.c_str());
-    const my_char8_t *needleEnd = needleStart + needle.length();
-
     if(caseSensitive) {
-      return checkStringMatchesWithUtf8<true>(
-        haystackStart, haystackEnd, needleStart, needleEnd
-      );
+      return doesUtf8StringEndWith<std::string, true>(haystack, needle);
     } else {
-      return checkStringMatchesWithUtf8<false>(
-        haystackStart, haystackEnd, needleStart, needleEnd
-      );
+      return doesUtf8StringEndWith<std::string, false>(haystack, needle);
     }
   }
 
@@ -435,9 +462,9 @@ namespace Nuclex { namespace Support { namespace Text {
     const my_char8_t *wildcardEnd = wildcardStart + wildcard.length();
 
     if(caseSensitive) {
-      return matchWildcardUtf8<true>(textStart, textEnd, wildcardStart, wildcardEnd);
+      return matchUtf8Wildcard<true>(textStart, textEnd, wildcardStart, wildcardEnd);
     } else {
-      return matchWildcardUtf8<false>(textStart, textEnd, wildcardStart, wildcardEnd);
+      return matchUtf8Wildcard<false>(textStart, textEnd, wildcardStart, wildcardEnd);
     }
   }
 
