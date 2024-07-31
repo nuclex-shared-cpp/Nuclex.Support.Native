@@ -396,24 +396,30 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool StringMatcher::Contains(
-    const std::string &haystack, const std::string &needle, bool caseSensitive /* = false */
+  template<> bool StringMatcher::Contains<false>(
+    const std::string &haystack, const std::string &needle
   ) {
     const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
-    const my_char8_t *haystackEnd = haystackStart + haystack.length();
-
     const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
-    const my_char8_t *needleEnd = needleStart + needle.length();
 
-    if(caseSensitive) {
-      return findUtf8Substring<true>(
-        haystackStart, haystackEnd, needleStart, needleEnd
-      ) != nullptr;
-    } else {
-      return findUtf8Substring<false>(
-        haystackStart, haystackEnd, needleStart, needleEnd
-      ) != nullptr;
-    }
+    return findUtf8Substring<false>(
+      haystackStart, haystackStart + haystack.length(),
+      needleStart, needleStart + needle.length()
+    ) != nullptr;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool StringMatcher::Contains<true>(
+    const std::string &haystack, const std::string &needle
+  ) {
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+
+    return findUtf8Substring<true>(
+      haystackStart, haystackStart + haystack.length(),
+      needleStart, needleStart + needle.length()
+    ) != nullptr;
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -48,16 +48,19 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Checks whether one UTF-8 string contains another UTF-8 string</summary>
+    /// <typeparam name="CaseSensitive">
+    ///   Whether the comparison will be case sensitive
+    /// </typeparam>
     /// <param name="haystack">
     ///   String that will be scanned for instances of another string
     /// </param>
     /// <param name="needle">String which might appear inside the other string</param>
-    /// <param name="caseSensitive">Whether the comparison will be case sensitive</param>
     /// <returns>
     ///   True if the 'needle' string appears at least once in the 'haystack' string
     /// </returns>
-    public: NUCLEX_SUPPORT_API static bool Contains(
-      const std::string &haystack, const std::string &needle, bool caseSensitive = false
+    public: template<bool CaseSensitive = false>
+    NUCLEX_SUPPORT_API static bool Contains(
+      const std::string &haystack, const std::string &needle
     );
 
     /// <summary>Checks whether one UTF-8 string starts with another UTF-8 string</summary>
@@ -71,7 +74,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <returns>
     ///   True if the 'haystack' string starts with the 'needle' string
     /// </returns>
-    public: template<bool CaseSensitive>
+    public: template<bool CaseSensitive = false>
     NUCLEX_SUPPORT_API static bool StartsWith(
       const std::string &text, const std::string &beginning
     );
@@ -93,7 +96,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   comparing. If you feed it ANSI codepage strings with characters in the range
     ///   of 0x80 - 0xbf (128 - 191), it will give wrong results.
     /// </remarks>
-    public: template<bool CaseSensitive>
+    public: template<bool CaseSensitive = false>
     NUCLEX_SUPPORT_API static bool EndsWith(
       const std::string &text, const std::string &ending
     );
@@ -114,6 +117,19 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::Contains<false>(
+    const std::string &text, const std::string &beginning
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::Contains<true>(
+    const std::string &text, const std::string &beginning
+  );
+
 
   // ------------------------------------------------------------------------------------------- //
 
