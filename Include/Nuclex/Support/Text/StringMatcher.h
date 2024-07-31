@@ -105,9 +105,11 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Checks whether a UTF-8 string matches a wildcard</summary>
+    /// <typeparam name="CaseSensitive">
+    ///   Whether the comparison will be case sensitive
+    /// </typeparam>
     /// <param name="text">Text that will be matched against the wildcard</param>
     /// <param name="wildcard">Wildcard against which the text will be matched</param>
-    /// <param name="caseSensitive">Whether the comparison will be case sensitive</param>
     /// <returns>True if the specified text matches the wildcard</returns>
     /// <remarks>
     ///   Wildcards refer to the simple placeholder symbols employed by many shells,
@@ -115,8 +117,9 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   a stand-in for zero or more UTF-8 characters. For example &quot;*l?o*&quot;
     ///   would match &quot;Hello&quot; and &quot;lion&quot; but not &quot;glow&quot;.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static bool FitsWildcard(
-      const std::string &text, const std::string &wildcard, bool caseSensitive = false
+    public: template<bool CaseSensitive = false>
+    NUCLEX_SUPPORT_API static bool FitsWildcard(
+      const std::string &text, const std::string &wildcard
     );
 
   };
@@ -167,6 +170,18 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::EndsWith<true>(
     const std::string &text, const std::string &ending
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::FitsWildcard<false>(
+    const std::string &text, const std::string &wildcard
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::FitsWildcard<true>(
+    const std::string &text, const std::string &wildcard
   );
 
   // ------------------------------------------------------------------------------------------- //

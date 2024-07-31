@@ -429,13 +429,13 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::StartsWith<false>(
-    const std::string &haystack, const std::string &needle
+    const std::string &text, const std::string &beginning
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(text.data());
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(beginning.data());
 
-    std::string::size_type needleLength = needle.length();
-    if(haystack.length() < needleLength) {
+    std::string::size_type needleLength = beginning.length();
+    if(text.length() < needleLength) {
       return false;
     }
 
@@ -448,13 +448,13 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::StartsWith<true>(
-    const std::string &haystack, const std::string &needle
+    const std::string &text, const std::string &beginning
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(text.data());
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(beginning.data());
 
-    std::string::size_type needleLength = needle.length();
-    if(haystack.length() < needleLength) {
+    std::string::size_type needleLength = beginning.length();
+    if(text.length() < needleLength) {
       return false;
     }
 
@@ -467,35 +467,45 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::EndsWith<false>(
-    const std::string &haystack, const std::string &needle
+    const std::string &text, const std::string &ending
   ) {
-    return doesUtf8StringEndWith<std::string, false>(haystack, needle);
+    return doesUtf8StringEndWith<std::string, false>(text, ending);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::EndsWith<true>(
-    const std::string &haystack, const std::string &needle
+    const std::string &text, const std::string &ending
   ) {
-    return doesUtf8StringEndWith<std::string, true>(haystack, needle);
+    return doesUtf8StringEndWith<std::string, true>(text, ending);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool StringMatcher::FitsWildcard(
-    const std::string &text, const std::string &wildcard, bool caseSensitive /* = false */
+  template<> bool StringMatcher::FitsWildcard<false>(
+    const std::string &text, const std::string &wildcard
   ) {
-    const my_char8_t *textStart = reinterpret_cast<const my_char8_t *>(text.c_str());
-    const my_char8_t *textEnd = textStart + text.length();
+    const my_char8_t *textStart = reinterpret_cast<const my_char8_t *>(text.data());
+    const my_char8_t *wildcardStart = reinterpret_cast<const my_char8_t *>(wildcard.data());
 
-    const my_char8_t *wildcardStart = reinterpret_cast<const my_char8_t *>(wildcard.c_str());
-    const my_char8_t *wildcardEnd = wildcardStart + wildcard.length();
+    return matchUtf8Wildcard<false>(
+      textStart, textStart + text.length(),
+      wildcardStart, wildcardStart + wildcard.length()
+    );
+  }
 
-    if(caseSensitive) {
-      return matchUtf8Wildcard<true>(textStart, textEnd, wildcardStart, wildcardEnd);
-    } else {
-      return matchUtf8Wildcard<false>(textStart, textEnd, wildcardStart, wildcardEnd);
-    }
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool StringMatcher::FitsWildcard<true>(
+    const std::string &text, const std::string &wildcard
+  ) {
+    const my_char8_t *textStart = reinterpret_cast<const my_char8_t *>(text.data());
+    const my_char8_t *wildcardStart = reinterpret_cast<const my_char8_t *>(wildcard.data());
+
+    return matchUtf8Wildcard<true>(
+      textStart, textStart + text.length(),
+      wildcardStart, wildcardStart + wildcard.length()
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //

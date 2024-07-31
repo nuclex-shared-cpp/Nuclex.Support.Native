@@ -176,15 +176,15 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, WilcardMatchDefaultsToCaseInsensitive) {
-    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"hello world"));
-    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"HellØ WØrld", u8"hellø wørld"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard<false>(u8"Hello World", u8"hello world"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard<false>(u8"HellØ WØrld", u8"hellø wørld"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, WildcardMatchCanBeCaseSensitive) {
-    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"Hello World", u8"hello world", true));
-    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"HellØ WØrld", u8"hellø wørld", true));
+    EXPECT_FALSE(StringMatcher::FitsWildcard<true>(u8"Hello World", u8"hello world"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard<true>(u8"HellØ WØrld", u8"hellø wørld"));
   }
 
   // ------------------------------------------------------------------------------------------- //
