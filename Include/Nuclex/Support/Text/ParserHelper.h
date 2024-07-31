@@ -101,6 +101,24 @@ namespace Nuclex { namespace Support { namespace Text {
       const Char8Type *&start, const Char8Type *end
     );
 
+    /// <summary>
+    ///   Moves <paramref cref="start" /> ahead until the first whitespace UTF-8
+    ///   character or until hitting <paramref cref="end" />
+    /// </summary>
+    /// <param name="start">Start pointer from which on non-whitespace will be skipped</param>
+    /// <param name="end">End pointer that may not be overrun</param>
+    public: NUCLEX_SUPPORT_API static void SkipNonWhitespace(
+      const Char8Type *&start, const Char8Type *end
+    );
+
+#if 0
+    public: NUCLEX_SUPPORT_API static std::string::size_type FindNextWord(
+      const std::string &text,
+      std::string::size_type startIndex = 0,
+      bool trimWhitespace = true
+    );
+#endif
+
 #if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
     /// <summary>Attempts to parse the specified numeric type from the provided text</summary>
     /// <typeparam name="TScalar">

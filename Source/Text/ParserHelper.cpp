@@ -111,6 +111,24 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  void ParserHelper::SkipNonWhitespace(const Char8Type *&start, const Char8Type *end) {
+    const Char8Type *current = start;
+    while(current < end) {
+      char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
+      if(codePoint == char32_t(-1)) {
+        break;
+      }
+
+      if(IsWhitespace(codePoint)) {
+        break;
+      } else {
+        start = current;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 #if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
   template<>
   std::optional<std::uint32_t> ParserHelper::ParseNumber(

@@ -57,7 +57,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(ParserHelperTest, CanSkipWhitespaces) {
-    std::string text(u8"\t Hellø Ünicøde Wórld ");
+    std::string text(u8"\t Hellø Ünicøde Wórld ", 26);
     const std::uint8_t *start = reinterpret_cast<const std::uint8_t *>(text.c_str());
     const std::uint8_t *end = start + text.length();
 
@@ -65,35 +65,85 @@ namespace Nuclex { namespace Support { namespace Text {
     {
       const std::uint8_t *current = start;
       ParserHelper::SkipWhitespace(current, end);
-      EXPECT_EQ(current, start + 2);
+      EXPECT_EQ(current - start, 2U);
     }
 
     // On letter
     {
       const std::uint8_t *current = start + 3;
       ParserHelper::SkipWhitespace(current, end);
-      EXPECT_EQ(current, start + 3);
+      EXPECT_EQ(current - start, 3U);
     }
 
     // Inside two-byte encoded code point
     {
       const std::uint8_t *current = start + 21;
       ParserHelper::SkipWhitespace(current, end);
-      EXPECT_EQ(current, start + 21);
+      EXPECT_EQ(current - start, 21U);
     }
 
     // On last character
     {
       const std::uint8_t *current = start + 25;
       ParserHelper::SkipWhitespace(current, end);
-      EXPECT_EQ(current, start + 26);
+      EXPECT_EQ(current - start, 26U);
     }
 
     // Past last character
     {
       const std::uint8_t *current = start + 26;
       ParserHelper::SkipWhitespace(current, end);
-      EXPECT_EQ(current, start + 26);
+      EXPECT_EQ(current - start, 26U);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ParserHelperTest, CanSkipNonWhitespaces) {
+    std::string text(u8"\t Hellø Ünicøde Wórld ", 26);
+    const std::uint8_t *start = reinterpret_cast<const std::uint8_t *>(text.c_str());
+    const std::uint8_t *end = start + text.length();
+
+    // First whitespace at beginning
+    {
+      const std::uint8_t *current = start;
+      ParserHelper::SkipNonWhitespace(current, end);
+      EXPECT_EQ(current - start, 0U);
+    }
+
+    // Second whitespace at beginning
+    {
+      const std::uint8_t *current = start + 1;
+      ParserHelper::SkipNonWhitespace(current, end);
+      EXPECT_EQ(current - start, 1U);
+    }
+
+    // First whitespace between words
+    {
+      const std::uint8_t *current = start + 2;
+      ParserHelper::SkipNonWhitespace(current, end);
+      EXPECT_EQ(current - start, 8U);
+    }
+
+    // Second whitespace between words
+    {
+      const std::uint8_t *current = start + 9;
+      ParserHelper::SkipNonWhitespace(current, end);
+      EXPECT_EQ(current - start, 18U);
+    }
+
+    // Past last character
+    {
+      const std::uint8_t *current = start + 19;
+      ParserHelper::SkipNonWhitespace(current, end);
+      EXPECT_EQ(current - start, 25U);
+    }
+
+    // On string end
+    {
+      const std::uint8_t *current = start + 26;
+      ParserHelper::SkipNonWhitespace(current, end);
+      EXPECT_EQ(current - start, 26U);
     }
   }
 
