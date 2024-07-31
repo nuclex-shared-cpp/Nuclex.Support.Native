@@ -363,35 +363,39 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool StringMatcher::AreEqual(
-    const std::string &left, const std::string &right, bool caseSensitive /* = false */
+  template<> bool StringMatcher::AreEqual<false>(
+    const std::string &left, const std::string &right
   ) {
-    if(caseSensitive) {
-      return (left == right);
-    } else {
-      const my_char8_t *leftStart, *leftEnd;
-      const my_char8_t *rightStart, *rightEnd;
-      {
-        std::string::size_type leftLength = left.length();
-        std::string::size_type rightLength = right.length();
+    const my_char8_t *leftStart, *leftEnd;
+    const my_char8_t *rightStart, *rightEnd;
+    {
+      std::string::size_type leftLength = left.length();
+      std::string::size_type rightLength = right.length();
 
-        // If the strings have different lengths, they can't be equal
-        if(leftLength != rightLength) {
-          return false;
-        }
-
-        leftStart = reinterpret_cast<const my_char8_t *>(left.data());
-        leftEnd = leftStart + leftLength;
-
-        rightStart = reinterpret_cast<const my_char8_t *>(right.data());
-        rightEnd = rightStart + rightLength;
+      // If the strings have different lengths, they can't be equal
+      if(leftLength != rightLength) {
+        return false;
       }
 
-      return areUtf8StringsEqual<false>(
-        leftStart, leftEnd,
-        rightStart, rightEnd
-      );
+      leftStart = reinterpret_cast<const my_char8_t *>(left.data());
+      leftEnd = leftStart + leftLength;
+
+      rightStart = reinterpret_cast<const my_char8_t *>(right.data());
+      rightEnd = rightStart + rightLength;
     }
+
+    return areUtf8StringsEqual<false>(
+      leftStart, leftEnd,
+      rightStart, rightEnd
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool StringMatcher::AreEqual<true>(
+    const std::string &left, const std::string &right
+  ) {
+    return (left == right); // d'oh!
   }
 
   // ------------------------------------------------------------------------------------------- //

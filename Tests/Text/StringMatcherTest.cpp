@@ -29,19 +29,19 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, ComparisonDefaultsToCaseInsensitive) {
-    EXPECT_TRUE(StringMatcher::AreEqual(u8"Hello", u8"hello"));
-    EXPECT_TRUE(StringMatcher::AreEqual(u8"hello", u8"hello"));
-    EXPECT_TRUE(StringMatcher::AreEqual(u8"Ünicøde", u8"üNICØDE"));
-    EXPECT_TRUE(StringMatcher::AreEqual(u8"ünicøde", u8"ünicøde"));
+    EXPECT_TRUE(StringMatcher::AreEqual<false>(u8"Hello", u8"hello"));
+    EXPECT_TRUE(StringMatcher::AreEqual<false>(u8"hello", u8"hello"));
+    EXPECT_TRUE(StringMatcher::AreEqual<false>(u8"Ünicøde", u8"üNICØDE"));
+    EXPECT_TRUE(StringMatcher::AreEqual<false>(u8"ünicøde", u8"ünicøde"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, CaseSensitiveComparisonIsPossible) {
-    EXPECT_FALSE(StringMatcher::AreEqual(u8"Hello", u8"hello", true));
-    EXPECT_TRUE(StringMatcher::AreEqual(u8"hello", u8"hello", true));
-    EXPECT_FALSE(StringMatcher::AreEqual(u8"Ünicøde", u8"ünicØde", true));
-    EXPECT_FALSE(StringMatcher::AreEqual(u8"ÜNICØDE", u8"üNICøDE", true));
+    EXPECT_FALSE(StringMatcher::AreEqual<true>(u8"Hello", u8"hello"));
+    EXPECT_TRUE(StringMatcher::AreEqual<true>(u8"hello", u8"hello"));
+    EXPECT_FALSE(StringMatcher::AreEqual<true>(u8"Ünicøde", u8"ünicØde"));
+    EXPECT_FALSE(StringMatcher::AreEqual<true>(u8"ÜNICØDE", u8"üNICøDE"));
   }
 
   // ------------------------------------------------------------------------------------------- //

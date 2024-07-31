@@ -34,17 +34,20 @@ namespace Nuclex { namespace Support { namespace Text {
   class NUCLEX_SUPPORT_TYPE StringMatcher {
 
     /// <summary>Compares two UTF-8 strings for equality, optionally ignoring case</summary>
+    /// <typeparam name="CaseSensitive">
+    ///   Whether the comparison will be case sensitive
+    /// </typeparam>
     /// <param name="left">String that will be compared on the left side</param>
     /// <param name="right">String that will be compared on the right side</param>
-    /// <param name="caseSensitive">Whether the comparison will be case sensitive</param>
     /// <returns>True if the two strings are equal, false otherwise</returns>
     /// <remarks>
     ///   This method is ideal for one-off comparisons. If you have to compare one string
     ///   against multiple strings or want to create a case-insensitive string map,
     ///   consider using the <see cref="StringConverter.ToFoldedLowercase" /> method.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static bool AreEqual(
-      const std::string &left, const std::string &right, bool caseSensitive = false
+    public: template<bool CaseSensitive = false>
+    NUCLEX_SUPPORT_API static bool AreEqual(
+      const std::string &left, const std::string &right
     );
 
     /// <summary>Checks whether one UTF-8 string contains another UTF-8 string</summary>
@@ -120,6 +123,18 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<false>(
+    const std::string &text, const std::string &beginning
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<true>(
+    const std::string &text, const std::string &beginning
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
   template<> bool NUCLEX_SUPPORT_API StringMatcher::Contains<false>(
     const std::string &text, const std::string &beginning
   );
@@ -129,7 +144,6 @@ namespace Nuclex { namespace Support { namespace Text {
   template<> bool NUCLEX_SUPPORT_API StringMatcher::Contains<true>(
     const std::string &text, const std::string &beginning
   );
-
 
   // ------------------------------------------------------------------------------------------- //
 

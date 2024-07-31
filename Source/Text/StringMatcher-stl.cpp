@@ -183,7 +183,7 @@ namespace Nuclex { namespace Support { namespace Text {
   bool CaseInsensitiveUtf8EqualTo::operator()(
     const std::string &left, const std::string &right
   ) const noexcept {
-    return StringMatcher::AreEqual(left, right, false);
+    return StringMatcher::AreEqual<false>(left, right);
   }
 
   // ------------------------------------------------------------------------------------------- //
