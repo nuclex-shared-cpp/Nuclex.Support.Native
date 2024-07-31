@@ -342,9 +342,8 @@
     <ClCompile Include="Source\Text\StringConverter.cpp" />
     <ClCompile Include="Source\Text\StringHelper.cpp" />
     <ClCompile Include="Source\Text\StringMatcher.cpp" />
+    <ClCompile Include="Source\Text\StringMatcher-stl.cpp" />
     <ClCompile Include="Source\Text\UnicodeHelper.cpp" />
-    <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\concurrentqueue.h" />
-    <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\lightweightsemaphore.h" />
     <ClCompile Include="Source\Threading\ConcurrentJob.cpp" />
     <ClCompile Include="Source\Threading\Latch.cpp" />
     <ClCompile Include="Source\Threading\Gate.cpp" />

@@ -99,9 +99,6 @@
     <Filter Include="Source\Platform">
       <UniqueIdentifier>{41337d1c-187d-4d7b-8eea-9eb521d00b08}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Threading\cameron314-concurrentqueue-1.0.4">
-      <UniqueIdentifier>{da7e1b21-f6c3-48ff-87b0-47511a653944}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h">
@@ -541,15 +538,12 @@
     <ClCompile Include="Source\Text\StringMatcher.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Text\StringMatcher-stl.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Text\UnicodeHelper.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\lightweightsemaphore.h">
-      <Filter>Source\Threading\cameron314-concurrentqueue-1.0.4</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\concurrentqueue.h">
-      <Filter>Source\Threading\cameron314-concurrentqueue-1.0.4</Filter>
-    </ClInclude>
     <ClCompile Include="Source\Threading\ConcurrentJob.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>

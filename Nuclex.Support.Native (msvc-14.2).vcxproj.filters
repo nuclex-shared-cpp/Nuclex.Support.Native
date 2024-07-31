@@ -69,9 +69,6 @@
     <Filter Include="Source\Text\DragonBox-1.1.2">
       <UniqueIdentifier>{823678f3-8cdc-419f-a34a-7b7cddff31a6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Threading\cameron314-concurrentqueue-1.0.4">
-      <UniqueIdentifier>{2edfecf9-78a3-43e9-9539-c5e2daee37c1}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h">
@@ -511,15 +508,12 @@
     <ClCompile Include="Source\Text\StringMatcher.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Text\StringMatcher-stl.cpp">
+      <Filter>Source\Text</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Text\UnicodeHelper.cpp">
       <Filter>Source\Text</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\concurrentqueue.h">
-      <Filter>Source\Threading\cameron314-concurrentqueue-1.0.4</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Threading\cameron314-concurrentqueue-1.0.4\lightweightsemaphore.h">
-      <Filter>Source\Threading\cameron314-concurrentqueue-1.0.4</Filter>
-    </ClInclude>
     <ClCompile Include="Source\Threading\ConcurrentJob.cpp">
       <Filter>Source\Threading</Filter>
     </ClCompile>
