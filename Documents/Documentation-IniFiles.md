@@ -23,7 +23,7 @@ Here's a summary explaining what this `.ini` file parser / writer can do:
   my Linux file system and inside my Windows VM's `Windows` directory.*
 
 * Const-correct. A const intance of the `IniSettingsStore` only allows
-  properties to the retrieved, not stored.
+  properties to be retrieved, not stored.
 
 * If properties in an existing `.ini` file are updated, all comments and
   formatting are preserved (including within the lines being updated!)

@@ -209,48 +209,6 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Calculates the 32 bit murmur hash of a byte sequence</summary>
-  /// <param name="key">Data for which the murmur hash will be calculated</param>
-  /// <param name="length">Number of bytes to calculate the hash for</param>
-  /// <param name="seed">Seed value to base the hash on</param>
-  /// <returns>The murmur hash value of the specified byte sequence</returns>
-  std::uint32_t CalculateMurmur32(
-    const std::uint8_t *data, std::size_t length, std::uint32_t seed
-  ) {
-    const std::uint32_t mixFactor = 0x5bd1e995;
-    const int mixShift = 24;
-
-    std::uint32_t hash = seed ^ static_cast<std::uint32_t>(length * mixFactor);
-
-    while(length >= 4) {
-      std::uint32_t data32 = *reinterpret_cast<const std::uint32_t *>(data);
-
-      data32 *= mixFactor;
-      data32 ^= data32 >> mixShift;
-      data32 *= mixFactor;
-
-      hash *= mixFactor;
-      hash ^= data32;
-
-      data += 4;
-      length -= 4;
-    }
-
-    switch(length) {
-      case 3: { hash ^= std::uint32_t(data[2]) << 16; [[fallthrough]]; }
-      case 2: { hash ^= std::uint32_t(data[1]) << 8; [[fallthrough]]; }
-      case 1: { hash ^= std::uint32_t(data[0]); }
-    };
-
-    hash ^= hash >> 13;
-    hash *= mixFactor;
-    hash ^= hash >> 15;
-
-    return hash;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>C-style function that checks if a string matches a wild card</summary>
   /// <typeparam name="CaseSensitive">Whether the comparison will be case-sensitive</typeparam>
   /// <param name="text">Text that will be checked against the wild card</param>
@@ -343,55 +301,6 @@ namespace {
     // No amount of skipping helped, there's no match
     return false;
 
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Calculates the 64 bit murmur hash of a byte sequence</summary>
-  /// <param name="key">Data for which the murmur hash will be calculated</param>
-  /// <param name="length">Number of bytes to calculate the hash for</param>
-  /// <param name="seed">Seed value to base the hash on</param>
-  /// <returns>The murmur hash value of the specified byte sequence</returns>
-  std::uint64_t CalculateMurmur64(
-    const std::uint8_t *data, std::size_t length, std::uint64_t seed
-  ) {
-    const std::uint64_t mixFactor = 0xc6a4a7935bd1e995ULL;
-    const int mixShift = 47;
-
-    std::uint64_t hash = seed ^ static_cast<std::uint64_t>(length * mixFactor);
-
-    // Process the data in 64 bit chunks until we're down to the last few bytes
-    while(length >= 8) {
-      std::uint64_t data64 = *reinterpret_cast<const std::uint64_t *>(data);
-
-      data64 *= mixFactor;
-      data64 ^= data64 >> mixShift;
-      data64 *= mixFactor;
-
-      hash ^= data64;
-      hash *= mixFactor;
-
-      data += 8;
-      length -= 8;
-    }
-
-    // Process the remaining 7 or less bytes
-    switch(length) {
-      case 7: { hash ^= std::uint64_t(data[6]) << 48; [[fallthrough]]; }
-      case 6: { hash ^= std::uint64_t(data[5]) << 40; [[fallthrough]]; }
-      case 5: { hash ^= std::uint64_t(data[4]) << 32; [[fallthrough]]; }
-      case 4: { hash ^= std::uint64_t(data[3]) << 24; [[fallthrough]]; }
-      case 3: { hash ^= std::uint64_t(data[2]) << 16; [[fallthrough]]; }
-      case 2: { hash ^= std::uint64_t(data[1]) << 8; [[fallthrough]]; }
-      case 1: { hash ^= std::uint64_t(data[0]); hash *= mixFactor; }
-    };
-
-    // Also apply the bit mixing operation to the last few bytes
-    hash ^= hash >> mixShift;
-    hash *= mixFactor;
-    hash ^= hash >> mixShift;
-
-    return hash;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -529,87 +438,6 @@ namespace Nuclex { namespace Support { namespace Text {
       return matchWildcardUtf8<true>(textStart, textEnd, wildcardStart, wildcardEnd);
     } else {
       return matchWildcardUtf8<false>(textStart, textEnd, wildcardStart, wildcardEnd);
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  std::size_t CaseInsensitiveUtf8Hash::operator()(const std::string &text) const noexcept {
-    static const std::uint8_t aslrSeed = 0;
-    std::size_t hash = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(&aslrSeed));
-
-    using Nuclex::Support::Text::UnicodeHelper;
-
-    const my_char8_t *current = reinterpret_cast<const my_char8_t *>(text.c_str());
-    const my_char8_t *end = current + text.length();
-    while(current < end) {
-      char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
-      requireValidCodePoint(codePoint);
-      codePoint = UnicodeHelper::ToFoldedLowercase(codePoint);
-
-      // We're abusing the Murmur hashing function a bit here. It's not intended for
-      // incremental generation and this will likely decrease hashing quality...
-      if constexpr(sizeof(std::size_t) >= 8) {
-        hash = CalculateMurmur64(
-          reinterpret_cast<const std::uint8_t *>(&codePoint), 4,
-          static_cast<std::uint32_t>(hash)
-        );
-      } else {
-        hash = CalculateMurmur32(
-          reinterpret_cast<const std::uint8_t *>(&codePoint), 4,
-          static_cast<std::uint32_t>(hash)
-        );
-      }
-    }
-
-    return hash;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  bool CaseInsensitiveUtf8EqualTo::operator()(
-    const std::string &left, const std::string &right
-  ) const noexcept {
-    return StringMatcher::AreEqual(left, right, false);
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  bool CaseInsensitiveUtf8Less::operator()(
-    const std::string &left, const std::string &right
-  ) const noexcept {
-    using Nuclex::Support::Text::UnicodeHelper;
-
-    const my_char8_t *leftStart = reinterpret_cast<const my_char8_t *>(left.c_str());
-    const my_char8_t *leftEnd = leftStart + left.length();
-    const my_char8_t *rightStart = reinterpret_cast<const my_char8_t *>(right.c_str());
-    const my_char8_t *rightEnd = rightStart + right.length();
-
-    for(;;) {
-      if(leftStart >= leftEnd) {
-        if(rightStart >= rightEnd) {
-          return false; // false because both equal up to here
-        } else {
-          return true; // true because left is shorter
-        }
-      }
-      if(rightStart >= rightEnd) {
-        return false; // false because left is longer
-      }
-
-      char32_t leftCodePoint = UnicodeHelper::ReadCodePoint(leftStart, leftEnd);
-      requireValidCodePoint(leftCodePoint);
-      char32_t rightCodePoint = UnicodeHelper::ReadCodePoint(rightStart, rightEnd);
-      requireValidCodePoint(rightCodePoint);
-
-      leftCodePoint = UnicodeHelper::ToFoldedLowercase(leftCodePoint);
-      rightCodePoint = UnicodeHelper::ToFoldedLowercase(rightCodePoint);
-
-      if(leftCodePoint < rightCodePoint) {
-        return true;
-      } else if(leftCodePoint > rightCodePoint) {
-        return false;
-      }
     }
   }
 
