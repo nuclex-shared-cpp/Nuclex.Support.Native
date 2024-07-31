@@ -28,7 +28,14 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(StringMatcherTest, ComparisonDefaultsToCaseInsensitive) {
+  TEST(StringMatcherTest, StringComparisonDefaultsToCaseInsensitive) {
+    EXPECT_TRUE(StringMatcher::AreEqual(u8"Hello", u8"hello"));
+    EXPECT_TRUE(StringMatcher::AreEqual<false>(u8"Hello", u8"hello"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, StringComparisonCanBeCaseInsensitive) {
     EXPECT_TRUE(StringMatcher::AreEqual<false>(u8"Hello", u8"hello"));
     EXPECT_TRUE(StringMatcher::AreEqual<false>(u8"hello", u8"hello"));
     EXPECT_TRUE(StringMatcher::AreEqual<false>(u8"Ünicøde", u8"üNICØDE"));
@@ -37,7 +44,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(StringMatcherTest, CaseSensitiveComparisonIsPossible) {
+  TEST(StringMatcherTest, StringComparisonCanBeCaseSensitive) {
     EXPECT_FALSE(StringMatcher::AreEqual<true>(u8"Hello", u8"hello"));
     EXPECT_TRUE(StringMatcher::AreEqual<true>(u8"hello", u8"hello"));
     EXPECT_FALSE(StringMatcher::AreEqual<true>(u8"Ünicøde", u8"ünicØde"));
@@ -176,6 +183,13 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, WilcardMatchDefaultsToCaseInsensitive) {
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"hello*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard<false>(u8"HellØ WØrld", u8"hellø*"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, WilcardMatchCanBeCaseInsensitive) {
     EXPECT_TRUE(StringMatcher::FitsWildcard<false>(u8"Hello World", u8"hello world"));
     EXPECT_TRUE(StringMatcher::FitsWildcard<false>(u8"HellØ WØrld", u8"hellø wørld"));
   }
