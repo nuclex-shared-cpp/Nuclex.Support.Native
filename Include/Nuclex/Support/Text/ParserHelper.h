@@ -111,22 +111,23 @@ namespace Nuclex { namespace Support { namespace Text {
       const Char8Type *&start, const Char8Type *end
     );
 
-#if 0
     /// <summary>Searches for the next word (character surrounded by whitespace)</summary>
-    /// <param name="text">String in which the next word is searched</param>
-    /// <param name="startIndex">Index in the string at which to begin searchign</param>
-    /// <param name="trimWhitespace">
-    ///   Whether the word should be isolated without whitespace
+    /// <param name="start">Start pointer from which on the word will be searched</param>
+    /// <param name="end">End pointer one past the last character to consider</param>
+    /// <param name="word">
+    ///   Optional pointer to a string_view that will be set to the entire next word
     /// </param>
-    /// <returns>
-    ///   A string_view containing either the next word alone (if whitespace trimming
-    ///   was enabled) or 
-    public: NUCLEX_SUPPORT_API static std::string_view FindNextWord(
-      const std::string &text,
-      std::string::size_type startIndex = 0,
-      bool trimWhitespace = true
+    /// <remarks>
+    ///   This method will look for a word in the input string. A word is considered to be
+    ///   one or more non-whitespace characters, either surrounded by whitespace or bordering
+    ///   the ends of the string. If the start index is on a word, that will be the word
+    ///   extracted. Otherwise, the method will scan for the next word.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static void FindWord(
+      const Char8Type *&start, const Char8Type *end,
+      std::string_view *word = nullptr
     );
-#endif
+
 #if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
     /// <summary>Attempts to parse the specified numeric type from the provided text</summary>
     /// <typeparam name="TScalar">

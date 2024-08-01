@@ -75,11 +75,11 @@ namespace Nuclex { namespace Support { namespace Text {
       EXPECT_EQ(current - start, 3U);
     }
 
-    // Inside two-byte encoded code point
+    // Before two-byte encoded code point
     {
-      const std::uint8_t *current = start + 21;
+      const std::uint8_t *current = start + 20;
       ParserHelper::SkipWhitespace(current, end);
-      EXPECT_EQ(current - start, 21U);
+      EXPECT_EQ(current - start, 20U);
     }
 
     // On last character
@@ -159,6 +159,44 @@ namespace Nuclex { namespace Support { namespace Text {
     EXPECT_FALSE(ParserHelper::IsBlankOrEmpty(std::string(u8"\t a")));
     EXPECT_FALSE(ParserHelper::IsBlankOrEmpty(std::string(u8"a \t")));
     EXPECT_FALSE(ParserHelper::IsBlankOrEmpty(std::string(u8"Hello")));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ParserHelperTest, CanFindWordInString) {
+    std::string text(u8"\t Hellø \r\n Ünicøde Wórld", 28);
+    const std::uint8_t *start = reinterpret_cast<const std::uint8_t *>(text.c_str());
+    const std::uint8_t *end = start + text.length();
+
+    // First whitespace at beginning
+    {
+      std::string_view word;
+
+      const std::uint8_t *current = start;
+      ParserHelper::FindWord(current, end, &word);
+      EXPECT_EQ(current - start, 2U);
+      EXPECT_TRUE(word == u8"Hellø");
+    }
+
+    // In the middle of a word
+    {
+      std::string_view word;
+
+      const std::uint8_t *current = start + 14;
+      ParserHelper::FindWord(current, end, &word);
+      EXPECT_EQ(current - start, 14U);
+      EXPECT_TRUE(word == u8"nicøde");
+    }
+
+    // Word in which the string ends
+    {
+      std::string_view word;
+
+      const std::uint8_t *current = start + 21;
+      ParserHelper::FindWord(current, end, &word);
+      EXPECT_EQ(current - start, 22U);
+      EXPECT_TRUE(word == u8"Wórld");
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

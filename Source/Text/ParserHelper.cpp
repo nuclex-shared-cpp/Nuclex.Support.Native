@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Text/ParserHelper.h"
 #include "Nuclex/Support/Text/UnicodeHelper.h"
+#include "Nuclex/Support/Errors/CorruptStringError.h"
 
 #include <cstdlib> // for std::strtoul(), std::strtoull(), std::strtol(), std::strtoll()
 
@@ -80,7 +81,7 @@ namespace Nuclex { namespace Support { namespace Text {
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
       if(codePoint == char32_t(-1)) {
-        return false; // Broken UTF-8 counts as non-empty
+        throw Errors::CorruptStringError(u8"Invalid UTF-8 sequence encountered");
       }
 
       if(!IsWhitespace(codePoint)) {
@@ -98,9 +99,12 @@ namespace Nuclex { namespace Support { namespace Text {
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
       if(codePoint == char32_t(-1)) {
-        break;
+        throw Errors::CorruptStringError(u8"Invalid UTF-8 sequence encountered");
       }
 
+      // We use this design to make 'start' lag one code point behind. This is needed
+      // because ReadCodePoint() advances the read pointer, so our 'current' is already
+      // past the first whitespace when we check the code point.
       if(IsWhitespace(codePoint)) {
         start = current;
       } else {
@@ -116,13 +120,37 @@ namespace Nuclex { namespace Support { namespace Text {
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
       if(codePoint == char32_t(-1)) {
-        break;
+        throw Errors::CorruptStringError(u8"Invalid UTF-8 sequence encountered");
       }
 
+      // We use this design to make 'start' lag one code point behind. This is needed
+      // because ReadCodePoint() advances the read pointer, so our 'current' is already
+      // past the first whitespace when we check the code point.
       if(IsWhitespace(codePoint)) {
         break;
       } else {
         start = current;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void ParserHelper::FindWord(
+    const Char8Type *&start, const Char8Type *end,
+    std::string_view *word /* = nullptr */
+  ) {
+    SkipWhitespace(start, end);
+
+    // If the caller was interested in obtaining the word, scan for its end
+    if(word != nullptr) {
+      const Char8Type *current = start;
+      SkipNonWhitespace(current, end);
+      if(start < current) {
+        *word = std::string_view(
+          reinterpret_cast<const std::string_view::value_type *>(start),
+          static_cast<std::string_view::size_type>(current - start)
+        );
       }
     }
   }
