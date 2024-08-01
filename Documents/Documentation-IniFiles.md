@@ -22,7 +22,7 @@ Here's a summary explaining what this `.ini` file parser / writer can do:
   just for fun, the parser has been tortured by parsing every file found in
   my Linux file system and inside my Windows VM's `Windows` directory.*
 
-* Const-correct. A const intance of the `IniSettingsStore` only allows
+* Const-correct. A const instance of the `IniSettingsStore` only allows
   properties to be retrieved, not stored.
 
 * If properties in an existing `.ini` file are updated, all comments and
@@ -46,9 +46,10 @@ Here's a summary explaining what this `.ini` file parser / writer can do:
   ini.Store<std::string>(u8"ExampleSection", u8"Value1", u8"Bonjour");
   ```
 
-* If you load an existing `.ini` file, it will analyze its format and use
-  the same type of newlines (CRLF / LF), empty lines around properties
-  and spaces around the assignment operator for any properties being added.
+* If you load an existing `.ini` file, it will collect some statistics while
+  parsing. Then it will use the same type of newlines (CRLF / LF) and it will
+  choose whether to place empty lines around options and and spaces between
+  assignments by matching the file's existing style.
 
 * Multi-line values are supported. This can be useful if you want to list
   command line parameters or if you have genuine line breaks in your values:
@@ -241,10 +242,14 @@ Error Handling
 In `Nuclex.Support.Native`, error handling uses exceptions.
 
 Regarding the `IniSettingsStore` specifically, however, the parser *will* eat
-any file you throw at it without complaint. And you can ask for any property
-or store any property, also without complaint.
+any file you throw at it without complaint. The parser has a concept of
+malformed lines, so when you load a binary file, you'll just have a list of
+those malformed lines in memory. You can even save the file again.
 
-The only cases where you might see an exception are:
+Retrieving values that don't exist returns an empty `std::optional` rather
+than throwing an exception.
+
+The only cases where you might encounter exceptions are:
 
 `std::system_error` - when you use the `Load()` or `Save()` methods and either
 specify an invalid path or there is a permission isue. `std::system_error` is

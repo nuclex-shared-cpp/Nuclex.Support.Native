@@ -2,13 +2,13 @@ Lexical Casts
 =============
 
 A lexical cast is a cast that interprets the contents of a string when
-converting between strings and numbers. Different functions for achieving
+converting between strings and numbers. Different functions for achieving that
 exist in C++ as well, see `std::to_string()`, `std::stoi()` or `std::stof()`.
 
-The `lexical_cast()` function does he same in a design similar to other C++
-casts such as `static_cast()` and `reinterpret_cast()`. This is also why
-this function's naming convention falls slightly out of line with the rest of
-Nuclex.Support.Native.
+The `lexical_cast()` method resembles other C++ casts such as `static_cast()`
+and `reinterpret_cast()`. It is inspired by the Boost method of the same name
+and can act as a drop-in replacement for it. This is also why its naming
+convention falls slightly out of line with the rest of Nuclex.Support.Native.
 
 There is, by design, no localization of number formats with `lexical_cast()`,
 it always uses the English locale (meaning the decimal point is a point, not
@@ -21,8 +21,9 @@ Usage example
 
 Usage is very simple and identical to Boost. Just replace classic functions
 such as `stoi()`, `stof()` or `std::to_string()` with `lexical_cast` where
-you wish to be independent of the system's locale (or interested in the speed
-boost compared to most C++ standard libraries).
+you wish to be independent of the system's locale (or where you need
+the improved performance compared to most C++ standard libraries, for example
+when processing very large XML files).
 
 ```cpp
 #include <Nuclex/Support/Text/LexicalCast.h>
