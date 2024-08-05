@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="190" height="20" role="img" aria-label="status: mature and stable">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="189" height="20" role="img" aria-label="status: mature and stable">
   <title>status: early planning phase</title>
   <linearGradient id="s" x2="0" y2="100%">
     <stop offset="0" stop-color="#bbb" stop-opacity=".1" />
     <stop offset="1" stop-opacity=".1" />
   </linearGradient>
   <clipPath id="r">
-    <rect width="190" height="20" rx="3" fill="#fff" />
+    <rect width="189" height="20" rx="3" fill="#fff" />
   </clipPath>
   <g clip-path="url(#r)">
     <rect width="43" height="20" fill="#555" />
     <rect x="43" width="149" height="20" fill="darkgreen" />
-    <rect width="190" height="20" fill="url(#s)" />
+    <rect width="189" height="20" fill="url(#s)" />
   </g>
   <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
     <text aria-hidden="true" x="225" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="330">status</text>
     <text x="225" y="140" transform="scale(.1)" fill="#fff" textLength="330">status</text>
-    <text aria-hidden="true" x="1265" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="1150">mature and stable</text>
-    <text x="1265" y="140" transform="scale(.1)" fill="#fff" textLength="1150">mature and stable</text>
+    <text aria-hidden="true" x="1245" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="1150">mature and stable</text>
+    <text x="1245" y="140" transform="scale(.1)" fill="#fff" textLength="1150">mature and stable</text>
   </g>
-  <g id="package" style="stroke:#fff;fill:none" transform="matrix(0.75,0,0,0.75,49,1)">
+  <g id="package" style="stroke:#fff;fill:none" transform="matrix(0.75,0,0,0.75,47,1)">
     <path id="box" d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
     <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
     <line x1="12" y1="22.08" x2="12" y2="12"/>

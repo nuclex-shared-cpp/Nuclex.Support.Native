@@ -37,20 +37,28 @@ For those who need a little refresher, this is what it's all about:
   every language in the world into one big table.
 
   As you might expect, there are more than 256 characters in the world.
-  More than 65536 (16 bit int), even. An index into this all-encompassing
+  More than 65536 (16 bit int), too. An index into this all-encompassing
   "unicode" table requires a 32-bit integer.
 
-- Analogous to ASCII, you can store unicode text by simply saving 32-bit
-  indices into the unicode table. That would be UTF-32. Then there's UTF-16,
-  which uses 16-bit integers instead (and a special range to indicate when
-  a letter is formed by *two* UTF-16 integers). And finally, there's UTF-8
-  which fully covers ASCII (0 - 127) and uses the upper bit in fun ways to
-  indicate how many bytes combine to form the respective letter.
+- UTF-32: analogous to ASCII, you could store unicode text by simply saving
+  each unicode character's 32-bit index in the unicode table. That happens to
+  be exactly what UTF-32 does: one 32-bit integer = one unicode character.
 
-- The terms change a bit, too.
+  UTF-16 uses 16-bit integers instead. For unicode character indices above
+  the 16-bit integer range, it uses special values (between 0xdc00 and 0xe000)
+  that mean that the next 16-bit integer is not a character on its own,
+  but extends the current character's bits.
+
+  UTF-8, finally, is includes, unchanged, ASCII (0 - 127) and uses the upper
+  bit(s) in fun ways to indicate how many bytes combine into a single unicode
+  character index. UTF-8 is space efficient, backwards compatible and
+  the standard everywhere (except for Windows OS APIs).
+
+- Unicode uses some terms slightly differently than you may be used to:
 
   * A character now means the smallest encoding unit (so a byte / octet for
     UTF-8 or a 16-bit integer for UTF-16).
+
   * Letters or glyphs are called code points (because they're an index into
     the unicode table)
 
