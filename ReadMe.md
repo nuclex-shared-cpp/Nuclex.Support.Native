@@ -1,10 +1,4 @@
-  - **Status:** Stable and mature. Several projects are using this library,
-    and it has received extensive testing on Linux and Windows.
-
-  - **Platforms:** Cross-platform, developed on Linux but also tested and
-    working without any known issues on Windows.
-
-Nuclex.Support.Native
+Nuclex.Support.Native ![Developed on Linux, works well on Windows](./Documents/images/platforms-linux-windows-badge.svg) ![Several projects are using library and it has received extensive testting](./Documents/images/status-mature-and-stable-badge.svg)
 =====================
 
 This library aims to be your trusty toolbox of supporting code for
