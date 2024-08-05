@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Text/StringMatcher.h"
 #include "Nuclex/Support/Text/UnicodeHelper.h" // UTF encoding and decoding
+#include "Nuclex/Support/Errors/CorruptStringError.h"
 
 #include <vector> // for std::vector
 #include <stdexcept> // for std::invalid_argument
@@ -78,7 +79,9 @@ namespace {
   /// </remarks>
   void requireValidCodePoint(char32_t codePoint) {
     if(!Nuclex::Support::Text::UnicodeHelper::IsValidCodePoint(codePoint)) {
-      throw std::invalid_argument(u8"Illegal UTF-8 character(s) encountered");
+      throw Nuclex::Support::Errors::CorruptStringError(
+        u8"Illegal UTF-8 character(s) encountered"
+      );
     }
   }
 

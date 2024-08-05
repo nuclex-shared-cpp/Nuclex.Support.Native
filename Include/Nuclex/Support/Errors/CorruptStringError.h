@@ -31,17 +31,17 @@ namespace Nuclex { namespace Support { namespace Errors {
   /// <summary>
   ///   Indicates that a unicode string was malformed / contained invalid characters
   /// </summary>
-  class NUCLEX_SUPPORT_TYPE CorruptStringError : public std::runtime_error {
+  class NUCLEX_SUPPORT_TYPE CorruptStringError : public std::invalid_argument {
 
     /// <summary>Initializes a new corrupt string error</summary>
     /// <param name="message">Message that describes the error</param>
     public: NUCLEX_SUPPORT_API explicit CorruptStringError(const std::string &message) :
-      std::runtime_error(message) {}
+      std::invalid_argument(message) {}
 
     /// <summary>Initializes a new corrupt string error</summary>
     /// <param name="message">Message that describes the error</param>
     public: NUCLEX_SUPPORT_API explicit CorruptStringError(const char *message) :
-      std::runtime_error(message) {}
+      std::invalid_argument(message) {}
 
   };
 
