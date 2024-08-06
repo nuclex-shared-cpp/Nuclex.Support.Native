@@ -9,18 +9,17 @@ Alternative: UTFcpp
 -------------------
 
 There's a popular C++ library called utfcpp by Nemanja Trifunovic (and earlier
-versions of this library even used it) which is popular for this task: UTFcpp.
-
+versions of Nuclex.Support.Native even used it) which is popular for this task:
 
 [Original Presentation of the UTFcpp header](https://www.codeproject.com/Articles/14637/UTF-8-With-C-in-a-Portable-Way)
 
 [Current home of UTFcpp on GitHub](https://github.com/nemtrif/utfcpp)
 
-This header is a subset of that functionality, designed with a firmer,
-more C-styled interface. I wrote it at a time when UTFcpp used `uint32_t`
-to store UTF-32 code points (`char32_t` was introduced with C++11) and
-when I felt that a fixed, flat C-style API makes it easier to grok
-the low-level parts of my code where off-by-1 errors mean segfaults.
+The `UnicodeHelper` in Nuclex.Support.Native goes for a firmer, more C-styled
+interface to tackle the issue. When dealing with UTF-8 on the byte/character
+level, my code is usually low-level - loops and checks - where I find that
+this harmonizes better with the usage patterns present there. Other than that,
+there is a lot of overlap with UTFcpp and UTFcpp is more feature-rich.
 
 
 Unicode Crash Course
@@ -136,3 +135,72 @@ not yet used in Nuclex.Support.Native.
 You can rely on `UnicodeHelper::Char8Type` to be the correct type, before and after C++20
 adoption takes place. In C++17, it will be `std::uint8_t` and in C++20 it will eventually
 become `char8_t`.
+
+
+Writing Code Points
+-------------------
+
+Analogous to the `ReadCodePoint()` method, there is also a `WriteCodePoint()`
+method that transforms `char32_t` unicode characters (UTF-32) into either
+UTF-8 or UTF-16 characters:
+
+```cpp
+using Nuclex::Support::Text::UnicodeHelper;
+
+std::string generateUtf8String() {
+  std::string result;
+
+  // Make enough room in the string. The maximum possible size per code point
+  // is 4 chars, so for the 5 code points below, we need up to 5 * 4 = 20 chars.
+  result.resize(20);
+
+  UnicodeHelper::Char8Type *startPointer = (
+    reinterpret_cast<UnicodeHelper::Char8Type *>(result.data())
+  );
+  UnicodeHelper::Char8Type *writePointer = startPointer;
+
+  // Write "Hello" in Japanese hiragana as UTF-8 into the string.
+  // U'' in C++ = a char32_t containing the UTF-32 code point.
+  UnicodeHelper::WriteCodePoint(writePointer, U'こ');
+  UnicodeHelper::WriteCodePoint(writePointer, U'ん');
+  UnicodeHelper::WriteCodePoint(writePointer, U'に');
+  UnicodeHelper::WriteCodePoint(writePointer, U'ち');
+  UnicodeHelper::WriteCodePoint(writePointer, U'は');
+
+  // Now shrink the string to the actual number of chars we wrote
+  result.resize(writePointer - startPointer);
+  return result;
+}
+```
+
+Just like `ReadCodePoint()`, the `WriteCodePoint()` method moves the write
+pointer forward, this time by the number of characters written. There is
+no bounds checking here since the maximum number of characters that can be
+generated is at most 4.
+
+You can either make sure that there are 4 characters available behind
+the write pointer, or use `CountUtf8Characters()` to obtain the actual number
+of characters that will be written (which does a range check with 4 `if`
+statements, so it's not slow by any means, it just involves extra branching).
+
+This keeps all your options open. Depending on your scenario you can use
+different allocation approaches. Here is some inspiration:
+
+  - You could: allocate 4 chars for each UTF-32 code point you wish to write.
+
+    It's fast due to requiring no bounds checking and works well
+    for either short strings or if you have a larger buffer anyway.
+
+  - You could: count the number of chars required up front by calling
+    `CountUtf8Characters()` for each code point you are going to write.
+
+    Useful in streaming scenarios with long strings or if allocations are
+    what you are most concerned about.
+
+  - You could: allocate in steps. For example, ensure that there are 32 chars
+    of available space, then blindly process 8 code points, then check again.
+
+    This method is relatively efficient and you can mix it with guessing.
+    If your application processes mostly english text, start by allocating
+    the same number of chars as you have code points. If your application is
+    international, start by allocating two times that number of code points.

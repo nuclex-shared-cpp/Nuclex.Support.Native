@@ -68,6 +68,22 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Throws an exception of the code point is invalid</summary>
+  /// <param name="codePoint">Unicode code point that will be checked</param>
+  /// <remarks>
+  ///   This does a generic code point check, but since within this file the code point
+  ///   must be coming from an UTF-8 encoded string, we do complain about invalid UTF-8.
+  /// </remarks>
+  void requireValidCodePoint(char32_t codePoint) {
+    if(!Nuclex::Support::Text::UnicodeHelper::IsValidCodePoint(codePoint)) {
+      throw Nuclex::Support::Errors::CorruptStringError(
+        u8"Illegal UTF-8 character(s) encountered"
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Text {
@@ -80,9 +96,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
-      if(codePoint == char32_t(-1)) {
-        throw Errors::CorruptStringError(u8"Invalid UTF-8 sequence encountered");
-      }
+      requireValidCodePoint(codePoint);
 
       if(!IsWhitespace(codePoint)) {
         return false;
@@ -98,9 +112,7 @@ namespace Nuclex { namespace Support { namespace Text {
     const Char8Type *current = start;
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
-      if(codePoint == char32_t(-1)) {
-        throw Errors::CorruptStringError(u8"Invalid UTF-8 sequence encountered");
-      }
+      requireValidCodePoint(codePoint);
 
       // We use this design to make 'start' lag one code point behind. This is needed
       // because ReadCodePoint() advances the read pointer, so our 'current' is already
@@ -119,9 +131,7 @@ namespace Nuclex { namespace Support { namespace Text {
     const Char8Type *current = start;
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
-      if(codePoint == char32_t(-1)) {
-        throw Errors::CorruptStringError(u8"Invalid UTF-8 sequence encountered");
-      }
+      requireValidCodePoint(codePoint);
 
       // We use this design to make 'start' lag one code point behind. This is needed
       // because ReadCodePoint() advances the read pointer, so our 'current' is already
@@ -151,84 +161,11 @@ namespace Nuclex { namespace Support { namespace Text {
           reinterpret_cast<const std::string_view::value_type *>(start),
           static_cast<std::string_view::size_type>(current - start)
         );
-      }
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-#if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
-  template<>
-  std::optional<std::uint32_t> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
-  ) {
-    const std::uint8_t *firstNonSpace = start;
-
-    // Skip whitespaces at the beginning if there are any
-    SkipWhitespace(firstNonSpace, end);
-    if(firstNonSpace == end) {
-      return false;
-    }
-
-    // Now look for an integer
-    const std::uint8_t *current = firstNonSpace;
-    if(skipInteger(current)) {
-      start = current;
-      if(*firstNonSpace == '-') {
-        return static_cast<std::uint32_t>(std::strtoll(firstNonSpace, end, 10));
       } else {
-        return static_cast<std::uint32_t>(std::strtoul(firstNonSpace, end, 10));
+        *word = std::string_view(); // to  ensure word.empty() returns true
       }
-    } else {
-      return std::optional<std::uint32_t>();
     }
   }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  template<>
-  std::optional<std::int32_t> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
-  ) {
-    throw u8"Not implemented yet";
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  template<>
-  std::optional<std::uint64_t> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
-  ) {
-    throw u8"Not implemented yet";
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  template<>
-  std::optional<std::int64_t> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
-  ) {
-    throw u8"Not implemented yet";
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  template<>
-  std::optional<float> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
-  ) {
-    throw u8"Not implemented yet";
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  template<>
-  std::optional<double> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
-  ) {
-    throw u8"Not implemented yet";
-  }
-#endif // defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
 
   // ------------------------------------------------------------------------------------------- //
 

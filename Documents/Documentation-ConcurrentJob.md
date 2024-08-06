@@ -122,7 +122,6 @@ class DocumentExportJob : public Nuclex::Support::Threading::ConcurrentJob {
 
   // ...
 
-
 };
 ```
 
