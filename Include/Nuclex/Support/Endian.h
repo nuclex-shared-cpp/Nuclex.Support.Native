@@ -68,19 +68,19 @@ namespace Nuclex { namespace Support {
     /// <returns>The input value, unmodified</returns>
     public: static std::uint8_t [[nodiscard]] Flip(std::uint8_t integer);
 
-    /// <summary>Reverses the bytes of a 16 bit integer</summary>
-    /// <param name="integer">Integer whose bytes will be reversed</param>
-    /// <returns>The endian-flipped 16 bit integer</returns>
+    /// <summary>Does nothing</summary>
+    /// <param name="integer">Integer that will be returned unmodified</param>
+    /// <returns>The input value, unmodified</returns>
     public: static std::uint16_t [[nodiscard]] Flip(std::uint16_t integer);
 
-    /// <summary>Reverses the bytes of a 32 bit integer</summary>
-    /// <param name="integer">Integer whose bytes will be reversed</param>
-    /// <returns>The endian-flipped 32 bit integer</returns>
+    /// <summary>Does nothing</summary>
+    /// <param name="integer">Integer that will be returned unmodified</param>
+    /// <returns>The input value, unmodified</returns>
     public: static std::uint32_t [[nodiscard]] Flip(std::uint32_t integer);
 
-    /// <summary>Reverses the bytes of a 64 bit integer</summary>
-    /// <param name="integer">Integer whose bytes will be reversed</param>
-    /// <returns>The endian-flipped 64 bit integer</returns>
+    /// <summary>Does nothing</summary>
+    /// <param name="integer">Integer that will be returned unmodified</param>
+    /// <returns>The input value, unmodified</returns>
     public: static std::uint64_t [[nodiscard]] Flip(std::uint64_t integer);
 
   };
@@ -117,9 +117,6 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Reverses the bytes of a 32 bit integer</summary>
-  /// <param name="integer">Integer whose bytes will be reversed</param>
-  /// <returns>The endian-flipped 32 bit integer</returns>
   NUCLEX_SUPPORT_ALWAYS_INLINE std::uint32_t Endian::Flip(std::uint32_t integer) {
 #if defined(_MSC_VER)
     return _byteswap_ulong(integer);
@@ -170,9 +167,6 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Reverses the bytes of a 32 bit integer</summary>
-  /// <param name="integer">Integer whose bytes will be reversed</param>
-  /// <returns>The endian-flipped 32 bit integer</returns>
   NUCLEX_SUPPORT_ALWAYS_INLINE std::uint32_t EndianNoop::Flip(std::uint32_t integer) {
     return integer;
   }

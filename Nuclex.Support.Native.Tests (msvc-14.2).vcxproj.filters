@@ -257,6 +257,9 @@
     <ClInclude Include="Include\Nuclex\Support\Config.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Endian.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h">
       <Filter>Include</Filter>
     </ClInclude>
@@ -595,6 +598,9 @@
     <ClCompile Include="Source\Config.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Endian.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="Source\ScopeGuard.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -751,6 +757,9 @@
       <Filter>Tests\Threading</Filter>
     </ClCompile>
     <ClCompile Include="Tests\BitTricksTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\EndianTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="Tests\ScopeGuardTest.cpp">

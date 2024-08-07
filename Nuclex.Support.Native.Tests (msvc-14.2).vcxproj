@@ -249,6 +249,7 @@
     <ClInclude Include="Include\Nuclex\Support\Threading\ThreadPool.h" />
     <ClInclude Include="Include\Nuclex\Support\BitTricks.h" />
     <ClInclude Include="Include\Nuclex\Support\Config.h" />
+    <ClInclude Include="Include\Nuclex\Support\Endian.h" />
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h" />
     <ClInclude Include="Include\Nuclex\Support\TemporaryDirectoryScope.h" />
     <ClInclude Include="Include\Nuclex\Support\TemporaryFileScope.h" />
@@ -361,6 +362,7 @@
     <ClInclude Include="Source\Threading\ThreadPoolTaskPool.h" />
     <ClCompile Include="Source\BitTricks.cpp" />
     <ClCompile Include="Source\Config.cpp" />
+    <ClCompile Include="Source\Endian.cpp" />
     <ClCompile Include="Source\ScopeGuard.cpp" />
     <ClCompile Include="Source\TemporaryDirectoryScope.cpp" />
     <ClCompile Include="Source\TemporaryFileScope.cpp" />
@@ -415,6 +417,7 @@
     <ClCompile Include="Tests\Threading\ThreadPoolTest.cpp" />
     <ClCompile Include="Tests\Threading\ThreadTest.cpp" />
     <ClCompile Include="Tests\BitTricksTest.cpp" />
+    <ClCompile Include="Tests\EndianTest.cpp" />
     <ClCompile Include="Tests\ScopeGuardTest.cpp" />
     <ClCompile Include="Tests\TemporaryDirectoryScopeTest.cpp" />
     <ClCompile Include="Tests\TemporaryFileScopeTest.cpp" />

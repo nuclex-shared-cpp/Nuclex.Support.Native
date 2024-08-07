@@ -236,6 +236,9 @@
     <ClInclude Include="Include\Nuclex\Support\Config.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Endian.h">
+      <Filter>Include</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\ScopeGuard.h">
       <Filter>Include</Filter>
     </ClInclude>
@@ -566,6 +569,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\Config.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Endian.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\ScopeGuard.cpp">
