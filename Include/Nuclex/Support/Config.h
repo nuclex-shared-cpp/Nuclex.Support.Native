@@ -70,6 +70,17 @@ limitations under the License.
   #error The Nuclex.Support.Native library does not work in C++20 mode yet
 #endif
 
+// --------------------------------------------------------------------------------------------- >
+
+// Strong suggestion to the compiler to inline something
+#if defined(_MSC_VER)
+  #define NUCLEX_SUPPORT_ALWAYS_INLINE __forceinline
+#elif defined(__clang__) || (defined(__GNUC__) || defined(__GNUG__))
+  #define NUCLEX_SUPPORT_ALWAYS_INLINE __attribute__((always_inline)) inline
+#else
+  #define NUCLEX_SUPPORT_ALWAYS_INLINE inline
+#endif
+
 // --------------------------------------------------------------------------------------------- //
 
 // Endianness detection
