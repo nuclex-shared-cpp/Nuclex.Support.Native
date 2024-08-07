@@ -67,4 +67,36 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(EndianTest, ProvidesHostFromNetworkEndianHelper) {
+    std::uint8_t eightBitResult = HostFromNetworkEndian::Flip(std::uint8_t(0));
+    (void)eightBitResult;
+
+    std::uint16_t sixteenBitResult = HostFromNetworkEndian::Flip(std::uint16_t(0));
+    (void)sixteenBitResult;
+
+    std::uint32_t thirtyTwoBitResult = HostFromNetworkEndian::Flip(std::uint32_t(0));
+    (void)thirtyTwoBitResult;
+
+    std::uint64_t sixtyFourBitResult = HostFromNetworkEndian::Flip(std::uint64_t(0));
+    (void)sixtyFourBitResult;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(EndianTest, ProvidesNetworkFromHostEndianHelper) {
+    std::uint8_t eightBitResult = NetworkFromHostEndian::Flip(std::uint8_t(0));
+    (void)eightBitResult;
+
+    std::uint16_t sixteenBitResult = NetworkFromHostEndian::Flip(std::uint16_t(0));
+    (void)sixteenBitResult;
+
+    std::uint32_t thirtyTwoBitResult = NetworkFromHostEndian::Flip(std::uint32_t(0));
+    (void)thirtyTwoBitResult;
+
+    std::uint64_t sixtyFourBitResult = NetworkFromHostEndian::Flip(std::uint64_t(0));
+    (void)sixtyFourBitResult;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }} // namespace Nuclex::Support
