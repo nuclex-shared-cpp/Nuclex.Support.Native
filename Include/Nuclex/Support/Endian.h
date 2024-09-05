@@ -39,22 +39,22 @@ namespace Nuclex { namespace Support {
     /// <summary>Does nothing</summary>
     /// <param name="integer">Integer that will be returned unmodified</param>
     /// <returns>The input value, unmodified</returns>
-    public: static std::uint8_t [[nodiscard]] Flip(std::uint8_t integer);
+    public: [[nodiscard]] static std::uint8_t Flip(std::uint8_t integer);
 
     /// <summary>Reverses the bytes of a 16 bit integer</summary>
     /// <param name="integer">Integer whose bytes will be reversed</param>
     /// <returns>The endian-flipped 16 bit integer</returns>
-    public: static std::uint16_t [[nodiscard]] Flip(std::uint16_t integer);
+    public: [[nodiscard]] static std::uint16_t Flip(std::uint16_t integer);
 
     /// <summary>Reverses the bytes of a 32 bit integer</summary>
     /// <param name="integer">Integer whose bytes will be reversed</param>
     /// <returns>The endian-flipped 32 bit integer</returns>
-    public: static std::uint32_t [[nodiscard]] Flip(std::uint32_t integer);
+    public: [[nodiscard]] static std::uint32_t Flip(std::uint32_t integer);
 
     /// <summary>Reverses the bytes of a 64 bit integer</summary>
     /// <param name="integer">Integer whose bytes will be reversed</param>
     /// <returns>The endian-flipped 64 bit integer</returns>
-    public: static std::uint64_t [[nodiscard]] Flip(std::uint64_t integer);
+    public: [[nodiscard]] static std::uint64_t Flip(std::uint64_t integer);
 
   };
 
@@ -66,22 +66,22 @@ namespace Nuclex { namespace Support {
     /// <summary>Does nothing</summary>
     /// <param name="integer">Integer that will be returned unmodified</param>
     /// <returns>The input value, unmodified</returns>
-    public: static std::uint8_t [[nodiscard]] Flip(std::uint8_t integer);
+    public: [[nodiscard]] static std::uint8_t Flip(std::uint8_t integer);
 
     /// <summary>Does nothing</summary>
     /// <param name="integer">Integer that will be returned unmodified</param>
     /// <returns>The input value, unmodified</returns>
-    public: static std::uint16_t [[nodiscard]] Flip(std::uint16_t integer);
+    public: [[nodiscard]] static std::uint16_t Flip(std::uint16_t integer);
 
     /// <summary>Does nothing</summary>
     /// <param name="integer">Integer that will be returned unmodified</param>
     /// <returns>The input value, unmodified</returns>
-    public: static std::uint32_t [[nodiscard]] Flip(std::uint32_t integer);
+    public: [[nodiscard]] static std::uint32_t Flip(std::uint32_t integer);
 
     /// <summary>Does nothing</summary>
     /// <param name="integer">Integer that will be returned unmodified</param>
     /// <returns>The input value, unmodified</returns>
-    public: static std::uint64_t [[nodiscard]] Flip(std::uint64_t integer);
+    public: [[nodiscard]] static std::uint64_t Flip(std::uint64_t integer);
 
   };
 
@@ -91,11 +91,19 @@ namespace Nuclex { namespace Support {
   typedef Endian NetworkFromHostEndian;
   /// <summary>Converts from network (big endian) to host byte order</summary>
   typedef Endian HostFromNetworkEndian;
+  /// <summary>Converts between the platform's native endian to big endian</summary>
+  typedef Endian FromOrToBigEndian;
+  /// <summary>Converts between the platform's native endian to little endian</summary>
+  typedef EndianNoop FromOrToLittleEndian;
 #else
   /// <summary>Converts from host to network (big endian) byte order</summary>
   typedef EndianNoop NetworkFromHostEndian;
   /// <summary>Converts from network (big endian) to host byte order</summary>
   typedef EndianNoop HostFromNetworkEndian;
+  /// <summary>Converts between the platform's native endian to big endian</summary>
+  typedef EndianNoop FromOrToBigEndian;
+  /// <summary>Converts between the platform's native endian to little endian</summary>
+  typedef Endian FromOrToLittleEndian;
 #endif
   // ------------------------------------------------------------------------------------------- //
 

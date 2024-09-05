@@ -80,7 +80,7 @@ if(BUILD_BENCHMARK)
   if(NOT (TARGET Celero))
     add_subdirectory(
       ${PROJECT_SOURCE_DIR}/../third-party/nuclex-celero
-      ${CMAKE_BINARY_DIR}/niclex-celero
+      ${CMAKE_BINARY_DIR}/nuclex-celero
     )
   endif()
 endif()
