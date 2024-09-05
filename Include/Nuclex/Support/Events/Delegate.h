@@ -224,6 +224,7 @@ namespace Nuclex { namespace Support { namespace Events {
       this->method = other.method;
       other.instance = nullptr;
       other.method = &Delegate::errorDelegateDestroyed;
+      return *this;
     }
 #else
     public: Delegate &operator =(Delegate &&other) = default;

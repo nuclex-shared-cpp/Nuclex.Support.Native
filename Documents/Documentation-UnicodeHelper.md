@@ -48,10 +48,11 @@ For those who need a little refresher, this is what it's all about:
   that mean that the next 16-bit integer is not a character on its own,
   but extends the current character's bits.
 
-  UTF-8, finally, is includes, unchanged, ASCII (0 - 127) and uses the upper
-  bit(s) in fun ways to indicate how many bytes combine into a single unicode
-  character index. UTF-8 is space efficient, backwards compatible and
-  the standard everywhere (except for Windows OS APIs).
+  UTF-8, finally, encompasses the unchanged ASCII (0 - 127) range and uses
+  the upper bit(s) in fun ways to indicate how many bytes combine into
+  a single unicode character index. That makes UTF-8 backwards compatible with
+  classic ASCII text but uses space efficiently. It has become the def-facto
+  standard everywhere (except for Windows OS APIs).
 
 - Unicode uses some terms slightly differently than you may be used to:
 
@@ -59,18 +60,20 @@ For those who need a little refresher, this is what it's all about:
     UTF-8 or a 16-bit integer for UTF-16).
 
   * Letters or glyphs are called code points (because they're an index into
-    the unicode table)
+    the unicode table).
 
-- Microsoft did its own thing. They used character tables from ANSI and worked
-  them into their own "code pages." Some code pages use 1 byte per letter,
-  some use 2 or more in a variable-length encoding.
+- Throughout the above developments, Microsoft did its own thing. They used
+  character tables from ANSI and worked them into their own "code pages."
+  Some code pages use 1 byte per letter, some use 2 or more in
+  a variable-length encoding similar to UTF-16.
 
-  Microsoft never dared to go all-in on UTF-8, but they adopted UTF-16 (after
-  trying to create their own, slightly incompatible variant called UCS-2), so
-  for Windows programmers, unicode has become synonymous with the crutches it
-  demands of them: `wchar_t`, `TEXT()` macros and even an entire parallel
-  Windows API where all function names end in a `W` (like `CreateWindowA()`
-  for the code page variant and `CreateWindowW()` for the UTF-16 variant).
+  Microsoft never dared to go all-in on UTF-8, like Linux did, but they
+  adopted UTF-16 (after trying to create their own, slightly incompatible
+  variant called UCS-2). So for Windows programmers, unicode has become
+  synonymous with the crutches it demands of them: `wchar_t`, `TEXT()` macros
+  and even an entire parallel Windows API where all function names end in
+  a `W` (like `CreateWindowA()` for the code page variant and
+  `CreateWindowW()` for the UTF-16 variant).
 
 There's a lot of explanation in `UnicodeHelper.h` itself, too.
 
@@ -84,7 +87,7 @@ Assuming you have a UTF-8 string, you can read the next character like this:
 using Nuclex::Support::Text::UnicodeHelper;
 
 void enumerateCodePoints(const std::string &utf8String) {
-  UnicodeHelper::Char8Type *start = reinterpret_cast<UnicodeHelper::Char8Type>(
+  UnicodeHelper::Char8Type *start = reinterpret_cast<UnicodeHelper::Char8Type *>(
     utf8String.data()
   );
   UnicodeHelper::Char8Type *end = start + utf8String.length();
