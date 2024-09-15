@@ -67,7 +67,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       // task structure and that it is at the beginning of the structure. If this assertion
       // triggers, your submitted task type is not compatible with the task pool.
       static_assert(
-        offsetof(TSubmittedTask, PayloadSize) == offsetof(SubmittedTaskTemplate, PayloadSize)
+        offsetof(TSubmittedTask, PayloadSize) == offsetof(SubmittedTaskTemplate, PayloadSize),
+        u8"TSubmittedTask must have a PayloadSize member matching SubmittedTaskTemplate"
       );
 #endif // defined(NUCLEX_SUPPORT_ENABLE_TASK_POOL_VERIFICATION)
     }
