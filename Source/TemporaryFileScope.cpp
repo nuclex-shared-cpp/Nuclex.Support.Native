@@ -145,8 +145,8 @@ namespace Nuclex { namespace Support {
     privateImplementationData {0} {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     static_assert(
-      (sizeof(this->privateImplementationData) >= sizeof(HANDLE)) &&
-      u8"File handlefits in space provided for private implementation data"
+      (sizeof(this->privateImplementationData) >= sizeof(HANDLE)),
+      u8"File handle must fit in the space provided for private implementation data"
     );
     *reinterpret_cast<HANDLE *>(this->privateImplementationData) = INVALID_HANDLE_VALUE;
 
@@ -182,8 +182,8 @@ namespace Nuclex { namespace Support {
     this->path = Text::StringConverter::Utf8FromWide(fullPath);
 #else
     static_assert(
-      (sizeof(this->privateImplementationData) >= sizeof(int)) &&
-      u8"File descriptor fits in space provided for private implementation data"
+      (sizeof(this->privateImplementationData) >= sizeof(int)),
+      u8"File descriptor must fit in space provided for private implementation data"
     );
 
     // Build the path template including the system's temporary directory

@@ -266,14 +266,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     const std::string &, const std::string &
   ) const {
     static_assert(
-      (
-        std::is_same<TValue, bool>::value ||
-        std::is_same<TValue, std::uint32_t>::value ||
-        std::is_same<TValue, std::int32_t>::value ||
-        std::is_same<TValue, std::uint64_t>::value ||
-        std::is_same<TValue, std::int64_t>::value ||
-        std::is_same<TValue, std::string>::value
-      ) &&
+      std::is_same<TValue, bool>::value ||
+      std::is_same<TValue, std::uint32_t>::value ||
+      std::is_same<TValue, std::int32_t>::value ||
+      std::is_same<TValue, std::uint64_t>::value ||
+      std::is_same<TValue, std::int64_t>::value ||
+      std::is_same<TValue, std::string>::value,
       u8"Only boolean, 32/64 bit integer and std::string properties are supported"
     );
   }
@@ -339,14 +337,12 @@ namespace Nuclex { namespace Support { namespace Settings {
     const std::string &, const std::string &, const TValue &
   ) {
     static_assert(
-      (
-        std::is_same<TValue, bool>::value ||
-        std::is_same<TValue, std::uint32_t>::value ||
-        std::is_same<TValue, std::int32_t>::value ||
-        std::is_same<TValue, std::uint64_t>::value ||
-        std::is_same<TValue, std::int64_t>::value ||
-        std::is_same<TValue, std::string>::value
-      ) &&
+      std::is_same<TValue, bool>::value ||
+      std::is_same<TValue, std::uint32_t>::value ||
+      std::is_same<TValue, std::int32_t>::value ||
+      std::is_same<TValue, std::uint64_t>::value ||
+      std::is_same<TValue, std::int64_t>::value ||
+      std::is_same<TValue, std::string>::value,
       u8"Only boolean, 32/64 bit integer and std::string properties are supported"
     );
   }

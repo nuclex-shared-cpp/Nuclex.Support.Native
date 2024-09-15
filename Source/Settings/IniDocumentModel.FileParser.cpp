@@ -614,7 +614,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TLine *IniDocumentModel::FileParser::allocateLineChunked(
     const std::uint8_t *contents, std::size_t byteCount
   ) {
-    static_assert(std::is_base_of<Line, TLine>::value && u8"TLine inherits from Line");
+    static_assert(std::is_base_of<Line, TLine>::value, u8"TLine must inherit from Line");
 
     // Allocate memory for a new line, assign its content pointer to hold
     // the line loaded from the .ini file and copy the line contents into it.

@@ -55,7 +55,7 @@ namespace {
   /// <param name="length">Number of bytes to calculate the hash for</param>
   /// <param name="seed">Seed value to base the hash on</param>
   /// <returns>The murmur hash value of the specified byte sequence</returns>
-  std::uint32_t CalculateMurmur32(
+  std::uint32_t calculateMurmur32(
     const std::uint8_t *data, std::size_t length, std::uint32_t seed
   ) {
     const std::uint32_t mixFactor = 0x5bd1e995;
@@ -97,7 +97,7 @@ namespace {
   /// <param name="length">Number of bytes to calculate the hash for</param>
   /// <param name="seed">Seed value to base the hash on</param>
   /// <returns>The murmur hash value of the specified byte sequence</returns>
-  std::uint64_t CalculateMurmur64(
+  std::uint64_t calculateMurmur64(
     const std::uint8_t *data, std::size_t length, std::uint64_t seed
   ) {
     const std::uint64_t mixFactor = 0xc6a4a7935bd1e995ULL;
@@ -163,12 +163,12 @@ namespace Nuclex { namespace Support { namespace Text {
       // We're abusing the Murmur hashing function a bit here. It's not intended for
       // incremental generation and this will likely decrease hashing quality...
       if constexpr(sizeof(std::size_t) >= 8) {
-        hash = CalculateMurmur64(
+        hash = calculateMurmur64(
           reinterpret_cast<const std::uint8_t *>(&codePoint), 4,
           static_cast<std::uint32_t>(hash)
         );
       } else {
-        hash = CalculateMurmur32(
+        hash = calculateMurmur32(
           reinterpret_cast<const std::uint8_t *>(&codePoint), 4,
           static_cast<std::uint32_t>(hash)
         );

@@ -227,14 +227,12 @@ namespace Nuclex { namespace Support { namespace Text {
     const std::uint8_t *&start, const std::uint8_t *end
   ) {
     static_assert(
-      (
-        std::is_same<TScalar, std::uint32_t>::value ||
-        std::is_same<TScalar, std::int32_t>::value ||
-        std::is_same<TScalar, std::uint64_t>::value ||
-        std::is_same<TScalar, std::int64_t>::value ||
-        std::is_same<TScalar, float>::value ||
-        std::is_same<TScalar, double>::value
-      ) &&
+      std::is_same<TScalar, std::uint32_t>::value ||
+      std::is_same<TScalar, std::int32_t>::value ||
+      std::is_same<TScalar, std::uint64_t>::value ||
+      std::is_same<TScalar, std::int64_t>::value ||
+      std::is_same<TScalar, float>::value ||
+      std::is_same<TScalar, double>::value,
       u8"Only 32/64 bit unsigned/signed integers, floats and doubles are supported"
     );
   }
