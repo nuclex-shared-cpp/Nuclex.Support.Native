@@ -23,6 +23,7 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 
 #include <string> // for std::string
+#include <string_view> // for std::string_view
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -45,7 +46,7 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Removes any whitespace characters that follow other whitespace</summary>
-    /// <param name="utf8String">String in which duplicate whitespace will be collapsed</param>
+    /// <param name="wideString">String in which duplicate whitespace will be collapsed</param>
     /// <param name="alsoTrim">Whether to also remove leading and trailing whitespace</param>
     /// <remarks>
     ///   This method considers all whitespace characters defined by unicode. It will leave
@@ -58,10 +59,10 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Removes all occurrences of a substring from the master string</summary>
-    /// <param name="master">
+    /// <param name="utf8String">
     ///   String from which all occurrences of the specified substring will be removed
     /// </param>
-    /// <param name="substringToRemove">
+    /// <param name="victim">
     ///   Substring that will be removed from the master string
     /// </param>
     /// <remarks>
@@ -75,10 +76,10 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Removes all occurrences of a substring from the master string</summary>
-    /// <param name="master">
+    /// <param name="wideString">
     ///   String from which all occurrences of the specified substring will be removed
     /// </param>
-    /// <param name="substringToRemove">
+    /// <param name="victim">
     ///   Substring that will be removed from the master string
     /// </param>
     /// <remarks>
@@ -89,6 +90,32 @@ namespace Nuclex { namespace Support { namespace Text {
     /// </remarks>
     public: NUCLEX_SUPPORT_API static void EraseSubstrings(
       std::wstring &wideString, const std::wstring &victim
+    );
+
+    /// <summary>Returns a whitespace-trimmed segment of the input string</summary>
+    /// <param name="utf8String">String in UTF-8 format that will be trimmed</param>
+    /// <returns>A whitespace-trimmed segment of the input string</returns>
+    /// <remarks>
+    ///   This is based on string_view because trimming is non-destructive and can
+    ///   return a view into the original string without copying it. There is little overhead
+    ///   as UTF-8 enumeration requires pointers to the string's data and length to
+    ///   be taken anyway.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static std::string_view GetTrimmed(
+      const std::string_view &utf8String
+    );
+
+    /// <summary>Returns a whitespace-trimmed segment of the input string</summary>
+    /// <param name="utf8String">String in UTF-8 format that will be trimmed</param>
+    /// <returns>A whitespace-trimmed segment of the input string</returns>
+    /// <remarks>
+    ///   This is based on string_view because trimming is non-destructive and can
+    ///   return a view into the original string without copying it. There is little overhead
+    ///   as UTF-8 enumeration requires pointers to the string's data and length to
+    ///   be taken anyway.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static std::wstring_view GetTrimmed(
+      const std::wstring_view &wideString
     );
 
   };

@@ -152,4 +152,44 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StringHelperTest, TrimmedEmptyStringIsStillEmpty) {
+    std::string_view trimmedEmpty = StringHelper::GetTrimmed(std::string());
+    EXPECT_TRUE(trimmedEmpty.empty());
+    EXPECT_EQ(trimmedEmpty.length(), 0U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringHelperTest, TrimmedPurWhitespaceBecomesEmpty) {
+    std::string_view trimmedPureWhitespace = StringHelper::GetTrimmed(u8" \t \t ");
+    EXPECT_TRUE(trimmedPureWhitespace.empty());
+    EXPECT_EQ(trimmedPureWhitespace.length(), 0U);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringHelperTest, UntrimmableStringRemainsUnchanged) {
+    std::string_view untrimmed(u8"x \t\n y");
+    std::string_view trimmed = StringHelper::GetTrimmed(untrimmed);
+    EXPECT_TRUE(untrimmed == trimmed);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringHelperTest, CanTrimUtf8StringEndingWithMultiCharacterCodePoint) {
+    std::string_view untrimmed(u8"M𐍈𐍈  ");
+    std::string_view trimmed = StringHelper::GetTrimmed(untrimmed);
+    EXPECT_TRUE(trimmed == std::string_view(u8"M𐍈𐍈"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringHelperTest, CanTrimUtf16StringEndingWithMultiCharacterCodePoint) {
+    std::wstring_view untrimmed(L" 😄😄 ");
+    std::wstring_view trimmed = StringHelper::GetTrimmed(untrimmed);
+    EXPECT_TRUE(trimmed == std::wstring_view(L"😄😄"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text

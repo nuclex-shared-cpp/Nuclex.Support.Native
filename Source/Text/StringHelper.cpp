@@ -30,6 +30,58 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Throws an exception if the specified code point is invalid</summary>
+  /// <typeparam name="CharType">Type of characters being processed</typeparam>
+  /// <param name="codePoint">Code point that will be checked</param>
+  template<typename CharType>
+  void requireInvalidCodePoint(char32_t codePoint) {
+    static_assert(
+      std::is_same<CharType, Nuclex::Support::Text::UnicodeHelper::Char8Type>::value ||
+      std::is_same<CharType, wchar_t>::value,
+      u8"This method is intended only for UTF-8 characters and wide characters"
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Throws an exception if the specified code point is invalid</summary>
+  /// <typeparam name="CharType">Type of characters being processed</typeparam>
+  /// <param name="codePoint">Code point that will be checked</param>
+  template<>
+  void requireInvalidCodePoint<Nuclex::Support::Text::UnicodeHelper::Char8Type>(
+    char32_t codePoint
+  ) {
+    if(codePoint == char32_t(-1)) {
+      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Throws an exception if the specified code point is invalid</summary>
+  /// <typeparam name="CharType">Type of characters being processed</typeparam>
+  /// <param name="codePoint">Code point that will be checked</param>
+  template<>
+  void requireInvalidCodePoint<char16_t>(char32_t codePoint) {
+    if(codePoint == char32_t(-1)) {
+      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-16 string");
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Throws an exception if the specified code point is invalid</summary>
+  /// <typeparam name="CharType">Type of characters being processed</typeparam>
+  /// <param name="codePoint">Code point that will be checked</param>
+  template<>
+  void requireInvalidCodePoint<char32_t>(char32_t codePoint) {
+    if(codePoint == char32_t(-1)) {
+      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-32 string");
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>
   ///   Collapses any instance of two or more consecutive whitespaces into a single whitespace
   /// </summary>
@@ -56,9 +108,7 @@ namespace {
     // decides if we can even run the scan-only loop (and doing the check outside of
     // the loop simplifies the conditions that need to be checked inside the loop)
     char32_t codePoint = UnicodeHelper::ReadCodePoint(read, end);
-    if(unlikely(codePoint == char32_t(-1))) {
-      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-    }
+    requireInvalidCodePoint<CharType>(codePoint);
 
     // If it was not a whitespace, we can fast-forward until we find a duplicate whitespace
     if(ParserHelper::IsWhitespace(codePoint)) {
@@ -69,9 +119,7 @@ namespace {
         }
 
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        if(unlikely(codePoint == char32_t(-1))) {
-          throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-        }
+        requireInvalidCodePoint<CharType>(codePoint);
 
         if(likely(!ParserHelper::IsWhitespace(codePoint))) {
           break; // Exit without updating write pointer since we're trimming
@@ -87,9 +135,7 @@ namespace {
         }
 
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        if(unlikely(codePoint == char32_t(-1))) {
-          throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-        }
+        requireInvalidCodePoint<CharType>(codePoint);
 
         if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
           ++successiveWhitespaceCount;
@@ -115,9 +161,7 @@ namespace {
       char32_t whitespaceCodePoint = codePoint;
       while(likely(read < end)) {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        if(unlikely(codePoint == char32_t(-1))) {
-          throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-        }
+        requireInvalidCodePoint<CharType>(codePoint);
 
         if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
           whitespaceCodePoint = codePoint;
@@ -170,9 +214,7 @@ namespace {
       }
 
       codePoint = UnicodeHelper::ReadCodePoint(read, end);
-      if(unlikely(codePoint == char32_t(-1))) {
-        throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-      }
+      requireInvalidCodePoint<CharType>(codePoint);
 
       if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
         ++successiveWhitespaceCount;
@@ -197,9 +239,7 @@ namespace {
       char32_t whitespaceCodePoint = codePoint;
       while(likely(read < end)) {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        if(unlikely(codePoint == char32_t(-1))) {
-          throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-        }
+        requireInvalidCodePoint<CharType>(codePoint);
 
         if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
           whitespaceCodePoint = codePoint;
@@ -252,9 +292,7 @@ namespace {
     char32_t firstCodePointOfVictim = UnicodeHelper::ReadCodePoint(
       victimFromSecondCodePoint, victimEnd
     );
-    if(unlikely(firstCodePointOfVictim == char32_t(-1))) {
-      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-    }
+    requireInvalidCodePoint<CharType>(firstCodePointOfVictim);
 
     // CHECK: Should we optimize this to stop comparison when master < substring?
     //   If there aren't enough characters left to fit the substring even once,
@@ -268,9 +306,7 @@ namespace {
     const CharType *end = read + targetString.length();
     while(likely(read < end)) {
       char32_t currentCodePoint = UnicodeHelper::ReadCodePoint(read, end);
-      if(unlikely(currentCodePoint == char32_t(-1))) {
-        throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-      }
+      requireInvalidCodePoint<CharType>(currentCodePoint);
 
       // Once we encounter a character that matches the first character of the substring,
       // start comparing the rest of the substring to see if we have a match.
@@ -283,15 +319,13 @@ namespace {
           }
 
           char32_t masterCodePoint = UnicodeHelper::ReadCodePoint(readForComparison, end);
-          if(unlikely(masterCodePoint == char32_t(-1))) {
-            throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-          }
+          requireInvalidCodePoint<CharType>(masterCodePoint);
+
           char32_t victimCodePoint = UnicodeHelper::ReadCodePoint(
             victimCurrent, victimEnd
           );
-          if(unlikely(victimCodePoint == char32_t(-1))) {
-            throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
-          }
+          requireInvalidCodePoint<CharType>(victimCodePoint);
+
           if(masterCodePoint != victimCodePoint) {
             break; // we found a difference, it doesn't match the full substring
           }
@@ -310,15 +344,87 @@ namespace {
 
     // Since the above loop keeps going until the end of the master string is reached,
     // in case substrings were found and skipped, it will already have moved all
-    // of the remaining characters to the left, so the string contents are all in place.
-
-    // We merely may need to tell the master string its new length in case it changed.
+    // of the remaining characters to the left, so the string contents are already
+    // back-shifted right to, and including, the last code point.
+    //
+    // We merely need to tell the master string its new length in case it changed.
     if(read != write) {
       targetString.resize(
         write - reinterpret_cast<CharType *>(targetString.data())
       );
     }
 
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename StringViewType, typename CharType>
+  StringViewType getTrimmedStringView(const StringViewType &untrimmedString) {
+    using Nuclex::Support::Text::UnicodeHelper;
+    using Nuclex::Support::Text::ParserHelper;
+
+    // Gather some pointers for moving around in the substring for comparison
+    const CharType *start = (
+      reinterpret_cast<const CharType *>(untrimmedString.data())
+    );
+    const CharType *end = start + untrimmedString.length();
+
+    // Scan for the first non-whitespace character. If the end of the string is reached,
+    // which may already be the case when the loop is entered, return an empty string_view.
+    const CharType *current = start;
+    for(;;) {
+      if(current >= end) {
+        return StringViewType(
+          reinterpret_cast<const typename StringViewType::value_type *>(current), 0
+        );
+      }
+
+      char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
+      requireInvalidCodePoint<CharType>(codePoint);
+
+      // If the current character is a whitespace record the new position
+      // (ReadCodePoint() will advance the character, so right here, 'current'
+      // already points to the character *after* the whitespce).
+      if(ParserHelper::IsWhitespace(codePoint)) {
+        start = current;
+      } else {
+        break;
+      }
+    }
+
+    // Now begin to shrink the string until we hit a non-whitespace character
+    current = end;
+    while(start < current) {
+      --current;
+
+      // We may land on a trailing character in the middle of a multi-character code point,
+      // so keep stepping back until we're on the leading character.
+      if constexpr(std::is_same<CharType, UnicodeHelper::Char8Type>::value) {
+        if((*current & 0xc0) == 0x80) {
+          continue; // Go further back if we're on a UTF-8 trailing byte
+        }
+      } else if constexpr(std::is_same<CharType, char16_t>::value) {
+        if((*current & 0xdc00) == 0xdc00) {
+          continue; // Go further back if we're on the UTF-16 trailing owrd
+        }
+      }
+
+      char32_t codePoint = 0;
+      {
+        const CharType *temp = current;
+        codePoint = UnicodeHelper::ReadCodePoint(temp, end);
+      }
+      requireInvalidCodePoint<CharType>(codePoint);
+      if(ParserHelper::IsWhitespace(codePoint)) {
+        end = current;
+      } else {
+        break;
+      }
+    }
+
+    return StringViewType(
+      reinterpret_cast<const typename StringViewType::value_type *>(start), end - start
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -376,6 +482,22 @@ namespace Nuclex { namespace Support { namespace Text {
       eraseSubstrings<std::wstring, char32_t>(wideString, victim);
     } else {
       eraseSubstrings<std::wstring, char16_t>(wideString, victim);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::string_view StringHelper::GetTrimmed(const std::string_view &utf8String) {
+    return getTrimmedStringView<std::string_view, UnicodeHelper::Char8Type>(utf8String);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::wstring_view StringHelper::GetTrimmed(const std::wstring_view &wideString) {
+    if constexpr(sizeof(std::wstring::value_type) == sizeof(char32_t)) {
+      return getTrimmedStringView<std::wstring_view, char32_t>(wideString);
+    } else {
+      return getTrimmedStringView<std::wstring_view, char16_t>(wideString);
     }
   }
 
