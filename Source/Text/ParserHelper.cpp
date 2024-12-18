@@ -162,7 +162,7 @@ namespace Nuclex { namespace Support { namespace Text {
           static_cast<std::string_view::size_type>(current - start)
         );
       } else {
-        *word = std::string_view(); // to  ensure word.empty() returns true
+        *word = std::string_view(); // to ensure word.empty() returns true
       }
     }
   }
