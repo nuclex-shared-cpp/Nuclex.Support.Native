@@ -72,9 +72,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Returns the source's stop token</summary>
     /// <returns>The stop token responding to the source</returns>
-    public: NUCLEX_SUPPORT_API std::shared_ptr<const StopToken> GetToken() const {
-      return this->watcher.lock();
-    }
+    public: NUCLEX_SUPPORT_API inline std::shared_ptr<const StopToken> GetToken() const;
 
     // ----------------------------------------------------------------------------------------- //
 
@@ -83,13 +81,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   Optional reason for the cancellation, included in exception message when
     ///   <see cref="StopToken.ThrowIfCanceled" /> is used.
     /// </param>
-    public: NUCLEX_SUPPORT_API void Cancel(const std::string &reason = std::string()) {
-      assert((IsCanceled() == false) && u8"Cancellation is triggered only once");
-
-      this->CancellationReason = reason;
-      std::atomic_thread_fence(std::memory_order::memory_order_release);
-      this->Canceled.store(true, std::memory_order::memory_order_relaxed);
-    }
+    public: NUCLEX_SUPPORT_API inline void Cancel(const std::string &reason = std::string());
 
     // ----------------------------------------------------------------------------------------- //
 
@@ -131,6 +123,23 @@ namespace Nuclex { namespace Support { namespace Threading {
     #endif
 
     return result;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  inline std::shared_ptr<const StopToken> StopSource::GetToken() const {
+    return this->watcher.lock();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  inline void StopSource::Cancel(const std::string &reason /* = std::string() */) {
+    assert((IsCanceled() == false) && u8"Cancellation is triggered only once");
+
+    this->CancellationReason = reason;
+    std::atomic_thread_fence(std::memory_order::memory_order_release);
+    this->Canceled.store(true, std::memory_order::memory_order_release);
+    this->CancellationGate.Open();
   }
 
   // ------------------------------------------------------------------------------------------- //

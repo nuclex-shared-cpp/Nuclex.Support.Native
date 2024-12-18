@@ -24,6 +24,13 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
+namespace {
+
+  // ------------------------------------------------------------------------------------------- //
+  // ------------------------------------------------------------------------------------------- //
+
+} // anonymous namespace
+
 namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
@@ -82,6 +89,30 @@ namespace Nuclex { namespace Support { namespace Threading {
       token->ThrowIfCanceled(),
       std::future_error
     );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StopTokenTest, CanWaitForCancellation) {
+    std::shared_ptr<StopSource> source = StopSource::Create();
+    std::shared_ptr<const StopToken> token = source->GetToken();
+
+    EXPECT_FALSE(token->WaitFor(std::chrono::milliseconds(1)));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StopTokenTest, WaitForCancellationEndsWithCancellation) {
+    std::shared_ptr<StopSource> source = StopSource::Create();
+    std::shared_ptr<const StopToken> token = source->GetToken();
+
+    std::thread cancelThread(
+      [source]() { source->Cancel(); }
+    );
+
+    EXPECT_TRUE(token->WaitFor(std::chrono::milliseconds(25)));
+
+    cancelThread.join();
   }
 
   // ------------------------------------------------------------------------------------------- //
