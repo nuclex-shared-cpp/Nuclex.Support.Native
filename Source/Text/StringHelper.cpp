@@ -34,7 +34,7 @@ namespace {
   /// <typeparam name="CharType">Type of characters being processed</typeparam>
   /// <param name="codePoint">Code point that will be checked</param>
   template<typename CharType>
-  void requireInvalidCodePoint(char32_t codePoint) {
+  void requireValidCodePoint(char32_t codePoint) {
     static_assert(
       std::is_same<CharType, Nuclex::Support::Text::UnicodeHelper::Char8Type>::value ||
       std::is_same<CharType, wchar_t>::value,
@@ -48,7 +48,7 @@ namespace {
   /// <typeparam name="CharType">Type of characters being processed</typeparam>
   /// <param name="codePoint">Code point that will be checked</param>
   template<>
-  void requireInvalidCodePoint<Nuclex::Support::Text::UnicodeHelper::Char8Type>(
+  void requireValidCodePoint<Nuclex::Support::Text::UnicodeHelper::Char8Type>(
     char32_t codePoint
   ) {
     if(codePoint == char32_t(-1)) {
@@ -62,7 +62,7 @@ namespace {
   /// <typeparam name="CharType">Type of characters being processed</typeparam>
   /// <param name="codePoint">Code point that will be checked</param>
   template<>
-  void requireInvalidCodePoint<char16_t>(char32_t codePoint) {
+  void requireValidCodePoint<char16_t>(char32_t codePoint) {
     if(codePoint == char32_t(-1)) {
       throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-16 string");
     }
@@ -74,7 +74,7 @@ namespace {
   /// <typeparam name="CharType">Type of characters being processed</typeparam>
   /// <param name="codePoint">Code point that will be checked</param>
   template<>
-  void requireInvalidCodePoint<char32_t>(char32_t codePoint) {
+  void requireValidCodePoint<char32_t>(char32_t codePoint) {
     if(codePoint == char32_t(-1)) {
       throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-32 string");
     }
@@ -108,7 +108,7 @@ namespace {
     // decides if we can even run the scan-only loop (and doing the check outside of
     // the loop simplifies the conditions that need to be checked inside the loop)
     char32_t codePoint = UnicodeHelper::ReadCodePoint(read, end);
-    requireInvalidCodePoint<CharType>(codePoint);
+    requireValidCodePoint<CharType>(codePoint);
 
     // If it was not a whitespace, we can fast-forward until we find a duplicate whitespace
     if(ParserHelper::IsWhitespace(codePoint)) {
@@ -119,7 +119,7 @@ namespace {
         }
 
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        requireInvalidCodePoint<CharType>(codePoint);
+        requireValidCodePoint<CharType>(codePoint);
 
         if(likely(!ParserHelper::IsWhitespace(codePoint))) {
           break; // Exit without updating write pointer since we're trimming
@@ -135,7 +135,7 @@ namespace {
         }
 
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        requireInvalidCodePoint<CharType>(codePoint);
+        requireValidCodePoint<CharType>(codePoint);
 
         if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
           ++successiveWhitespaceCount;
@@ -161,7 +161,7 @@ namespace {
       char32_t whitespaceCodePoint = codePoint;
       while(likely(read < end)) {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        requireInvalidCodePoint<CharType>(codePoint);
+        requireValidCodePoint<CharType>(codePoint);
 
         if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
           whitespaceCodePoint = codePoint;
@@ -214,7 +214,7 @@ namespace {
       }
 
       codePoint = UnicodeHelper::ReadCodePoint(read, end);
-      requireInvalidCodePoint<CharType>(codePoint);
+      requireValidCodePoint<CharType>(codePoint);
 
       if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
         ++successiveWhitespaceCount;
@@ -239,7 +239,7 @@ namespace {
       char32_t whitespaceCodePoint = codePoint;
       while(likely(read < end)) {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
-        requireInvalidCodePoint<CharType>(codePoint);
+        requireValidCodePoint<CharType>(codePoint);
 
         if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
           whitespaceCodePoint = codePoint;
@@ -292,7 +292,7 @@ namespace {
     char32_t firstCodePointOfVictim = UnicodeHelper::ReadCodePoint(
       victimFromSecondCodePoint, victimEnd
     );
-    requireInvalidCodePoint<CharType>(firstCodePointOfVictim);
+    requireValidCodePoint<CharType>(firstCodePointOfVictim);
 
     // CHECK: Should we optimize this to stop comparison when master < substring?
     //   If there aren't enough characters left to fit the substring even once,
@@ -306,7 +306,7 @@ namespace {
     const CharType *end = read + targetString.length();
     while(likely(read < end)) {
       char32_t currentCodePoint = UnicodeHelper::ReadCodePoint(read, end);
-      requireInvalidCodePoint<CharType>(currentCodePoint);
+      requireValidCodePoint<CharType>(currentCodePoint);
 
       // Once we encounter a character that matches the first character of the substring,
       // start comparing the rest of the substring to see if we have a match.
@@ -319,12 +319,12 @@ namespace {
           }
 
           char32_t masterCodePoint = UnicodeHelper::ReadCodePoint(readForComparison, end);
-          requireInvalidCodePoint<CharType>(masterCodePoint);
+          requireValidCodePoint<CharType>(masterCodePoint);
 
           char32_t victimCodePoint = UnicodeHelper::ReadCodePoint(
             victimCurrent, victimEnd
           );
-          requireInvalidCodePoint<CharType>(victimCodePoint);
+          requireValidCodePoint<CharType>(victimCodePoint);
 
           if(masterCodePoint != victimCodePoint) {
             break; // we found a difference, it doesn't match the full substring
@@ -380,7 +380,7 @@ namespace {
       }
 
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
-      requireInvalidCodePoint<CharType>(codePoint);
+      requireValidCodePoint<CharType>(codePoint);
 
       // If the current character is a whitespace record the new position
       // (ReadCodePoint() will advance the character, so right here, 'current'
@@ -414,7 +414,7 @@ namespace {
         const CharType *temp = current;
         codePoint = UnicodeHelper::ReadCodePoint(temp, end);
       }
-      requireInvalidCodePoint<CharType>(codePoint);
+      requireValidCodePoint<CharType>(codePoint);
       if(ParserHelper::IsWhitespace(codePoint)) {
         end = current;
       } else {
