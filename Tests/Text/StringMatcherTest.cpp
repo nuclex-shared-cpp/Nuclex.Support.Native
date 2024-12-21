@@ -283,4 +283,62 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StringMatcherTest, CanFindSubstringCaseInsensitive) {
+    EXPECT_EQ(StringMatcher::Find<false>(u8"Hello World", u8"hello"), 0);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"Hello World", u8"world"), 6);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"Hello World", u8"o w"), 4);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"Hello World", u8"world!"), std::string::npos);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"Hello World", u8"Hello World"), 0);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"Hello World", u8"Hello World!"), std::string::npos);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, FindHandlesEmptyNeedleCaseInsensitive) {
+    EXPECT_EQ(StringMatcher::Find<false>(u8"Hello World", u8""), 0);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"", u8""), 0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CanFindSubstringCaseSensitive) {
+    EXPECT_EQ(StringMatcher::Find<true>(u8"Hello World", u8"Hello"), 0);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"Hello World", u8"World"), 6);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"Hello World", u8"o W"), 4);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"Hello World", u8"world"), std::string::npos);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"Hello World", u8"Hello World"), 0);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"Hello World", u8"Hello World!"), std::string::npos);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, FindHandlesEmptyNeedleCaseSensitive) {
+    EXPECT_EQ(StringMatcher::Find<true>(u8"Hello World", u8""), 0);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"", u8""), 0);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CanFindUtf8SubstringCaseInsensitive) {
+    EXPECT_EQ(StringMatcher::Find<false>(u8"HellØ WØrld", u8"hellø"), 0);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"HellØ WØrld", u8"wørld"), 7);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"HellØ WØrld", u8"ø w"), 4);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"HellØ WØrld", u8"wørld!"), std::string::npos);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"HellØ WØrld", u8"HellØ WØrld"), 0);
+    EXPECT_EQ(StringMatcher::Find<false>(u8"HellØ WØrld", u8"HellØ WØrld!"), std::string::npos);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StringMatcherTest, CanFindUtf8SubstringCaseSensitive) {
+    EXPECT_EQ(StringMatcher::Find<true>(u8"HellØ WØrld", u8"HellØ"), 0);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"HellØ WØrld", u8"WØrld"), 7);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"HellØ WØrld", u8"ø W"), std::string::npos);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"HellØ WØrld", u8"wørld"), std::string::npos);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"HellØ WØrld", u8"HellØ WØrld"), 0);
+    EXPECT_EQ(StringMatcher::Find<true>(u8"HellØ WØrld", u8"HellØ WØrld!"), std::string::npos);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text

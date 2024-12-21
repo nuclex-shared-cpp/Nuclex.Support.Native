@@ -431,6 +431,44 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  template<> std::string::size_type StringMatcher::Find<false>(
+    const std::string &haystack, const std::string &needle
+  ) {
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+
+    const my_char8_t *start =  findUtf8Substring<false>(
+      haystackStart, haystackStart + haystack.length(),
+      needleStart, needleStart + needle.length()
+    );
+    if(start == nullptr) {
+      return std::string::npos;
+    } else {
+      return start - haystackStart;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::string::size_type StringMatcher::Find<true>(
+    const std::string &haystack, const std::string &needle
+  ) {
+    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
+    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+
+    const my_char8_t *start = findUtf8Substring<true>(
+      haystackStart, haystackStart + haystack.length(),
+      needleStart, needleStart + needle.length()
+    );
+    if(start == nullptr) {
+      return std::string::npos;
+    } else {
+      return start - haystackStart;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   template<> bool StringMatcher::StartsWith<false>(
     const std::string &text, const std::string &beginning
   ) {
