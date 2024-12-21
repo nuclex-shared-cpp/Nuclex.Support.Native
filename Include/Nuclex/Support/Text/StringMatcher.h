@@ -66,6 +66,23 @@ namespace Nuclex { namespace Support { namespace Text {
       const std::string &haystack, const std::string &needle
     );
 
+    /// <summary>Finds the first occurrence of a string within another string</summary>
+    /// <typeparam name="CaseSensitive">
+    ///   Whether the comparison will be case sensitive
+    /// </typeparam>
+    /// <param name="haystack">
+    ///   String that will be scanned for instances of another string
+    /// </param>
+    /// <param name="needle">String which might appear inside the other string</param>
+    /// <returns>
+    ///   The index of the first 'needle' string within the 'haystack' string or
+    ///   std::string::npos if the 'needle' was not found.
+    /// </returns>
+    public: template<bool CaseSensitive = false>
+    NUCLEX_SUPPORT_API static std::string::size_type Find(
+      const std::string &haystack, const std::string &needle
+    );
+
     /// <summary>Checks whether one UTF-8 string starts with another UTF-8 string</summary>
     /// <typeparam name="CaseSensitive">
     ///   Whether the comparison will be case sensitive
@@ -127,25 +144,37 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<false>(
-    const std::string &text, const std::string &beginning
+    const std::string &left, const std::string &right
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<true>(
-    const std::string &text, const std::string &beginning
+    const std::string &left, const std::string &right
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::Contains<false>(
-    const std::string &text, const std::string &beginning
+    const std::string &haystack, const std::string &needle
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::Contains<true>(
-    const std::string &text, const std::string &beginning
+    const std::string &haystack, const std::string &needle
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::string::size_type NUCLEX_SUPPORT_API StringMatcher::Find<false>(
+    const std::string &haystack, const std::string &needle
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::string::size_type NUCLEX_SUPPORT_API StringMatcher::Find<true>(
+    const std::string &haystack, const std::string &needle
   );
 
   // ------------------------------------------------------------------------------------------- //
