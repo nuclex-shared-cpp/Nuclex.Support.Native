@@ -422,7 +422,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
         // This will open the mutex for other threads to enter and wait until the condition
         // variable is signaled. The worker thread signals the condition variable whenever
-        // a status change occurs that would be intersting to this specific line of code.
+        // a status change occurs that would be interesting to this specific line of code.
         if(patience.count() == 0) {
           this->statusChangedCondition.wait(stateMutexScope);
         } else {
@@ -435,7 +435,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     } // for(;;)
 
-    // Could call thread::join() here, but another thread might have called StartOrRestaty()
+    // Could call thread::join() here, but another thread might have called StartOrRestart()
     // already and we'd be sitting here until the whole operation is done...
   }
 
@@ -489,7 +489,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     } // for(;;)
 
-    // Could call thread::join() here, but another thread might have called StartOrRestaty()
+    // Could call thread::join() here, but another thread might have called StartOrRestart()
     // already and we'd be sitting here until the whole operation is done...
   }
 
