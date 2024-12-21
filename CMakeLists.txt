@@ -362,6 +362,18 @@ if(BUILD_BENCHMARK)
   install_debug_symbols(NuclexSupportNativeBenchmark)
 endif()
 
+# Maintain a symlink to the most recent build directory in the bin directory.
+# This is useful to simplify IDE configurations (i.e. path to the executable
+# that should be debugged, etc.)
+install(
+  CODE
+  "execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+    ${PROJECT_SOURCE_DIR}/bin/${NUCLEX_COMPILER_TAG}
+    ${PROJECT_SOURCE_DIR}/bin/last-build
+  )"
+)
+
 # -------------------------------------------------------------------------------------------------
 
 if(BUILD_DOCS)

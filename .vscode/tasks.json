@@ -66,7 +66,7 @@
         "isDefault": true
       },
       "type": "shell",
-      "command": "bin/linux-gcc13.3-amd64-debug/NuclexSupportNativeTests",
+      "command": "bin/last-build/NuclexSupportNativeTests",
       "args": [ ],
       "options": {
         "cwd": "${workspaceFolder}"
@@ -81,26 +81,12 @@
         "isDefault": true
       },
       "type": "shell",
-      "command": "bin/linux-gcc13.3-amd64-debug/NuclexSupportNativeBenchmark",
+      "command": "bin/last-build/NuclexSupportNativeBenchmark",
       "args": [ ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": "$gcc"
-    },
-    {
-      "label": "Clean",
-      "group": "build",
-      "type": "shell",
-      "command": "scons",
-      "args": [
-        "-c",
-        "DEBUG=1"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
     }
   ]
 }
