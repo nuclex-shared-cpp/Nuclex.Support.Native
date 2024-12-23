@@ -30,6 +30,14 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>The UTF-32 code point for the line feed character</summary>
+  constexpr const char32_t LineFeed = char32_t(0x000A);
+
+  /// <summary>The UTF-32 code point for the carriage return character</summary>
+  constexpr const char32_t CarriageReturn = char32_t(0x000D);
+
+  // ------------------------------------------------------------------------------------------- //
+
 #if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
   /// <summary>Skips over an integer in textual form</summary>
   /// <param name="start">Pointer to the start of the text, will be updated</param>
@@ -164,6 +172,95 @@ namespace Nuclex { namespace Support { namespace Text {
       } else {
         *word = std::string_view(); // to ensure word.empty() returns true
       }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void ParserHelper::FindLine(
+    const Char8Type *&start, const Char8Type *end,
+    std::string_view *line /* = nullptr */
+  ) {
+    if(unlikely(start >= end)) {
+      if(line != nullptr) {
+        *line = std::string_view(
+          reinterpret_cast<const std::string_view::value_type *>(start), 0
+        );
+        return;
+      }
+    }
+
+    // Figure out where the current/next line begins as well as the exact point where
+    // it ends excluding the line break.
+    const Char8Type *lineStart, *lineEnd;
+    {
+      const Char8Type *current = start;
+
+      char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
+      requireValidCodePoint(codePoint);
+
+      // If a carriage return follows, it might be:
+      // - An old MacOS line break with only the carriage return
+      // - A Windows line break where the carriage return is followed by a line feed
+      if(unlikely(codePoint == CarriageReturn)) {
+        lineStart = current;
+
+        // We need to read the next character to find out if it is the anticipated
+        // line feed, making this a Windows line break, or if it is something else.
+        // It can even be another carriage return, in which case we'd be dealing
+        // with an empty line using old MacOS line breaks.
+        codePoint = UnicodeHelper::ReadCodePoint(current, end);
+        requireValidCodePoint(codePoint);
+
+        // If it was a line feed, we've encountered a Windows line break and we need
+        // to treat it together with the preceding carriage return as one line break.
+        if(likely(codePoint == LineFeed)) {
+          lineStart = current;
+          if(likely(current < end)) {
+            codePoint = UnicodeHelper::ReadCodePoint(current, end);
+            requireValidCodePoint(codePoint);
+          }
+        }
+      } else if(unlikely(codePoint == LineFeed)) { // line feed only means Unix/Linux line break
+        lineStart = current;
+        if(likely(current < end)) {
+          codePoint = UnicodeHelper::ReadCodePoint(current, end);
+          requireValidCodePoint(codePoint);
+        }
+      } else { // anything else means we were placed in the middle of a line
+        lineStart = start;
+      }
+
+      // When this point is reached, the following holds true:
+      // - codePoint is the next UTF-32 character which has not been evaluated yet
+      // - current is placed on the next UTF-8 character past where codePoint was read
+      // - lineStart points to the beginning of the line
+      //
+      // Thus, we're now doing the loop condition in reverse, checking for CR or LF first,
+      // and only then checking if we can advance further
+      lineEnd = current;
+      while((codePoint != CarriageReturn) && (codePoint != LineFeed)) {
+        lineEnd = current;
+
+        if(current >= end) {
+          break;
+        }
+
+        codePoint = UnicodeHelper::ReadCodePoint(current, end);
+        requireValidCodePoint(codePoint);
+      }
+    }
+
+    // We found a carriage return, line feed or the end of the string, so now our work
+    // is done. Since we ran through without error, we can now update the start pointer
+    // provided by theuser. If the user also provided a string_view, place the segment
+    // containing the line in it. 
+    start = lineEnd;
+    if(line != nullptr) {
+      *line = std::string_view(
+        reinterpret_cast<const std::string_view::value_type *>(lineStart),
+        (lineEnd - lineStart)
+      );
     }
   }
 
