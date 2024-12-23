@@ -201,4 +201,115 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(ParserHelperTest, CanFindLineInString) {
+    std::string text(
+      u8"Unix line break\nWindows line break\r\nMac line break\rNo line break", 64
+    );
+    const std::uint8_t *start = reinterpret_cast<const std::uint8_t *>(text.c_str());
+    const std::uint8_t *end = start + text.length();
+
+    // First Unix-style line break
+    {
+      std::string_view line;
+
+      const std::uint8_t *current = start;
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 16U);
+      EXPECT_TRUE(line == u8"Unix line break");
+    }
+
+    // Second Windows-style line break
+    {
+      std::string_view line;
+
+      const std::uint8_t *current = start + 16;
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 36U);
+      EXPECT_TRUE(line == u8"Windows line break");
+    }
+
+    // Third MacOS-style line break
+    {
+      std::string_view line;
+
+      const std::uint8_t *current = start + 36;
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 51U);
+      EXPECT_TRUE(line == u8"Mac line break");
+    }
+
+    // Fourth line running against the end of the string
+    {
+      std::string_view line;
+
+      const std::uint8_t *current = start + 51;
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 64U);
+      EXPECT_TRUE(line == u8"No line break");
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ParserHelperTest, FindLineHandlesEmptyStrings) {
+    std::string text(u8"", 0);
+    const std::uint8_t *start = reinterpret_cast<const std::uint8_t *>(text.c_str());
+    const std::uint8_t *end = start;
+
+    std::string_view line;
+    ParserHelper::FindLine(start, end, &line);
+
+    EXPECT_EQ(start, end);
+    EXPECT_TRUE(line.empty());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(ParserHelperTest, FindLineHandlesEmptyLines) {
+    std::string text(u8"Linux\n\nWindows\r\n\r\nMac\r\r", 23);
+    const std::uint8_t *start = reinterpret_cast<const std::uint8_t *>(text.c_str());
+    const std::uint8_t *end = start + text.length();
+
+    // Empty line using Linux style line ending
+    {
+      std::string_view line;
+
+      const std::uint8_t *current = start;
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 6U);
+      EXPECT_TRUE(line == u8"Linux");
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 7U);
+      EXPECT_TRUE(line.empty());
+    }
+
+    // Empty line using Windows style line ending
+    {
+      std::string_view line;
+
+      const std::uint8_t *current = start + 7;
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 16U);
+      EXPECT_TRUE(line == u8"Windows");
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 18U);
+      EXPECT_TRUE(line.empty());
+    }
+
+    // Empty line using old Mac-style line ending
+    {
+      std::string_view line;
+
+      const std::uint8_t *current = start + 18;
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 22U);
+      EXPECT_TRUE(line == u8"Mac");
+      ParserHelper::FindLine(current, end, &line);
+      EXPECT_EQ(current - start, 23U);
+      EXPECT_TRUE(line.empty());
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text

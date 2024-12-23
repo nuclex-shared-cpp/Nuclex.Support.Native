@@ -142,12 +142,21 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   excluding any line break characters
     /// </param>
     /// <remarks>
-    ///   This method will look for a line break in the input string. If the start index
-    ///   is on a line break already, the start pointer will only be advanced past that
-    ///   line break and an empty string will be stored in the <paramref cref="line" />
-    ///   pointer, if provided. This behavior is needed in order to correctly report
-    ///   empty lines back to the caller. If you're looking for non-empty lines, simply
-    ///   call this method until finding a non-empty string or reaching the end pointer.
+    ///   <para>
+    ///     This method will look for a line break in the input string. If the start index
+    ///     is on a line break already, the start pointer will only be advanced past that
+    ///     line break and an empty string will be stored in the <paramref cref="line" />
+    ///     pointer, if provided. This behavior is needed in order to correctly report
+    ///     empty lines back to the caller. If you're looking for non-empty lines, simply
+    ///     call this method until finding a non-empty string or reaching the end pointer.
+    ///   </para>
+    ///   <para>
+    ///     Note that this tries to deal with Windows-style line breaks (CR followed by LF),
+    ///     but also accepts old Mac-style line breaks (just CR) and Linux/Unix-style line
+    ///     breaks (just LF). This means that if you're chunking text and a chunk boundary
+    ///     happens exactly between a CR and its LF, this method, unable to keep state
+    ///     between the calls on the chunks, would report a spurious line break.
+    ///   </para>
     /// </remarks>
     public: NUCLEX_SUPPORT_API static void FindLine(
       const Char8Type *&start, const Char8Type *end,
