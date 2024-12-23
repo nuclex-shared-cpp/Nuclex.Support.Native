@@ -112,7 +112,10 @@ namespace Nuclex { namespace Support { namespace Text {
     );
 
     /// <summary>Searches for the next word (character surrounded by whitespace)</summary>
-    /// <param name="start">Start pointer from which on the word will be searched</param>
+    /// <param name="start">
+    ///   Start pointer from which on the word will be searched. Will be advanced to
+    ///   the first character past the word
+    /// </param>
     /// <param name="end">End pointer one past the last character to consider</param>
     /// <param name="word">
     ///   Optional pointer to a string_view that will be set to the entire next word
@@ -126,6 +129,29 @@ namespace Nuclex { namespace Support { namespace Text {
     public: NUCLEX_SUPPORT_API static void FindWord(
       const Char8Type *&start, const Char8Type *end,
       std::string_view *word = nullptr
+    );
+
+    /// <summary>Searches for the next line break</summary>
+    /// <param name="start">
+    ///   Start pointer from which on the line will be searched. Will be advanced to
+    ///   the first character past the discovered line break or to the end pointer
+    /// </param>
+    /// <param name="end">End pointer one past the last character to consider</param>
+    /// <param name="line">
+    ///   Optional pointer to a string_view that will be set to the entire line,
+    ///   excluding any line break characters
+    /// </param>
+    /// <remarks>
+    ///   This method will look for a line break in the input string. If the start index
+    ///   is on a line break already, the start pointer will only be advanced past that
+    ///   line break and an empty string will be stored in the <paramref cref="line" />
+    ///   pointer, if provided. This behavior is needed in order to correctly report
+    ///   empty lines back to the caller. If you're looking for non-empty lines, simply
+    ///   call this method until finding a non-empty string or reaching the end pointer.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static void FindLine(
+      const Char8Type *&start, const Char8Type *end,
+      std::string_view *line = nullptr
     );
 
 #if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
