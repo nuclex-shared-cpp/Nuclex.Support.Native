@@ -105,7 +105,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Whether the background job is current running</summary>
     /// <remarks>
     ///   Don't use this to make decisions, use it to display a progress spinner in your UI
-    ///   or somthing similarly inconsequential.
+    ///   or something similarly inconsequential.
     /// </remarks>
     public: NUCLEX_SUPPORT_API bool IsRunning() const;
 
