@@ -312,4 +312,18 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(ParserHelperTest, FindLineDealsWithCarriageReturnAtEnd) {
+    std::string text(u8"Test\r", 5);
+    const std::uint8_t *start = reinterpret_cast<const std::uint8_t *>(text.c_str());
+    const std::uint8_t *end = start + text.length();
+
+    std::string_view line;
+    ParserHelper::FindLine(start, end, &line);
+
+    EXPECT_EQ(start, end);
+    EXPECT_TRUE(line == u8"Test");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }}} // namespace Nuclex::Support::Text
