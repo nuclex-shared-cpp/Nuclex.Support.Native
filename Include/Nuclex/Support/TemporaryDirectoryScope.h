@@ -99,7 +99,7 @@ namespace Nuclex { namespace Support {
       const std::string &name, const std::string &text
     ) {
       return PlaceFile(
-        name, reinterpret_cast<const std::uint8_t *>(text.c_str()), text.length()
+        name, reinterpret_cast<const std::byte *>(text.c_str()), text.length()
       );
     }
 
@@ -108,7 +108,7 @@ namespace Nuclex { namespace Support {
     /// <param name="contents">Contents that will be written into the file</param>
     /// <returns>The full path of the newly created file</returns>
     public: NUCLEX_SUPPORT_API std::string PlaceFile(
-      const std::string &name, const std::vector<std::uint8_t> &contents
+      const std::string &name, const std::vector<std::byte> &contents
     ) {
       return PlaceFile(name, contents.data(), contents.size());
     }
@@ -119,16 +119,16 @@ namespace Nuclex { namespace Support {
     /// <param name="byteCount">Number of bytes that will be written to the file</param>
     /// <returns>The full path of the newly created file</returns>
     public: NUCLEX_SUPPORT_API std::string PlaceFile(
-      const std::string &name, const std::uint8_t *contents, std::size_t byteCount
+      const std::string &name, const std::byte *contents, std::size_t byteCount
     );
 
     /// <summary>Reads the whole contents of a file in the temporary directory</summary>
     /// <param name="name">Name of the file that will be read</param>
     /// <returns>A vector containing all of the file's contents</returns>
-    public: NUCLEX_SUPPORT_API std::vector<std::uint8_t> ReadFile(
+    public: NUCLEX_SUPPORT_API std::vector<std::byte> ReadFile(
       const std::string &name
     ) const {
-      std::vector<std::uint8_t> contents;
+      std::vector<std::byte> contents;
       ReadFile(name, contents);
       return contents;
     }
@@ -137,7 +137,7 @@ namespace Nuclex { namespace Support {
     /// <param name="name">Name of the file that will be read</param>
     /// <param name="contents">A vector to which the file's contents will be appended</param>
     public: NUCLEX_SUPPORT_API void ReadFile(
-      const std::string &name, std::vector<std::uint8_t> &contents
+      const std::string &name, std::vector<std::byte> &contents
     ) const;
 
     /// <summary>Reads the whole contents of a file in the temporary directory</summary>

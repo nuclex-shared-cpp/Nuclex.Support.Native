@@ -114,7 +114,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniDocumentModelTest, HasFileContentsConstructor) {
     EXPECT_NO_THROW(
       IniDocumentModel dom(
-        reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
+        reinterpret_cast<const std::byte *>(VanillaIniFile),
         sizeof(VanillaIniFile) - 1
       );
     );
@@ -125,7 +125,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniDocumentModelTest, EmptyDocumentCanBeSerialized) {
     IniDocumentModel dom;
 
-    std::vector<std::uint8_t> contents = dom.Serialize();
+    std::vector<std::byte> contents = dom.Serialize();
     EXPECT_EQ(contents.size(), 0U);
   }
 
@@ -133,7 +133,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, CanParseVanillaProperty) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
+      reinterpret_cast<const std::byte *>(VanillaIniFile),
       sizeof(VanillaIniFile) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(std::string(), u8"GlobalProperty");
@@ -145,7 +145,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, CanParseVanillaSection) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
+      reinterpret_cast<const std::byte *>(VanillaIniFile),
       sizeof(VanillaIniFile) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(u8"ImportantStuff", u8"Normal");
@@ -157,7 +157,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, NamesAreCaseInsensitive) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
+      reinterpret_cast<const std::byte *>(VanillaIniFile),
       sizeof(VanillaIniFile) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(u8"impOrtantstUff", u8"nOrmAl");
@@ -169,7 +169,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, IgnoresComments) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
+      reinterpret_cast<const std::byte *>(VanillaIniFile),
       sizeof(VanillaIniFile) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(u8"ImportantStuff", u8"CommentedOut");
@@ -181,7 +181,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniDocumentModelTest, CanHandleEmptyAssignments) {
     EXPECT_NO_THROW(
       IniDocumentModel dom(
-        reinterpret_cast<const std::uint8_t *>(EmptyAssignments),
+        reinterpret_cast<const std::byte *>(EmptyAssignments),
         sizeof(EmptyAssignments) - 1
       );
     );
@@ -191,7 +191,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, AssignmentWithoutValueIsValid) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(EmptyAssignments),
+      reinterpret_cast<const std::byte *>(EmptyAssignments),
       sizeof(EmptyAssignments) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(std::string(), u8"WithoutValue");
@@ -203,7 +203,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, SectionCanBePaddedWithSpaces) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(EmptyAssignments),
+      reinterpret_cast<const std::byte *>(EmptyAssignments),
       sizeof(EmptyAssignments) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(u8"MoreStuff", u8"AlsoNoValue");
@@ -214,7 +214,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, CommentAfterPropertyValueIsOmitted) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(EmptyAssignments),
+      reinterpret_cast<const std::byte *>(EmptyAssignments),
       sizeof(EmptyAssignments) - 1
     );
 
@@ -235,7 +235,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, SpacesAfterPropertyValueAreIgnored) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(EmptyAssignments),
+      reinterpret_cast<const std::byte *>(EmptyAssignments),
       sizeof(EmptyAssignments) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(u8"MoreStuff", u8"TrailingSpaces");
@@ -247,7 +247,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, SpacesInsideQuotesAreKept) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(EmptyAssignments),
+      reinterpret_cast<const std::byte *>(EmptyAssignments),
       sizeof(EmptyAssignments) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(u8"MoreStuff", u8"Quoted");
@@ -259,7 +259,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, UnclosedQuoteInvalidatesLine) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(EmptyAssignments),
+      reinterpret_cast<const std::byte *>(EmptyAssignments),
       sizeof(EmptyAssignments) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(u8"MoreStuff", u8"WeirdOne");
@@ -281,7 +281,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniDocumentModelTest, CanHandleMalformedLines) {
     EXPECT_NO_THROW(
       IniDocumentModel dom(
-        reinterpret_cast<const std::uint8_t *>(MalformedLines),
+        reinterpret_cast<const std::byte *>(MalformedLines),
         sizeof(MalformedLines) - 1
       );
     );
@@ -291,7 +291,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, MalformedLinesAreIgnored) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(MalformedLines),
+      reinterpret_cast<const std::byte *>(MalformedLines),
       sizeof(MalformedLines) - 1
     );
 
@@ -316,7 +316,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, SectionNameCanHaveQuotes) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(MalformedLines),
+      reinterpret_cast<const std::byte *>(MalformedLines),
       sizeof(MalformedLines) - 1
     );
     std::vector<std::string> sections = dom.GetAllSections();
@@ -333,7 +333,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, PropertyNameCanHaveBrackets) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(MalformedLines),
+      reinterpret_cast<const std::byte *>(MalformedLines),
       sizeof(MalformedLines) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(std::string(), u8"NotASection");
@@ -344,7 +344,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, PropertyNameAndValueCanHaveBrackets) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(MalformedLines),
+      reinterpret_cast<const std::byte *>(MalformedLines),
       sizeof(MalformedLines) - 1
     );
     std::optional<std::string> value = dom.GetPropertyValue(std::string(), u8"AlsoNoSection");
@@ -356,7 +356,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, AllMalformedElementsAreIgnored) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(MalformedLines),
+      reinterpret_cast<const std::byte *>(MalformedLines),
       sizeof(MalformedLines) - 1
     );
 
@@ -389,9 +389,11 @@ namespace Nuclex { namespace Support { namespace Settings {
     dom.SetPropertyValue(u8"MySection", u8"World", u8"Hello");
     dom.SetPropertyValue(std::string(), u8"Hello", u8"World");
 
-    std::vector<std::uint8_t> fileContents = dom.Serialize();
+    std::vector<std::byte> fileContents = dom.Serialize();
 
-    std::string fileContentsAsString(fileContents.begin(), fileContents.end());
+    std::string fileContentsAsString(
+      reinterpret_cast<const char *>(fileContents.data()), fileContents.size()
+    );
     EXPECT_TRUE(fileContentsAsString.find(u8"Hello = World") != std::string::npos);
   }
 
@@ -399,14 +401,16 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, PropertyValueCanBeChangedToShorter) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
+      reinterpret_cast<const std::byte *>(VanillaIniFile),
       sizeof(VanillaIniFile) - 1
     );
     dom.SetPropertyValue(u8"ImportantStuff", u8"Normal", u8"2");
 
-    std::vector<std::uint8_t> fileContents = dom.Serialize();
+    std::vector<std::byte> fileContents = dom.Serialize();
 
-    std::string fileContentsAsString(fileContents.begin(), fileContents.end());
+    std::string fileContentsAsString(
+      reinterpret_cast<const char *>(fileContents.data()), fileContents.size()
+    );
     EXPECT_TRUE(fileContentsAsString.find(u8"Normal=2\n") != std::string::npos);
   }
 
@@ -414,14 +418,16 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, PropertyValueCanBeChangedToLonger) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(VanillaIniFile),
+      reinterpret_cast<const std::byte *>(VanillaIniFile),
       sizeof(VanillaIniFile) - 1
     );
     dom.SetPropertyValue(u8"ImportantStuff", u8"Normal", u8"Crazy");
 
-    std::vector<std::uint8_t> fileContents = dom.Serialize();
+    std::vector<std::byte> fileContents = dom.Serialize();
 
-    std::string fileContentsAsString(fileContents.begin(), fileContents.end());
+    std::string fileContentsAsString(
+      reinterpret_cast<const char *>(fileContents.data()), fileContents.size()
+    );
     EXPECT_TRUE(fileContentsAsString.find(u8"Normal=Crazy\n") != std::string::npos);
   }
 
@@ -429,7 +435,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniDocumentModelTest, QuotedStringsCanContainLineBreaks) {
     IniDocumentModel dom(
-      reinterpret_cast<const std::uint8_t *>(MultilineStrings),
+      reinterpret_cast<const std::byte *>(MultilineStrings),
       sizeof(MultilineStrings) - 1
     );
 
@@ -453,7 +459,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniDocumentModelTest, EqualsSignCanBeUsedInValue) {
-    std::vector<std::uint8_t> serialized;
+    std::vector<std::byte> serialized;
     {
       IniDocumentModel dom;
       dom.SetPropertyValue(u8"Section", u8"ChangedOption", u8"123");
@@ -477,7 +483,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniDocumentModelTest, BackslashCanBeUsedInValue) {
-    std::vector<std::uint8_t> serialized;
+    std::vector<std::byte> serialized;
     {
       IniDocumentModel dom;
       dom.SetPropertyValue(u8"Section", u8"ChangedOption", u8"123");
@@ -501,7 +507,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(IniDocumentModelTest, QuotesCanBeUsedInValue) {
-    std::vector<std::uint8_t> serialized;
+    std::vector<std::byte> serialized;
     {
       IniDocumentModel dom;
       dom.SetPropertyValue(u8"Section", u8"ChangedOption", u8"123");

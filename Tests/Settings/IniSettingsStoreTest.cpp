@@ -67,7 +67,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, FileCanBeLoadedFromMemory) {
     IniSettingsStore settings;
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
   }
@@ -115,7 +115,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, CanReadBooleanTypes) {
     IniSettingsStore settings;
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -142,7 +142,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, CanReadUnsigned32BitIntegers) {
     IniSettingsStore settings;
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -158,7 +158,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, CanReadSigned32BitIntegers) {
     IniSettingsStore settings;
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -181,7 +181,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, CanReadUnsigned64BitIntegers) {
     IniSettingsStore settings;
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -197,7 +197,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, CanReadSigned64BitIntegers) {
     IniSettingsStore settings;
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -219,7 +219,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, CanReadStrings) {
     IniSettingsStore settings;
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -241,7 +241,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, CategoriesCanBeEnumerated) {
     IniSettingsStore settings;
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -254,7 +254,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, PropertiesCanBeEnumerated) {
     IniSettingsStore settings;
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -274,7 +274,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     EXPECT_FALSE(wasDeleted);
 
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -294,7 +294,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     EXPECT_FALSE(wasDeleted);
 
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 
@@ -317,7 +317,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     EXPECT_FALSE(wasDeleted);
 
     settings.Load(
-      reinterpret_cast<const std::uint8_t *>(ExampleIniFile),
+      reinterpret_cast<const std::byte *>(ExampleIniFile),
       sizeof(ExampleIniFile) - 1
     );
 

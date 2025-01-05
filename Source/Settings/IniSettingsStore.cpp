@@ -55,7 +55,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   IniSettingsStore::IniSettingsStore(
-    const std::uint8_t *iniFileContents, std::size_t iniFileByteCount
+    const std::byte *iniFileContents, std::size_t iniFileByteCount
   ) :
     privateImplementationData(nullptr),
     modified(false) {
@@ -73,7 +73,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void IniSettingsStore::Load(const std::string &iniFilePath) {
-    std::vector<std::uint8_t> contents;
+    std::vector<std::byte> contents;
 
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
@@ -139,7 +139,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void IniSettingsStore::Load(const std::uint8_t *iniFileContents, std::size_t iniFileByteCount) {
+  void IniSettingsStore::Load(const std::byte *iniFileContents, std::size_t iniFileByteCount) {
     std::unique_ptr<IniDocumentModel> newDocumentModel(
       new IniDocumentModel(iniFileContents, iniFileByteCount)
     );
@@ -168,7 +168,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           this->privateImplementationData
         )->Serialize(
           &fileDescriptor,
-          [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
+          [](void *context, const std::byte *buffer, std::size_t byteCount) {
             Platform::LinuxFileApi::Write(
               *reinterpret_cast<int *>(context), buffer, byteCount
             );
@@ -227,9 +227,9 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::uint8_t> IniSettingsStore::Save() const {
+  std::vector<std::byte> IniSettingsStore::Save() const {
     if(this->privateImplementationData == nullptr) {
-      return std::vector<std::uint8_t>();
+      return std::vector<std::byte>();
     } else {
       return reinterpret_cast<const IniDocumentModel *>(
         this->privateImplementationData

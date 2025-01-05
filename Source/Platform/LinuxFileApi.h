@@ -72,7 +72,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <param name="count">Number of bytes that will be read from the file</param>
     /// <returns>The number of bytes that were actually read</returns>
     public: static std::size_t Read(
-      int fileDescriptor, std::uint8_t *buffer, std::size_t count
+      int fileDescriptor, std::byte *buffer, std::size_t count
     );
 
     /// <summary>Writes data into the specified file</summary>
@@ -81,7 +81,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <param name="count">Number of bytes that will be written into the file</param>
     /// <returns>The number of bytes that were actually written</returns>
     public: static std::size_t Write(
-      int fileDescriptor, const std::uint8_t *buffer, std::size_t count
+      int fileDescriptor, const std::byte *buffer, std::size_t count
     );
 
     /// <summary>Truncates or pads the file to the specified length</summary>

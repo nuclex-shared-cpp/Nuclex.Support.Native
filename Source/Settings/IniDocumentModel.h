@@ -69,21 +69,21 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// </summary>
     /// <param name="fileContents">The whole contents of an .ini file</param>
     /// <param name="byteCount">Lenght of the .ini file in bytes</param>
-    public: IniDocumentModel(const std::uint8_t *fileContents, std::size_t byteCount);
+    public: IniDocumentModel(const std::byte *fileContents, std::size_t byteCount);
 
     /// <summary>Frees all memory owned by the instance</summary>
     public: ~IniDocumentModel();
 
     /// <summary>Serializes the entire document model into a memory block</summary>
     /// <returns>Vector holding the entire .ini file contents</returns>
-    public: std::vector<std::uint8_t> Serialize() const;
+    public: std::vector<std::byte> Serialize() const;
 
     /// <summary>Serializes the entire document model back into an .ini file</summary>
     /// <param name="context">Will be passed along to the write callback</param>
     /// <param name="write">Will be invoked to write individual lines</param>
     /// <returns>The total number of bytes that have been written</returns> 
     public: std::size_t Serialize(
-      void *context, void write(void *context, const std::uint8_t *, std::size_t)
+      void *context, void write(void *context, const std::byte *, std::size_t)
     ) const;
 
     /// <summary>Retrieves a list of all sections that exist in the .ini file</summary>
@@ -138,7 +138,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       public: Line *Next;
 
       /// <summary>The text contained in this line, including CR or CR-LF</summary>
-      public: std::uint8_t *Contents;
+      public: std::byte *Contents;
       /// <summary>Length of the line in bytes</summary>
       public: std::size_t Length;
 
@@ -241,7 +241,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   Amount of memory allocated in <see cref="createdLinesMemory" />
     /// </param>
     private: void parseFileContents(
-      const std::uint8_t *fileContents, std::size_t byteCount
+      const std::byte *fileContents, std::size_t byteCount
     );
 
     /// <summary>Changes the value stored in an existing line</summary>
@@ -273,14 +273,14 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="length">Length fo the untouched string</param>
     /// <returns>The number of bytes written at the target address</returns>
     private: static std::string::size_type escape(
-      std::uint8_t *target, const char *source, std::string::size_type length
+      std::byte *target, const char *source, std::string::size_type length
     );
 
     /// <summary>Copies the string, unescaping any backslash-escaped characters</summary>
     /// <param name="begin">First character that should be copied and unescaped</param>
     /// <param name="end">One past the last character should be copied and unescaped</param>
     /// <returns>A string with the unescaped characters from the specified range</returns>
-    private: static std::string unescape(const std::uint8_t *begin, const std::uint8_t *end);
+    private: static std::string unescape(const std::byte *begin, const std::byte *end);
 
     /// <summary>Allocates memory for a single line</summary>
     /// <typeparam name="TLine">Type of line that will be allocated</typeparam>
@@ -288,7 +288,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="byteCount">Length of the line in bytes</param>
     /// <returns>The new line</returns>
     private: template<typename TLine>
-    TLine *allocateLine(const std::uint8_t *contents, std::size_t byteCount);
+    TLine *allocateLine(const std::byte *contents, std::size_t byteCount);
 
     /// <summary>Allocates memory for the specified type</summary>
     /// <typeparam name="T">Type for which memory will be allocated</typeparam>
@@ -322,9 +322,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   memory fragmentation and is fairly efficient as usually, .ini files aren't completely
     ///   restructured during an application run.
     /// </remarks>
-    private: std::vector<std::uint8_t *> loadedLinesMemory;
+    private: std::vector<std::byte *> loadedLinesMemory;
     /// <summary>Memory for all Line instances that were created after loading</summary>
-    private: std::unordered_set<std::uint8_t *> createdLinesMemory;
+    private: std::unordered_set<std::byte *> createdLinesMemory;
 
     /// <summary>Pointer to the first line, useful to reconstruct the file</summary>
     private: Line *firstLine;

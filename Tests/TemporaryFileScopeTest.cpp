@@ -103,7 +103,13 @@ namespace Nuclex { namespace Support {
   TEST(TemporaryFileScopeTest, CanWriteVectorToTemporaryFile) {
     TemporaryFileScope scope(u8"tst");
 
-    std::vector<std::uint8_t> contents = { 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9 };
+    std::vector<std::byte> contents = {
+      static_cast<std::byte>(0x1), static_cast<std::byte>(0x2),
+      static_cast<std::byte>(0x3), static_cast<std::byte>(0x4),
+      static_cast<std::byte>(0x5), static_cast<std::byte>(0x6),
+      static_cast<std::byte>(0x7), static_cast<std::byte>(0x8),
+      static_cast<std::byte>(0x9)
+    };
     scope.SetFileContents(contents);
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
