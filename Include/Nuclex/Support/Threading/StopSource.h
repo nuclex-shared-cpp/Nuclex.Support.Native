@@ -72,7 +72,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Returns the source's stop token</summary>
     /// <returns>The stop token responding to the source</returns>
-    public: NUCLEX_SUPPORT_API inline std::shared_ptr<const StopToken> GetToken() const;
+    public: NUCLEX_SUPPORT_API inline std::shared_ptr<const StopToken> GetToken() const noexcept;
 
     // ----------------------------------------------------------------------------------------- //
 
@@ -127,7 +127,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline std::shared_ptr<const StopToken> StopSource::GetToken() const {
+  inline std::shared_ptr<const StopToken> StopSource::GetToken() const noexcept {
     return this->watcher.lock();
   }
 

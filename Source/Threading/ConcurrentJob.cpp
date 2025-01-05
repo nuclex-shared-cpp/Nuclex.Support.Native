@@ -45,9 +45,9 @@ namespace {
     Scheduled = -1,
     /// <summary>Concurrent job is currently executing</summary>
     Running = -2,
-    /// <summayr>Concurrent job is executing and was signaled to cancel</summary>
+    /// <summary>Concurrent job is executing and was signaled to cancel</summary>
     Canceling = -3,
-    /// <summayr>Concurrent job is executing, canceled and should restart immediately</summary>
+    /// <summary>Concurrent job is executing, canceled and should restart immediately</summary>
     CancelingWithRestart = -4
 
   };
