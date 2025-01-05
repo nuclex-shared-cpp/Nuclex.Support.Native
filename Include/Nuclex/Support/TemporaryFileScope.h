@@ -46,7 +46,7 @@ namespace Nuclex { namespace Support {
   ///         TemporaryFileScope tempFile(u8"xyz"); // file with custom prefix
   ///
   ///         // Write something into the file. Overloads are also provided for
-  ///         // a buffer + length pair as well as for std::vector<std::uint8_t>.
+  ///         // a buffer + length pair as well as for std::vector<std::byte>.
   ///         tempFile.SetFileContents(u8"Hello World!");
   ///
   ///         // ...do something that requires an actual file....
@@ -76,17 +76,17 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Reads the current contents of the file as a vector</summary>
     /// <returns>The current contents of the file as a vector</returns>
-    public: NUCLEX_SUPPORT_API std::vector<std::uint8_t> GetFileContentsAsVector() const;
+    public: NUCLEX_SUPPORT_API std::vector<std::byte> GetFileContentsAsVector() const;
 
     /// <summary>Replaces the file contents with the specified string</summary>
     /// <param name="text">String whose contents will be written into the file</param>
     public: NUCLEX_SUPPORT_API void SetFileContents(const std::string &text) {
-      SetFileContents(reinterpret_cast<const std::uint8_t *>(text.c_str()), text.length());
+      SetFileContents(reinterpret_cast<const std::byte *>(text.c_str()), text.length());
     }
 
     /// <summary>Replaces the file contents with the data in the specified vector</summary>
     /// <param name="contents">Contents that will be written into the file</param>
-    public: NUCLEX_SUPPORT_API void SetFileContents(const std::vector<std::uint8_t> &contents) {
+    public: NUCLEX_SUPPORT_API void SetFileContents(const std::vector<std::byte> &contents) {
       SetFileContents(contents.data(), contents.size());
     }
 
@@ -94,7 +94,7 @@ namespace Nuclex { namespace Support {
     /// <param name="contents">Memory block containing the new file contents</param>
     /// <param name="byteCount">Number of bytes that will be written to the file</param>
     public: NUCLEX_SUPPORT_API void SetFileContents(
-      const std::uint8_t *contents, std::size_t byteCount
+      const std::byte *contents, std::size_t byteCount
     );
 
     /// <summary>The full path to the temporary file</summary>

@@ -73,7 +73,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  IniDocumentModel::IniDocumentModel(const std::uint8_t *fileContents, std::size_t byteCount) :
+  IniDocumentModel::IniDocumentModel(const std::byte *fileContents, std::size_t byteCount) :
     loadedLinesMemory(),
     createdLinesMemory(),
     firstLine(nullptr),
@@ -105,7 +105,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     // Delete the memory for any lines that were created by the user
     for(
-      std::unordered_set<std::uint8_t *>::iterator iterator = this->createdLinesMemory.begin();
+      std::unordered_set<std::byte *>::iterator iterator = this->createdLinesMemory.begin();
       iterator != this->createdLinesMemory.end();
       ++iterator
     ) {
@@ -114,7 +114,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     // If an existing .ini file was loaded, memory will have been allocated in chunks.
     for(
-      std::vector<std::uint8_t *>::reverse_iterator iterator = this->loadedLinesMemory.rbegin();
+      std::vector<std::byte *>::reverse_iterator iterator = this->loadedLinesMemory.rbegin();
       iterator != this->loadedLinesMemory.rend();
       ++iterator
     ) {
@@ -125,8 +125,8 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::uint8_t> IniDocumentModel::Serialize() const {
-    std::vector<std::uint8_t> result;
+  std::vector<std::byte> IniDocumentModel::Serialize() const {
+    std::vector<std::byte> result;
 
     if(this->firstLine != nullptr) {
       result.reserve(4096);
@@ -151,7 +151,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t IniDocumentModel::Serialize(
-    void *context, void write(void *context, const std::uint8_t *, std::size_t)
+    void *context, void write(void *context, const std::byte *, std::size_t)
   ) const {
     if(this->firstLine == nullptr) {
       return 0;
@@ -433,7 +433,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         sectionIterator->second->DeclarationLine = nullptr;
         sectionIterator->second->LastLine = nullptr;
       } else { // No, this is an explicit section
-        std::uint8_t *sectionMemory = reinterpret_cast<std::uint8_t *>(sectionIterator->second);
+        std::byte *sectionMemory = reinterpret_cast<std::byte *>(sectionIterator->second);
         this->sections.erase(sectionIterator);
         std::size_t removedElementCount = this->createdLinesMemory.erase(sectionMemory);
         if(removedElementCount > 0) {
@@ -474,18 +474,18 @@ namespace Nuclex { namespace Support { namespace Settings {
           nullptr, nameLength + (this->usesCrLf ? 4 : 3)
         );
 
-        newDeclarationLine->Contents[0] = '[';
+        newDeclarationLine->Contents[0] = static_cast<std::byte>('[');
         std::copy_n(
-          sectionName.c_str(),
+          reinterpret_cast<const std::byte *>(sectionName.c_str()),
           nameLength,
           newDeclarationLine->Contents + 1
         );
-        newDeclarationLine->Contents[nameLength + 1] = ']';
+        newDeclarationLine->Contents[nameLength + 1] = static_cast<std::byte>(']');
         if(this->usesCrLf) {
-          newDeclarationLine->Contents[nameLength + 2] = '\r';
-          newDeclarationLine->Contents[nameLength + 3] = '\n';
+          newDeclarationLine->Contents[nameLength + 2] = static_cast<std::byte>('\r');
+          newDeclarationLine->Contents[nameLength + 3] = static_cast<std::byte>('\n');
         } else {
-          newDeclarationLine->Contents[nameLength + 2] = '\n';
+          newDeclarationLine->Contents[nameLength + 2] = static_cast<std::byte>('\n');
         }
 
         newDeclarationLine->NameStartIndex = 1;
@@ -496,10 +496,10 @@ namespace Nuclex { namespace Support { namespace Settings {
         } else {
           Line *blankLine = allocateLine<Line>(nullptr, (this->usesCrLf ? 2 : 1));
           if(this->usesCrLf) {
-            blankLine->Contents[0] = '\r';
-            blankLine->Contents[1] = '\n';
+            blankLine->Contents[0] = static_cast<std::byte>('\r');
+            blankLine->Contents[1] = static_cast<std::byte>('\n');
           } else {
-            blankLine->Contents[0] = '\n';
+            blankLine->Contents[0] = static_cast<std::byte>('\n');
           }
 
           this->firstLine = blankLine;
@@ -542,7 +542,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       newPropertyLine->NameStartIndex = 0;
       newPropertyLine->NameLength = newPropertyLine->Length = propertyName.length();
       std::copy_n(
-        propertyName.begin(),
+        reinterpret_cast<const std::byte *>(propertyName.c_str()),
         newPropertyLine->NameLength,
         newPropertyLine->Contents
       );
@@ -550,17 +550,17 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     // Add an equals sign after the property name
     if(this->hasSpacesAroundAssignment) {
-      newPropertyLine->Contents[newPropertyLine->Length++] = ' ';
-      newPropertyLine->Contents[newPropertyLine->Length++] = '=';
-      newPropertyLine->Contents[newPropertyLine->Length++] = ' ';
+      newPropertyLine->Contents[newPropertyLine->Length++] = static_cast<std::byte>(' ');
+      newPropertyLine->Contents[newPropertyLine->Length++] = static_cast<std::byte>('=');
+      newPropertyLine->Contents[newPropertyLine->Length++] = static_cast<std::byte>(' ');
     } else {
-      newPropertyLine->Contents[newPropertyLine->Length++] = '=';
+      newPropertyLine->Contents[newPropertyLine->Length++] = static_cast<std::byte>('=');
     }
 
     // Write the value of the property behind the equals sign
     {
       if(requiresQuotes) {
-        newPropertyLine->Contents[newPropertyLine->Length++] = '"';
+        newPropertyLine->Contents[newPropertyLine->Length++] = static_cast<std::byte>('"');
       }
 
       newPropertyLine->ValueStartIndex = newPropertyLine->Length;
@@ -572,16 +572,16 @@ namespace Nuclex { namespace Support { namespace Settings {
       newPropertyLine->Length += newPropertyLine->ValueLength;
 
       if(requiresQuotes) {
-        newPropertyLine->Contents[newPropertyLine->Length++] = '"';
+        newPropertyLine->Contents[newPropertyLine->Length++] = static_cast<std::byte>('"');
       }
     }
 
     // Add a line break at the end of the line
     if(this->usesCrLf) {
-      newPropertyLine->Contents[newPropertyLine->Length++] = '\r';
-      newPropertyLine->Contents[newPropertyLine->Length++] = '\n';
+      newPropertyLine->Contents[newPropertyLine->Length++] = static_cast<std::byte>('\r');
+      newPropertyLine->Contents[newPropertyLine->Length++] = static_cast<std::byte>('\n');
     } else {
-      newPropertyLine->Contents[newPropertyLine->Length++] = '\n';
+      newPropertyLine->Contents[newPropertyLine->Length++] = static_cast<std::byte>('\n');
     }
 
     return newPropertyLine;
@@ -595,10 +595,10 @@ namespace Nuclex { namespace Support { namespace Settings {
     if(extraBlankLineBefore) {
       Line *blankLine = allocateLine<Line>(nullptr, (this->usesCrLf ? 2 : 1));
       if(this->usesCrLf) {
-        blankLine->Contents[0] = '\r';
-        blankLine->Contents[1] = '\n';
+        blankLine->Contents[0] = static_cast<std::byte>('\r');
+        blankLine->Contents[1] = static_cast<std::byte>('\n');
       } else {
-        blankLine->Contents[0] = '\n';
+        blankLine->Contents[0] = static_cast<std::byte>('\n');
       }
 
       blankLine->Previous = previous;
@@ -621,7 +621,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void IniDocumentModel::parseFileContents(
-    const std::uint8_t *fileContents, std::size_t byteCount
+    const std::byte *fileContents, std::size_t byteCount
   ) {
     FileParser parser(fileContents, byteCount);
     parser.ParseInto(this);
@@ -642,10 +642,10 @@ namespace Nuclex { namespace Support { namespace Settings {
     std::string::size_type remainderLength = line->Length - remainderStartIndex;
 
     // Write the new property value over the old one (and add quotes if required)
-    std::uint8_t *writeStart = (line->Contents + line->ValueStartIndex);
+    std::byte *writeStart = (line->Contents + line->ValueStartIndex);
     {
       if(addQuotes) {
-        *writeStart = '"';
+        *writeStart = static_cast<std::byte>('"');
         ++writeStart;
         ++line->ValueStartIndex;
       }
@@ -653,7 +653,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       writeStart += escape(writeStart, newValue.c_str(), newValue.length());
 
       if(addQuotes) {
-        *writeStart = '"';
+        *writeStart = static_cast<std::byte>('"');
         ++writeStart;
       }
     }
@@ -679,8 +679,8 @@ namespace Nuclex { namespace Support { namespace Settings {
       return false;
     }
 
-    char before = propertyLine->Contents[propertyLine->ValueStartIndex - 1];
-    return (before == '"');
+    std::byte before = propertyLine->Contents[propertyLine->ValueStartIndex - 1];
+    return (before == static_cast<std::byte>('"'));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -726,28 +726,28 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   std::string::size_type IniDocumentModel::escape(
-    std::uint8_t *target, const char *source, std::string::size_type length
+    std::byte *target, const char *source, std::string::size_type length
   ) {
     std::string::size_type targetIndex = 0;
 
     for(std::string::size_type sourceIndex = 0; sourceIndex < length; ++sourceIndex) {
       switch(source[sourceIndex]) {
         case '\\': {
-          target[targetIndex] = static_cast<std::uint8_t>('\\');
+          target[targetIndex] = static_cast<std::byte>('\\');
           ++targetIndex;
-          target[targetIndex] = static_cast<std::uint8_t>('\\');
+          target[targetIndex] = static_cast<std::byte>('\\');
           ++targetIndex;
           break;
         }
         case '"': {
-          target[targetIndex] = static_cast<std::uint8_t>('\\');
+          target[targetIndex] = static_cast<std::byte>('\\');
           ++targetIndex;
-          target[targetIndex] = static_cast<std::uint8_t>('\"');
+          target[targetIndex] = static_cast<std::byte>('\"');
           ++targetIndex;
           break;
         }
         default: {
-          target[targetIndex] = static_cast<std::uint8_t>(source[sourceIndex]);
+          target[targetIndex] = static_cast<std::byte>(source[sourceIndex]);
           ++targetIndex;
           break;
         }
@@ -759,19 +759,19 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string IniDocumentModel::unescape(const std::uint8_t *begin, const std::uint8_t *end) {
+  std::string IniDocumentModel::unescape(const std::byte *begin, const std::byte *end) {
     std::string result;
     result.reserve(end - begin); // Should be a very close guess for the line's length
 
     bool escapeMode = false;
     while(begin < end) {
       if(escapeMode) {
-        result.push_back(*begin);
+        result.push_back(static_cast<char>(*begin));
         escapeMode = false;
-      } else if(*begin == '\\') {
+      } else if(*begin == static_cast<std::byte>('\\')) {
         escapeMode = true;
       } else {
-        result.push_back(*begin);
+        result.push_back(static_cast<char>(*begin));
       }
 
       ++begin;
@@ -791,7 +791,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TLine>
-  TLine *IniDocumentModel::allocateLine(const std::uint8_t *contents, std::size_t byteCount) {
+  TLine *IniDocumentModel::allocateLine(const std::byte *contents, std::size_t byteCount) {
     static_assert(std::is_base_of<Line, TLine>::value, u8"TLine must inherit from Line");
 
     // Allocate memory for a new line, assign its content pointer to hold
@@ -799,7 +799,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     TLine *newLine = allocate<TLine>(byteCount);
     {
       newLine->Contents = (
-        reinterpret_cast<std::uint8_t *>(newLine) + getSizePlusAlignmentPadding<TLine>()
+        reinterpret_cast<std::byte *>(newLine) + getSizePlusAlignmentPadding<TLine>()
       );
       newLine->Length = byteCount;
 
@@ -827,7 +827,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     // Calculate the exact amount of memory required, including the extra bytes
     // aligned to the same conditions as the requested type.
     constexpr std::size_t requiredMemory = getSizePlusAlignmentPadding<T>();
-    std::uint8_t *bytes = new std::uint8_t[requiredMemory + extraByteCount];
+    std::byte *bytes = new std::byte[requiredMemory + extraByteCount];
     this->createdLinesMemory.insert(bytes);
 
     return reinterpret_cast<T *>(bytes);
@@ -840,8 +840,8 @@ namespace Nuclex { namespace Support { namespace Settings {
   void IniDocumentModel::freeLine(TLine *line) {
     static_assert(std::is_base_of<Line, TLine>::value, u8"TLine must inherit from Line");
 
-    std::uint8_t *bytes = reinterpret_cast<std::uint8_t *>(line);
-    std::unordered_set<std::uint8_t *>::iterator iterator = (
+    std::byte *bytes = reinterpret_cast<std::byte *>(line);
+    std::unordered_set<std::byte *>::iterator iterator = (
       this->createdLinesMemory.find(bytes)
     );
     if(iterator == this->createdLinesMemory.end()) {

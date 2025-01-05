@@ -82,21 +82,21 @@ namespace Nuclex { namespace Support { namespace Platform {
         ::close(fileDescriptor);
       };
 
-      std::uint8_t buffer[11];
+      std::byte buffer[11];
       std::size_t readByteCount = LinuxFileApi::Read(fileDescriptor, buffer, 11);
       ASSERT_EQ(readByteCount, 11U);
 
-      EXPECT_EQ(buffer[0], u8'H');
-      EXPECT_EQ(buffer[1], u8'e');
-      EXPECT_EQ(buffer[2], u8'l');
-      EXPECT_EQ(buffer[3], u8'l');
-      EXPECT_EQ(buffer[4], u8'o');
-      EXPECT_EQ(buffer[5], u8' ');
-      EXPECT_EQ(buffer[6], u8'W');
-      EXPECT_EQ(buffer[7], u8'o');
-      EXPECT_EQ(buffer[8], u8'r');
-      EXPECT_EQ(buffer[9], u8'l');
-      EXPECT_EQ(buffer[10], u8'd');
+      EXPECT_EQ(buffer[0], static_cast<std::byte>(u8'H'));
+      EXPECT_EQ(buffer[1], static_cast<std::byte>(u8'e'));
+      EXPECT_EQ(buffer[2], static_cast<std::byte>(u8'l'));
+      EXPECT_EQ(buffer[3], static_cast<std::byte>(u8'l'));
+      EXPECT_EQ(buffer[4], static_cast<std::byte>(u8'o'));
+      EXPECT_EQ(buffer[5], static_cast<std::byte>(u8' '));
+      EXPECT_EQ(buffer[6], static_cast<std::byte>(u8'W'));
+      EXPECT_EQ(buffer[7], static_cast<std::byte>(u8'o'));
+      EXPECT_EQ(buffer[8], static_cast<std::byte>(u8'r'));
+      EXPECT_EQ(buffer[9], static_cast<std::byte>(u8'l'));
+      EXPECT_EQ(buffer[10], static_cast<std::byte>(u8'd'));
     }
   }
 
@@ -112,7 +112,13 @@ namespace Nuclex { namespace Support { namespace Platform {
         ::close(fileDescriptor);
       };
 
-      std::uint8_t data[] = { 1, 2, 3, 4, 5 };
+      std::byte data[] = {
+        static_cast<std::byte>(1),
+        static_cast<std::byte>(2),
+        static_cast<std::byte>(3),
+        static_cast<std::byte>(4),
+        static_cast<std::byte>(5)
+      };
       LinuxFileApi::Write(fileDescriptor, data, 5);
     }
 

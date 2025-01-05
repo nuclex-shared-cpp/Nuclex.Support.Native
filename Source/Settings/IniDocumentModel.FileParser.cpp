@@ -90,7 +90,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::FileParser::FileParser(
-    const std::uint8_t *fileContents, std::size_t byteCount
+    const std::byte *fileContents, std::size_t byteCount
   ) :
     target(nullptr),
     remainingChunkByteCount(0),
@@ -133,15 +133,15 @@ namespace Nuclex { namespace Support { namespace Settings {
     // codepoints will have the highest bit set in all bytes)
     this->parsePosition = this->lineStart = this->fileBegin;
     while(this->parsePosition < this->fileEnd) {
-      std::uint8_t current = *this->parsePosition;
+      std::byte current = *this->parsePosition;
       switch(current) {
 
         // Comments (any section or property already found still counts)
-        case '#':
-        case ';': { parseComment(); break; }
+        case static_cast<std::byte>('#'):
+        case static_cast<std::byte>(';'): { parseComment(); break; }
 
         // Equals sign, line is a property assignment
-        case '=': {
+        case static_cast<std::byte>('='): {
           if(equalsSignFound) {
             parseMalformedLine();
           } else {
@@ -163,7 +163,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         }
 
         // Line break, submits the current line to the document model
-        case '\n': {
+        case static_cast<std::byte>('\n'): {
           if(previousWasCR) {
             --this->unixLineBreaks;
           } else {
@@ -184,7 +184,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
         // Other character, parse as section name, property name or property value
         default: {
-          previousWasCR = (current == '\r');
+          previousWasCR = (current == static_cast<std::byte>('\r'));
           previousWasSpace = Text::ParserHelper::IsWhitespace(static_cast<char>(current));
           encounteredNonBlankCharacter |= (!previousWasSpace);
 
@@ -212,8 +212,8 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   void IniDocumentModel::FileParser::parseComment() {
     while(this->parsePosition < this->fileEnd) {
-      std::uint8_t current = *this->parsePosition;
-      if(current == '\n') {
+      std::byte current = *this->parsePosition;
+      if(current == static_cast<std::byte>('\n')) {
         break;
       } else { // Skip everything that isn't a newline character
         ++this->parsePosition;
@@ -229,36 +229,36 @@ namespace Nuclex { namespace Support { namespace Settings {
     bool isInSection = false;
 
     while(this->parsePosition < this->fileEnd) {
-      std::uint8_t current = *this->parsePosition;
+      std::byte current = *this->parsePosition;
 
       // When inside a quote, ignore everything but the closing quote
       // (or newline / end-of-file which are handled in all cases)
       if(isInQuote) {
         nameEnd = this->parsePosition; // Quotes name includes anything until closing quote
         switch(current) {
-          case '"': {
+          case static_cast<std::byte>('"'): {
             isInQuote = false;
             break;
           }
-          case '\n': { // Newline without closing quote? -> Line is malformed
+          case static_cast<std::byte>('\n'): { // Newline without closing quote? -> Line is malformed
             this->lineIsMalformed = true;
             return;
           }
         }
-        isInQuote = (current != '"');
+        isInQuote = (current != static_cast<std::byte>('"'));
         nameEnd = this->parsePosition;
       } else { // Outside of quote
         switch(current) {
 
           // Comment start found?
-          case ';':
-          case '#': {
+          case static_cast<std::byte>(';'):
+          case static_cast<std::byte>('#'): {
             parseMalformedLine(); // Name without equals sign? -> Line is malformed
             return;
           }
 
           // Section start found?
-          case '[': {
+          case static_cast<std::byte>('['): {
             if((this->nameStart != nullptr) || isInSection) { // Bracket is not first char?
               parseMalformedLine();
               return;
@@ -272,7 +272,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Section end found?
-          case ']': {
+          case static_cast<std::byte>(']'): {
             if((this->nameStart == nullptr) || !isInSection) { // Bracket is first char?
               parseMalformedLine();
               return;
@@ -285,7 +285,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Quoted name found?
-          case '"': {
+          case static_cast<std::byte>('"'): {
             if((this->nameStart != nullptr) || quoteEncountered) { // Quote is not first char?
               parseMalformedLine();
               return;
@@ -298,7 +298,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Equals sign found? The name part is over, assignment follows
-          case '=': {
+          case static_cast<std::byte>('='): {
             if(isInSection) { // Equals sign inside section name? -> line is malformed
               parseMalformedLine();
             }
@@ -307,7 +307,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Newline found? Either the section was closed or the line is malformed.
-          case '\n': {
+          case static_cast<std::byte>('\n'): {
             this->lineIsMalformed |= isInSection;
             return;
           }
@@ -342,25 +342,25 @@ namespace Nuclex { namespace Support { namespace Settings {
     bool escapeMode = false;
 
     while(this->parsePosition < this->fileEnd) {
-      std::uint8_t current = *this->parsePosition;
+      std::byte current = *this->parsePosition;
 
       // When inside a quote, ignore everything but the closing quote
       // (or newline / end-of-file which are handled in all cases)
       if(isInQuote) {
         valueEnd = this->parsePosition; // Quoted value includes anything until closing quote
         switch(current) {
-          case '\\': {
+          case static_cast<std::byte>('\\'): {
             escapeMode = !escapeMode;
             break;
           }
-          case '"': {
+          case static_cast<std::byte>('"'): {
             if(!escapeMode) {
               isInQuote = false;
             }
             escapeMode = false;
             break;
           }
-          case '\n': { // Newline without closing quote? -> Line is malformed
+          case static_cast<std::byte>('\n'): { // Newline without closing quote?
             if(!this->allowMultilineStrings) {
               this->lineIsMalformed = true;
               return; // Stop parsing, consider the line malformed
@@ -373,14 +373,14 @@ namespace Nuclex { namespace Support { namespace Settings {
         switch(current) {
 
           // Comment start found?
-          case ';':
-          case '#': {
+          case static_cast<std::byte>(';'):
+          case static_cast<std::byte>('#'): {
             parseComment();
             return;
           }
 
           // Quoted value found?
-          case '"': {
+          case static_cast<std::byte>('"'): {
             if((this->valueStart != nullptr) || quoteEncountered) { // Quote is not first char?
               parseMalformedLine();
               return;
@@ -393,13 +393,13 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Another equals sign found? -> line is malformed
-          case '=': {
+          case static_cast<std::byte>('='): {
             parseMalformedLine();
             return;
           }
 
           // Newline found? The value ends, we're done
-          case '\n': {
+          case static_cast<std::byte>('\n'): {
             return;
           }
 
@@ -442,8 +442,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     this->lineIsMalformed = true;
 
     while(this->parsePosition < this->fileEnd) {
-      std::uint8_t current = *this->parsePosition;
-      if(current == '\n') {
+      std::byte current = *this->parsePosition;
+      if(current == static_cast<std::byte>('\n')) {
         break;
       }
 
@@ -517,7 +517,9 @@ namespace Nuclex { namespace Support { namespace Settings {
       if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
         newPropertyLine->NameStartIndex = this->nameStart - this->lineStart;
         newPropertyLine->NameLength = this->nameEnd - this->nameStart;
-        propertyName.assign(nameStart, nameEnd);
+        propertyName.assign(
+          reinterpret_cast<const char *>(nameStart), reinterpret_cast<const char *>(nameEnd)
+        );
       } else {
         newPropertyLine->NameStartIndex = 0;
         newPropertyLine->NameLength = 0;
@@ -553,7 +555,9 @@ namespace Nuclex { namespace Support { namespace Settings {
       if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
         newSectionLine->NameStartIndex = this->nameStart - this->lineStart;
         newSectionLine->NameLength = this->nameEnd - this->nameStart;
-        sectionName.assign(nameStart, nameEnd);
+        sectionName.assign(
+          reinterpret_cast<const char *>(nameStart), reinterpret_cast<const char *>(nameEnd)
+        );
       } else {
         newSectionLine->NameStartIndex = 0;
         newSectionLine->NameLength = 0;
@@ -612,7 +616,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<typename TLine>
   TLine *IniDocumentModel::FileParser::allocateLineChunked(
-    const std::uint8_t *contents, std::size_t byteCount
+    const std::byte *contents, std::size_t byteCount
   ) {
     static_assert(std::is_base_of<Line, TLine>::value, u8"TLine must inherit from Line");
 
@@ -621,7 +625,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     TLine *newLine = allocateChunked<TLine>(byteCount);
     {
       newLine->Contents = (
-        reinterpret_cast<std::uint8_t *>(newLine) + getSizePlusAlignmentPadding<TLine>()
+        reinterpret_cast<std::byte *>(newLine) + getSizePlusAlignmentPadding<TLine>()
       );
       newLine->Length = byteCount;
 
@@ -667,17 +671,17 @@ namespace Nuclex { namespace Support { namespace Settings {
       if(occupiedByteCount + totalByteCount < AllocationChunkSize) {
         this->remainingChunkByteCount = AllocationChunkSize - occupiedByteCount - totalByteCount;
         std::size_t chunkCount = this->target->loadedLinesMemory.size();
-        std::uint8_t *memory = this->target->loadedLinesMemory[chunkCount - 1];
+        std::byte *memory = this->target->loadedLinesMemory[chunkCount - 1];
         return reinterpret_cast<T *>(memory + occupiedByteCount);
       } else { // Instance didn't fit in the current chunk or no chunk allocated
-        std::unique_ptr<std::uint8_t[]> newChunk(new std::uint8_t[AllocationChunkSize]);
+        std::unique_ptr<std::byte[]> newChunk(new std::byte[AllocationChunkSize]);
         this->target->loadedLinesMemory.push_back(newChunk.get());
         this->remainingChunkByteCount = AllocationChunkSize - totalByteCount;
         return reinterpret_cast<T *>(newChunk.release());
       }
 
     } else { // Requested instance would take half the allocation chunk size or more
-      std::unique_ptr<std::uint8_t[]> newChunk(new std::uint8_t[totalByteCount]);
+      std::unique_ptr<std::byte[]> newChunk(new std::byte[totalByteCount]);
       this->target->createdLinesMemory.insert(newChunk.get());
       return reinterpret_cast<T *>(newChunk.release());
     }

@@ -302,7 +302,7 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   std::string TemporaryDirectoryScope::PlaceFile(
-    const std::string &name, const std::uint8_t *contents, std::size_t byteCount
+    const std::string &name, const std::byte *contents, std::size_t byteCount
   ) {
     std::string fullPath = this->path;
     {
@@ -349,7 +349,7 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   void TemporaryDirectoryScope::ReadFile(
-    const std::string &name, std::vector<std::uint8_t> &contents
+    const std::string &name, std::vector<std::byte> &contents
   ) const {
     std::string fullPath = this->path;
     {
@@ -456,7 +456,7 @@ namespace Nuclex { namespace Support {
 
       contents.resize(4096);
       for(std::size_t offset = 0;;) {
-        std::uint8_t *data = reinterpret_cast<std::uint8_t *>(contents.data());
+        std::byte *data = reinterpret_cast<std::byte *>(contents.data());
         std::size_t readByteCount = Platform::LinuxFileApi::Read(
           fileDescriptor, data + offset, 4096
         );

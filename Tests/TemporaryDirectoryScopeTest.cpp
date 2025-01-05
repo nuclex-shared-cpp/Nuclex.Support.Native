@@ -138,8 +138,18 @@ namespace Nuclex { namespace Support {
   TEST(TemporaryDirectoryScopeTest, CanCreateFilesFromVectors) {
     TemporaryDirectoryScope scope(u8"tst");
 
-    std::vector<std::uint8_t> firstContents = { 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8 };
-    std::vector<std::uint8_t> secondContents = { 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1 };
+    std::vector<std::byte> firstContents = {
+      static_cast<std::byte>(0x1), static_cast<std::byte>(0x2),
+      static_cast<std::byte>(0x3), static_cast<std::byte>(0x4),
+      static_cast<std::byte>(0x5), static_cast<std::byte>(0x6),
+      static_cast<std::byte>(0x7), static_cast<std::byte>(0x8)
+    };
+    std::vector<std::byte> secondContents = {
+      static_cast<std::byte>(0x8), static_cast<std::byte>(0x7),
+      static_cast<std::byte>(0x6), static_cast<std::byte>(0x5),
+      static_cast<std::byte>(0x4), static_cast<std::byte>(0x3),
+      static_cast<std::byte>(0x2), static_cast<std::byte>(0x1)
+    };
 
     std::string firstFilePath = scope.PlaceFile(u8"first", firstContents);
     std::string secondFilePath = scope.PlaceFile(u8"second", secondContents);
@@ -182,9 +192,13 @@ namespace Nuclex { namespace Support {
   TEST(TemporaryDirectoryScopeTest, CanReadFilesIntoVectors) {
     TemporaryDirectoryScope scope(u8"tst");
 
-    std::vector<std::uint8_t> contents = { 0x42, 0x43, 0x44, 0x45, 0x46, 0x47 };
+    std::vector<std::byte> contents = {
+      static_cast<std::byte>(0x42), static_cast<std::byte>(0x43),
+      static_cast<std::byte>(0x44), static_cast<std::byte>(0x45),
+      static_cast<std::byte>(0x46), static_cast<std::byte>(0x47)
+    };
     scope.PlaceFile(u8"this-is-a-test-file", contents);
-    std::vector<std::uint8_t> readBack = scope.ReadFile(u8"this-is-a-test-file");
+    std::vector<std::byte> readBack = scope.ReadFile(u8"this-is-a-test-file");
 
     ASSERT_EQ(contents.size(), readBack.size());
     for(std::size_t index = 0; index < contents.size(); ++index) {

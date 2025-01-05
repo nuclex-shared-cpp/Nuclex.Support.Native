@@ -50,7 +50,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Initializes a new .ini file parser</summary>
     /// <param name="fileContents">Full file contents of the .ini file in memory</param>
     /// <param name="byteCount">Length of the .ini file in bytes</param>
-    public: FileParser(const std::uint8_t *fileContents, std::size_t byteCount);
+    public: FileParser(const std::byte *fileContents, std::size_t byteCount);
 
     /// <summary>Parses the .ini file and fills the specified document model</summary>
     /// <param name="documentModel">
@@ -113,7 +113,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="byteCount">Number of bytes the line long</param>
     /// <returns>The newly allocated line with its content buffer filled</returns>
     private: template<typename TLine> TLine *allocateLineChunked(
-      const std::uint8_t *contents, std::size_t byteCount
+      const std::byte *contents, std::size_t byteCount
     );
 
     /// <summary>Allocates memory for the specified type with extra bytes</summary>
@@ -135,22 +135,22 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: IndexedSection *currentSection;
 
     /// <summary>Pointer to the beginning of the .ini file in memory</summary>
-    private: const std::uint8_t *fileBegin;
+    private: const std::byte *fileBegin;
     /// <summary>Pointer one past the end of the .ini file in memory</memory>
-    private: const std::uint8_t *fileEnd;
+    private: const std::byte *fileEnd;
     /// <summary>Pointer to the current parsing location</summary>
-    private: const std::uint8_t *parsePosition;
+    private: const std::byte *parsePosition;
 
     /// <summary>Position at which the current line in the .ini file begins</summary>
-    private: const std::uint8_t *lineStart;
+    private: const std::byte *lineStart;
     /// <summary>Position at which the current section or property's name starts</summary>
-    private: const std::uint8_t *nameStart;
+    private: const std::byte *nameStart;
     /// <summary>Position one after the end of the current section or property name</summary>
-    private: const std::uint8_t *nameEnd;
+    private: const std::byte *nameEnd;
     /// <summary>Position at which the current property's value starts, if any</summary>
-    private: const std::uint8_t *valueStart;
+    private: const std::byte *valueStart;
     /// <summary>Position one after the end of the current property's value, if any</summary>
-    private: const std::uint8_t *valueEnd;
+    private: const std::byte *valueEnd;
 
     /// <summary>Whether a section was found in the current line</summary>
     private: bool sectionFound;

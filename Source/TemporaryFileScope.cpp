@@ -91,7 +91,7 @@ namespace {
     container.resize(4096);
 
     for(std::size_t offset = 0;;) {
-      std::uint8_t *data = reinterpret_cast<std::uint8_t *>(container.data());
+      std::byte *data = reinterpret_cast<std::byte *>(container.data());
       std::size_t readByteCount = LinuxFileApi::Read(
         fileDescriptor, data + offset, 4096
       );
@@ -263,8 +263,8 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::uint8_t> TemporaryFileScope::GetFileContentsAsVector() const {
-    std::vector<std::uint8_t> contents;
+  std::vector<std::byte> TemporaryFileScope::GetFileContentsAsVector() const {
+    std::vector<std::byte> contents;
 
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
@@ -285,7 +285,7 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   void TemporaryFileScope::SetFileContents(
-    const std::uint8_t *contents, std::size_t byteCount
+    const std::byte *contents, std::size_t byteCount
   ) {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     ::HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(this->path);
