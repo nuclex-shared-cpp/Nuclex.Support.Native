@@ -187,7 +187,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(this->privateImplementationData)->Serialize(
           &fileHandle,
-          [](void *context, const std::uint8_t *buffer, std::size_t byteCount) {
+          [](void *context, const std::byte *buffer, std::size_t byteCount) {
             Platform::WindowsFileApi::Write(
               *reinterpret_cast<::HANDLE *>(context), buffer, byteCount
             );

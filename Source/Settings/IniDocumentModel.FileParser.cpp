@@ -133,15 +133,15 @@ namespace Nuclex { namespace Support { namespace Settings {
     // codepoints will have the highest bit set in all bytes)
     this->parsePosition = this->lineStart = this->fileBegin;
     while(this->parsePosition < this->fileEnd) {
-      std::byte current = *this->parsePosition;
+      char current = static_cast<char>(*this->parsePosition);
       switch(current) {
 
         // Comments (any section or property already found still counts)
-        case static_cast<std::byte>('#'):
-        case static_cast<std::byte>(';'): { parseComment(); break; }
+        case u8'#':
+        case u8';': { parseComment(); break; }
 
         // Equals sign, line is a property assignment
-        case static_cast<std::byte>('='): {
+        case u8'=': {
           if(equalsSignFound) {
             parseMalformedLine();
           } else {
@@ -163,7 +163,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         }
 
         // Line break, submits the current line to the document model
-        case static_cast<std::byte>('\n'): {
+        case u8'\n': {
           if(previousWasCR) {
             --this->unixLineBreaks;
           } else {
@@ -184,7 +184,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
         // Other character, parse as section name, property name or property value
         default: {
-          previousWasCR = (current == static_cast<std::byte>('\r'));
+          previousWasCR = (current == u8'\r');
           previousWasSpace = Text::ParserHelper::IsWhitespace(static_cast<char>(current));
           encounteredNonBlankCharacter |= (!previousWasSpace);
 
@@ -229,36 +229,36 @@ namespace Nuclex { namespace Support { namespace Settings {
     bool isInSection = false;
 
     while(this->parsePosition < this->fileEnd) {
-      std::byte current = *this->parsePosition;
+      char current = static_cast<char>(*this->parsePosition);
 
       // When inside a quote, ignore everything but the closing quote
       // (or newline / end-of-file which are handled in all cases)
       if(isInQuote) {
         nameEnd = this->parsePosition; // Quotes name includes anything until closing quote
         switch(current) {
-          case static_cast<std::byte>('"'): {
+          case u8'"': {
             isInQuote = false;
             break;
           }
-          case static_cast<std::byte>('\n'): { // Newline without closing quote? -> Line is malformed
+          case u8'\n': { // Newline without closing quote? -> Line is malformed
             this->lineIsMalformed = true;
             return;
           }
         }
-        isInQuote = (current != static_cast<std::byte>('"'));
+        isInQuote = (current != u8'"');
         nameEnd = this->parsePosition;
       } else { // Outside of quote
         switch(current) {
 
           // Comment start found?
-          case static_cast<std::byte>(';'):
-          case static_cast<std::byte>('#'): {
+          case u8';':
+          case u8'#': {
             parseMalformedLine(); // Name without equals sign? -> Line is malformed
             return;
           }
 
           // Section start found?
-          case static_cast<std::byte>('['): {
+          case u8'[': {
             if((this->nameStart != nullptr) || isInSection) { // Bracket is not first char?
               parseMalformedLine();
               return;
@@ -272,7 +272,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Section end found?
-          case static_cast<std::byte>(']'): {
+          case u8']': {
             if((this->nameStart == nullptr) || !isInSection) { // Bracket is first char?
               parseMalformedLine();
               return;
@@ -285,7 +285,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Quoted name found?
-          case static_cast<std::byte>('"'): {
+          case u8'"': {
             if((this->nameStart != nullptr) || quoteEncountered) { // Quote is not first char?
               parseMalformedLine();
               return;
@@ -298,7 +298,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Equals sign found? The name part is over, assignment follows
-          case static_cast<std::byte>('='): {
+          case u8'=': {
             if(isInSection) { // Equals sign inside section name? -> line is malformed
               parseMalformedLine();
             }
@@ -307,7 +307,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Newline found? Either the section was closed or the line is malformed.
-          case static_cast<std::byte>('\n'): {
+          case u8'\n': {
             this->lineIsMalformed |= isInSection;
             return;
           }
@@ -342,25 +342,25 @@ namespace Nuclex { namespace Support { namespace Settings {
     bool escapeMode = false;
 
     while(this->parsePosition < this->fileEnd) {
-      std::byte current = *this->parsePosition;
+      char current = static_cast<char>(*this->parsePosition);
 
       // When inside a quote, ignore everything but the closing quote
       // (or newline / end-of-file which are handled in all cases)
       if(isInQuote) {
         valueEnd = this->parsePosition; // Quoted value includes anything until closing quote
         switch(current) {
-          case static_cast<std::byte>('\\'): {
+          case u8'\\': {
             escapeMode = !escapeMode;
             break;
           }
-          case static_cast<std::byte>('"'): {
+          case u8'"': {
             if(!escapeMode) {
               isInQuote = false;
             }
             escapeMode = false;
             break;
           }
-          case static_cast<std::byte>('\n'): { // Newline without closing quote?
+          case u8'\n': { // Newline without closing quote?
             if(!this->allowMultilineStrings) {
               this->lineIsMalformed = true;
               return; // Stop parsing, consider the line malformed
@@ -373,14 +373,14 @@ namespace Nuclex { namespace Support { namespace Settings {
         switch(current) {
 
           // Comment start found?
-          case static_cast<std::byte>(';'):
-          case static_cast<std::byte>('#'): {
+          case u8';':
+          case u8'#': {
             parseComment();
             return;
           }
 
           // Quoted value found?
-          case static_cast<std::byte>('"'): {
+          case u8'"': {
             if((this->valueStart != nullptr) || quoteEncountered) { // Quote is not first char?
               parseMalformedLine();
               return;
@@ -393,13 +393,13 @@ namespace Nuclex { namespace Support { namespace Settings {
           }
 
           // Another equals sign found? -> line is malformed
-          case static_cast<std::byte>('='): {
+          case u8'=': {
             parseMalformedLine();
             return;
           }
 
           // Newline found? The value ends, we're done
-          case static_cast<std::byte>('\n'): {
+          case u8'\n': {
             return;
           }
 
@@ -442,8 +442,8 @@ namespace Nuclex { namespace Support { namespace Settings {
     this->lineIsMalformed = true;
 
     while(this->parsePosition < this->fileEnd) {
-      std::byte current = *this->parsePosition;
-      if(current == static_cast<std::byte>('\n')) {
+      char current = static_cast<char>(*this->parsePosition);
+      if(current == u8'\n') {
         break;
       }
 
