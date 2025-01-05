@@ -230,7 +230,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // destroying all scheduled tasks without invoking their callbacks.
     assert(instance->ScheduledTasks.size_approx() == 0);
 
-    // Leave the rest up to the normal destructor, them reclaim the memory
+    // Leave the rest up to the normal destructor, then reclaim the memory
     instance->~PlatformDependentImplementation();
     delete[] reinterpret_cast<std::uint8_t *>(instance);
 
