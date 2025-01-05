@@ -194,7 +194,7 @@ namespace Nuclex { namespace Support { namespace Text {
         // See if we can read one more character in order to figure out if this is
         // a Windows-style line break or if it's really an old Mac document.
         if(likely(current < end)) {
-          char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
+          codePoint = UnicodeHelper::ReadCodePoint(current, end);
           requireValidCodePoint(codePoint);
           if(likely(codePoint == LineFeed)) { // It's a Windows-style line break
             start = current; // Update start pointer to Include the LF in the line
