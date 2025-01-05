@@ -40,8 +40,22 @@ working on all platforms tested (Linux, Windows, Raspberry).
 * If it's there, it's unit-tested
 
 
-lexical_cast & lexical_append
------------------------------
+![Important](./Documents/images/important.svg) Compiling ![Important](./Documents/images/important.svg)
+-------------------------------------------------------------------------------------------------------
+
+**This is a sub-project!** The CMake build script in this project expects to be in a tree with `../build-system` and `../third-party/nuclex-moodycamelqueues` present.
+
+The easiest way to compile the library is to clone my [framework-package](https://github.com/nuclex-shared-cpp/framework-package) repository (with `--recurse-submodules`) which will create the required directory tree.
+
+
+Overview
+--------
+
+Here's a short overview of the most important bits and pieces:
+
+
+`lexical_cast` & `lexical_append`
+---------------------------------
 
 This is almost identical to the `lexical_cast` function found in Boost,
 but it avoids the heavyweight iostreams library. By shipping its own
@@ -69,8 +83,8 @@ Uses [DragonBox](https://github.com/jk-jeon/dragonbox/),
 use. See Copyright.md in the Documents directory for more details.
 
 
-StringConverter & StringMatcher
--------------------------------
+`StringConverter` & `StringMatcher`
+-----------------------------------
 
 Useful helper methods for unicode strings, such as conversion between UTF-8,
 UTF-16 and UTF-32. Can also convert between "wide char" strings and UTF-8.
