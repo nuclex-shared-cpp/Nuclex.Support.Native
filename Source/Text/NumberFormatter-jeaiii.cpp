@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "./NumberFormatter.h"
 
-// Prepares an integral number or the specified decimal megnitude for printing.
+// Prepares an integral number of the specified decimal megnitude for printing.
 //
 // This uses a magic formula to turn a 32 bit number into a specific 64 bit number.
 //
