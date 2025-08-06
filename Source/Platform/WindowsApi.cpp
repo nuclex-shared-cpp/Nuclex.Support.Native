@@ -24,6 +24,8 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include <comdef.h> // for _com_error
+
 #include "Nuclex/Support/Errors/FileAccessError.h" // for FileAccessError
 
 #include "Nuclex/Support/Text/StringConverter.h" // to convert UTF-16 wholesome
@@ -67,13 +69,118 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Wrapper around FormatMessage() that extract the error message</summary>
+  /// <param name="errorCode">
+  ///   DWORD error code or standard HRESULT to query the error message for
+  /// </param>
+  /// <param name="fallbackMessage">
+  ///   Message to fall back to if FormatMessage() does not know the error code or HRESULT
+  ///   (should end with a space because the numeric error code will be appended to it)
+  /// </param>
+  /// <returns>A printable error message always encoded in UTF-8</returns>
+  std::u8string callFormatMessage(DWORD errorCode, const std::u8string &fallbackMessage) {
+    using Nuclex::Support::Text::UnicodeHelper;
+    using Nuclex::Support::Text::ParserHelper;
+
+    // Use FormatMessage() to ask Windows for a human-readable error message.
+    // First, we'll ask for an English message regardless of the system language in
+    // order to provide an understandable (and internet-searchable) message if possible.
+    LPWSTR wideErrorMessageBuffer;
+    DWORD wideErrorMessageLength = ::FormatMessageW(
+      (
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS
+      ),
+      nullptr, // message string, ignored with passed flags
+      errorCode,
+      MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), // Try for an English message first
+      reinterpret_cast<LPWSTR>(&wideErrorMessageBuffer), // MS wants us to cast off pointer levels!
+      0,
+      nullptr
+    );
+    if(wideErrorMessageLength == 0) {
+      // MSDN states that "Last-Error" will be set to ERROR_RESOURCE_LANG_NOT_FOUND,
+      // but that doesn't really happen, so we recheck on *any* FormatMessage() failure
+      wideErrorMessageLength = ::FormatMessageW(
+        (
+          FORMAT_MESSAGE_ALLOCATE_BUFFER |
+          FORMAT_MESSAGE_FROM_SYSTEM |
+          FORMAT_MESSAGE_IGNORE_INSERTS
+        ),
+        nullptr, // message string, ignored with passed flags
+        errorCode,
+        0, // Let FormatMessage search: neutral, thread locale, user locale and system locale
+        reinterpret_cast<LPWSTR>(&wideErrorMessageBuffer), // MS wants us to cast off pointer levels!
+        0,
+        nullptr
+      );
+      if(wideErrorMessageLength == 0) [[unlikely]] {
+        std::u8string errorMessage(fallbackMessage);
+        Nuclex::Support::Text::lexical_append(errorMessage, static_cast<std::uint32_t>(errorCode));
+        return errorMessage;
+      }
+    }
+
+    // The error message itself will have been allocated on the process heap,
+    // so we need to make sure to always delete it to avoid memory leaks
+    LocalAllocScope errorMessageScope(wideErrorMessageBuffer);
+
+    // We don't want UTF-16 anywhere - at all. So convert this mess to UTF-8.
+    std::u8string errorMessage;
+    {
+      errorMessage.resize(wideErrorMessageLength);
+
+      // We're on Windos, so wchar_t is char16_t (on Linux it would be char32_t)
+      const char16_t *current = reinterpret_cast<const char16_t *>(wideErrorMessageBuffer);
+      const char16_t *end = current + wideErrorMessageLength;
+
+      char8_t *write = errorMessage.data();
+      while(current < end) {
+        char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
+        if(codePoint == char32_t(-1)) {
+          break;
+        }
+        UnicodeHelper::WriteCodePoint(write, codePoint);
+      }
+
+      errorMessage.resize(write - errorMessage.data());
+    }
+
+    // Microsoft likes to end their error messages with various spaces and newlines,
+    // cut these off so we have a single-line error message
+    std::u8string::size_type length = errorMessage.length();
+    while(length > 0) {
+      if(!ParserHelper::IsWhitespace(static_cast<char>(errorMessage[length - 1]))) {
+        break;
+      }
+      --length;
+    }
+
+    // Since the error message is trimmed of any trailing whitespace (including \r and \n),
+    // it may actually end up empty. As unlikely as that is, to be entirely on the safe side,
+    // we check this and use the fallback message should it really happen.
+    if(length == 0) [[unlikely]] {
+      errorMessage.assign(fallbackMessage);
+      Nuclex::Support::Text::lexical_append(
+        errorMessage, static_cast<std::uint32_t>(errorCode)
+      );
+    } else {
+      errorMessage.resize(length);
+    }
+
+    return errorMessage;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // anonymous namespace
 
 namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string WindowsApi::GetErrorMessage(int errorNumber) {
+  std::u8string WindowsApi::GetErrorMessage(int errorNumber) {
     std::wstring buffer(256, L'\0');
     for(;;) {
 
@@ -101,7 +208,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
       // We failed to look up the error message. At least output the original
       // error number and remark that we weren't able to look up the error message.
-      std::string errorMessage(u8"Error ");
+      std::u8string errorMessage(u8"Error ");
       Text::lexical_append(errorMessage, errorNumber);
       errorMessage.append(u8" (and error message lookup failed)");
       return errorMessage;
@@ -111,133 +218,65 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string WindowsApi::GetErrorMessage(DWORD errorCode) {
-
-    // Use FormatMessage() to ask Windows for a human-readable error message
-    LPWSTR errorMessageBuffer;
-    DWORD errorMessageLength = ::FormatMessageW(
-      (
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS
-      ),
-      nullptr, // message string, ignored with passed flags
-      errorCode,
-      MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), // Try for an english message first
-      reinterpret_cast<LPWSTR>(&errorMessageBuffer), // MS wants us to cast off pointer levels!
-      0,
-      nullptr
-    );
-    if(errorMessageLength == 0) {
-      // MSDN states that "Last-Error" will be set to ERROR_RESOURCE_LANG_NOT_FOUND,
-      // but that doesn't really happen, so we recheck on any FormatMessage() failure
-      errorMessageLength = ::FormatMessageW(
-        (
-          FORMAT_MESSAGE_ALLOCATE_BUFFER |
-          FORMAT_MESSAGE_FROM_SYSTEM |
-          FORMAT_MESSAGE_IGNORE_INSERTS
-        ),
-        nullptr, // message string, ignored with passed flags
-        errorCode,
-        0, // Let FormatMessage search: neutral, thread locale, user locale and system locale
-        reinterpret_cast<LPWSTR>(&errorMessageBuffer), // MS wants us to cast off pointer levels!
-        0,
-        nullptr
-      );
-      if(errorMessageLength == 0) {
-        std::string message(u8"Windows API error ");
-        Text::lexical_append(message, static_cast<std::uint32_t>(errorCode));
-        return message;
-      }
-    }
-
-    // We don't want UTF-16 anywhere - at all. So convert this mess to UTF-8.
-    std::string utf8ErrorMessage;
-    {
-      using Nuclex::Support::Text::UnicodeHelper;
-      typedef UnicodeHelper::Char8Type Char8Type;
-
-      LocalAllocScope errorMessageScope(errorMessageBuffer);
-
-      utf8ErrorMessage.resize(errorMessageLength);
-      {
-        const char16_t *current = reinterpret_cast<const char16_t *>(errorMessageBuffer);
-        const char16_t *end = current + errorMessageLength;
-        Char8Type *write = reinterpret_cast<Char8Type *>(utf8ErrorMessage.data());
-        while(current < end) {
-          char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
-          if(codePoint == char32_t(-1)) {
-            break;
-          }
-          UnicodeHelper::WriteCodePoint(write, codePoint);
-        }
-
-        utf8ErrorMessage.resize(
-          write - reinterpret_cast<Char8Type *>(utf8ErrorMessage.data())
-        );
-      }
-    }
-
-    // Microsoft likes to end their error messages with various spaces and newlines,
-    // cut these off so we have a single-line error message
-    std::string::size_type length = utf8ErrorMessage.length();
-    while(length > 0) {
-      if(!Text::ParserHelper::IsWhitespace(static_cast<char>(utf8ErrorMessage[length - 1]))) {
-        break;
-      }
-      --length;
-    }
-
-    // If the error message is empty, return a generic one
-    if(length == 0) {
-      std::string message(u8"Windows API error ");
-      Text::lexical_append(message, static_cast<std::uint32_t>(errorCode));
-      return message;
-    } else { // Error message had content, return it
-      utf8ErrorMessage.resize(length);
-      return utf8ErrorMessage;
-    }
-
+  std::u8string WindowsApi::GetErrorMessage(DWORD errorCode) {
+    const static std::u8string fallbackMessage(u8"Windows API error ");
+    return callFormatMessage(errorCode, fallbackMessage);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string WindowsApi::GetErrorMessage(HRESULT resultHandle) {
+  std::u8string WindowsApi::GetErrorMessage(HRESULT resultHandle) {
 
-    // The _com_error class has a bit of special code when the error message could
-    // not be looked up. If the error code is greater than or equal to
-    // WCODE_HRESULT_FIRST and also less than or equal to WCODE_HRESULT_LAST,
-    // the error is a dispatch error (IDispatch, late-binding).
+    // All HRESULTs in the in the "interface" facility (meaning all the common errors
+    // from 0x80040000 to 0x804FFFF) map to the classic 16-bit Windows error codes
+    // (called "WCode" in the _com_error class).
     //
-    //     return (hr >= WCODE_HRESULT_FIRST && hr <= WCODE_HRESULT_LAST)
-    //         ? WORD(hr - WCODE_HRESULT_FIRST)
-    //         : 0;
+    // This article claims 0x80040200 to 0x8004FFFF:
+    // https://learn.microsoft.com/en-us/cpp/cpp/com-error-wcode
     //
-    // I don't think we'll encounter IDispatch errors in this library.
-    return GetErrorMessage(static_cast<DWORD>(resultHandle));
+    // But that would cut off the ever popular E_FAIL, E_NOTIMPL, E_POINTER.
+    //
+
+    // Then we've got E_INVALIDARG, E_ACCESSDENIED and such in the "win32" facility
+    // where we find another region of 16-bit error codes, called "system error codes"
+    // in recent Microsoft documentation.
+    //
+    // See HRESULT_FROM_WIN32() here:
+    // https://learn.microsoft.com/en-us/windows/win32/api/winerror/
+    //
+
+    // Microsoft code often shovels these and more into FormatMessage(), unmodified,
+    // and hopes that it can figure out an error message (perhaps relying on it to
+    // fail if the error code doesn't exist). 
+    //
+    // So that's what we'll do here as well:
+    //
+    const static std::u8string fallbackMessage(u8"Windows COM error ");
+    return callFormatMessage(static_cast<DWORD>(resultHandle), fallbackMessage);
 
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void WindowsApi::ThrowExceptionForSystemError(
-    const std::string &errorMessage, DWORD errorCode
+    const std::u8string &errorMessage, DWORD errorCode
   ) {
-    std::string combinedErrorMessage(errorMessage);
+    std::u8string combinedErrorMessage(errorMessage);
     combinedErrorMessage.append(u8" - ");
     combinedErrorMessage.append(WindowsApi::GetErrorMessage(errorCode));
 
     throw std::system_error(
-      std::error_code(errorCode, std::system_category()), combinedErrorMessage
+      std::error_code(errorCode, std::system_category()),
+      Text::StringConverter::CharFromUtf8(combinedErrorMessage)
     );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void WindowsApi::ThrowExceptionForFileSystemError(
-    const std::string &errorMessage, DWORD errorCode
+    const std::u8string &errorMessage, DWORD errorCode
   ) {
-    std::string combinedErrorMessage(errorMessage);
+    std::u8string combinedErrorMessage(errorMessage);
     combinedErrorMessage.append(u8" - ");
     combinedErrorMessage.append(WindowsApi::GetErrorMessage(errorCode));
 
@@ -259,7 +298,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       (errorCode == ERROR_WRITE_FAULT) || // cannot write to the specified device
       (errorCode == ERROR_READ_FAULT) || // cannot read from the specified device
       (errorCode == ERROR_SHARING_VIOLATION) || // file is being accessed by another process
-      (errorCode == ERROR_LOCK_VIOLATION) || // another proces has locked the file
+      (errorCode == ERROR_LOCK_VIOLATION) || // another process has locked the file
       (errorCode == ERROR_HANDLE_EOF) || // too many file handles
       (errorCode == ERROR_HANDLE_DISK_FULL) || // disk is full
       (errorCode == ERROR_BAD_NETPATH) || // invalid network path
@@ -298,11 +337,13 @@ namespace Nuclex { namespace Support { namespace Platform {
     );
     if(isFileAccessError) {
       throw Errors::FileAccessError(
-        std::error_code(errorCode, std::system_category()), combinedErrorMessage
+        std::error_code(errorCode, std::system_category()),
+        Text::StringConverter::CharFromUtf8(combinedErrorMessage)
       );
     } else {
       throw std::system_error(
-        std::error_code(errorCode, std::system_category()), combinedErrorMessage
+        std::error_code(errorCode, std::system_category()),
+        Text::StringConverter::CharFromUtf8(combinedErrorMessage)
       );
     }
   }
@@ -310,14 +351,15 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   void WindowsApi::ThrowExceptionForHResult(
-    const std::string &errorMessage, HRESULT resultHandle
+    const std::u8string &errorMessage, HRESULT resultHandle
   ) {
-    std::string combinedErrorMessage(errorMessage);
+    std::u8string combinedErrorMessage(errorMessage);
     combinedErrorMessage.append(u8" - ");
     combinedErrorMessage.append(WindowsApi::GetErrorMessage(resultHandle));
 
     throw std::system_error(
-      std::error_code(resultHandle, std::system_category()), combinedErrorMessage
+      std::error_code(resultHandle, std::system_category()),
+      Text::StringConverter::CharFromUtf8(combinedErrorMessage)
     );
   }
 
