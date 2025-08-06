@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <optional> // for std::optional
 #include <cstdint> // for std::uint32_t, std::int32_t, std::uint64_t, std::int64_t
 
@@ -48,18 +48,6 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   </para>
   /// </remarks>
   class NUCLEX_SUPPORT_TYPE ParserHelper {
-
-    /// <summary>UTF-8 character of which either 1, 2, 3 or 4 specify one codepoint</summary>
-    /// <remarks>
-    ///   Under C++20, this will be a native type like char16_t and char32_t. There will also
-    ///   be an std::u8string using this character type to unambiguously indicate that
-    ///   the contents of the string are supposed to be UTF-8 encoded.
-    /// </remarks>
-#if defined(__cpp_char8_t)
-    public: typedef char8_t Char8Type;
-#else
-    public: typedef unsigned char Char8Type;
-#endif
 
     /// <summary>Checks whether the specified character is a whitespace</summary>
     /// <param name="asciiCharacter">
@@ -89,7 +77,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <summary>Checks if an UTF-8 string is either empty or contains only whitespace</summary>
     /// <param name="text">String that will be checked for being blank or empty</param>
     /// <returns>True if th string was empty or contained only whitespace</returns>
-    public: NUCLEX_SUPPORT_API static bool IsBlankOrEmpty(const std::string &text);
+    public: NUCLEX_SUPPORT_API static bool IsBlankOrEmpty(const std::u8string &text);
 
     /// <summary>
     ///   Moves <paramref cref="start" /> ahead until the first non-whitespace UTF-8
@@ -98,7 +86,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="start">Start pointer from which on whitespace will be skipped</param>
     /// <param name="end">End pointer that may not be overrun</param>
     public: NUCLEX_SUPPORT_API static void SkipWhitespace(
-      const Char8Type *&start, const Char8Type *end
+      const char8_t *&start, const char8_t *end
     );
 
     /// <summary>
@@ -108,7 +96,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="start">Start pointer from which on non-whitespace will be skipped</param>
     /// <param name="end">End pointer that may not be overrun</param>
     public: NUCLEX_SUPPORT_API static void SkipNonWhitespace(
-      const Char8Type *&start, const Char8Type *end
+      const char8_t *&start, const char8_t *end
     );
 
     /// <summary>Searches for the next word (character surrounded by whitespace)</summary>
@@ -127,8 +115,8 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   extracted. Otherwise, the method will scan for the next word.
     /// </remarks>
     public: NUCLEX_SUPPORT_API static void FindWord(
-      const Char8Type *&start, const Char8Type *end,
-      std::string_view *word = nullptr
+      const char8_t *&start, const char8_t *end,
+      std::u8string_view *word = nullptr
     );
 
     /// <summary>Searches for the next line break</summary>
@@ -159,8 +147,8 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   </para>
     /// </remarks>
     public: NUCLEX_SUPPORT_API static void FindLine(
-      const Char8Type *&start, const Char8Type *end,
-      std::string_view *line = nullptr
+      const char8_t *&start, const char8_t *end,
+      std::u8string_view *line = nullptr
     );
 
 #if defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
@@ -177,7 +165,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <returns>The parsed numeric type or an empty std::optional instance</returns>
     public: template<typename TScalar>
     inline static std::optional<TScalar> ParseNumber(
-      const std::uint8_t *&start, const std::uint8_t *end
+      const char8_t *&start, const char8_t *end
     );
 #endif
   };
@@ -259,7 +247,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<typename TScalar>
   inline std::optional<TScalar> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
+    const char8_t *&start, const char8_t *end
   ) {
     static_assert(
       std::is_same<TScalar, std::uint32_t>::value ||
@@ -276,32 +264,32 @@ namespace Nuclex { namespace Support { namespace Text {
 
   template<>
   NUCLEX_SUPPORT_API std::optional<std::uint32_t> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
+    const char8_t *&start, const char8_t *end
   );
 
   template<>
   NUCLEX_SUPPORT_API std::optional<std::int32_t> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
+    const char8_t *&start, const char8_t *end
   );
 
   template<>
   NUCLEX_SUPPORT_API std::optional<std::uint64_t> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
+    const char8_t *&start, const char8_t *end
   );
 
   template<>
   NUCLEX_SUPPORT_API std::optional<std::int64_t> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
+    const char8_t *&start, const char8_t *end
   );
 
   template<>
   NUCLEX_SUPPORT_API std::optional<float> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
+    const char8_t *&start, const char8_t *end
   );
 
   template<>
   NUCLEX_SUPPORT_API std::optional<double> ParserHelper::ParseNumber(
-    const std::uint8_t *&start, const std::uint8_t *end
+    const char8_t *&start, const char8_t *end
   );
 #endif // defined(NUCLEX_SUPPORT_CUSTOM_PARSENUMBER)
 

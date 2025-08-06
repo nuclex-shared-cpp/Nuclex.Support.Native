@@ -146,18 +146,18 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void RollingLogger::Inform(const std::string &message) {
+  void RollingLogger::Inform(const std::u8string &message) {
     updateTimeInLine(*this->currentLine);
     {
-      std::string::value_type *currentCharacter = this->currentLine->data();
-      currentCharacter[TimeStampLength + 0] = 'I';
-      currentCharacter[TimeStampLength + 1] = 'N';
-      currentCharacter[TimeStampLength + 2] = 'F';
-      currentCharacter[TimeStampLength + 3] = 'O';
-      currentCharacter[TimeStampLength + 4] = ' ';
-      currentCharacter[TimeStampLength + 5] = ' ';
-      currentCharacter[TimeStampLength + 6] = ' ';
-      currentCharacter[TimeStampLength + 7] = ' ';
+      std::u8string::value_type *currentCharacter = this->currentLine->data();
+      currentCharacter[TimeStampLength + 0] = u8'I';
+      currentCharacter[TimeStampLength + 1] = u8'N';
+      currentCharacter[TimeStampLength + 2] = u8'F';
+      currentCharacter[TimeStampLength + 3] = u8'O';
+      currentCharacter[TimeStampLength + 4] = u8' ';
+      currentCharacter[TimeStampLength + 5] = u8' ';
+      currentCharacter[TimeStampLength + 6] = u8' ';
+      currentCharacter[TimeStampLength + 7] = u8' ';
     }
 
     this->currentLine->append(message);
@@ -167,18 +167,18 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void RollingLogger::Warn(const std::string &warning) {
+  void RollingLogger::Warn(const std::u8string &warning) {
     updateTimeInLine(*this->currentLine);
     {
-      std::string::value_type *currentCharacter = this->currentLine->data();
-      currentCharacter[TimeStampLength + 0] = 'W';
-      currentCharacter[TimeStampLength + 1] = 'A';
-      currentCharacter[TimeStampLength + 2] = 'R';
-      currentCharacter[TimeStampLength + 3] = 'N';
-      currentCharacter[TimeStampLength + 4] = 'I';
-      currentCharacter[TimeStampLength + 5] = 'N';
-      currentCharacter[TimeStampLength + 6] = 'G';
-      currentCharacter[TimeStampLength + 7] = ' ';
+      std::u8string::value_type *currentCharacter = this->currentLine->data();
+      currentCharacter[TimeStampLength + 0] = u8'W';
+      currentCharacter[TimeStampLength + 1] = u8'A';
+      currentCharacter[TimeStampLength + 2] = u8'R';
+      currentCharacter[TimeStampLength + 3] = u8'N';
+      currentCharacter[TimeStampLength + 4] = u8'I';
+      currentCharacter[TimeStampLength + 5] = u8'N';
+      currentCharacter[TimeStampLength + 6] = u8'G';
+      currentCharacter[TimeStampLength + 7] = u8' ';
     }
 
     this->currentLine->append(warning);
@@ -188,18 +188,18 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void RollingLogger::Complain(const std::string &error) {
+  void RollingLogger::Complain(const std::u8string &error) {
     updateTimeInLine(*this->currentLine);
     {
-      std::string::value_type *currentCharacter = this->currentLine->data();
-      currentCharacter[TimeStampLength + 0] = 'E';
-      currentCharacter[TimeStampLength + 1] = 'R';
-      currentCharacter[TimeStampLength + 2] = 'R';
-      currentCharacter[TimeStampLength + 3] = 'O';
-      currentCharacter[TimeStampLength + 4] = 'R';
-      currentCharacter[TimeStampLength + 5] = ' ';
-      currentCharacter[TimeStampLength + 6] = ' ';
-      currentCharacter[TimeStampLength + 7] = ' ';
+      std::u8string::value_type *currentCharacter = this->currentLine->data();
+      currentCharacter[TimeStampLength + 0] = u8'E';
+      currentCharacter[TimeStampLength + 1] = u8'R';
+      currentCharacter[TimeStampLength + 2] = u8'R';
+      currentCharacter[TimeStampLength + 3] = u8'O';
+      currentCharacter[TimeStampLength + 4] = u8'R';
+      currentCharacter[TimeStampLength + 5] = u8' ';
+      currentCharacter[TimeStampLength + 6] = u8' ';
+      currentCharacter[TimeStampLength + 7] = u8' ';
     }
 
     this->currentLine->append(error);
@@ -227,12 +227,12 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::string> RollingLogger::GetLines() const {
+  std::vector<std::u8string> RollingLogger::GetLines() const {
     if(this->oldestLineIndex == this->nextLineIndex) {
-      return std::vector<std::string>();
+      return std::vector<std::u8string>();
     }
 
-    std::vector<std::string> orderedLines;
+    std::vector<std::u8string> orderedLines;
     if(this->oldestLineIndex < this->nextLineIndex) {
       orderedLines.reserve(this->nextLineIndex - this->oldestLineIndex);
       for(std::size_t index = this->oldestLineIndex; index < this->nextLineIndex; ++index) {
@@ -264,7 +264,7 @@ namespace Nuclex { namespace Support { namespace Text {
       this->oldestLineIndex = (this->oldestLineIndex + 1) % historyLineCount;
     }
 
-    const std::string &previousLine = *this->currentLine;
+    const std::u8string &previousLine = *this->currentLine;
 
     this->currentLine = &this->lines[this->nextLineIndex];
     this->currentLine->resize(TimeStampLength + SeverityLength);
@@ -277,7 +277,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void RollingLogger::updateTimeInLine(std::string &line) {
+  void RollingLogger::updateTimeInLine(std::u8string &line) {
     assert((line.length() >= 12) && u8"Line is long enough to hold the current time");
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
@@ -286,30 +286,30 @@ namespace Nuclex { namespace Support { namespace Text {
     ::SYSTEMTIME splitUtcTime;
     ::GetSystemTime(&splitUtcTime);
     {
-      std::string::value_type *currentCharacter = line.data();
+      std::u8string::value_type *currentCharacter = line.data();
       currentCharacter[0] = TimestampDigits[splitUtcTime.wHour][0];
       currentCharacter[1] = TimestampDigits[splitUtcTime.wHour][1];
-      currentCharacter[2] = ':';
+      currentCharacter[2] = u8':';
       currentCharacter[3] = TimestampDigits[splitUtcTime.wMinute][0];
       currentCharacter[4] = TimestampDigits[splitUtcTime.wMinute][1];
-      currentCharacter[5] = ':';
+      currentCharacter[5] = u8':';
       currentCharacter[6] = TimestampDigits[splitUtcTime.wSecond][0];
       currentCharacter[7] = TimestampDigits[splitUtcTime.wSecond][1];
-      currentCharacter[8] = '.';
+      currentCharacter[8] = u8'.';
       std::size_t count = lexical_append(currentCharacter + 9, 3, splitUtcTime.wMilliseconds);
       if(count == 1) {
         currentCharacter[11] = currentCharacter[9];
-        currentCharacter[9] = '0';
-        currentCharacter[10] = '0';
+        currentCharacter[9] = u8'0';
+        currentCharacter[10] = u8'0';
       } else if(count == 2) {
         currentCharacter[11] = currentCharacter[10];
         currentCharacter[10] = currentCharacter[9];
-        currentCharacter[9] = '0';
+        currentCharacter[9] = u8'0';
       }
-      currentCharacter[12] = ' ';
+      currentCharacter[12] = u8' ';
     }
 
-#else // Posix and Linux through Posix
+#else // ^^ Windows ^^ / vv Posix and Linux through Posix vv
 
     // Obtain the current wall clock time. This clock /may/ skip or jump backwards if time
     // is synchronized by, for example, an NTP daemon. For logging, this doesn't matter much
@@ -320,7 +320,9 @@ namespace Nuclex { namespace Support { namespace Text {
       if(result != 0) {
         int errorNumber = errno;
         Platform::PosixApi::ThrowExceptionForSystemError(
-          u8"Could not obtain the current wall clock via ::clock_gettime(CLOCK_REALTIME...)",
+          Text::StringConverter::CharFromUtf8(
+            u8"Could not obtain the current wall clock via ::clock_gettime(CLOCK_REALTIME...)"
+          ),
           errorNumber
         );
       }
@@ -339,7 +341,7 @@ namespace Nuclex { namespace Support { namespace Text {
     {
       const std::size_t nanosecondsPerMillisecond = 1000000U;
 
-      std::string::value_type *currentCharacter = line.data();
+      std::u8string::value_type *currentCharacter = line.data();
       currentCharacter[0] = TimestampDigits[splitUtcTime.tm_hour][0];
       currentCharacter[1] = TimestampDigits[splitUtcTime.tm_hour][1];
       currentCharacter[2] = ':';
@@ -354,14 +356,14 @@ namespace Nuclex { namespace Support { namespace Text {
       std::size_t count = lexical_append(currentCharacter + 9, 3, timeMilliseconds);
       if(count == 1) {
         currentCharacter[11] = currentCharacter[9];
-        currentCharacter[9] = '0';
-        currentCharacter[10] = '0';
+        currentCharacter[9] = u8'0';
+        currentCharacter[10] = u8'0';
       } else if(count == 2) {
         currentCharacter[11] = currentCharacter[10];
         currentCharacter[10] = currentCharacter[9];
-        currentCharacter[9] = '0';
+        currentCharacter[9] = u8'0';
       }
-      currentCharacter[12] = ' ';
+      currentCharacter[12] = u8' ';
     }
 
 #endif

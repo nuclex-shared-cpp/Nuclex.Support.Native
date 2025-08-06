@@ -32,7 +32,7 @@ namespace {
   /// <summary>Appends a number treating the last digit as behind a decimal point</summary>
   /// <param name="target">String to which the number will be appended</param>
   /// <param name="numberTimesTen">Number that will be appended</param>
-  void appendWithOneDecimalDigit(std::string &target, std::uint64_t numberTimesTen) {
+  void appendWithOneDecimalDigit(std::u8string &target, std::uint64_t numberTimesTen) {
     Nuclex::Support::Text::lexical_append(target, numberTimesTen / 10);
     target.push_back(u8'.');
     Nuclex::Support::Text::lexical_append(target, numberTimesTen % 10);
@@ -43,7 +43,7 @@ namespace {
   /// <summary>Appends a number with a leading '0' if it is less than two digits long</summary>
   /// <param name="target">String to which the number will be appended</param>
   /// <param name="number">Number that will be appended to the string</param>
-  void appendAsTwoDigits(std::string &target, std::uint64_t number) {
+  void appendAsTwoDigits(std::u8string &target, std::uint64_t number) {
     if(number < 10) {
       target.push_back(u8'0');
     }
@@ -59,10 +59,10 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string QuantityFormatter::StringFromByteCount(
+  std::u8string QuantityFormatter::StringFromByteCount(
     std::uint64_t byteCount, bool useBinaryMagnitudes /* = true */
   ) {
-    std::string result;
+    std::u8string result;
 
     if(useBinaryMagnitudes) {
       if(byteCount < 1'023'936) { // up to 1000 KiB
@@ -153,10 +153,10 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string QuantityFormatter::StringFromDuration(
+  std::u8string QuantityFormatter::StringFromDuration(
     std::chrono::seconds duration, bool useSimpleFormat /* = true */
   ) {
-    std::string result;
+    std::u8string result;
 
     if(useSimpleFormat) {
       if(duration < std::chrono::seconds(3'597)) { // less than an hour?

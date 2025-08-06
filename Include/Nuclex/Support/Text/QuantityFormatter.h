@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <optional> // for std::optional
 #include <cstdint> // for std::uint32_t, std::int32_t, std::uint64_t, std::int64_t
 #include <chrono> // for std::chrono::seconds
@@ -40,7 +40,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   Whether to output KiB, GiB and TiB, each being 1024 of the next lower unit rather
     ///   than decimal SI units with KB, GB and TB being 1000 of the next lower unit each.
     /// </param>
-    public: NUCLEX_SUPPORT_API static std::string StringFromByteCount(
+    public: NUCLEX_SUPPORT_API static std::u8string StringFromByteCount(
       std::uint64_t byteCount, bool useBinaryMagnitudes = true
     );
 
@@ -55,7 +55,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   This is a simple helper with no localization. While the strings generated
     ///   should be universally understood, they will use English terms for the units.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static std::string StringFromDuration(
+    public: NUCLEX_SUPPORT_API static std::u8string StringFromDuration(
       std::chrono::seconds duration, bool useSimpleFormat = true
     );
 
@@ -63,7 +63,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
     // Elapsed time since UTC timestamp
 
-    // Reamining time
+    // Remaining time
 
   };
 

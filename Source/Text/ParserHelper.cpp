@@ -21,6 +21,7 @@ limitations under the License.
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Text/ParserHelper.h"
+#include "Nuclex/Support/Text/StringConverter.h"
 #include "Nuclex/Support/Text/UnicodeHelper.h"
 #include "Nuclex/Support/Errors/CorruptStringError.h"
 
@@ -47,7 +48,7 @@ namespace {
   ///   false if not valid integer was found (and <paramref cref="start" /> contains junk)
   /// </returns>
   bool skipInteger(
-    const std::uint8_t *&start, const std::uint8_t *end
+    const char8_t *&start, const char8_t *end
   ) {
 
     // An optional plus or minus sign can follow
@@ -85,7 +86,9 @@ namespace {
   void requireValidCodePoint(char32_t codePoint) {
     if(!Nuclex::Support::Text::UnicodeHelper::IsValidCodePoint(codePoint)) {
       throw Nuclex::Support::Errors::CorruptStringError(
-        u8"Illegal UTF-8 character(s) encountered"
+        Nuclex::Support::Text::StringConverter::CharFromUtf8(
+          u8"Illegal UTF-8 character(s) encountered"
+        )
       );
     }
   }
@@ -98,9 +101,9 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool ParserHelper::IsBlankOrEmpty(const std::string &text) {
-    const Char8Type *current = reinterpret_cast<const Char8Type *>(text.c_str());
-    const Char8Type *end = current + text.length();
+  bool ParserHelper::IsBlankOrEmpty(const std::u8string &text) {
+    const char8_t *current = reinterpret_cast<const char8_t *>(text.c_str());
+    const char8_t *end = current + text.length();
 
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
@@ -116,8 +119,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void ParserHelper::SkipWhitespace(const Char8Type *&start, const Char8Type *end) {
-    const Char8Type *current = start;
+  void ParserHelper::SkipWhitespace(const char8_t *&start, const char8_t *end) {
+    const char8_t *current = start;
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
       requireValidCodePoint(codePoint);
@@ -135,8 +138,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void ParserHelper::SkipNonWhitespace(const Char8Type *&start, const Char8Type *end) {
-    const Char8Type *current = start;
+  void ParserHelper::SkipNonWhitespace(const char8_t *&start, const char8_t *end) {
+    const char8_t *current = start;
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
       requireValidCodePoint(codePoint);
@@ -155,22 +158,22 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   void ParserHelper::FindWord(
-    const Char8Type *&start, const Char8Type *end,
-    std::string_view *word /* = nullptr */
+    const char8_t *&start, const char8_t *end,
+    std::u8string_view *word /* = nullptr */
   ) {
     SkipWhitespace(start, end);
 
     // If the caller was interested in obtaining the word, scan for its end
     if(word != nullptr) {
-      const Char8Type *current = start;
+      const char8_t *current = start;
       SkipNonWhitespace(current, end);
       if(start < current) {
-        *word = std::string_view(
-          reinterpret_cast<const std::string_view::value_type *>(start),
-          static_cast<std::string_view::size_type>(current - start)
+        *word = std::u8string_view(
+          reinterpret_cast<const std::u8string_view::value_type *>(start),
+          static_cast<std::u8string_view::size_type>(current - start)
         );
       } else {
-        *word = std::string_view(); // to ensure word.empty() returns true
+        *word = std::u8string_view(); // to ensure word.empty() returns true
       }
     }
   }
@@ -178,9 +181,9 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   void ParserHelper::FindLine(
-    const Char8Type *&start, const Char8Type *end, std::string_view *line /* = nullptr */
+    const char8_t *&start, const char8_t *end, std::u8string_view *line /* = nullptr */
   ) {
-    const Char8Type *lineStart = start, *lineEnd = end, *current = start;
+    const char8_t *lineStart = start, *lineEnd = end, *current = start;
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
       requireValidCodePoint(codePoint);
@@ -212,9 +215,9 @@ namespace Nuclex { namespace Support { namespace Text {
     }
 
     if(line != nullptr) { // Provide complete line if  the user is interested
-      *line = std::string_view(
-        reinterpret_cast<const std::string_view::value_type *>(lineStart),
-        static_cast<std::string_view::size_type>(lineEnd - lineStart)
+      *line = std::u8string_view(
+        reinterpret_cast<const std::u8string_view::value_type *>(lineStart),
+        static_cast<std::u8string_view::size_type>(lineEnd - lineStart)
       );
     }
   }

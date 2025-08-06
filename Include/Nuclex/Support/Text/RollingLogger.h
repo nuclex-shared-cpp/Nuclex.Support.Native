@@ -52,11 +52,11 @@ namespace Nuclex { namespace Support { namespace Text {
   ///
   ///         logger.Append(u8"ResolutionX = ");
   ///         logger.Append(1920);
-  ///         logger.Inform(std::string());
+  ///         logger.Inform(std::u8string());
   ///
   ///         logger.Append(u8"ResolutionY = ");
   ///         logger.Append(1080);
-  ///         logger.Inform(std::string());
+  ///         logger.Inform(std::u8string());
   ///       }
   ///       logger.Inform(u8"}");
   ///     </code>
@@ -116,7 +116,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   things are indeed happening the way you intended to. These messages typically
     ///   go into some log, a details window or are discarded outright.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API void Inform(const std::string &message) override;
+    public: NUCLEX_SUPPORT_API void Inform(const std::u8string &message) override;
 
     /// <summary>Logs a warning</summary>
     /// <param name="warning">Warning the operation wishes to log</param>
@@ -132,7 +132,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     the operation completed with warnings.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API void Warn(const std::string &warning) override;
+    public: NUCLEX_SUPPORT_API void Warn(const std::u8string &warning) override;
 
     /// <summary>Logs an error</summary>
     /// <param name="error">Error the operation wishes to log</param>
@@ -147,12 +147,12 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     the operation has failed.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API void Complain(const std::string &error) override;
+    public: NUCLEX_SUPPORT_API void Complain(const std::u8string &error) override;
 
     /// <summary>Appends something to the log line currently being formed</summary>
     /// <param name="value">
     ///   Value that will be appended to the line-in-progress as text.
-    ///   Must be a primitive type or std::string
+    ///   Must be a primitive type or std::u8string
     /// </param>
     /// <remarks>
     ///   This method appends the specified value to the logger's internal line buffer.
@@ -185,12 +185,12 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     well as the actions leading up to it when needed.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API std::vector<std::string> GetLines() const;
+    public: NUCLEX_SUPPORT_API std::vector<std::u8string> GetLines() const;
 
 #if 0 // Convenient, but usually people want to save additional information to the file...
     /// <summary>Saves the current contents of the log into a file</summary>
     /// <param name="path">Path of the file to which the log will be written</param>
-    public: NUCLEX_SUPPORT_API void SaveToFile(const std::string &path) const;
+    public: NUCLEX_SUPPORT_API void SaveToFile(const std::u8string &path) const;
 #endif
 
     /// <summary>Called each time a new line is added to the rolling log</summary>
@@ -199,7 +199,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   You can override this method if you wish to live-print log lines to console
     ///   windows or terminals of some kind.
     /// </remarks>
-    protected: NUCLEX_SUPPORT_API virtual void OnLineAdded(const std::string &line) {
+    protected: NUCLEX_SUPPORT_API virtual void OnLineAdded(const std::u8string &line) {
       (void)line;
     }
 
@@ -211,16 +211,16 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <remarks>
     ///   Assumes that the line is long enough have the time stamp written into it.
     /// </remarks>
-    private: static void updateTimeInLine(std::string &line);
+    private: static void updateTimeInLine(std::u8string &line);
 
     /// <summary>Index of the line that is currently being formed</summary>
     private: std::size_t nextLineIndex;
     /// <summary>Index of the oldest line in the ring buffer</summary>
     private: std::size_t oldestLineIndex;
     /// <summary>Ring buffer holding the log history as strings that get reused</summary>
-    private: std::vector<std::string> lines;
+    private: std::vector<std::u8string> lines;
     /// <summary>String from the lines array with index nextLineIndex</summary>
-    private: std::string *currentLine;
+    private: std::u8string *currentLine;
     /// <summary>Number of spaces the current line is indented by</summary>
     private: std::size_t indentationCount;
 
