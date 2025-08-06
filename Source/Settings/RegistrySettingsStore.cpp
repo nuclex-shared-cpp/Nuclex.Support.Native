@@ -405,7 +405,7 @@ namespace {
       }
     } // propertyName scope
 
-    if(unlikely(result != ERROR_SUCCESS)) {
+    if(result != ERROR_SUCCESS) [[unlikely]] {
       std::string message(u8"Could not store setting '", 25);
       message.append(propertyName);
       message.append(u8"' in registry", 13);
@@ -445,7 +445,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       ::LSTATUS result = ::RegDeleteTreeW(hiveKeyHandle, subKeyNameUtf16.c_str());
       if(result == ERROR_FILE_NOT_FOUND) {
         return false;
-      } else if(unlikely(result != ERROR_SUCCESS)) {
+      } else if(result != ERROR_SUCCESS) [[unlikely]] {
         std::string message(u8"Could not delete registry tree at '", 35);
         message.append(registryPath);
         message.append(u8"'", 1);
@@ -578,7 +578,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle),
           valueNameUtf16.c_str()
         );
-        if(unlikely(result != ERROR_SUCCESS)) {
+        if(result != ERROR_SUCCESS) [[unlikely]] {
           std::string message(u8"Could not delete value '", 24);
           message.append(categoryName);
           message.append(u8"' from settings key in registry", 31);
@@ -594,7 +594,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       );
       if(result == ERROR_FILE_NOT_FOUND) {
         return false;
-      } else if(unlikely(result != ERROR_SUCCESS)) {
+      } else if(result != ERROR_SUCCESS) [[unlikely]] {
         std::string message(u8"Could not delete subtree '", 26);
         message.append(categoryName);
         message.append(u8"' from settings key in registry", 31);
@@ -641,7 +641,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     if(result == ERROR_FILE_NOT_FOUND) {
       return false;
-    } else if(unlikely(result != ERROR_SUCCESS)) {
+    } else if(result != ERROR_SUCCESS) [[unlikely]] {
       std::string message(u8"Could not delete settings value '", 33);
       message.append(propertyName);
       message.append(u8"' from registry", 15);

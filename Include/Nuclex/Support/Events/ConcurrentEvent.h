@@ -320,11 +320,11 @@ namespace Nuclex { namespace Support { namespace Events {
         );
 
         // Did we just release the last reference to the queue?
-        if(unlikely(totalReferences == 1)) {
+        if(totalReferences == 1) [[unlikely]] {
           BroadcastQueue *recycledQueue = this->self.recyclableSubscribers.exchange(
             this->queueToRelease
           );
-          if(likely(recycledQueue != nullptr)) {
+          if(recycledQueue != nullptr) [[likely]] {
             freeBroadcastQueue(recycledQueue);
           }
         }
@@ -474,7 +474,7 @@ namespace Nuclex { namespace Support { namespace Events {
     const BroadcastQueue *currentQueue = this->subscribers.load(
       std::memory_order::memory_order_consume // if carries dependency
     );
-    if(unlikely(currentQueue == nullptr)) {
+    if(currentQueue == nullptr) [[unlikely]] {
       releaseSpinLock();
       return 0;
     } else {
@@ -499,7 +499,7 @@ namespace Nuclex { namespace Support { namespace Events {
     BroadcastQueue *currentQueue = this->subscribers.load(
       std::memory_order::memory_order_consume // if carries dependency
     );
-    if(likely(currentQueue == nullptr)) {
+    if(currentQueue == nullptr) [[likely]] {
       releaseSpinLock();
       return results;
     } else { // A queue is present, increment its reference count so it isn't deleted
@@ -540,7 +540,7 @@ namespace Nuclex { namespace Support { namespace Events {
     BroadcastQueue *currentQueue = this->subscribers.load(
       std::memory_order::memory_order_consume // if carries dependency
     );
-    if(likely(currentQueue == nullptr)) {
+    if(currentQueue == nullptr) [[likely]] {
       releaseSpinLock();
       return;
     } else { // A queue is present, increment its reference count so it isn't deleted
@@ -576,7 +576,7 @@ namespace Nuclex { namespace Support { namespace Events {
     BroadcastQueue *currentQueue = this->subscribers.load(
       std::memory_order::memory_order_consume // if carries dependency
     );
-    if(likely(currentQueue == nullptr)) {
+    if(currentQueue == nullptr) [[likely]] {
       releaseSpinLock();
       return;
     } else { // A queue is present, increment its reference count so it isn't deleted
@@ -617,13 +617,13 @@ namespace Nuclex { namespace Support { namespace Events {
       BroadcastQueue *currentQueue = this->subscribers.load(
         std::memory_order::memory_order_consume // if carries dependency
       );
-      if(likely(currentQueue == nullptr)) {
+      if(currentQueue == nullptr) [[likely]] {
         releaseSpinLock();
 
         // Try to recycle an earlier queue. If we get one, we don't need to check its
         // capacity because any queue created will have space for at least 1 subscriber.
         newQueue = this->recyclableSubscribers.exchange(nullptr);
-        if(unlikely(newQueue == nullptr)) {
+        if(newQueue == nullptr) [[unlikely]] {
           newQueue = allocateBroadcastQueue(1);
         } else {
           newQueue->Count = 1;
@@ -640,9 +640,9 @@ namespace Nuclex { namespace Support { namespace Events {
         // previous queue or by creating a new one
         std::size_t subscriberCount = currentQueue->Count;
         newQueue = this->recyclableSubscribers.exchange(nullptr);
-        if(unlikely(newQueue == nullptr)) { // No previous queue available?
+        if(newQueue == nullptr) [[unlikely]] { // No previous queue available?
           newQueue = allocateBroadcastQueue(subscriberCount + 1);
-        } else if(unlikely(subscriberCount >= newQueue->Capacity)) { // Not enough capacity?
+        } else if(subscriberCount >= newQueue->Capacity) [[unlikely]] { // Not enough capacity?
           freeBroadcastQueue(newQueue);
           newQueue = allocateBroadcastQueue(subscriberCount + 1);
         } else { // Recycled queue can be reused, raise its reference count
@@ -668,14 +668,14 @@ namespace Nuclex { namespace Support { namespace Events {
       );
       releaseSpinLock();
 
-      if(likely(wasReplaced)) {
-        if(likely(currentQueue != nullptr)) {
+      if(wasReplaced) [[likely]] {
+        if(currentQueue != nullptr) [[likely]] {
           std::size_t totalReferences = currentQueue->ReferenceCount.fetch_sub(
             1, std::memory_order::memory_order_release
           );
-          if(unlikely(totalReferences == 1)) { // We just released the last reference
+          if(totalReferences == 1) [[unlikely]] { // We just released the last reference
             currentQueue = this->recyclableSubscribers.exchange(currentQueue);
-            if(likely(currentQueue != nullptr)) {
+            if(currentQueue != nullptr) [[likely]] {
               freeBroadcastQueue(currentQueue);
             }
           }
@@ -684,7 +684,7 @@ namespace Nuclex { namespace Support { namespace Events {
       } else { // Put our queue back into the loop, hopefully we can still reuse it above
         newQueue->ReferenceCount.store(0, std::memory_order::memory_order_relaxed);
         newQueue = this->recyclableSubscribers.exchange(newQueue);
-        if(unlikely(newQueue != nullptr)) {
+        if(newQueue != nullptr) [[unlikely]] {
           freeBroadcastQueue(newQueue);
         }
       }
@@ -708,7 +708,7 @@ namespace Nuclex { namespace Support { namespace Events {
       BroadcastQueue *currentQueue = this->subscribers.load(
         std::memory_order::memory_order_consume // if carries dependency
       );
-      if(unlikely(currentQueue == nullptr)) {
+      if(currentQueue == nullptr) [[unlikely]] {
         releaseSpinLock();
         return false; // No queue -> no subscribers -> subscriber not found -> exit!
       } else {
@@ -725,14 +725,14 @@ namespace Nuclex { namespace Support { namespace Events {
         std::size_t index = 0;
         std::size_t currentSubscriberCount = currentQueue->Count;
         for(;;) {
-          if(unlikely(currentQueue->Callbacks[index] == delegate)) {
+          if(currentQueue->Callbacks[index] == delegate) [[unlikely]] {
             if(currentSubscriberCount == 1) { // Last subscriber just left
               newQueue = nullptr;
             } else { // Obtain a new queue to put the subscribers into
               newQueue = this->recyclableSubscribers.exchange(nullptr);
-              if(unlikely(newQueue == nullptr)) { // No previous queue available?
+              if(newQueue == nullptr) [[unlikely]] { // No previous queue available?
                 newQueue = allocateBroadcastQueue(currentSubscriberCount - 1);
-              } else if(unlikely(newQueue->Capacity < currentSubscriberCount)) {
+              } else if(newQueue->Capacity < currentSubscriberCount) [[unlikely]] {
                 freeBroadcastQueue(newQueue);
                 newQueue = allocateBroadcastQueue(currentSubscriberCount - 1);
               } else {
@@ -760,14 +760,14 @@ namespace Nuclex { namespace Support { namespace Events {
             );
             releaseSpinLock();
 
-            if(likely(wasReplaced)) {
-              if(likely(currentQueue != nullptr)) {
+            if(wasReplaced) [[likely]] {
+              if(currentQueue != nullptr) [[likely]] {
                 std::size_t totalReferences = currentQueue->ReferenceCount.fetch_sub(
                   1, std::memory_order::memory_order_release
                 );
-                if(unlikely(totalReferences == 1)) { // We just released the last reference
+                if(totalReferences == 1) [[unlikely]] { // We just released the last reference
                   currentQueue = this->recyclableSubscribers.exchange(currentQueue);
-                  if(likely(currentQueue != nullptr)) {
+                  if(currentQueue != nullptr) [[likely]] {
                     freeBroadcastQueue(currentQueue);
                   }
                 }
@@ -776,7 +776,7 @@ namespace Nuclex { namespace Support { namespace Events {
             } else { // Put our queue back into the loop, hopefully we can still reuse it above
               newQueue->ReferenceCount.store(0, std::memory_order::memory_order_relaxed);
               newQueue = this->recyclableSubscribers.exchange(newQueue);
-              if(unlikely(newQueue != nullptr)) {
+              if(newQueue != nullptr) [[unlikely]] {
                 freeBroadcastQueue(newQueue);
               }
               break; // C-A-S loop needs to run again
@@ -785,7 +785,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
           // Search loop still running, advance to next item until end reached
           ++index;
-          if(likely(index == currentSubscriberCount)) {
+          if(index == currentSubscriberCount) [[likely]] {
             return false; // Loop completed without finding the delegate
           }
         } // delegate search loop

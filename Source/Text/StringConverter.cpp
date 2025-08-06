@@ -119,7 +119,7 @@ namespace Nuclex { namespace Support { namespace Text {
           char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
           UnicodeHelper::WriteCodePoint(write, codePoint);
 
-          if(unlikely(write + 4 >= writeEnd)) {
+          if(write + 4 >= writeEnd) [[unlikely]] {
             std::string::size_type writeIndex = (
               write - reinterpret_cast<my_char8_t *>(result.data())
             );
@@ -139,7 +139,7 @@ namespace Nuclex { namespace Support { namespace Text {
           UnicodeHelper::WriteCodePoint(write, *read);
           ++read;
 
-          if(unlikely(write + 4 >= writeEnd)) {
+          if(write + 4 >= writeEnd) [[unlikely]] {
             std::string::size_type writeIndex = (
               write - reinterpret_cast<my_char8_t *>(result.data())
             );
@@ -203,7 +203,7 @@ namespace Nuclex { namespace Support { namespace Text {
         char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
         UnicodeHelper::WriteCodePoint(write, codePoint);
 
-        if(unlikely(write + 4 >= writeEnd)) {
+        if(write + 4 >= writeEnd) [[unlikely]] {
           std::string::size_type writeIndex = (
             write - reinterpret_cast<my_char8_t *>(result.data())
           );
@@ -266,7 +266,7 @@ namespace Nuclex { namespace Support { namespace Text {
         UnicodeHelper::WriteCodePoint(write, *read);
         ++read;
 
-        if(unlikely(write + 4 >= writeEnd)) {
+        if(write + 4 >= writeEnd) [[unlikely]] {
           std::string::size_type writeIndex = (
             write - reinterpret_cast<my_char8_t *>(result.data())
           );

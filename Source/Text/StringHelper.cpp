@@ -100,7 +100,7 @@ namespace {
     const CharType *end = read + targetString.length();
 
     // If the string is of zero length, we don't need to do anything
-    if(unlikely(read == end)) {
+    if(read == end) [[unlikely]] {
       return;
     }
 
@@ -113,7 +113,7 @@ namespace {
     // If it was not a whitespace, we can fast-forward until we find a duplicate whitespace
     if(ParserHelper::IsWhitespace(codePoint)) {
       for(;;) {
-        if(unlikely(read >= end)) {
+        if(read >= end) [[unlikely]] {
           targetString.resize(0); // Only whitespace + trim = string becomes empty
           return;
         }
@@ -121,7 +121,7 @@ namespace {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
         requireValidCodePoint<CharType>(codePoint);
 
-        if(likely(!ParserHelper::IsWhitespace(codePoint))) {
+        if(!ParserHelper::IsWhitespace(codePoint)) [[likely]] {
           break; // Exit without updating write pointer since we're trimming
         }
       } // for ever
@@ -129,7 +129,7 @@ namespace {
       write = read;
       std::size_t successiveWhitespaceCount = 0;
       for(;;) {
-        if(unlikely(read >= end)) {
+        if(read >= end) [[unlikely]] {
           targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
           return;
         }
@@ -137,9 +137,9 @@ namespace {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
         requireValidCodePoint<CharType>(codePoint);
 
-        if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
+        if(ParserHelper::IsWhitespace(codePoint)) [[unlikely]] {
           ++successiveWhitespaceCount;
-        } else if(unlikely(successiveWhitespaceCount >= 2)) { // String will need backshifting
+        } else if(successiveWhitespaceCount >= 2) [[unlikely]] { // String will need backshifting
           UnicodeHelper::WriteCodePoint(write, U' ');
           break;
         } else { // Character after single whitespace (which we'll just skip over)
@@ -159,17 +159,17 @@ namespace {
     {
       std::size_t successiveWhitespaceCount = 0;
       char32_t whitespaceCodePoint = codePoint;
-      while(likely(read < end)) {
+      while(read < end) [[likely]] {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
         requireValidCodePoint<CharType>(codePoint);
 
-        if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
+        if(ParserHelper::IsWhitespace(codePoint)) [[unlikely]] {
           whitespaceCodePoint = codePoint;
           ++successiveWhitespaceCount;
         } else {
-          if(unlikely(successiveWhitespaceCount >= 2)) { // Normalize multiple whitespaces into one
+          if(successiveWhitespaceCount >= 2) [[unlikely]] { // Normalize many whitespaces into one
             UnicodeHelper::WriteCodePoint(write, U' ');
-          } else if(unlikely(successiveWhitespaceCount == 1)) { // Pass through single whitespace
+          } else if(successiveWhitespaceCount == 1) [[unlikely]] { // Pass through single whitespace
             UnicodeHelper::WriteCodePoint(write, whitespaceCodePoint);
           }
           UnicodeHelper::WriteCodePoint(write, codePoint);
@@ -204,8 +204,8 @@ namespace {
     char32_t codePoint;
 
     for(;;) {
-      if(unlikely(read >= end)) {
-        if(unlikely(successiveWhitespaceCount >= 2)) {
+      if(read >= end) [[unlikely]] {
+        if(successiveWhitespaceCount >= 2) [[unlikely]] {
           UnicodeHelper::WriteCodePoint(write, U' ');
           targetString.resize(write - reinterpret_cast<CharType *>(targetString.data()));
         } // Otherwise, even if final character was single whitespace, string is fine.
@@ -216,9 +216,9 @@ namespace {
       codePoint = UnicodeHelper::ReadCodePoint(read, end);
       requireValidCodePoint<CharType>(codePoint);
 
-      if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
+      if(ParserHelper::IsWhitespace(codePoint)) [[unlikely]] {
         ++successiveWhitespaceCount;
-      } else if(unlikely(successiveWhitespaceCount >= 2)) {
+      } else if(successiveWhitespaceCount >= 2) [[unlikely]] {
         UnicodeHelper::WriteCodePoint(write, U' ');
         successiveWhitespaceCount = 0;
         break; // From here on out, we need to backshift the string
@@ -237,17 +237,17 @@ namespace {
     // Backshifting loop
     {
       char32_t whitespaceCodePoint = codePoint;
-      while(likely(read < end)) {
+      while(read < end) [[likely]] {
         codePoint = UnicodeHelper::ReadCodePoint(read, end);
         requireValidCodePoint<CharType>(codePoint);
 
-        if(unlikely(ParserHelper::IsWhitespace(codePoint))) {
+        if(ParserHelper::IsWhitespace(codePoint)) [[unlikely]] {
           whitespaceCodePoint = codePoint;
           ++successiveWhitespaceCount;
         } else {
-          if(unlikely(successiveWhitespaceCount >= 2)) { // Normalize multiple whitespaces
+          if(successiveWhitespaceCount >= 2) [[unlikely]] { // Normalize multiple whitespaces
             UnicodeHelper::WriteCodePoint(write, U' ');
-          } else if(unlikely(successiveWhitespaceCount == 1)) { // Pass through single whitespace
+          } else if(successiveWhitespaceCount == 1) [[unlikely]] { // Pass through single whitespace
             UnicodeHelper::WriteCodePoint(write, whitespaceCodePoint);
           }
           UnicodeHelper::WriteCodePoint(write, codePoint);
@@ -255,9 +255,9 @@ namespace {
         }
       } // while read characters remain
 
-      if(unlikely(successiveWhitespaceCount >= 2)) { // Normalize multiple whitespaces into one
+      if(successiveWhitespaceCount >= 2) [[unlikely]] { // Normalize multiple whitespaces into one
         UnicodeHelper::WriteCodePoint(write, U' ');
-      } else if(unlikely(successiveWhitespaceCount == 1)) { // Pass through single whitespace
+      } else if(successiveWhitespaceCount == 1) [[unlikely]] { // Pass through single whitespace
         UnicodeHelper::WriteCodePoint(write, whitespaceCodePoint);
       }
 
@@ -304,16 +304,16 @@ namespace {
     CharType *read = reinterpret_cast<CharType *>(targetString.data());
     CharType *write = read;
     const CharType *end = read + targetString.length();
-    while(likely(read < end)) {
+    while(read < end) [[likely]] {
       char32_t currentCodePoint = UnicodeHelper::ReadCodePoint(read, end);
       requireValidCodePoint<CharType>(currentCodePoint);
 
       // Once we encounter a character that matches the first character of the substring,
       // start comparing the rest of the substring to see if we have a match.
-      if(unlikely(currentCodePoint == firstCodePointOfVictim)) {
+      if(currentCodePoint == firstCodePointOfVictim) [[unlikely]] {
         CharType *readForComparison = read;
         const CharType *victimCurrent = victimFromSecondCodePoint;
-        while(likely(victimCurrent < victimEnd)) {
+        while(victimCurrent < victimEnd) [[likely]] {
           if(readForComparison >= end) {
             break; // master string ended before full substring was compared
           }

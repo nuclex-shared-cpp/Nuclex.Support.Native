@@ -116,14 +116,14 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Create a new pthread conditional variable
     int result = ::pthread_cond_init(&this->Condition, monotonicClockAttribute);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not initialize pthread conditional variable", result
       );
     }
 
     result = ::pthread_mutex_init(&this->Mutex, nullptr);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not initialize pthread mutex", result
       );
@@ -181,7 +181,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // If the latch was open at the time of this call, we need to close it so threads
     // can wait on the futex.
-    if(unlikely(previousCountdown == 0)) {
+    if(previousCountdown == 0) [[unlikely]] {
 
       // There's a race condition at this point. If at this exact point, another thread
       // calls CountDown() and sets the FutexWord to 1 because the counter hit zero,
@@ -192,7 +192,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // To fix this, we re-check the latch counter after setting the futex word.
       //
-      if(likely(count > 0)) {
+      if(count > 0) [[likely]] {
         __atomic_store_n(&impl.FutexWord, 0, __ATOMIC_RELEASE); // 0 -> latch now locked
       }
 
@@ -204,7 +204,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // never a spurious closed latch (which blocks the thread and can't be dealt with).
       //
       previousCountdown = impl.Countdown.load(std::memory_order_consume);
-      if(likely(previousCountdown == 0)) {
+      if(previousCountdown == 0) [[likely]] {
         __atomic_store_n(&impl.FutexWord, 1, __ATOMIC_RELEASE); // 1 -> latch open
       }
 
@@ -223,7 +223,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // If the latch was open at the time of this call, we need to close it so threads
     // can wait on the futex.
-    if(unlikely(previousCountdown == 0)) {
+    if(previousCountdown == 0) [[unlikely]] {
 
       // There's a race condition at this point. If at this exact point, another thread
       // calls CountDown() and sets the FutexWord to 1 because the counter hit zero,
@@ -234,7 +234,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       //
       // To fix this, we re-check the latch counter after setting the futex word.
       //
-      if(likely(count > 0)) {
+      if(count > 0) [[likely]] {
         impl.WaitWord = 0; // 0 -> latch now locked
         std::atomic_thread_fence(std::memory_order::memory_order_release);
       }
@@ -247,7 +247,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // never a spurious closed latch (which blocks the thread and can't be dealt with).
       //
       previousCountdown = impl.Countdown.load(std::memory_order_consume);
-      if(likely(previousCountdown == 0)) {
+      if(previousCountdown == 0) [[likely]] {
         impl.WaitWord = 1; // 1 -> latch open
         std::atomic_thread_fence(std::memory_order::memory_order_release);
       }
@@ -261,7 +261,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
@@ -270,7 +270,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     impl.Countdown.fetch_add(count, std::memory_order_release);
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );
@@ -290,7 +290,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     assert((previousCountdown >= count) && u8"Latch remains zero or positive");
 
     // If we just decremented the latch to zero, signal the futex
-    if(unlikely(previousCountdown == count)) {
+    if(previousCountdown == count) [[unlikely]] {
 
       // Just like in the semaphore implementation, another thread may have incremented
       // the latch counter between our fetch_sub() and this point (a classical race
@@ -300,7 +300,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // and causes them to re-check the counter. So we'll have potential spurious wake-ups,
       // but no spurious blocks.
       //
-      if(likely(count > 0)) { // check needed? nobody would post 0 tasks...
+      if(count > 0) [[likely]] { // check needed? nobody would post 0 tasks...
         __atomic_store_n(&impl.FutexWord, 1, __ATOMIC_RELEASE); // 1 -> countdown is zero
       }
 
@@ -328,7 +328,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     assert((previousCountdown >= count) && u8"Latch remains zero or positive");
 
     // If we just decremented the latch to zero, signal the futex
-    if(unlikely(previousCountdown == count)) {
+    if(previousCountdown == count) [[unlikely]] {
 
       // Just like in the semaphore implementation, another thread may have incremented
       // the latch counter between our fetch_sub() and this point (a classical race
@@ -338,7 +338,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // and causes them to re-check the counter. So we'll have potential spurious wake-ups,
       // but no spurious blocks.
       //
-      if(likely(count > 0)) { // check needed? nobody would post 0 tasks...
+      if(count > 0) [[likely]] { // check needed? nobody would post 0 tasks...
         impl.WaitWord = 1; // 1 -> countdown is zero
         std::atomic_thread_fence(std::memory_order::memory_order_release);
       }
@@ -360,7 +360,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
@@ -374,7 +374,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       if(previousCountdown == count) {
         result = ::pthread_cond_signal(&impl.Condition);
-        if(unlikely(result != 0)) {
+        if(result != 0) [[unlikely]] {
           int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
           NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
           assert((unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler");
@@ -386,7 +386,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );
@@ -483,7 +483,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
@@ -491,7 +491,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     while(impl.Countdown.load(std::memory_order_consume) > 0) {
       result = ::pthread_cond_wait(&impl.Condition, &impl.Mutex);
-      if(unlikely(result != 0)) {
+      if(result != 0) [[unlikely]] {
         int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
         NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
         assert(
@@ -504,7 +504,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );
@@ -550,14 +550,14 @@ namespace Nuclex { namespace Support { namespace Threading {
         0,
         timeout
       );
-      if(unlikely(result == Platform::LinuxFutexApi::TimedOut)) {
+      if(result == Platform::LinuxFutexApi::TimedOut) [[unlikely]] {
         return false; // Timeout elapsed, so it's time to give the bad news to the caller
       }
 
       // If this was a spurious wake-up, we need to adjust the futex word in order to prevent
       // a busy loop in this Wait() method.
       safeCountdown = impl.Countdown.load(std::memory_order_consume);
-      if(likely(safeCountdown > 0)) {
+      if(safeCountdown > 0) [[likely]] {
         __atomic_store_n(&impl.FutexWord, 0, __ATOMIC_RELEASE); // 0 -> latch now locked
 
         // But just like in Post(), this is a race condition with other threads potentially
@@ -565,7 +565,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         // need to re-check the latch counter.
         //
         safeCountdown = impl.Countdown.load(std::memory_order_consume);
-        if(unlikely(safeCountdown == 0)) {
+        if(safeCountdown == 0) [[unlikely]] {
           __atomic_store_n(&impl.FutexWord, 1, __ATOMIC_RELEASE); // 1 -> latch open
         }
       }
@@ -602,14 +602,14 @@ namespace Nuclex { namespace Support { namespace Threading {
         static_cast<std::uint32_t>(0), // wait while wait variable is 0 (== gate closed)
         remainingTickCount
       );
-      if(unlikely(result == Platform::WindowsSyncApi::WaitResult::TimedOut)) {
+      if(result == Platform::WindowsSyncApi::WaitResult::TimedOut) [[unlikely]] {
         return false;
       }
 
       // If this was a spurious wake-up, we need to adjust the futex word in order to prevent
       // a busy loop in this Wait() method.
       safeCountdown = impl.Countdown.load(std::memory_order_consume);
-      if(likely(safeCountdown > 0)) {
+      if(safeCountdown > 0) [[likely]] {
         impl.WaitWord = 0; // 0 -> latch now locked
         std::atomic_thread_fence(std::memory_order::memory_order_release);
 
@@ -618,7 +618,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         // need to re-check the latch counter.
         //
         safeCountdown = impl.Countdown.load(std::memory_order_consume);
-        if(unlikely(safeCountdown == 0)) {
+        if(safeCountdown == 0) [[unlikely]] {
           impl.WaitWord = 1; // 1 -> latch open
           std::atomic_thread_fence(std::memory_order::memory_order_release);
         }
@@ -655,7 +655,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     struct ::timespec endTime = Platform::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
@@ -663,10 +663,10 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     while(impl.Countdown.load(std::memory_order_consume) > 0) {
       result = ::pthread_cond_timedwait(&impl.Condition, &impl.Mutex, &endTime);
-      if(unlikely(result != 0)) {
+      if(result != 0) [[unlikely]] {
         if(result == ETIMEDOUT) {
           result = ::pthread_mutex_unlock(&impl.Mutex);
-          if(unlikely(result != 0)) {
+          if(result != 0) [[unlikely]] {
             Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
               u8"Could not unlock pthread mutex", result
             );
@@ -687,7 +687,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );

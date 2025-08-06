@@ -229,7 +229,7 @@ namespace {
 
       // In the outer loop, scan only for the a match of the first needle codepoint.
       // Keeping this loop tight allows the compiler to optimize it into a simple scan.
-      if(unlikely(haystackCodePoint == firstNeedleCodePoint)) {
+      if(haystackCodePoint == firstNeedleCodePoint) [[unlikely]] {
         const my_char8_t *haystackInner = haystack;
         for(;;) {
           if(needle >= needleEnd) { // Needle ended? We've got a full match!

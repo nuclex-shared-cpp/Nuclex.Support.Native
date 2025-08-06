@@ -71,7 +71,7 @@ namespace {
 
     // Initialize the conditional attribute structure
     int result = ::pthread_condattr_init(&this->attribute);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not initialize pthread conditional variable attribute", result
       );
@@ -79,7 +79,7 @@ namespace {
 
     // Change the attribute's clock settings so the monotonic clock is used
     result = ::pthread_condattr_setclock(&this->attribute, CLOCK_MONOTONIC);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not set pthread conditional variable attribute's clock id", result
       );
@@ -102,7 +102,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
     // Query the specified clock's current time
     int result = ::clock_gettime(clock, &futureTime);
-    if(unlikely(result == -1)) {
+    if(result == -1) [[unlikely]] {
       int errorNumber = errno;
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not get time from clock", errorNumber
@@ -144,7 +144,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
     // Query the specified clock's current time
     int result = ::clock_gettime(clock, &futureTime);
-    if(unlikely(result == -1)) {
+    if(result == -1) [[unlikely]] {
       int errorNumber = errno;
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not get time from clock", errorNumber
@@ -189,7 +189,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     struct ::timespec currentTime;
     {
       int result = ::clock_gettime(clock, &currentTime);
-      if(unlikely(result == -1)) {
+      if(result == -1) [[unlikely]] {
         int errorNumber = errno;
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
           u8"Could not get time from clock", errorNumber
@@ -264,7 +264,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     struct ::timespec currentTime;
     {
       int result = ::clock_gettime(clock, &currentTime);
-      if(unlikely(result == -1)) {
+      if(result == -1) [[unlikely]] {
         int errorNumber = errno;
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
           u8"Could not get time from clock", errorNumber

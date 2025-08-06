@@ -131,7 +131,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     target.resize(MAX_PATH);
 
     UINT result = ::GetSystemDirectoryW(target.data(), MAX_PATH);
-    if(unlikely(result == 0)) {
+    if(result == 0) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       Platform::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not get Windows system directory", errorCode
@@ -147,7 +147,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     target.resize(MAX_PATH);
 
     UINT result = ::GetWindowsDirectoryW(target.data(), MAX_PATH);
-    if(unlikely(result == 0)) {
+    if(result == 0) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       Platform::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not get Windows directory", errorCode
@@ -164,7 +164,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
     // Ask for the current user's or for the system's temporary directory
     DWORD result = ::GetTempPathW(MAX_PATH + 1, target.data());
-    if(unlikely(result == 0)) {
+    if(result == 0) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       Platform::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not obtain path to temp directory", errorCode
@@ -223,7 +223,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   void WindowsPathApi::CreateDirectory(const std::wstring &path) {
     BOOL result = ::CreateDirectoryW(path.c_str(), nullptr);
-    if(unlikely(result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
 
       std::string errorMessage(u8"Could not create directory '");

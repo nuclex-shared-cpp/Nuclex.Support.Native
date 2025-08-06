@@ -54,7 +54,7 @@ namespace {
       blocked(false) {
 
       int result = ::sigemptyset(&this->signalSet);
-      if(unlikely(result == -1)) {
+      if(result == -1) [[unlikely]] {
         int errorNumber = errno;
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
           u8"Could not create an empty signal set", errorNumber
@@ -62,7 +62,7 @@ namespace {
       }
 
       result = ::sigaddset(&this->signalSet, SIGCHLD);
-      if(unlikely(result == -1)) {
+      if(result == -1) [[unlikely]] {
         int errorNumber = errno;
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
           u8"Could not add a signal to a signal set", errorNumber
@@ -93,7 +93,7 @@ namespace {
 
       // Add SIGCHLD to the blocked signals and remember the previous signal set
       int result = ::sigprocmask(SIG_BLOCK, &this->signalSet, &this->previousSignalSet);
-      if(unlikely(result == -1)) {
+      if(result == -1) [[unlikely]] {
         int errorNumber = errno;
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
           u8"Could not update signal mask for thread", errorNumber
@@ -130,7 +130,7 @@ namespace {
     // See the documentation for dup2(), this drops the target file number's
     // current file and makes it points to the same file as our replacement file number.
     int result = ::dup2(replacementFileNumber, standardFileNumber);
-    if(unlikely(result == -1)) {
+    if(result == -1) [[unlikely]] {
       int errorNumber = errno;
       std::string message;
       message.reserve(18 + standardFileName.length() + 1);
@@ -192,7 +192,7 @@ namespace {
     // Some system resources, such as stdin, stdout and stderr do propagate to the
     // switched-out process, however.
     int result = ::execvp(executablePath.c_str(), &argumentValues[0]);
-    if(likely(result == -1)) {
+    if(result == -1) [[likely]] {
       int errorNumber = errno;
       std::string message;
       message.reserve(18 + executablePath.length() + 1);
@@ -351,7 +351,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // The original process will have the process id of the child process in the return
     // value while the child process will have 0 returned.
     ::pid_t childOrZeroPid = ::fork();
-    if(unlikely(childOrZeroPid == -1)) {
+    if(childOrZeroPid == -1) [[unlikely]] {
       int errorNumber = errno;
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not fork process", errorNumber
@@ -359,7 +359,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     // Are we the original process?
-    if(likely(childOrZeroPid != 0)) {
+    if(childOrZeroPid != 0) [[likely]] {
 
       // Close the unwanted ends of each pipe
       stdinPipe.CloseOneEnd(0);
@@ -443,7 +443,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // The call may be interrupted by signals, so keep checking if it's interrupted.
     for(;;) {
       int result = ::waitpid(impl.ChildProcessId, &impl.ExitCode, WNOHANG);
-      if(unlikely(result == -1)) {
+      if(result == -1) [[unlikely]] {
         int errorNumber = errno;
         if(errorNumber == EINTR) {
           continue;
@@ -455,7 +455,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       }
 
       // If no status (exit code) is available, that means the process is still running
-      if(likely(result == 0)) {
+      if(result == 0) [[likely]] {
         return true;
       } else {
         impl.Finished = true;
@@ -504,7 +504,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         // Check if the child process our caller is interested in has already exited
         {
           int result = ::waitpid(impl.ChildProcessId, &impl.ExitCode, WNOHANG);
-          if(unlikely(result == -1)) {
+          if(result == -1) [[unlikely]] {
             int errorNumber = errno;
             Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
               u8"Could not check status of child process", errorNumber
@@ -535,11 +535,11 @@ namespace Nuclex { namespace Support { namespace Threading {
         // has terminated and it may be the one we're waiting for.
         if(!wasOutputGenerated) {
           int result = ::sigtimedwait(&sigChild.GetSignalSet(), nullptr, &waitTime);
-          if(unlikely(result == -1)) {
+          if(result == -1) [[unlikely]] {
             int errorNumber = errno;
-            if(unlikely(errorNumber == EINTR)) {
+            if(errorNumber == EINTR) [[unlikely]] {
               continue; // Another signal interrupted the wait, just keep trying...
-            } else if(unlikely(errorNumber != EAGAIN)) { // EAGAIN means timeout
+            } else if(errorNumber != EAGAIN) [[unlikely]] { // EAGAIN means timeout
               Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
                 u8"Could not wait for signal from child process", errorNumber
               );
@@ -679,7 +679,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         int waitingByteCount = 0;
         {
           int result = ::ioctl(fileNumbers[pipeIndex], FIONREAD, &waitingByteCount);
-          if(unlikely(result == -1)) {
+          if(result == -1) [[unlikely]] {
             int errorNumber = errno;
             if(errorNumber == EINTR) {
               continue; // A signal interrupted us, just try again
@@ -699,7 +699,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         ::ssize_t readByteCount = 0;
         if(waitingByteCount >= 1) {
           readByteCount = ::read(fileNumbers[pipeIndex], this->buffer.data(), BatchSize);
-          if(unlikely(readByteCount == -1)) {
+          if(readByteCount == -1) [[unlikely]] {
             int errorNumber = errno;
             if(errorNumber == EINTR) {
               continue; // A signal interrupted us, just try again

@@ -166,7 +166,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       }
 
       if(this->startIndex == InvalidIndex) {
-        if(unlikely(count > this->capacity)) {
+        if(count > this->capacity) [[unlikely]] {
           std::size_t newCapacity = BitTricks::GetUpperPowerOfTwo(count);
           std::unique_ptr<std::uint8_t[]> newItemMemory(
             new std::uint8_t[sizeof(TItem[2]) * capacity / 2]
@@ -258,7 +258,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       const TItem *sourceItems, std::size_t itemCount
     ) {
       std::size_t remainingItemCount = this->startIndex - this->endIndex;
-      if(likely(remainingItemCount >= itemCount)) { // New data fits, simplest case there is
+      if(remainingItemCount >= itemCount) [[likely]] { // New data fits, simplest case there is
         TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
         targetItems += this->endIndex;
         std::size_t count = itemCount;
@@ -305,7 +305,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       const TItem *sourceItems, std::size_t itemCount
     ) {
       std::size_t remainingItemCount = this->startIndex - this->endIndex;
-      if(likely(remainingItemCount >= itemCount)) { // New data fits, simplest case there is
+      if(remainingItemCount >= itemCount) [[likely]] { // New data fits, simplest case there is
         TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
         targetItems += this->endIndex;
         std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
@@ -327,7 +327,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       const TItem *sourceItems, std::size_t itemCount
     ) {
       std::size_t remainingSegmentItemCount = this->capacity - this->endIndex;
-      if(likely(remainingSegmentItemCount >= itemCount)) { // New data fits
+      if(remainingSegmentItemCount >= itemCount) [[likely]] { // New data fits
         TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
         targetItems += this->endIndex;
 
@@ -348,7 +348,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         this->endIndex += itemCount;
       } else { // New data must be wrapped or ring buffer needs to be extended
         std::size_t wrappedItemCount = itemCount - remainingSegmentItemCount;
-        if(likely(wrappedItemCount < this->startIndex)) {
+        if(wrappedItemCount < this->startIndex) [[likely]] {
           if(remainingSegmentItemCount > 0) {
             TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
             targetItems += this->endIndex;
@@ -422,14 +422,14 @@ namespace Nuclex { namespace Support { namespace Collections {
       const TItem *sourceItems, std::size_t itemCount
     ) {
       std::size_t remainingSegmentItemCount = this->capacity - this->endIndex;
-      if(likely(remainingSegmentItemCount >= itemCount)) { // New data fits
+      if(remainingSegmentItemCount >= itemCount) [[likely]] { // New data fits
         TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
         targetItems += this->endIndex;
         std::memcpy(targetItems, sourceItems, itemCount * sizeof(TItem));
         this->endIndex += itemCount;
       } else { // New data must be wrapped or ring buffer needs to be extended
         std::size_t remainingItemCount = remainingSegmentItemCount + this->startIndex;
-        if(likely(remainingItemCount >= itemCount)) {
+        if(remainingItemCount >= itemCount) [[likely]] {
           TItem *targetItems = reinterpret_cast<TItem *>(this->itemMemory.get());
           targetItems += this->endIndex;
           std::memcpy(targetItems, sourceItems, remainingSegmentItemCount * sizeof(TItem));
@@ -681,7 +681,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       !std::is_trivially_copyable<T>::value || !std::is_trivially_destructible<T>::value
     >::type extractFromLinear(TItem *targetItems, std::size_t itemCount) {
       std::size_t availableItemCount = this->endIndex - this->startIndex;
-      if(likely(availableItemCount >= itemCount)) {
+      if(availableItemCount >= itemCount) [[likely]] {
         TItem *sourceItems = reinterpret_cast<TItem *>(this->itemMemory.get());
         sourceItems += this->startIndex;
         std::size_t count = itemCount;
@@ -722,7 +722,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       std::is_trivially_copyable<T>::value && std::is_trivially_destructible<T>::value
     >::type extractFromLinear(TItem *targetItems, std::size_t itemCount) {
       std::size_t availableItemCount = this->endIndex - this->startIndex;
-      if(likely(availableItemCount >= itemCount)) {
+      if(availableItemCount >= itemCount) [[likely]] {
         TItem *sourceItems = reinterpret_cast<TItem *>(this->itemMemory.get());
         sourceItems += this->startIndex;
         std::memcpy(targetItems, sourceItems, sizeof(TItem) * itemCount);
@@ -778,7 +778,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         }
       } else { // The older segment alone does not have enough data, check younger segment
         std::size_t availableItemCount = availableSegmentItemCount + this->endIndex;
-        if(likely(availableItemCount >= itemCount)) { // Is there enough data with both segments together?
+        if(availableItemCount >= itemCount) [[likely]] { // Is there enough data (both segments)?
 
           // Move the items from the older segment into the caller-provided buffer
           {
@@ -863,7 +863,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         }
       } else { // The older segment alone does not have enough data, check younger segment
         std::size_t availableItemCount = availableSegmentItemCount + this->endIndex;
-        if(likely(availableItemCount >= itemCount)) { // Is there enough data with both segments together?
+        if(availableItemCount >= itemCount) [[likely]] { // Is there enough data (both segments)?
 
           // Move the items from the older segment into the caller-provided buffer
           {

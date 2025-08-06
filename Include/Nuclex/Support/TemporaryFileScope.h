@@ -25,6 +25,7 @@ limitations under the License.
 #include <string> // for std::string
 #include <vector> // for std::vector
 #include <cstdint> // for std::uint8_t
+#include <filesystem> // for std::filesystem::path
 
 namespace Nuclex { namespace Support {
 

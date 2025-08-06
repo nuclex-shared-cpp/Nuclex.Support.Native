@@ -206,14 +206,14 @@ namespace Nuclex { namespace Support { namespace Threading {
       std::int8_t threadStatus = instance->ThreadStatus[threadIndex].load(
         std::memory_order_consume // if() below carries dependency
       );
-      if(unlikely(threadStatus > 0)) {
+      if(threadStatus > 0) [[unlikely]] {
         assert((threadStatus < 1) && u8"Thread finished before its destruction");
         // Detaching is a pretty terrible thing to do, but the alternative is to destroy
         // the threads and have them call std::terminate(). So we assert and let
         // each thread crash in a multi-threaded firework of segmentation faults.
         instance->Threads[threadIndex].detach();
         instance->Threads[threadIndex].~thread();
-      } else if(likely(threadStatus < 0)) {
+      } else if(threadStatus < 0) [[likely]] {
         instance->Threads[threadIndex].join(); // Thread is stopped, call returns instantly.
         instance->Threads[threadIndex].~thread();
       }
@@ -342,7 +342,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       std::size_t remainingThreadCount = this->ThreadCount.fetch_sub(
         1, std::memory_order_consume // if() below carries dependency
       );
-      if(unlikely(remainingThreadCount == 1)) { // 1 because we're getting the previous value
+      if(remainingThreadCount == 1) [[unlikely]] { // 1 because we're getting the previous value
         this->LightsOut.Open();
       }
     };
@@ -353,7 +353,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // Keep looking for work to do
     for(;;) {
       bool isShuttingDown = this->IsShuttingDown.load(std::memory_order_consume);
-      if(unlikely(isShuttingDown)) {
+      if(isShuttingDown) [[unlikely]] {
         cancelAllTasks();
         break;
       }
@@ -535,7 +535,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Task is ready, schedule it for execution by a worker thread
     bool wasEnqueued = this->implementation->ScheduledTasks.enqueue(submittedTask);
-    if(likely(wasEnqueued)) {
+    if(wasEnqueued) [[likely]] {
       this->implementation->TaskCount.fetch_add(1, std::memory_order_release);
     } else {
       submittedTask->Task->~Task();

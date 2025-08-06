@@ -160,7 +160,7 @@ namespace Nuclex { namespace Support {
       FILE_ATTRIBUTE_NORMAL,
       nullptr
     );
-    if(unlikely(fileHandle == INVALID_HANDLE_VALUE)) {
+    if(fileHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
 
       // Something went wrong, kill the temporary file again before throwing the exception
@@ -192,7 +192,7 @@ namespace Nuclex { namespace Support {
 
     // Select and open a unique temporary filename
     int fileDescriptor = ::mkstemp(pathTemplate.data());
-    if(unlikely(fileDescriptor == -1)) {
+    if(fileDescriptor == -1) [[unlikely]] {
       int errorNumber = errno;
 
       std::string errorMessage(u8"Could not create temporary file '");
@@ -213,7 +213,7 @@ namespace Nuclex { namespace Support {
 
   TemporaryFileScope::~TemporaryFileScope() {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    if(likely(!this->path.empty())) {
+    if(!this->path.empty()) [[likely]] {
       std::wstring utf16Path = Text::StringConverter::WideFromUtf8(this->path);
       BOOL result = ::DeleteFileW(utf16Path.c_str());
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -223,7 +223,7 @@ namespace Nuclex { namespace Support {
     int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
 
     // Close the file so we don't leak handles
-    if(likely(fileDescriptor != 0)) {
+    if(fileDescriptor != 0) [[likely]] {
       int result = ::close(fileDescriptor);
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result != -1) && u8"Temporary file is closed successfully");
@@ -232,7 +232,7 @@ namespace Nuclex { namespace Support {
     // Delete the file. Even if the close failed, on Linux systems we
     // can delete the file and it will be removed from the file index
     // (and the data will disppear as soon as the last process closes it).
-    if(likely(!this->path.empty())) {
+    if(!this->path.empty()) [[likely]] {
       int result = ::unlink(this->path.c_str());
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result != -1) && u8"Temporary file is deleted successfully");

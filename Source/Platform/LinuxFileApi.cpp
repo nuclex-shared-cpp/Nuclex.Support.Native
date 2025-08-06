@@ -79,7 +79,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   int LinuxFileApi::OpenFileForReading(const std::string &path) {
     int fileDescriptor = ::open(path.c_str(), O_RDONLY | O_LARGEFILE);
-    if(unlikely(fileDescriptor < 0)) {
+    if(fileDescriptor < 0) [[unlikely]] {
       int errorNumber = errno;
 
       std::string errorMessage(u8"Could not open file '");
@@ -100,7 +100,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       O_RDWR | O_CREAT | O_LARGEFILE,
       S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH
     );
-    if(unlikely(fileDescriptor < 0)) {
+    if(fileDescriptor < 0) [[unlikely]] {
       int errorNumber = errno;
 
       std::string errorMessage(u8"Could not open file '");
@@ -132,7 +132,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     int fileDescriptor, std::byte *buffer, std::size_t count
   ) {
     ssize_t result = ::read(fileDescriptor, buffer, count);
-    if(unlikely(result == static_cast<ssize_t>(-1))) {
+    if(result == static_cast<ssize_t>(-1)) [[unlikely]] {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not read data from file");
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
@@ -147,7 +147,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     int fileDescriptor, const std::byte *buffer, std::size_t count
   ) {
     ssize_t result = ::write(fileDescriptor, buffer, count);
-    if(unlikely(result == static_cast<ssize_t>(-1))) {
+    if(result == static_cast<ssize_t>(-1)) [[unlikely]] {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not write data to file");
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
@@ -171,7 +171,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   void LinuxFileApi::Flush(int fileDescriptor) {
     int result = ::fsync(fileDescriptor);
-    if(unlikely(result == -1)) {
+    if(result == -1) [[unlikely]] {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not flush file buffers");
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
@@ -182,10 +182,12 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   void LinuxFileApi::Close(int fileDescriptor, bool throwOnError /* = true */) {
     int result = ::close(fileDescriptor);
-    if(throwOnError && unlikely(result == -1)) {
-      int errorNumber = errno;
-      std::string errorMessage(u8"Could not close file");
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+    if(result == -1) [[unlikely]] {
+      if(throwOnError) [[likely]] {
+        int errorNumber = errno;
+        std::string errorMessage(u8"Could not close file");
+        Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      }
     }
   }
 

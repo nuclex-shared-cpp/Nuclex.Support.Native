@@ -94,7 +94,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
       // Try to obtain a returned task with adequate payload size that can
       // be re-used instead of allocating a new one
-      if(likely(totalRequiredMemory < ThreadPoolConfig::SubmittedTaskReuseLimit)) {
+      if(totalRequiredMemory < ThreadPoolConfig::SubmittedTaskReuseLimit) [[likely]] {
         TSubmittedTask *submittedTask;
         for(std::size_t attempt = 0; attempt < 3; ++attempt) {
           if(this->returnedTasks.try_dequeue(submittedTask)) {

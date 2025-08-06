@@ -154,7 +154,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       // Create a new thread pool. There is no documentation on how many threads it
       // will create or run by default.
       this->NewThreadPool = ::CreateThreadpool(nullptr);
-      if(unlikely(this->NewThreadPool == nullptr)) {
+      if(this->NewThreadPool == nullptr) [[unlikely]] {
         DWORD lastErrorCode = ::GetLastError();
         Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not create thread pool (using Vista and later API)", lastErrorCode
@@ -175,7 +175,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         BOOL result = ::SetThreadpoolThreadMinimum(
           this->NewThreadPool, static_cast<DWORD>(minimumThreadCount)
         );
-        if(unlikely(result == FALSE)) {
+        if(result == FALSE) [[unlikely]] {
           DWORD lastErrorCode = ::GetLastError();
           Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not set minimum number of thread pool threads", lastErrorCode
@@ -229,7 +229,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     bool isShuttingDown = submittedTask->Implementation->IsShuttingDown.load(
       std::memory_order_consume // if() below carries dependency
     );
-    if(unlikely(isShuttingDown)) {
+    if(isShuttingDown) [[unlikely]] {
       submittedTask->Task->~Task();
       implementation.SubmittedTaskPool.DeleteTask(submittedTask);
     } else {
@@ -306,7 +306,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementation::SubmittedTask *submittedTask = (
       this->implementation->SubmittedTaskPool.GetNewTask(payload)
     );
-    if(unlikely(submittedTask->Implementation == nullptr)) {
+    if(submittedTask->Implementation == nullptr) [[unlikely]] {
       submittedTask->Implementation = this->implementation;
       if(this->implementation->UseNewThreadPoolApi) {
         submittedTask->Work = ::CreateThreadpoolWork(
@@ -315,7 +315,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           //nullptr,
           &this->implementation->NewCallbackEnvironment
         );
-        if(unlikely(submittedTask->Work == nullptr)) {
+        if(submittedTask->Work == nullptr) [[unlikely]] {
           DWORD lastErrorCode = ::GetLastError();
           this->implementation->SubmittedTaskPool.DeleteTask(submittedTask);
           Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(

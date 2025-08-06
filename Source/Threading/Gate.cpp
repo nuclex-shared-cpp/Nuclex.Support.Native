@@ -113,14 +113,14 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // Create a new pthread conditional variable
     int result = ::pthread_cond_init(&this->Condition, monotonicClockAttribute);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not initialize pthread conditional variable", result
       );
     }
 
     result = ::pthread_mutex_init(&this->Mutex, nullptr);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not initialize pthread mutex", result
       );
@@ -206,7 +206,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
@@ -214,7 +214,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     impl.IsOpen.store(true, std::memory_order_relaxed);
     result = ::pthread_cond_signal(&impl.Condition);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
       NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
       assert((unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler");
@@ -224,7 +224,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );
@@ -295,9 +295,9 @@ namespace Nuclex { namespace Support { namespace Threading {
         impl.FutexWord,
         0 // wait while futex word is 0 (== gate closed)
       );
-      if(likely(result != Platform::LinuxFutexApi::Interrupted)) {
+      if(result != Platform::LinuxFutexApi::Interrupted) [[likely]] {
         safeFutexWord = __atomic_load_n(&impl.FutexWord, __ATOMIC_CONSUME);
-        if(likely(safeFutexWord != 0)) {
+        if(safeFutexWord != 0) [[likely]] {
           return; // Gate now open
         }
       }
@@ -330,9 +330,9 @@ namespace Nuclex { namespace Support { namespace Threading {
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0) // wait while wait variable is 0 (== gate closed)
       );
-      if(likely(result == Platform::WindowsSyncApi::WaitResult::ValueChanged)) {
+      if(result == Platform::WindowsSyncApi::WaitResult::ValueChanged) [[likely]] {
         safeWaitValue = impl.WaitWord; // std::atomic_load(...);
-        if(likely(safeWaitValue != 0)) {
+        if(safeWaitValue != 0) [[likely]] {
           return; // Value was not 0, so gate is now open
         }
       }
@@ -346,7 +346,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
@@ -354,7 +354,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     while(!impl.IsOpen.load(std::memory_order_consume)) {
       result = ::pthread_cond_wait(&impl.Condition, &impl.Mutex);
-      if(unlikely(result != 0)) {
+      if(result != 0) [[unlikely]] {
         int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
         NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
         assert(
@@ -367,7 +367,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );
@@ -429,12 +429,12 @@ namespace Nuclex { namespace Support { namespace Threading {
         0, // wait while futex word is 0 (== gate closed)
         timeout // timeout after which to fail
       );
-      if(likely(result == Platform::LinuxFutexApi::WaitResult::ValueChanged)) {
+      if(result == Platform::LinuxFutexApi::WaitResult::ValueChanged) [[likely]] {
         safeFutexWord = __atomic_load_n(&impl.FutexWord, __ATOMIC_CONSUME);
         if(safeFutexWord != 0) {
           return true; // Gate now open
         }
-      } else if(unlikely(result == Platform::LinuxFutexApi::WaitResult::TimedOut)) {
+      } else if(result == Platform::LinuxFutexApi::WaitResult::TimedOut) [[unlikely]] {
         return false; // Patience has been exceeded
       }
 
@@ -483,9 +483,9 @@ namespace Nuclex { namespace Support { namespace Threading {
         static_cast<std::uint32_t>(0), // wait while wait variable is 0 (== gate closed)
         remainingTickCount
       );
-      if(likely(result != Platform::WindowsSyncApi::WaitResult::TimedOut)) {
+      if(result != Platform::WindowsSyncApi::WaitResult::TimedOut) [[likely]] {
         safeWaitValue = impl.WaitWord; // std::atomic_load(...);
-        if(likely(safeWaitValue != 0)) { // Value was not 0, so gate is now open
+        if(safeWaitValue != 0) [[likely]] { // Value was not 0, so gate is now open
           break;
         }
       }
@@ -517,7 +517,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     struct ::timespec waitEndTime = Platform::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthreads mutex", result
       );
@@ -525,10 +525,10 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     while(!impl.IsOpen.load(std::memory_order_consume)) {
       result = ::pthread_cond_timedwait(&impl.Condition, &impl.Mutex, &waitEndTime);
-      if(unlikely(result != 0)) {
+      if(result != 0) [[unlikely]] {
         if(result == ETIMEDOUT) {
           result = ::pthread_mutex_unlock(&impl.Mutex);
-          if(unlikely(result != 0)) {
+          if(result != 0) [[unlikely]] {
             Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
               u8"Could not unlock pthreads mutex", result
             );
@@ -548,7 +548,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthreads mutex", result
       );

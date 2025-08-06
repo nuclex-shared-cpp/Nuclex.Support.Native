@@ -242,7 +242,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         // If the buffer needs to be resized anyway, we don't need to shift back
         // and can do the resize + shift in one operation
         std::size_t totalItemCount = usedItemCount + itemCount;
-        if(likely(this->capacity >= totalItemCount)) {
+        if(this->capacity >= totalItemCount) [[likely]] {
           TItem *items = reinterpret_cast<TItem *>(this->itemMemory.get()) + this->startIndex;
           shiftItems(items, usedItemCount);
         } else { // No buffer resize needed, just shift the items back
@@ -264,7 +264,7 @@ namespace Nuclex { namespace Support { namespace Collections {
         // two times the required size. This ensures that the buffer will settle into
         // a read-shift-fill cycle without resizes if the current usage pattern repeats.
         std::size_t freeItemCount = this->capacity - this->endIndex;
-        if(likely(freeItemCount >= itemCount)) {
+        if(freeItemCount >= itemCount) [[likely]] {
           // Enough space available, no action needed
         } else {
           this->capacity = BitTricks::GetUpperPowerOfTwo((usedItemCount + itemCount) * 2);

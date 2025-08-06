@@ -414,7 +414,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     }
 
     // If the function returned 0, something went wrong
-    if(unlikely(result == 0)) {
+    if(result == 0) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::string errorMessage(u8"Could not determine executable module path");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);

@@ -52,9 +52,9 @@ namespace Nuclex { namespace Support { namespace Platform {
       static_cast<SIZE_T>(waitVariableByteCount),
       static_cast<DWORD>(patience.count())
     );
-    if(unlikely(result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      if(likely(errorCode == ERROR_TIMEOUT)) {
+      if(errorCode == ERROR_TIMEOUT) [[likely]] {
         return WaitResult::TimedOut;
       }
 
@@ -77,7 +77,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       static_cast<SIZE_T>(waitVariableByteCount),
       INFINITE
     );
-    if(unlikely(result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       WindowsApi::ThrowExceptionForSystemError(u8"Could not wait on memory address", errorCode);
     }

@@ -56,9 +56,9 @@ namespace Nuclex { namespace Support { namespace Platform {
       static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
       static_cast<int>(0) // second futex word value -> ignored
     );
-    if(unlikely(result == -1)) {
+    if(result == -1) [[unlikely]] {
       int errorNumber = errno;
-      if(likely(errorNumber == EAGAIN)) { // Value was not 0, so gate is now open
+      if(errorNumber == EAGAIN) [[likely]] { // Value was not 0, so gate is now open
         return WaitResult::ValueChanged;
       } else if(errorNumber != EINTR) {
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
@@ -96,11 +96,11 @@ namespace Nuclex { namespace Support { namespace Platform {
       static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
       static_cast<int>(0) // second futex word value -> ignored
     );
-    if(unlikely(result == -1)) {
+    if(result == -1) [[unlikely]] {
       int errorNumber = errno;
-      if(likely(errorNumber == EAGAIN)) { // Value was not 0, so gate is now open
+      if(errorNumber == EAGAIN) [[likely]] { // Value was not 0, so gate is now open
         return WaitResult::ValueChanged;
-      } else if(likely(errorNumber == ETIMEDOUT)) { // Timeout, wait failed
+      } else if(errorNumber == ETIMEDOUT) [[likely]] { // Timeout, wait failed
         return WaitResult::TimedOut;
       } else if(errorNumber != EINTR) {
         Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
@@ -134,7 +134,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
       static_cast<int>(0) // second futex word value -> ignored
     );
-    if(unlikely(result == -1)) {
+    if(result == -1) [[unlikely]] {
       int errorNumber = errno;
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not wake up thread waiting on futex", errorNumber
@@ -161,7 +161,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       static_cast<std::uint32_t *>(nullptr), // second futex word -> ignored
       static_cast<int>(0) // second futex word value -> ignored
     );
-    if(unlikely(result == -1)) {
+    if(result == -1) [[unlikely]] {
       int errorNumber = errno;
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not wake up threads waiting on futex", errorNumber

@@ -46,7 +46,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     static const char *fileMode = "rb";
 
     FILE *file = ::fopen(path.c_str(), fileMode);
-    if(unlikely(file == nullptr)) {
+    if(file == nullptr) [[unlikely]] {
       int errorNumber = errno;
 
       std::string errorMessage(u8"Could not open file '");
@@ -65,7 +65,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     static const char *fileMode = truncate ? "wb" : "w+b";
 
     FILE *file = ::fopen(path.c_str(), fileMode);
-    if(unlikely(file == nullptr)) {
+    if(file == nullptr) [[unlikely]] {
       int errorNumber = errno;
 
       std::string errorMessage(u8"Could not open file '");
@@ -82,7 +82,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   std::size_t PosixFileApi::Read(FILE *file, std::uint8_t *buffer, std::size_t count) {
     size_t readByteCount = ::fread(buffer, 1, count, file);
-    if(unlikely(readByteCount == 0)) {
+    if(readByteCount == 0) [[unlikely]] {
       int errorNumber = errno;
 
       int result = ::feof(file);
@@ -101,7 +101,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   std::size_t PosixFileApi::Write(FILE *file, const std::uint8_t *buffer, std::size_t count) {
     size_t writtenByteCount = ::fwrite(buffer, 1, count, file);
-    if(unlikely(writtenByteCount == 0)) {
+    if(writtenByteCount == 0) [[unlikely]] {
       int errorNumber = errno;
 
       int result = ::ferror(file);
@@ -120,7 +120,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   void PosixFileApi::Flush(FILE *file) {
     int result = ::fflush(file);
-    if(unlikely(result == EOF)) {
+    if(result == EOF) [[unlikely]] {
       int errorNumber = errno;
       std::string errorMessage(u8"Could not flush file buffers");
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
@@ -131,10 +131,12 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   void PosixFileApi::Close(FILE *file, bool throwOnError /* = true */) {
     int result = ::fclose(file);
-    if(throwOnError && unlikely(result != 0)) {
-      int errorNumber = errno;
-      std::string errorMessage(u8"Could not close file");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    if(result != 0) [[unlikely]] {
+      if(throwOnError) [[likely]] {
+        int errorNumber = errno;
+        std::string errorMessage(u8"Could not close file");
+        Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      }
     }
   }
 

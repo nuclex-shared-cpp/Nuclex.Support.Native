@@ -141,7 +141,7 @@ namespace {
 
         while(read < readEnd) {
           char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
-          if(unlikely(codePoint == U'/')) {
+          if(codePoint == U'/') [[unlikely]] {
             UnicodeHelper::WriteCodePoint(write, U'\\');
           } else {
             UnicodeHelper::WriteCodePoint(write, codePoint);
@@ -154,7 +154,7 @@ namespace {
 
         while(read < readEnd) {
           char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
-          if(unlikely(codePoint == U'/')) {
+          if(codePoint == U'/') [[unlikely]] {
             *write = U'\\';
           } else {
             *write = UnicodeHelper::ReadCodePoint(read, readEnd);
@@ -266,7 +266,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         &longestSubKeyLength, nullptr, nullptr, nullptr,
         nullptr, nullptr, nullptr
       );
-      if(unlikely(result != ERROR_SUCCESS)) {
+      if(result != ERROR_SUCCESS) [[unlikely]] {
         Platform::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not query number of subkeys from registry key", result
         );
@@ -299,7 +299,7 @@ namespace Nuclex { namespace Support { namespace Platform {
             &keyNameLength,
             nullptr, nullptr, nullptr, nullptr
           );
-          if(likely(result != ERROR_MORE_DATA)) {
+          if(result != ERROR_MORE_DATA) [[likely]] {
             break;
           } else {
             longestSubKeyLength += 256;
@@ -307,9 +307,9 @@ namespace Nuclex { namespace Support { namespace Platform {
             keyNameLength = longestSubKeyLength;
           }
         }
-        if(unlikely(result == ERROR_NO_MORE_ITEMS)) {
+        if(result == ERROR_NO_MORE_ITEMS) [[unlikely]] {
           break; // end reached
-        } else if(unlikely(result != ERROR_SUCCESS)) {
+        } else if(result != ERROR_SUCCESS) [[unlikely]] {
           Platform::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not query name of subkey from registry key", result
           );
@@ -341,7 +341,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         nullptr, nullptr, &valueCount, &longestValueNameLength,
         nullptr, nullptr, nullptr
       );
-      if(unlikely(result != ERROR_SUCCESS)) {
+      if(result != ERROR_SUCCESS) [[unlikely]] {
         Platform::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not query number of values in registry key", result
         );
@@ -374,7 +374,7 @@ namespace Nuclex { namespace Support { namespace Platform {
             &valueNameLength,
             nullptr, nullptr, nullptr, nullptr
           );
-          if(likely(result != ERROR_MORE_DATA)) {
+          if(result != ERROR_MORE_DATA) [[likely]] {
             break;
           } else {
             longestValueNameLength += 256;
@@ -382,9 +382,9 @@ namespace Nuclex { namespace Support { namespace Platform {
             valueNameLength = longestValueNameLength;
           }
         }
-        if(unlikely(result == ERROR_NO_MORE_ITEMS)) {
+        if(result == ERROR_NO_MORE_ITEMS) [[unlikely]] {
           break; // end reached
-        } else if(unlikely(result != ERROR_SUCCESS)) {
+        } else if(result != ERROR_SUCCESS) [[unlikely]] {
           Platform::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not query name of registry value", result
           );
@@ -436,7 +436,7 @@ namespace Nuclex { namespace Support { namespace Platform {
           &subKeyHandle
         );
       }
-      if(unlikely(result != ERROR_SUCCESS)) {
+      if(result != ERROR_SUCCESS) [[unlikely]] {
         if(result == ERROR_FILE_NOT_FOUND) {
           return ::HKEY(nullptr);
         } else {
@@ -469,7 +469,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         &openedSubKey,
         nullptr // disposition - tells whether new key was created - we don't care
       );
-      if(unlikely(result != ERROR_SUCCESS)) {
+      if(result != ERROR_SUCCESS) [[unlikely]] {
         Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not open or create registry subkey for read/write access", result
         );
@@ -487,7 +487,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ::LSTATUS result = ::RegDeleteTreeW(parentKeyHandle, subKeyNameUtf16.c_str());
     if(result == ERROR_FILE_NOT_FOUND) {
       return false;
-    } else if(unlikely(result != ERROR_SUCCESS)) {
+    } else if(result != ERROR_SUCCESS) [[unlikely]] {
       std::string message(u8"Could not delete registry tree at '", 35);
       message.append(subKeyName);
       message.append(u8"'", 1);

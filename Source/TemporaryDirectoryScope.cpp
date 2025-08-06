@@ -208,7 +208,7 @@ namespace Nuclex { namespace Support {
 
     // Create the temporary directory
     BOOL result = ::CreateDirectoryW(directoryPath.c_str(), nullptr);
-    if(unlikely(result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
 
       std::string errorMessage(u8"Could not create directory '");
@@ -230,7 +230,7 @@ namespace Nuclex { namespace Support {
 
     // Select and open a unique temporary directory name
     const char *path = ::mkdtemp(pathTemplate.data());
-    if(unlikely(path == nullptr)) {
+    if(path == nullptr) [[unlikely]] {
       int errorNumber = errno;
 
       std::string errorMessage(u8"Could not create temporary directory '");
@@ -264,10 +264,10 @@ namespace Nuclex { namespace Support {
     int result = ::nftw(
       this->path.c_str(), removeFileOrDirectoryCallback, 64, FTW_DEPTH | FTW_PHYS
     );
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       int errorNumber = errno;
 
-      std::string errorMessage(u8"Could not erase temporary directory contents in '");
+      std::u8string errorMessage(u8"Could not erase temporary directory contents in '");
       errorMessage.append(this->path);
       errorMessage.append(u8"'");
 

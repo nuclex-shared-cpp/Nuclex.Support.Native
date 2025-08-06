@@ -187,22 +187,22 @@ namespace Nuclex { namespace Support { namespace Text {
 
       // If the current character is a carriage return, then we're either dealing with
       // an old Mac-style CR line break or a Windows-style CR-LF line break
-      if(unlikely(codePoint == CarriageReturn)) {
+      if(codePoint == CarriageReturn) [[unlikely]] {
         lineEnd = start;
         start = current;
 
         // See if we can read one more character in order to figure out if this is
         // a Windows-style line break or if it's really an old Mac document.
-        if(likely(current < end)) {
+        if(current < end) [[likely]] {
           codePoint = UnicodeHelper::ReadCodePoint(current, end);
           requireValidCodePoint(codePoint);
-          if(likely(codePoint == LineFeed)) { // It's a Windows-style line break
+          if(codePoint == LineFeed) [[likely]] { // It's a Windows-style line break
             start = current; // Update start pointer to Include the LF in the line
           }
         }
 
         break;
-      } else if(unlikely(codePoint == LineFeed)) { // Unix/Linux-style line break
+      } else if(codePoint == LineFeed) [[unlikely]] { // Unix/Linux-style line break
         lineEnd = start;
         start = current;
         break;

@@ -106,7 +106,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ends {-1, -1} {
 
     int result = ::pipe(this->ends);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       int errorNumber = errno;
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not set up a pipe", errorNumber
@@ -135,7 +135,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     assert(((whichEnd == 0) || (whichEnd == 1)) && u8"whichEnd is either 0 or 1");
 
     int result = ::close(this->ends[whichEnd]);
-    if(unlikely(result != 0)) {
+    if(result != 0) [[unlikely]] {
       int errorNumber = errno;
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
         u8"Could not close one end of a pipe", errorNumber

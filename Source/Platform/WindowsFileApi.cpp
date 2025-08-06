@@ -133,7 +133,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       FILE_ATTRIBUTE_NORMAL,
       nullptr
     );
-    if(unlikely(fileHandle == INVALID_HANDLE_VALUE)) {
+    if(fileHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
 
       std::string errorMessage(u8"Could not open file '");
@@ -160,7 +160,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       FILE_ATTRIBUTE_NORMAL,
       nullptr
     );
-    if(unlikely(fileHandle == INVALID_HANDLE_VALUE)) {
+    if(fileHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
 
       std::string errorMessage(u8"Could not open file '");
@@ -183,7 +183,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     BOOL result = ::SetFilePointerEx(
       fileHandle, distanceToMove, &newFilePointer, anchor
     );
-    if(unlikely(result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::string errorMessage(u8"Could not move file cursor");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
@@ -199,7 +199,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     DWORD actualCount = 0;
 
     BOOL result = ::ReadFile(fileHandle, buffer, desiredCount, &actualCount, nullptr);
-    if(unlikely(result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::string errorMessage(u8"Could not read data from file");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
@@ -217,7 +217,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     DWORD actualCount = 0;
 
     BOOL result = ::WriteFile(fileHandle, buffer, desiredCount, &actualCount, nullptr);
-    if(unlikely(result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::string errorMessage(u8"Could not write data from file");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
@@ -230,7 +230,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   void WindowsFileApi::SetLengthToFileCursor(HANDLE fileHandle) {
     BOOL result = ::SetEndOfFile(fileHandle);
-    if(unlikely(result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::string errorMessage(u8"Could not truncate/pad file to file cursor position");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
@@ -241,7 +241,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   void WindowsFileApi::FlushFileBuffers(HANDLE fileHandle) {
     BOOL result = ::FlushFileBuffers(fileHandle);
-    if(unlikely(result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::string errorMessage(u8"Could not flush file buffers");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
