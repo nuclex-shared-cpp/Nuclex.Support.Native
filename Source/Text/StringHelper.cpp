@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Text/StringHelper.h"
 
+#include "Nuclex/Support/Text/StringConverter.h"
 #include "Nuclex/Support/Text/UnicodeHelper.h"
 #include "Nuclex/Support/Text/ParserHelper.h"
 #include "Nuclex/Support/Errors/CorruptStringError.h"
@@ -48,11 +49,13 @@ namespace {
   /// <typeparam name="CharType">Type of characters being processed</typeparam>
   /// <param name="codePoint">Code point that will be checked</param>
   template<>
-  void requireValidCodePoint<Nuclex::Support::Text::UnicodeHelper::Char8Type>(
+  void requireValidCodePoint<char8_t>(
     char32_t codePoint
   ) {
     if(codePoint == char32_t(-1)) {
-      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-8 string");
+      throw Nuclex::Support::Errors::CorruptStringError(
+        Nuclex::Support::Text::StringConverter::CharFromUtf8(u8"Corrupt UTF-8 string")
+      );
     }
   }
 
@@ -64,7 +67,9 @@ namespace {
   template<>
   void requireValidCodePoint<char16_t>(char32_t codePoint) {
     if(codePoint == char32_t(-1)) {
-      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-16 string");
+      throw Nuclex::Support::Errors::CorruptStringError(
+        Nuclex::Support::Text::StringConverter::CharFromUtf8(u8"Corrupt UTF-16 string")
+      );
     }
   }
 
@@ -76,7 +81,9 @@ namespace {
   template<>
   void requireValidCodePoint<char32_t>(char32_t codePoint) {
     if(codePoint == char32_t(-1)) {
-      throw Nuclex::Support::Errors::CorruptStringError(u8"Corrupt UTF-32 string");
+      throw Nuclex::Support::Errors::CorruptStringError(
+        Nuclex::Support::Text::StringConverter::CharFromUtf8(u8"Corrupt UTF-32 string")
+      );
     }
   }
 
@@ -436,12 +443,12 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   void StringHelper::CollapseDuplicateWhitespace(
-    std::string &utf8String, bool alsoTrim /* = true */
+    std::u8string &utf8String, bool alsoTrim /* = true */
   ) {
     if(alsoTrim) {
-      collapseDuplicateWhitespaceAndTrim<std::string, UnicodeHelper::Char8Type>(utf8String);
+      collapseDuplicateWhitespaceAndTrim<std::u8string, char8_t>(utf8String);
     } else {
-      collapseDuplicateWhitespaceWithoutTrim<std::string, UnicodeHelper::Char8Type>(utf8String);
+      collapseDuplicateWhitespaceWithoutTrim<std::u8string, char8_t>(utf8String);
     }
   }
 
@@ -468,9 +475,9 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   void StringHelper::EraseSubstrings(
-    std::string &utf8String, const std::string &victim
+    std::u8string &utf8String, const std::u8string &victim
   ) {
-    eraseSubstrings<std::string, UnicodeHelper::Char8Type>(utf8String, victim);
+    eraseSubstrings<std::u8string, char8_t>(utf8String, victim);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -487,8 +494,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string_view StringHelper::GetTrimmed(const std::string_view &utf8String) {
-    return getTrimmedStringView<std::string_view, UnicodeHelper::Char8Type>(utf8String);
+  std::u8string_view StringHelper::GetTrimmed(const std::u8string_view &utf8String) {
+    return getTrimmedStringView<std::u8string_view, char8_t>(utf8String);
   }
 
   // ------------------------------------------------------------------------------------------- //

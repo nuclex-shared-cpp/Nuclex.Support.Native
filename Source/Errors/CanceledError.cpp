@@ -21,10 +21,19 @@ limitations under the License.
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Errors/CanceledError.h"
+#include "Nuclex/Support/Text/StringConverter.h"
 
-// --------------------------------------------------------------------------------------------- //
+namespace Nuclex { namespace Support { namespace Errors {
 
-// This file is only here to guarantee that its associated header has no hidden
-// dependencies and can be included on its own
+  // ------------------------------------------------------------------------------------------- //
 
-// --------------------------------------------------------------------------------------------- //
+  CanceledError::CanceledError(const std::u8string &message) :
+    std::future_error(std::future_errc::broken_promise),
+    message(Text::StringConverter::Utf16FromUtf8)
+
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+}}} // namespace Nuclex::Support::Errors
+

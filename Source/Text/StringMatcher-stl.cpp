@@ -21,6 +21,7 @@ limitations under the License.
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Text/StringMatcher.h"
+#include "Nuclex/Support/Text/StringConverter.h"
 #include "Nuclex/Support/Text/UnicodeHelper.h" // UTF encoding and decoding
 
 #include <vector> // for std::vector
@@ -28,11 +29,6 @@ limitations under the License.
 #include <cassert> // for assert()
 
 namespace {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Invidual UTF-8 character type (until C++20 introduces char8_t)</summary>
-  typedef unsigned char my_char8_t;
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -44,7 +40,11 @@ namespace {
   /// </remarks>
   void requireValidCodePoint(char32_t codePoint) {
     if(!Nuclex::Support::Text::UnicodeHelper::IsValidCodePoint(codePoint)) {
-      throw std::invalid_argument(u8"Illegal UTF-8 character(s) encountered");
+      throw std::invalid_argument(
+        Nuclex::Support::Text::StringConverter::CharFromUtf8(
+          u8"Illegal UTF-8 character(s) encountered"
+        )
+      );
     }
   }
 
@@ -147,14 +147,14 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::size_t CaseInsensitiveUtf8Hash::operator()(const std::string &text) const noexcept {
+  std::size_t CaseInsensitiveUtf8Hash::operator()(const std::u8string &text) const noexcept {
     static const std::uint8_t aslrSeed = 0;
     std::size_t hash = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(&aslrSeed));
 
     using Nuclex::Support::Text::UnicodeHelper;
 
-    const my_char8_t *current = reinterpret_cast<const my_char8_t *>(text.c_str());
-    const my_char8_t *end = current + text.length();
+    const char8_t *current = text.c_str();
+    const char8_t *end = current + text.length();
     while(current < end) {
       char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
       requireValidCodePoint(codePoint);
@@ -181,7 +181,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   bool CaseInsensitiveUtf8EqualTo::operator()(
-    const std::string &left, const std::string &right
+    const std::u8string &left, const std::u8string &right
   ) const noexcept {
     return StringMatcher::AreEqual<false>(left, right);
   }
@@ -189,14 +189,14 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   bool CaseInsensitiveUtf8Less::operator()(
-    const std::string &left, const std::string &right
+    const std::u8string &left, const std::u8string &right
   ) const noexcept {
     using Nuclex::Support::Text::UnicodeHelper;
 
-    const my_char8_t *leftStart = reinterpret_cast<const my_char8_t *>(left.c_str());
-    const my_char8_t *leftEnd = leftStart + left.length();
-    const my_char8_t *rightStart = reinterpret_cast<const my_char8_t *>(right.c_str());
-    const my_char8_t *rightEnd = rightStart + right.length();
+    const char8_t *leftStart = left.c_str();
+    const char8_t *leftEnd = leftStart + left.length();
+    const char8_t *rightStart = right.c_str();
+    const char8_t *rightEnd = rightStart + right.length();
 
     for(;;) {
       if(leftStart >= leftEnd) {

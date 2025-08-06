@@ -38,6 +38,10 @@ namespace Nuclex { namespace Support { namespace Errors {
 
     /// <summary>Initializes a cancellation-indicating error</summary>
     /// <param name="message">Message that describes the error</param>
+    public: NUCLEX_SUPPORT_API explicit CanceledError(const std::u8string &message);
+
+    /// <summary>Initializes a cancellation-indicating error</summary>
+    /// <param name="message">Message that describes the error</param>
     public: NUCLEX_SUPPORT_API explicit CanceledError(const std::string &message) :
       std::future_error(std::future_errc::broken_promise),
       message(message) {}

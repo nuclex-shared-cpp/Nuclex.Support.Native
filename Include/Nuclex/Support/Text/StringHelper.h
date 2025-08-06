@@ -22,8 +22,8 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-#include <string> // for std::string
-#include <string_view> // for std::string_view
+#include <string> // for std::u8string
+#include <string_view> // for std::u8string_view
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -42,7 +42,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   will result either in a single whitespace remaining or nothing if trim is enabled.
     /// </remarks>
     public: NUCLEX_SUPPORT_API static void CollapseDuplicateWhitespace(
-      std::string &utf8String, bool alsoTrim = true
+      std::u8string &utf8String, bool alsoTrim = true
     );
 
     /// <summary>Removes any whitespace characters that follow other whitespace</summary>
@@ -72,7 +72,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   was present initially, not where it was formed as an effect of the removal).
     /// </remarks>
     public: NUCLEX_SUPPORT_API static void EraseSubstrings(
-      std::string &utf8String, const std::string &victim
+      std::u8string &utf8String, const std::u8string &victim
     );
 
     /// <summary>Removes all occurrences of a substring from the master string</summary>
@@ -101,8 +101,8 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   as UTF-8 enumeration requires pointers to the string's data and length to
     ///   be taken anyway.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static std::string_view GetTrimmed(
-      const std::string_view &utf8String
+    public: NUCLEX_SUPPORT_API static std::u8string_view GetTrimmed(
+      const std::u8string_view &utf8String
     );
 
     /// <summary>Returns a whitespace-trimmed segment of the input string</summary>

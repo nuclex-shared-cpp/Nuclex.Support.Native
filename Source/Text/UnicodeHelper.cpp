@@ -615,13 +615,13 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char32_t UnicodeHelper::ReadCodePoint(const Char8Type *&current, const Char8Type *end) {
+  char32_t UnicodeHelper::ReadCodePoint(const char8_t *&current, const char8_t *end) {
     return readCodePointUtf8(current, end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  char32_t UnicodeHelper::ReadCodePoint(Char8Type *&current, const Char8Type *end) {
+  char32_t UnicodeHelper::ReadCodePoint(char8_t *&current, const char8_t *end) {
     return readCodePointUtf8(current, end);
   }
 

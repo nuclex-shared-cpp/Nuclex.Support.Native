@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <functional> //for std::hash, std::equal_to, std::less
 #include <cstdint> // for std::uint32_t, std::uint64_t
 
@@ -47,7 +47,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// </remarks>
     public: template<bool CaseSensitive = false>
     NUCLEX_SUPPORT_API static bool AreEqual(
-      const std::string &left, const std::string &right
+      const std::u8string &left, const std::u8string &right
     );
 
     /// <summary>Checks whether one UTF-8 string contains another UTF-8 string</summary>
@@ -63,7 +63,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// </returns>
     public: template<bool CaseSensitive = false>
     NUCLEX_SUPPORT_API static bool Contains(
-      const std::string &haystack, const std::string &needle
+      const std::u8string &haystack, const std::u8string &needle
     );
 
     /// <summary>Finds the first occurrence of a string within another string</summary>
@@ -76,11 +76,11 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="needle">String which might appear inside the other string</param>
     /// <returns>
     ///   The index of the first 'needle' string within the 'haystack' string or
-    ///   std::string::npos if the 'needle' was not found.
+    ///   std::u8string::npos if the 'needle' was not found.
     /// </returns>
     public: template<bool CaseSensitive = false>
-    NUCLEX_SUPPORT_API static std::string::size_type Find(
-      const std::string &haystack, const std::string &needle
+    NUCLEX_SUPPORT_API static std::u8string::size_type Find(
+      const std::u8string &haystack, const std::u8string &needle
     );
 
     /// <summary>Checks whether one UTF-8 string starts with another UTF-8 string</summary>
@@ -96,7 +96,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// </returns>
     public: template<bool CaseSensitive = false>
     NUCLEX_SUPPORT_API static bool StartsWith(
-      const std::string &text, const std::string &beginning
+      const std::u8string &text, const std::u8string &beginning
     );
 
     /// <summary>Checks whether one UTF-8 string ends with another UTF-8 string</summary>
@@ -118,7 +118,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// </remarks>
     public: template<bool CaseSensitive = false>
     NUCLEX_SUPPORT_API static bool EndsWith(
-      const std::string &text, const std::string &ending
+      const std::u8string &text, const std::u8string &ending
     );
 
     /// <summary>Checks whether a UTF-8 string matches a wildcard</summary>
@@ -136,7 +136,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// </remarks>
     public: template<bool CaseSensitive = false>
     NUCLEX_SUPPORT_API static bool FitsWildcard(
-      const std::string &text, const std::string &wildcard
+      const std::u8string &text, const std::u8string &wildcard
     );
 
   };
@@ -144,78 +144,78 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<false>(
-    const std::string &left, const std::string &right
+    const std::u8string &left, const std::u8string &right
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<true>(
-    const std::string &left, const std::string &right
+    const std::u8string &left, const std::u8string &right
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::Contains<false>(
-    const std::string &haystack, const std::string &needle
+    const std::u8string &haystack, const std::u8string &needle
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::Contains<true>(
-    const std::string &haystack, const std::string &needle
+    const std::u8string &haystack, const std::u8string &needle
   );
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string::size_type NUCLEX_SUPPORT_API StringMatcher::Find<false>(
-    const std::string &haystack, const std::string &needle
+  template<> std::u8string::size_type NUCLEX_SUPPORT_API StringMatcher::Find<false>(
+    const std::u8string &haystack, const std::u8string &needle
   );
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string::size_type NUCLEX_SUPPORT_API StringMatcher::Find<true>(
-    const std::string &haystack, const std::string &needle
+  template<> std::u8string::size_type NUCLEX_SUPPORT_API StringMatcher::Find<true>(
+    const std::u8string &haystack, const std::u8string &needle
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::StartsWith<false>(
-    const std::string &text, const std::string &beginning
+    const std::u8string &text, const std::u8string &beginning
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::StartsWith<true>(
-    const std::string &text, const std::string &beginning
+    const std::u8string &text, const std::u8string &beginning
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::EndsWith<false>(
-    const std::string &text, const std::string &ending
+    const std::u8string &text, const std::u8string &ending
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::EndsWith<true>(
-    const std::string &text, const std::string &ending
+    const std::u8string &text, const std::u8string &ending
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::FitsWildcard<false>(
-    const std::string &text, const std::string &wildcard
+    const std::u8string &text, const std::u8string &wildcard
   );
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::FitsWildcard<true>(
-    const std::string &text, const std::string &wildcard
+    const std::u8string &text, const std::u8string &wildcard
   );
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Case-insensitive UTF-8 version of std::hash&lt;std::string&gt;</summary>
+  /// <summary>Case-insensitive UTF-8 version of std::hash&lt;std::u8string&gt;</summary>
   /// <remarks>
   ///   You can use this to construct a case-insensitive <code>std::unordered_map</code>.
   /// </remarks>
@@ -225,14 +225,14 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="text">UTF-8 string of which a hash value will be calculated</param>
     /// <returns>The case-insensitive hash value of the provided string</returns>
     public: NUCLEX_SUPPORT_API std::size_t operator()(
-      const std::string &text
+      const std::u8string &text
     ) const noexcept;
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Case-insensitive UTF-8 version of std::equal_to&lt;std::string&gt;</summary>
+  /// <summary>Case-insensitive UTF-8 version of std::equal_to&lt;std::u8string&gt;</summary>
   /// <remarks>
   ///   You can use this to construct a case-insensitive <code>std::unordered_map</code>.
   /// </remarks>
@@ -243,14 +243,14 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="right">Other UTF-8 string to compare</param>
     /// <returns>True if both UTF-8 strings have equal contents</returns>
     public: NUCLEX_SUPPORT_API bool operator()(
-      const std::string &left, const std::string &right
+      const std::u8string &left, const std::u8string &right
     ) const noexcept;
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Case-insensitive UTF-8 version of std::less&lt;std::string&gt;</summary>
+  /// <summary>Case-insensitive UTF-8 version of std::less&lt;std::u8string&gt;</summary>
   /// <remarks>
   ///   You can use this to construct a case-insensitive <code>std::map</code>.
   /// </remarks>
@@ -261,7 +261,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="right">Other UTF-8 string to compare</param>
     /// <returns>True if the first UTF-8 string is 'less', ignoring case</returns>
     public: NUCLEX_SUPPORT_API bool operator()(
-      const std::string &left, const std::string &right
+      const std::u8string &left, const std::u8string &right
     ) const noexcept;
 
   };

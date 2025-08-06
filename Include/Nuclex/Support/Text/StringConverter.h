@@ -71,8 +71,8 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <summary>Counts the number of UTF-8 letters in a string</summary>
     /// <param name="from">UTF-8 string whose letters will be counted</param>
     /// <returns>The number of UTF-8 letters the string is holding</returns>
-    public: NUCLEX_SUPPORT_API static std::string::size_type CountUtf8Letters(
-      const std::string &from
+    public: NUCLEX_SUPPORT_API static std::u8string::size_type CountUtf8CodePoints(
+      const std::u8string &from
     );
 
     /// <summary>Converts a UTF-8 string into a wide (UTF-16 or UTF-32) string</summary>
@@ -83,7 +83,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   the compiler's wchar_t, thereby matching the default encoding used by your compiler
     ///   and the defaults of any wide-character APIs on your platform.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static std::wstring WideFromUtf8(const std::string &from);
+    public: NUCLEX_SUPPORT_API static std::wstring WideFromUtf8(const std::u8string &from);
 
     /// <summary>Converts a wide (UTF-16 or UTF-32) string into a UTF-8 string</summary>
     /// <param name="from">Wide string that will be converted</param>
@@ -93,19 +93,40 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   the compiler's wchar_t, thereby matching the default encoding used by your compiler
     ///   when you write L&quot;Hello&quot; in your code.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static std::string Utf8FromWide(const std::wstring &from);
+    public: NUCLEX_SUPPORT_API static std::u8string Utf8FromWide(const std::wstring &from);
+
+    /// <summary>Converts a UTF-8 string into a 'char'-based string that's still UTF-8</summary>
+    /// <param name="from">UTF-8 string that will be converted</param>
+    /// <returns>A 'char'-based version of the provided UTF-8 string</returns>
+    /// <remarks>
+    ///   Historically, 'char' was used for ASCII text, but the UNIX and Linux world early on
+    ///   did a clean switch to UTF-8, so 'char' is synonymous with UTF-8 character (of which
+    ///   1 to 4 form a code point, aka a letter), while Windows did the whole regional ANSI
+    ///   codepage mess, thus, overall, `std::string` might contain ASCII, ANSI or UTF-8.
+    ///   This method just mushes the UTF-8 characters into an std::string unchanged.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static std::string CharFromUtf8(const std::u8string &from);
+
+    /// <summary>Converts a 'char'-based (but UTF-8 encoded) string into a UTF-8 string</summary>
+    /// <param name="from">'char'-based string holding UTF-8 text that will be converted</param>
+    /// <returns>A UTF-8 version of the provided 'char'-based string</returns>
+    /// <remarks>
+    ///   This assumes that the provided string already contains UTF-8 characters that just
+    ///   so happen to be stored in a 'char'-based string for compatibility reasons.
+    /// </remarks>
+    public: NUCLEX_SUPPORT_API static std::u8string Utf8FromChar(const std::string &from);
 
     /// <summary>Converts a UTF-8 string into a UTF-16 string</summary>
     /// <param name="utf8String">UTF-8 string that will be converted</param>
     /// <returns>A UTF-16 version of the provided UTF-8 string</returns>
     public: NUCLEX_SUPPORT_API static std::u16string Utf16FromUtf8(
-      const std::string &utf8String
+      const std::u8string &utf8String
     );
 
     /// <summary>Converts a UTF-16 string into a UTF-8 string</summary>
     /// <param name="utf16String">UTF-16 string that will be converted</param>
     /// <returns>A UTF-8 version of the provided UTF-16 string</returns>
-    public: NUCLEX_SUPPORT_API static std::string Utf8FromUtf16(
+    public: NUCLEX_SUPPORT_API static std::u8string Utf8FromUtf16(
       const std::u16string &utf16String
     );
 
@@ -113,13 +134,13 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <param name="utf8String">UTF-8 string that will be converted</param>
     /// <returns>A UTF-32 version of the provided UTF-8 string</returns>
     public: NUCLEX_SUPPORT_API static std::u32string Utf32FromUtf8(
-      const std::string &utf8String
+      const std::u8string &utf8String
     );
 
     /// <summary>Converts a UTF-32 string into a UTF-8 string</summary>
     /// <param name="utf32String">UTF-32 string that will be converted</param>
     /// <returns>A UTF-8 version of the provided UTF-32 string</returns>
-    public: NUCLEX_SUPPORT_API static std::string Utf8FromUtf32(
+    public: NUCLEX_SUPPORT_API static std::u8string Utf8FromUtf32(
       const std::u32string &utf32String
     );
 
@@ -132,8 +153,8 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   correct result for a human reading the string (though in the vast majority of cases
     ///   it does) -- its purpose is to enable case-insensitive comparison of strings.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static std::string FoldedLowercaseFromUtf8(
-      const std::string &utf8String
+    public: NUCLEX_SUPPORT_API static std::u8string FoldedLowercaseFromUtf8(
+      const std::u8string &utf8String
     );
 
   };

@@ -21,6 +21,7 @@ limitations under the License.
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Text/StringMatcher.h"
+#include "Nuclex/Support/Text/StringConverter.h"
 #include "Nuclex/Support/Text/UnicodeHelper.h" // UTF encoding and decoding
 #include "Nuclex/Support/Errors/CorruptStringError.h"
 
@@ -66,11 +67,6 @@ namespace {
 #endif
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Invidual UTF-8 character type (until C++20 introduces char8_t)</summary>
-  typedef unsigned char my_char8_t;
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Throws an exception of the code point is invalid</summary>
   /// <param name="codePoint">Unicode code point that will be checked</param>
   /// <remarks>
@@ -80,7 +76,9 @@ namespace {
   void requireValidCodePoint(char32_t codePoint) {
     if(!Nuclex::Support::Text::UnicodeHelper::IsValidCodePoint(codePoint)) {
       throw Nuclex::Support::Errors::CorruptStringError(
-        u8"Illegal UTF-8 character(s) encountered"
+        Nuclex::Support::Text::StringConverter::CharFromUtf8(
+          u8"Illegal UTF-8 character(s) encountered"
+        )
       );
     }
   }
@@ -96,8 +94,8 @@ namespace {
   /// <returns>True if the 'haystack' string starts with the 'needle' string</returns>
   template<bool CaseSensitive>
   bool areUtf8StringsEqual(
-    const my_char8_t *haystack, const my_char8_t *haystackEnd,
-    const my_char8_t *needle, const my_char8_t *needleEnd
+    const char8_t *haystack, const char8_t *haystackEnd,
+    const char8_t *needle, const char8_t *needleEnd
   ) {
     using Nuclex::Support::Text::UnicodeHelper;
     assert((haystack != nullptr) && u8"Haystack must not be a NULL pointer");
@@ -130,18 +128,18 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Checks if a string ends with the specified UTF-8 sequence</summary>
-  /// <typeparam name="TString">Stirng type, either std::string or std::string_view</typeparam>
+  /// <typeparam name="TString">Stirng type, either std::u8string or std::u8string_view</typeparam>
   /// <typeparam name="CaseSensitive">Whether to compare case sensitive</typeparam>
   /// <param name="haystack">String whose ending will be checked</param>
   /// <param name="needle">String that the other string might end with</param>
   /// <returns>True if the 'haystack' ended with the 'needle' string</returns>
   template<typename TString, bool CaseSensitive>
-  bool doesUtf8StringEndWith(const TString &haystack, const std::string &needle) {
+  bool doesUtf8StringEndWith(const TString &haystack, const std::u8string &needle) {
     const my_char8_t *haystackStart, *haystackEnd;
     const my_char8_t *needleStart, *needleEnd;
     {
-      std::string::size_type needleLength = needle.length();
-      std::string::size_type haystackLength = haystack.length();
+      std::u8string::size_type needleLength = needle.length();
+      std::u8string::size_type haystackLength = haystack.length();
 
       // If the haystack is too short to contain the needle, we don't even need to check
       // Also required for the pointer math below to be safe.
@@ -151,10 +149,10 @@ namespace {
 
       // Pick the start in the haystack to begin the same number of bytes from
       // its end as the 'needle' is long.
-      haystackEnd = reinterpret_cast<const my_char8_t*>(haystack.data()) + haystackLength;
+      haystackEnd = haystack.data() + haystackLength;
       haystackStart = haystackEnd - needleLength; // safe, since we checked the length
 
-      needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+      needleStart = needle.data();
       needleEnd = needleStart + needleLength;
     }
 
@@ -192,9 +190,9 @@ namespace {
   ///   if no matches were found.
   /// </returns>
   template<bool CaseSensitive>
-  const my_char8_t *findUtf8Substring(
-    const my_char8_t *haystack, const my_char8_t *haystackEnd,
-    const my_char8_t *needle, const my_char8_t *needleEnd
+  const char8_t *findUtf8Substring(
+    const char8_t *haystack, const char8_t *haystackEnd,
+    const char8_t *needle, const char8_t *needleEnd
   ) {
     using Nuclex::Support::Text::UnicodeHelper;
     assert((haystack != nullptr) && u8"Haystack must not be a NULL pointer");
@@ -273,8 +271,8 @@ namespace {
   /// <returns>True if the text matches the wild card, false otherwise</returns>
   template<bool CaseSensitive>
   bool matchUtf8Wildcard(
-    const my_char8_t *text, const my_char8_t *textEnd,
-    const my_char8_t *wildcard, const my_char8_t *wildcardEnd
+    const char8_t *text, const char8_t *textEnd,
+    const char8_t *wildcard, const char8_t *wildcardEnd
   ) {
     using Nuclex::Support::Text::UnicodeHelper;
     assert((text != nullptr) && u8"Text must not be a NULL pointer");
@@ -367,23 +365,23 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::AreEqual<false>(
-    const std::string &left, const std::string &right
+    const std::u8string &left, const std::u8string &right
   ) {
-    const my_char8_t *leftStart, *leftEnd;
-    const my_char8_t *rightStart, *rightEnd;
+    const char8_t *leftStart, *leftEnd;
+    const char8_t *rightStart, *rightEnd;
     {
-      std::string::size_type leftLength = left.length();
-      std::string::size_type rightLength = right.length();
+      std::u8string::size_type leftLength = left.length();
+      std::u8string::size_type rightLength = right.length();
 
       // If the strings have different lengths, they can't be equal
       if(leftLength != rightLength) {
         return false;
       }
 
-      leftStart = reinterpret_cast<const my_char8_t *>(left.data());
+      leftStart = left.data();
       leftEnd = leftStart + leftLength;
 
-      rightStart = reinterpret_cast<const my_char8_t *>(right.data());
+      rightStart = right.data();
       rightEnd = rightStart + rightLength;
     }
 
@@ -396,7 +394,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::AreEqual<true>(
-    const std::string &left, const std::string &right
+    const std::u8string &left, const std::u8string &right
   ) {
     return (left == right); // d'oh!
   }
@@ -404,10 +402,10 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::Contains<false>(
-    const std::string &haystack, const std::string &needle
+    const std::u8string &haystack, const std::u8string &needle
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+    const char8_t *haystackStart = haystack.data();
+    const char8_t *needleStart = needle.data();
 
     return findUtf8Substring<false>(
       haystackStart, haystackStart + haystack.length(),
@@ -418,10 +416,10 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::Contains<true>(
-    const std::string &haystack, const std::string &needle
+    const std::u8string &haystack, const std::u8string &needle
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+    const char8_t *haystackStart = haystack.data();
+    const char8_t *needleStart = needle.data();
 
     return findUtf8Substring<true>(
       haystackStart, haystackStart + haystack.length(),
@@ -431,18 +429,18 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string::size_type StringMatcher::Find<false>(
-    const std::string &haystack, const std::string &needle
+  template<> std::u8string::size_type StringMatcher::Find<false>(
+    const std::u8string &haystack, const std::u8string &needle
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+    const char8_t *haystackStart = haystack.data();
+    const char8_t *needleStart = needle.data();
 
-    const my_char8_t *start =  findUtf8Substring<false>(
+    const char8_t *start =  findUtf8Substring<false>(
       haystackStart, haystackStart + haystack.length(),
       needleStart, needleStart + needle.length()
     );
     if(start == nullptr) {
-      return std::string::npos;
+      return std::u8string::npos;
     } else {
       return start - haystackStart;
     }
@@ -450,18 +448,18 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string::size_type StringMatcher::Find<true>(
-    const std::string &haystack, const std::string &needle
+  template<> std::u8string::size_type StringMatcher::Find<true>(
+    const std::u8string &haystack, const std::u8string &needle
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(haystack.data());
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(needle.data());
+    const char8_t *haystackStart = haystack.data();
+    const char8_t *needleStart = needle.data();
 
-    const my_char8_t *start = findUtf8Substring<true>(
+    const char8_t *start = findUtf8Substring<true>(
       haystackStart, haystackStart + haystack.length(),
       needleStart, needleStart + needle.length()
     );
     if(start == nullptr) {
-      return std::string::npos;
+      return std::u8string::npos;
     } else {
       return start - haystackStart;
     }
@@ -470,12 +468,12 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::StartsWith<false>(
-    const std::string &text, const std::string &beginning
+    const std::u8string &text, const std::u8string &beginning
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(text.data());
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(beginning.data());
+    const char8_t *haystackStart = text.data();
+    const char8_t *needleStart = beginning.data();
 
-    std::string::size_type needleLength = beginning.length();
+    std::u8string::size_type needleLength = beginning.length();
     if(text.length() < needleLength) {
       return false;
     }
@@ -489,12 +487,12 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::StartsWith<true>(
-    const std::string &text, const std::string &beginning
+    const std::u8string &text, const std::u8string &beginning
   ) {
-    const my_char8_t *haystackStart = reinterpret_cast<const my_char8_t *>(text.data());
-    const my_char8_t *needleStart = reinterpret_cast<const my_char8_t *>(beginning.data());
+    const char8_t *haystackStart = text.data();
+    const char8_t *needleStart = beginning.data();
 
-    std::string::size_type needleLength = beginning.length();
+    std::u8string::size_type needleLength = beginning.length();
     if(text.length() < needleLength) {
       return false;
     }
@@ -508,26 +506,26 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::EndsWith<false>(
-    const std::string &text, const std::string &ending
+    const std::u8string &text, const std::u8string &ending
   ) {
-    return doesUtf8StringEndWith<std::string, false>(text, ending);
+    return doesUtf8StringEndWith<std::u8string, false>(text, ending);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::EndsWith<true>(
-    const std::string &text, const std::string &ending
+    const std::u8string &text, const std::u8string &ending
   ) {
-    return doesUtf8StringEndWith<std::string, true>(text, ending);
+    return doesUtf8StringEndWith<std::u8string, true>(text, ending);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::FitsWildcard<false>(
-    const std::string &text, const std::string &wildcard
+    const std::u8string &text, const std::u8string &wildcard
   ) {
-    const my_char8_t *textStart = reinterpret_cast<const my_char8_t *>(text.data());
-    const my_char8_t *wildcardStart = reinterpret_cast<const my_char8_t *>(wildcard.data());
+    const char8_t *textStart = text.data();
+    const char8_t *wildcardStart = wildcard.data();
 
     return matchUtf8Wildcard<false>(
       textStart, textStart + text.length(),
@@ -538,10 +536,10 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::FitsWildcard<true>(
-    const std::string &text, const std::string &wildcard
+    const std::u8string &text, const std::u8string &wildcard
   ) {
-    const my_char8_t *textStart = reinterpret_cast<const my_char8_t *>(text.data());
-    const my_char8_t *wildcardStart = reinterpret_cast<const my_char8_t *>(wildcard.data());
+    const char8_t *textStart = text.data();
+    const char8_t *wildcardStart = wildcard.data();
 
     return matchUtf8Wildcard<true>(
       textStart, textStart + text.length(),
