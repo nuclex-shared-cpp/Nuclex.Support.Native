@@ -24,6 +24,7 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include <filesystem> // for std::filesystem
 #include "WindowsApi.h"
 
 namespace Nuclex { namespace Support { namespace Platform {
@@ -49,12 +50,12 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <summary>Opens the specified file for shared reading</summary>
     /// <param name="path">Path of the file that will be opened</param>
     /// <returns>The handle of the opened file</returns>
-    public: static HANDLE OpenFileForReading(const std::string &path);
+    public: static HANDLE OpenFileForReading(const std::filesystem::path &path);
 
     /// <summary>Creates or opens the specified file for exclusive writing</summary>
     /// <param name="path">Path of the file that will be opened</param>
     /// <returns>The handle of the opened file</returns>
-    public: static HANDLE OpenFileForWriting(const std::string &path);
+    public: static HANDLE OpenFileForWriting(const std::filesystem::path &path);
 
     /// <summary>Moves the file cursor to a different position</summary>
     /// <param name="fileHandle">Handle of the file whose file cursor to move</param>

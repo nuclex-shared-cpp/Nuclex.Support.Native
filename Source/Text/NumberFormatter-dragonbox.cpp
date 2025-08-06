@@ -39,31 +39,31 @@ limitations under the License.
 #define READY_NEXT_TWO_DIGITS() \
   temp = std::uint64_t(100) * static_cast<std::uint32_t>(temp)
 
-// Appends the next two highest digits in the prepared number to the char buffer
+// Appends the next two highest digits in the prepared number to the char8_t buffer
 // Also adjusts the number such that the next two digits are ready for extraction.
 #define WRITE_TWO_DIGITS(bufferPointer) \
   *reinterpret_cast<TwoChars *>(bufferPointer) = ( \
     *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[(temp >> 31) & 0xFE]) \
   )
 
-// Appends the next highest digit in the prepared number to the char buffer
+// Appends the next highest digit in the prepared number to the char8_t buffer
 // Thus doesn't adjust the number because it is always used on the very last digit.
 #define WRITE_ONE_DIGIT(bufferPointer) \
-  *reinterpret_cast<char *>(bufferPointer) = ( \
-    u8'0' + static_cast<char>(std::uint64_t(10) * std::uint32_t(temp) >> 32) \
+  *reinterpret_cast<char8_t *>(bufferPointer) = ( \
+    u8'0' + static_cast<char8_t>(std::uint64_t(10) * std::uint32_t(temp) >> 32) \
   )
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Structure with the size of two chars</summary>
+  /// <summary>Structure with the size of two char8_ts</summary>
   /// <remarks>
   ///   This is only used to assign two characters at once. Benchmarks (in release mode on
   ///   AMD64 with -O3 on GCC 11) revealed that std::memcpy() is not inlined/intrinsic'd as
   ///   much as one would hope and that this method resulted in faster code.
   /// </remarks>
-  struct TwoChars { char t, o; };
+  struct TwoChars { char8_t t, o; };
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -145,7 +145,7 @@ namespace {
   /// <param name="temp">The integer that will be written to the buffer</param>
   /// <param name="magnitude">Magnitude of the number (digit count minus 1)</param>
   /// <returns>A pointer one past the last written character in the buffer</returns>
-  char *formatInteger32(char *buffer /* [10] */, std::uint64_t temp, std::size_t magnitude) {
+  char8_t *formatInteger32(char8_t *buffer /* [10] */, std::uint64_t temp, std::size_t magnitude) {
     temp *= factors[magnitude];
     temp >>= shift[magnitude];
     temp += bias[magnitude];
@@ -186,8 +186,8 @@ namespace {
   ///   which is between the first and second integral digit
   /// </param>
   /// <returns>A pointer one past the last written character in the buffer</returns>
-  char *formatInteger32WithDecimalPoint(
-    char *buffer /* [48] */, std::uint64_t temp,
+  char8_t *formatInteger32WithDecimalPoint(
+    char8_t *buffer /* [48] */, std::uint64_t temp,
     std::size_t magnitude, std::size_t decimalPointPosition
   ) {
     assert(static_cast<std::uint32_t>(temp) == temp); // Must fit in 32 bits integer!
@@ -212,10 +212,10 @@ namespace {
     // Is there an odd number of digits before the decimal point? Logic is inverse
     // because of the -1 offset on the decimal point posiiton.
     if((decimalPointPosition & 1) == 0) {
-      char pendingDigit;
+      char8_t pendingDigit;
 
       // Append the digits before the decimal point. We know it's an odd number,
-      // so once we get within 2 chars of the decimal point, we have to keep one on hold.
+      // so once we get within 2 char8_ts of the decimal point, we have to keep one on hold.
       for(;;) {
         WRITE_TWO_DIGITS(buffer);
         if(decimalPointPosition < 2) { // Are less than 3 remaining?
@@ -319,8 +319,8 @@ namespace {
   ///   which is between the first and second integral digit
   /// </param>
   /// <returns>A pointer one past the last written character in the buffer</returns>
-  char *formatInteger64WithDecimalPoint(
-    char *buffer /* [325] */, std::uint64_t number,
+  char8_t *formatInteger64WithDecimalPoint(
+    char8_t *buffer /* [325] */, std::uint64_t number,
     std::size_t magnitude, std::size_t decimalPointPosition
   ) {
     // float64 has 53 bits precision for the significand, thus the largest value we can
@@ -366,7 +366,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatFloat(char *buffer /* [46] */, float value) {
+  char8_t *FormatFloat(char8_t *buffer /* [46] */, float value) {
     jkj::dragonbox::float_bits<
       float, jkj::dragonbox::default_float_traits<float>
     > floatBits(value);
@@ -445,7 +445,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatFloat(char *buffer /* [325] */, double value) {
+  char8_t *FormatFloat(char8_t *buffer /* [325] */, double value) {
     jkj::dragonbox::float_bits<
       double, jkj::dragonbox::default_float_traits<double>
     > floatBits(value);

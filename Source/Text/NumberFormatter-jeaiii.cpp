@@ -46,29 +46,29 @@ limitations under the License.
 #define READY_NEXT_TWO_DIGITS() \
   temp = std::uint64_t(100) * static_cast<std::uint32_t>(temp)
 
-// Appends the next two highest digits in the prepared number to the char buffer
+// Appends the next two highest digits in the prepared number to the char8_t buffer
 #define WRITE_TWO_DIGITS(bufferPointer) \
   *reinterpret_cast<TwoChars *>(bufferPointer) = ( \
     *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[(temp >> 31) & 0xFE]) \
   )
 
-// Appends the next highest digit in the prepared number to the char buffer
+// Appends the next highest digit in the prepared number to the char8_t buffer
 #define WRITE_ONE_DIGIT(bufferPointer) \
-  *reinterpret_cast<char *>(bufferPointer) = ( \
-    u8'0' + static_cast<char>(std::uint64_t(10) * std::uint32_t(temp) >> 32) \
+  *reinterpret_cast<char8_t *>(bufferPointer) = ( \
+    u8'0' + static_cast<char8_t>(std::uint64_t(10) * std::uint32_t(temp) >> 32) \
   )
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Structure with the size of two chars</summary>
+  /// <summary>Structure with the size of two chararacters</summary>
   /// <remarks>
   ///   This is only used to assign two characters at once. Benchmarks (in release mode on
   ///   AMD64 with -O3 on GCC 11) revealed that std::memcpy() is not inlined/intrinsic'd as
   ///   much as one would hope and that this method resulted in faster code.
   /// </remarks>
-  struct TwoChars { char t, o; };
+  struct TwoChars { char8_t t, o; };
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -106,7 +106,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(char *buffer /* [10] */, std::uint32_t number) {
+  char8_t *FormatInteger(char8_t *buffer /* [10] */, std::uint32_t number) {
     std::uint64_t temp;
 
     // I have a nice Nuclex::Support::BitTricks::GetLogBase10() method which uses
@@ -122,7 +122,7 @@ namespace Nuclex { namespace Support { namespace Text {
     //
     if(number < 100) {
       if(number < 10) {
-        *buffer = static_cast<char>(u8'0' + number);
+        *buffer = static_cast<char8_t>(u8'0' + number);
         return buffer + 1;
       } else {
         *reinterpret_cast<TwoChars *>(buffer) = (
@@ -215,7 +215,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(char *buffer /* [11] */, std::int32_t value) {
+  char8_t *FormatInteger(char8_t *buffer /* [11] */, std::int32_t value) {
     if(value >= 0) {
       return FormatInteger(buffer, static_cast<std::uint32_t>(value));
     } else {
@@ -226,7 +226,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(char *buffer /* [20] */, std::uint64_t number64) {
+  char8_t *FormatInteger(char8_t *buffer /* [20] */, std::uint64_t number64) {
 
     // If this number fits into 32 bits, then don't bother with the extra processing
     std::uint32_t number = static_cast<std::uint32_t>(number64);
@@ -248,7 +248,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
       if(number < 100) {
         if(number < 10) {
-          *buffer++ = static_cast<char>(u8'0' + number);
+          *buffer++ = static_cast<char8_t>(u8'0' + number);
         } else {
           *reinterpret_cast<TwoChars *>(buffer) = (
             *reinterpret_cast<const TwoChars *>(&Nuclex::Support::Text::Radix100[number * 2])
@@ -299,7 +299,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  char *FormatInteger(char *buffer /* [20] */, std::int64_t number64) {
+  char8_t *FormatInteger(char8_t *buffer /* [20] */, std::int64_t number64) {
     if(number64 >= 0) {
       return FormatInteger(buffer, static_cast<std::uint64_t>(number64));
     } else {

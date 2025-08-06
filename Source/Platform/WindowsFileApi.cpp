@@ -27,6 +27,7 @@ limitations under the License.
 #include <stdexcept> // for std::invalid_argument
 
 #include "Nuclex/Support/Text/UnicodeHelper.h" // for UTF-16 <-> UTF-8 conversion
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
 
 namespace {
 
@@ -40,20 +41,26 @@ namespace {
   /// </remarks>
   void requireValidCodePoint(char32_t codePoint) {
     if(!Nuclex::Support::Text::UnicodeHelper::IsValidCodePoint(codePoint)) {
-      throw std::invalid_argument(u8"Illegal UTF-8 character(s) encountered");
+      throw std::invalid_argument(
+        Nuclex::Support::Text::StringConverter::CharFromUtf8(
+          u8"Illegal UTF-8 character(s) encountered"
+        )
+      );
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a UTF-8 path into a UTF-16 path</summary>
-  /// <param name="utf8Path">String containing a UTF-8 path</param>
+  /// <param name="path">String containing a UTF-8 path</param>
   /// <returns>The UTF-16 path with magic prefix to eliminate the path length limit</returns>
-  std::wstring utf16FromUtf8Path(const std::string &utf8Path) {
-    if(utf8Path.empty()) {
+  std::wstring wideFromPath(const std::filesystem::path &path) {
+    if(path.empty()) {
       return std::wstring();
     }
 
+    // UNC path format
+    //
     // https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=cmd
     // https://docs.microsoft.com/en-us/dotnet/standard/io/file-path-formats#example-ways-to-refer-to-the-same-file
     //
@@ -65,52 +72,61 @@ namespace {
     //   - \\?\UNC\Server\share\file.txt -> (keep)
     //   - \\.\D:\file.txt               -> (keep) // because the user may have their reasons
     //   - \\.\UNC\Server\file.txt       -> (keep) // because the user may have their reasons
-/*
-    std::string::size_type length = utf8Path.length();
-    if(length >= 3) {
-      bool
-      if(utf8Path[0] == '\\')
-    }
-*/
+    //
+    // Note that this renders relative paths (..\) unusable.
+    //
+
     // We guess that we need as many UTF-16 characters as we needed UTF-8 characters
-    // based on the assumption that most text will only use ascii characters.
-    std::wstring utf16Path;
-    utf16Path.reserve(utf8Path.length() + 4);
-
-    // According to Microsoft, this is how you lift the 260 char MAX_PATH limit.
-    // Also skips the internal call to GetFullPathName() every API method does internally,
-    // so paths have to be normalized.
-    // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
-    const wchar_t prefix[] = L"\\\\?\\";
-    utf16Path.push_back(prefix[0]);
-    utf16Path.push_back(prefix[1]);
-    utf16Path.push_back(prefix[2]);
-    utf16Path.push_back(prefix[3]);
-
-    // Do the conversions. If the vector was too short, it will be grown in factors
-    // of 2 usually (depending on the standard library implementation)
+    // based on the assumption that most file names will only use ascii characters.
+    std::wstring widePath;
     {
-      using Nuclex::Support::Text::UnicodeHelper;
-      typedef UnicodeHelper::Char8Type Char8Type;
+      const std::filesystem::path::string_type &pathString = path.native();
 
-      const Char8Type *current = reinterpret_cast<const Char8Type *>(
-        utf8Path.c_str()
-      );
-      const Char8Type *end = current + utf8Path.length();
+      if(path.is_absolute()) {
+        widePath.reserve(pathString.length() + 4);
 
-      utf16Path.resize(utf8Path.length() + 4);
-
-      char16_t *write = reinterpret_cast<char16_t *>(utf16Path.data()) + 4;
-      while(current < end) {
-        char32_t codePoint = UnicodeHelper::ReadCodePoint(current, end);
-        requireValidCodePoint(codePoint);
-        UnicodeHelper::WriteCodePoint(write, codePoint);
+        // According to Microsoft, this is how you lift the 260 char MAX_PATH limit.
+        // Also skips the internal call to GetFullPathName() every API method does
+        // internally, so paths have to be absolute.
+        // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+        const wchar_t prefix[] = L"\\\\?\\";
+        widePath.push_back(prefix[0]);
+        widePath.push_back(prefix[1]);
+        widePath.push_back(prefix[2]);
+        widePath.push_back(prefix[3]);
+      } else {
+        widePath.reserve(pathString.length() + 1);
       }
 
-      utf16Path.resize(write - reinterpret_cast<char16_t *>(utf16Path.data()));
+      // If the string already is UTF-16 (likely when compiling in MSVC),
+      // we can directly copy it over, only fixing forward slashes
+      if constexpr(std::is_same<std::filesystem::path::string_type, std::wstring>::value) {
+        const std::filesystem::path::string_type::value_type *start = pathString.data();
+        const std::filesystem::path::string_type::value_type *end = start + pathString.length();
+        while(start < end) {
+          if(*start == L'/') {
+            widePath.push_back(L'\\');
+          } else {
+            widePath.push_back(*start);
+          }
+          ++start;
+        }
+      } else { // Nope, path has another format, convert to UTF-16 and fix slashes
+        std::u16string utf16PathString(path.u16string());
+        const std::u16string::value_type *start = utf16PathString.data();
+        const std::u16string::value_type *end = start + utf16PathString.length();
+        while(start < end) {
+          if(*start == L'/') {
+            widePath.push_back(L'\\');
+          } else {
+            widePath.push_back(*start);
+          }
+          ++start;
+        }
+      }
     }
 
-    return utf16Path;
+    return widePath;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -121,11 +137,11 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  HANDLE WindowsFileApi::OpenFileForReading(const std::string &path) {
-    std::wstring utf16Path = utf16FromUtf8Path(path);
+  HANDLE WindowsFileApi::OpenFileForReading(const std::filesystem::path &path) {
+    std::wstring widePath = wideFromPath(path);
 
     HANDLE fileHandle = ::CreateFileW(
-      utf16Path.c_str(),
+      widePath.c_str(),
       GENERIC_READ, // desired access
       FILE_SHARE_READ, // share mode,
       nullptr,
@@ -136,8 +152,8 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(fileHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
 
-      std::string errorMessage(u8"Could not open file '");
-      errorMessage.append(path);
+      std::u8string errorMessage(u8"Could not open file '");
+      errorMessage.append(path.u8string());
       errorMessage.append(u8"' for reading");
 
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
@@ -148,11 +164,11 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  HANDLE WindowsFileApi::OpenFileForWriting(const std::string &path) {
-    std::wstring utf16Path = utf16FromUtf8Path(path);
+  HANDLE WindowsFileApi::OpenFileForWriting(const std::filesystem::path &path) {
+    std::wstring widePath = wideFromPath(path);
 
     HANDLE fileHandle = ::CreateFileW(
-      utf16Path.c_str(),
+      widePath.c_str(),
       GENERIC_READ | GENERIC_WRITE, // desired access
       0, // share mode
       nullptr,
@@ -163,8 +179,8 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(fileHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
 
-      std::string errorMessage(u8"Could not open file '");
-      errorMessage.append(path);
+      std::u8string errorMessage(u8"Could not open file '");
+      errorMessage.append(path.u8string());
       errorMessage.append(u8"' for writing");
 
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
@@ -185,7 +201,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     );
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      std::string errorMessage(u8"Could not move file cursor");
+      std::u8string errorMessage(u8"Could not move file cursor");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
@@ -201,7 +217,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     BOOL result = ::ReadFile(fileHandle, buffer, desiredCount, &actualCount, nullptr);
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      std::string errorMessage(u8"Could not read data from file");
+      std::u8string errorMessage(u8"Could not read data from file");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
@@ -219,7 +235,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     BOOL result = ::WriteFile(fileHandle, buffer, desiredCount, &actualCount, nullptr);
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      std::string errorMessage(u8"Could not write data from file");
+      std::u8string errorMessage(u8"Could not write data from file");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
@@ -232,7 +248,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     BOOL result = ::SetEndOfFile(fileHandle);
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      std::string errorMessage(u8"Could not truncate/pad file to file cursor position");
+      std::u8string errorMessage(u8"Could not truncate/pad file to file cursor position");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
   }
@@ -243,7 +259,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     BOOL result = ::FlushFileBuffers(fileHandle);
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      std::string errorMessage(u8"Could not flush file buffers");
+      std::u8string errorMessage(u8"Could not flush file buffers");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
   }
@@ -254,7 +270,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     BOOL result = ::CloseHandle(fileHandle);
     if(throwOnError && (result == FALSE)) {
       DWORD errorCode = ::GetLastError();
-      std::string errorMessage(u8"Could not close file handle");
+      std::u8string errorMessage(u8"Could not close file handle");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
   }

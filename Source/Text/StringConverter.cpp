@@ -290,6 +290,35 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  void StringConverter::AppendPathAsUtf8(
+    std::u8string &target, const std::filesystem::path &pathToAppend
+  ) {
+    typedef std::filesystem::path::string_type path_string_type;
+    if constexpr(std::is_same<path_string_type, std::u8string>::value) {
+      target.append(pathToAppend.native());
+    } else if constexpr(std::is_same<path_string_type, std::string>::value) {
+      const path_string_type &pathChars = pathToAppend.native();
+      target.append(pathChars.begin(), pathChars.end());
+    } else {
+      target.append(pathToAppend.u8string());
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void StringConverter::AppendPathAsWide(
+    std::wstring &target, const std::filesystem::path &pathToAppend
+  ) {
+    typedef std::filesystem::path::string_type path_string_type;
+    if constexpr(std::is_same<path_string_type, std::wstring>::value) {
+      target.append(pathToAppend.native());
+    } else {
+      target.append(pathToAppend.wstring());
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   std::u8string StringConverter::FoldedLowercaseFromUtf8(const std::u8string &utf8String) {
     std::u8string result;
     {

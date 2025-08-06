@@ -26,7 +26,7 @@ limitations under the License.
 
 #include "WindowsApi.h"
 
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <vector> // for std::vector
 
 namespace Nuclex { namespace Support { namespace Platform {
@@ -44,7 +44,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   (HKEY_CURRENT_USER/, HKEY_LOCAL_MACHINE/) for specifying the hive.
     /// </remarks>
     public: static ::HKEY GetHiveFromString(
-      const std::string &hiveName, std::string::size_type hiveNameLength
+      const std::u8string &hiveName, std::u8string::size_type hiveNameLength
     );
 
     /// <summary>
@@ -53,7 +53,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// </summary>
     /// <param name="keyHandle">Handle of the key whose direct children will be queried</param>
     /// <returns>A list containing the names of all child keys</returns>
-    public: static std::vector<std::string> GetAllSubKeyNames(
+    public: static std::vector<std::u8string> GetAllSubKeyNames(
       ::HKEY keyHandle
     );
 
@@ -63,7 +63,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// </summary>
     /// <param name="keyHandle">Handle of the key whose values will be queried</param>
     /// <returns>A list containing the names of all value below the key</returns>
-    public: static std::vector<std::string> GetAllValueNames(
+    public: static std::vector<std::u8string> GetAllValueNames(
       ::HKEY keyHandle
     );
 
@@ -75,7 +75,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   The handle of the opened registry subkey or a null pointer if the key doesn't exist
     /// </returns>
     public: static ::HKEY OpenExistingSubKey(
-      ::HKEY parentKeyHandle, const std::string &subKeyName, bool writable = true
+      ::HKEY parentKeyHandle, const std::u8string &subKeyName, bool writable = true
     );
 
     /// <summary>Opens or creates a subkey below the specified parent registry key</summary>
@@ -83,7 +83,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <param name="subKeyName">Name of the subkey that will be opened or created</param>
     /// <returns>The handle of the opened or created registry subkey</returns>
     public: static ::HKEY OpenOrCreateSubKey(
-      ::HKEY parentKeyHandle, const std::string &subKeyName
+      ::HKEY parentKeyHandle, const std::u8string &subKeyName
     );
 
     /// <summary>Deletes the specified registry and all subkeys and values in it</summary>
@@ -95,7 +95,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   it's the bottommost key in the path that will be deleted)
     /// </param>
     /// <returns>True if the key existed and was deleted, false if it didn't exist</returns>
-    public: static bool DeleteTree(::HKEY parentKeyHandle, const std::string &subKeyName);
+    public: static bool DeleteTree(::HKEY parentKeyHandle, const std::u8string &subKeyName);
 
   };
 

@@ -105,17 +105,40 @@ limitations under the License.
 //   o glibc - decent, but GPL
 //
 
+namespace {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  // TODO: This exists for performance reasons, remover and write custom integer parser
+
+  /// <summary>Causes undefined behavior or converts a string to a long</summary>
+  /// <param name="start">
+  ///   Address of the first character of the null-terminated string that will be parsed
+  /// </param>
+  /// <returns>The unsigned long integer value parsed out of the string</returns>
+  inline unsigned long u8strtoul(const char8_t *start) {
+    return std::strtoul(
+      reinterpret_cast<const char *>(start),
+      nullptr, // end pointer
+      10 // numeric base
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+}
+
 namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> bool lexical_cast<>(const std::string &from) {
+  template<> bool lexical_cast<>(const std::u8string &from) {
     if(from.length() >= 4) {
       return (
-        ((from[0] == 't') || (from[0] == 'T')) &&
-        ((from[1] == 'r') || (from[1] == 'R')) &&
-        ((from[2] == 'u') || (from[2] == 'U')) &&
-        ((from[3] == 'e') || (from[3] == 'E'))
+        ((from[0] == u8't') || (from[0] == u8'T')) &&
+        ((from[1] == u8'r') || (from[1] == u8'R')) &&
+        ((from[2] == u8'u') || (from[2] == u8'U')) &&
+        ((from[3] == u8'e') || (from[3] == u8'E'))
       );
     } else {
       return false;
@@ -124,19 +147,19 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> bool lexical_cast<>(const char *from) {
+  template<> bool lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return false;
     } else {
-      return lexical_cast<bool>(std::string(from));
+      return lexical_cast<bool>(std::u8string(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const bool &from) {
-    static const std::string trueString(u8"true");
-    static const std::string falseString(u8"false");
+  template<> std::u8string lexical_cast<>(const bool &from) {
+    static const std::u8string trueString(u8"true");
+    static const std::u8string falseString(u8"false");
 
     if(from) {
       return trueString;
@@ -147,207 +170,207 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const std::uint8_t &from) {
-    char characters[4];
-    const char *end = FormatInteger(characters, from);
-    return std::string(static_cast<const char *>(characters), end);
+  template<> std::u8string lexical_cast<>(const std::uint8_t &from) {
+    char8_t characters[4];
+    const char8_t *end = FormatInteger(characters, from);
+    return std::u8string(static_cast<const char8_t *>(characters), end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::uint8_t lexical_cast<>(const char *from) {
+  template<> std::uint8_t lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::uint8_t>(std::strtoul(from, nullptr, 10));
+      return static_cast<std::uint8_t>(u8strtoul(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::uint8_t lexical_cast<>(const std::string &from) {
-    return static_cast<std::uint8_t>(std::strtoul(from.c_str(), nullptr, 10));
+  template<> std::uint8_t lexical_cast<>(const std::u8string &from) {
+    return static_cast<std::uint8_t>(u8strtoul(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const std::int8_t &from) {
-    char characters[5];
-    const char *end = FormatInteger(characters, from);
-    return std::string(static_cast<const char *>(characters), end);
+  template<> std::u8string lexical_cast<>(const std::int8_t &from) {
+    char8_t characters[5];
+    const char8_t *end = FormatInteger(characters, from);
+    return std::u8string(static_cast<const char8_t *>(characters), end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::int8_t lexical_cast<>(const char *from) {
+  template<> std::int8_t lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::int8_t>(std::strtol(from, nullptr, 10));
+      return static_cast<std::int8_t>(u8strtoul(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::int8_t lexical_cast<>(const std::string &from) {
-    return static_cast<std::int8_t>(std::strtol(from.c_str(), nullptr, 10));
+  template<> std::int8_t lexical_cast<>(const std::u8string &from) {
+    return static_cast<std::int8_t>(u8strtoul(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const std::uint16_t &from) {
-    char characters[6];
-    const char *end = FormatInteger(characters, from);
-    return std::string(static_cast<const char *>(characters), end);
+  template<> std::u8string lexical_cast<>(const std::uint16_t &from) {
+    char8_t characters[6];
+    const char8_t *end = FormatInteger(characters, from);
+    return std::u8string(static_cast<const char8_t *>(characters), end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::uint16_t lexical_cast<>(const char *from) {
+  template<> std::uint16_t lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::uint16_t>(std::strtoul(from, nullptr, 10));
+      return static_cast<std::uint16_t>(u8strtoul(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::uint16_t lexical_cast<>(const std::string &from) {
-    return static_cast<std::uint16_t>(std::strtoul(from.c_str(), nullptr, 10));
+  template<> std::uint16_t lexical_cast<>(const std::u8string &from) {
+    return static_cast<std::uint16_t>(u8strtoul(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const std::int16_t &from) {
-    char characters[7];
-    const char *end = FormatInteger(characters, from);
-    return std::string(static_cast<const char *>(characters), end);
+  template<> std::u8string lexical_cast<>(const std::int16_t &from) {
+    char8_t characters[7];
+    const char8_t *end = FormatInteger(characters, from);
+    return std::u8string(static_cast<const char8_t *>(characters), end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::int16_t lexical_cast<>(const char *from) {
+  template<> std::int16_t lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::int16_t>(std::strtol(from, nullptr, 10));
+      return static_cast<std::int16_t>(u8strtoul(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::int16_t lexical_cast<>(const std::string &from) {
-    return static_cast<std::int16_t>(std::strtol(from.c_str(), nullptr, 10));
+  template<> std::int16_t lexical_cast<>(const std::u8string &from) {
+    return static_cast<std::int16_t>(u8strtoul(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const std::uint32_t &from) {
-    char characters[11];
-    const char *end = FormatInteger(characters, from);
-    return std::string(static_cast<const char *>(characters), end);
+  template<> std::u8string lexical_cast<>(const std::uint32_t &from) {
+    char8_t characters[11];
+    const char8_t *end = FormatInteger(characters, from);
+    return std::u8string(static_cast<const char8_t *>(characters), end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::uint32_t lexical_cast<>(const char *from) {
+  template<> std::uint32_t lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0U;
     } else {
-      return static_cast<std::uint32_t>(std::strtoul(from, nullptr, 10));
+      return static_cast<std::uint32_t>(u8strtoul(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::uint32_t lexical_cast<>(const std::string &from) {
-    return static_cast<std::uint32_t>(std::strtoul(from.c_str(), nullptr, 10));
+  template<> std::uint32_t lexical_cast<>(const std::u8string &from) {
+    return static_cast<std::uint32_t>(u8strtoul(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const std::int32_t &from) {
-    char characters[12];
-    const char *end = FormatInteger(characters, from);
-    return std::string(static_cast<const char *>(characters), end);
+  template<> std::u8string lexical_cast<>(const std::int32_t &from) {
+    char8_t characters[12];
+    const char8_t *end = FormatInteger(characters, from);
+    return std::u8string(static_cast<const char8_t *>(characters), end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::int32_t lexical_cast<>(const char *from) {
+  template<> std::int32_t lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::int32_t>(std::strtol(from, nullptr, 10));
+      return static_cast<std::int32_t>(u8strtoul(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::int32_t lexical_cast<>(const std::string &from) {
-    return static_cast<std::int32_t>(std::strtol(from.c_str(), nullptr, 10));
+  template<> std::int32_t lexical_cast<>(const std::u8string &from) {
+    return static_cast<std::int32_t>(u8strtoul(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const std::uint64_t &from) {
-    char characters[21];
-    const char *end = FormatInteger(characters, from);
-    return std::string(static_cast<const char *>(characters), end);
+  template<> std::u8string lexical_cast<>(const std::uint64_t &from) {
+    char8_t characters[21];
+    const char8_t *end = FormatInteger(characters, from);
+    return std::u8string(static_cast<const char8_t *>(characters), end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::uint64_t lexical_cast<>(const char *from) {
+  template<> std::uint64_t lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0ULL;
     } else {
-      return static_cast<std::uint64_t>(std::strtoull(from, nullptr, 10));
+      return static_cast<std::uint64_t>(u8strtoul(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::uint64_t lexical_cast<>(const std::string &from) {
-    return static_cast<std::uint64_t>(std::strtoull(from.c_str(), nullptr, 10));
+  template<> std::uint64_t lexical_cast<>(const std::u8string &from) {
+    return static_cast<std::uint64_t>(u8strtoul(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const std::int64_t &from) {
-    char characters[21];
-    const char *end = FormatInteger(characters, from);
-    return std::string(static_cast<const char *>(characters), end);
+  template<> std::u8string lexical_cast<>(const std::int64_t &from) {
+    char8_t characters[21];
+    const char8_t *end = FormatInteger(characters, from);
+    return std::u8string(static_cast<const char8_t *>(characters), end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::int64_t lexical_cast<>(const char *from) {
+  template<> std::int64_t lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0LL;
     } else {
-      return static_cast<std::int64_t>(std::strtoll(from, nullptr, 10));
+      return static_cast<std::int64_t>(u8strtoul(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::int64_t lexical_cast<>(const std::string &from) {
-    return static_cast<std::int64_t>(std::strtoll(from.c_str(), nullptr, 10));
+  template<> std::int64_t lexical_cast<>(const std::u8string &from) {
+    return static_cast<std::int64_t>(u8strtoul(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const float &from) {
-    char characters[48];
-    char *end = FormatFloat(characters, from);
-    return std::string(characters, end);
+  template<> std::u8string lexical_cast<>(const float &from) {
+    char8_t characters[48];
+    char8_t *end = FormatFloat(characters, from);
+    return std::u8string(characters, end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> float lexical_cast<>(const char *from) {
+  template<> float lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0.0f;
     } else {
@@ -363,7 +386,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> float lexical_cast<>(const std::string &from) {
+  template<> float lexical_cast<>(const std::u8string &from) {
     double result;
     enum ::Status status = ::s2d_n(from.c_str(), static_cast<int>(from.length()), &result);
     if(status == SUCCESS) {
@@ -375,15 +398,15 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> std::string lexical_cast<>(const double &from) {
-    char characters[325];
-    char *end = FormatFloat(characters, from);
-    return std::string(characters, end);
+  template<> std::u8string lexical_cast<>(const double &from) {
+    char8_t characters[325];
+    char8_t *end = FormatFloat(characters, from);
+    return std::u8string(characters, end);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> double lexical_cast<>(const char *from) {
+  template<> double lexical_cast<>(const char8_t *from) {
     if(from == nullptr) {
       return 0.0;
     } else {
@@ -399,7 +422,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> double lexical_cast<>(const std::string &from) {
+  template<> double lexical_cast<>(const std::u8string &from) {
     double result;
     enum ::Status status = ::s2d_n(from.c_str(), static_cast<int>(from.length()), &result);
     if(status == SUCCESS) {

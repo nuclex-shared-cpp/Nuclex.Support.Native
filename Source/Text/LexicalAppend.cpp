@@ -30,7 +30,7 @@ limitations under the License.
 
 #include "Ryu/ryu_parse.h"
 
-// TODO lexical_append() with std::string could resize within NumberFormatter
+// TODO lexical_append() with std::u8string could resize within NumberFormatter
 //
 // The NumberFormatter already figures out the number of digits that need to be appended
 // ahead of time, so the call to BitTricks::GetLogBase10() is completely redundant.
@@ -141,9 +141,9 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const bool &from) {
-    static const std::string trueString(u8"true");
-    static const std::string falseString(u8"false");
+  template<> void lexical_append<>(std::u8string &target, const bool &from) {
+    static const std::u8string trueString(u8"true");
+    static const std::u8string falseString(u8"false");
 
     if(from) {
       target.append(trueString);
@@ -155,23 +155,23 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const bool &from
+    char8_t *target, std::size_t availableBytes, const bool &from
   ) {
     if(from) {
       if(availableBytes >= 4U) {
-        *target++ = 't';
-        *target++ = 'r';
-        *target++ = 'u';
-        *target = 'e';
+        *target++ = u8't';
+        *target++ = u8'r';
+        *target++ = u8'u';
+        *target = u8'e';
       }
       return 4U;
     } else {
       if(availableBytes >= 5U) {
-        *target++ = 'f';
-        *target++ = 'a';
-        *target++ = 'l';
-        *target++ = 's';
-        *target = 'e';
+        *target++ = u8'f';
+        *target++ = u8'a';
+        *target++ = u8'l';
+        *target++ = u8's';
+        *target = u8'e';
       }
       return 5U;
     }
@@ -179,8 +179,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void lexical_append(std::string &target, const char *from) {
-    static const std::string nullString(u8"<nullptr>");
+  void lexical_append(std::u8string &target, const char8_t *from) {
+    static const std::u8string nullString(u8"<nullptr>");
 
     if(from == nullptr) {
       target.append(nullString);
@@ -192,21 +192,21 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t lexical_append(
-    char *target, std::size_t availableBytes, const char *from
+    char8_t *target, std::size_t availableBytes, const char8_t *from
   ) {
 
     // If we've gotten a null pointer, append a special string indicating so
     if(from == nullptr) {
       if(availableBytes >= 9U) {
-        *target++ = '<';
-        *target++ = 'n';
-        *target++ = 'u';
-        *target++ = 'l';
-        *target++ = 'l';
-        *target++ = 'p';
-        *target++ = 't';
-        *target++ = 'r';
-        *target = '>';
+        *target++ = u8'<';
+        *target++ = u8'n';
+        *target++ = u8'u';
+        *target++ = u8'l';
+        *target++ = u8'l';
+        *target++ = u8'p';
+        *target++ = u8't';
+        *target++ = u8'r';
+        *target = u8'>';
       }
 
       return 9U;
@@ -237,21 +237,21 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const std::string &from) {
+  template<> void lexical_append<>(std::u8string &target, const std::u8string &from) {
     target.append(from);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::string &from
+    char8_t *target, std::size_t availableBytes, const std::u8string &from
   ) {
     std::size_t fromLength = from.length();
     if(fromLength > availableBytes) {
       return fromLength;
     }
 
-    const char *fromBytes = from.c_str();
+    const char8_t *fromBytes = from.c_str();
     for(std::size_t index = 0; index < fromLength; ++index) {
       target[index] = fromBytes[index];
     }
@@ -261,8 +261,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const std::uint8_t &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const std::uint8_t &from) {
+    std::u8string::size_type length = target.length();
     target.resize(length + countDigits(from));
     FormatInteger(target.data() + length, from);
   }
@@ -270,7 +270,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::uint8_t &from
+    char8_t *target, std::size_t availableBytes, const std::uint8_t &from
   ) {
     std::size_t requiredBytes = countDigits(from);
     if(availableBytes >= requiredBytes) {
@@ -282,8 +282,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const std::int8_t &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const std::int8_t &from) {
+    std::u8string::size_type length = target.length();
     target.resize(length + countDigits(from));
     FormatInteger(target.data() + length, from);
   }
@@ -291,7 +291,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::int8_t &from
+    char8_t *target, std::size_t availableBytes, const std::int8_t &from
   ) {
     std::size_t requiredBytes = countDigits(from);
     if(availableBytes >= requiredBytes) {
@@ -303,8 +303,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const std::uint16_t &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const std::uint16_t &from) {
+    std::u8string::size_type length = target.length();
     target.resize(length + countDigits(from));
     FormatInteger(target.data() + length, from);
   }
@@ -312,7 +312,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::uint16_t &from
+    char8_t *target, std::size_t availableBytes, const std::uint16_t &from
   ) {
     std::size_t requiredBytes = countDigits(from);
     if(availableBytes >= requiredBytes) {
@@ -324,8 +324,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const std::int16_t &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const std::int16_t &from) {
+    std::u8string::size_type length = target.length();
     target.resize(length + countDigits(from));
     FormatInteger(target.data() + length, from);
   }
@@ -333,7 +333,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::int16_t &from
+    char8_t *target, std::size_t availableBytes, const std::int16_t &from
   ) {
     std::size_t requiredBytes = countDigits(from);
     if(availableBytes >= requiredBytes) {
@@ -345,8 +345,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const std::uint32_t &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const std::uint32_t &from) {
+    std::u8string::size_type length = target.length();
     if(from >= 1) {
       target.resize(length + BitTricks::GetLogBase10(from) + 1);
       FormatInteger(target.data() + length, from);
@@ -358,7 +358,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::uint32_t &from
+    char8_t *target, std::size_t availableBytes, const std::uint32_t &from
   ) {
     std::size_t requiredBytes = (from >= 1) ? (BitTricks::GetLogBase10(from) + 1) : 1;
     if(availableBytes >= requiredBytes) {
@@ -370,8 +370,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const std::int32_t &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const std::int32_t &from) {
+    std::u8string::size_type length = target.length();
     if(from >= 1) {
       target.resize(length + BitTricks::GetLogBase10(static_cast<std::uint32_t>(from)) + 1);
       FormatInteger(target.data() + length, static_cast<std::uint32_t>(from));
@@ -386,7 +386,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::int32_t &from
+    char8_t *target, std::size_t availableBytes, const std::int32_t &from
   ) {
     if(from >= 1) {
       std::size_t requiredBytes = BitTricks::GetLogBase10(static_cast<std::uint32_t>(from)) + 1;
@@ -410,8 +410,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const std::uint64_t &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const std::uint64_t &from) {
+    std::u8string::size_type length = target.length();
     if(from >= 1) {
       target.resize(length + BitTricks::GetLogBase10(from) + 1);
       FormatInteger(target.data() + length, from);
@@ -423,7 +423,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::uint64_t &from
+    char8_t *target, std::size_t availableBytes, const std::uint64_t &from
   ) {
     std::size_t requiredBytes = (from >= 1) ? (BitTricks::GetLogBase10(from) + 1) : 1;
     if(availableBytes >= requiredBytes) {
@@ -435,8 +435,8 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const std::int64_t &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const std::int64_t &from) {
+    std::u8string::size_type length = target.length();
     if(from >= 1) {
       target.resize(length + BitTricks::GetLogBase10(static_cast<std::uint64_t>(from)) + 1);
       FormatInteger(target.data() + length, static_cast<std::uint64_t>(from));
@@ -451,7 +451,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::int64_t &from
+    char8_t *target, std::size_t availableBytes, const std::int64_t &from
   ) {
     if(from >= 1) {
       std::size_t requiredBytes = BitTricks::GetLogBase10(static_cast<std::uint64_t>(from)) + 1;
@@ -475,25 +475,25 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const float &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const float &from) {
+    std::u8string::size_type length = target.length();
     target.resize(length + 48U);
 
-    char *end = FormatFloat(target.data() + length, from);
+    char8_t *end = FormatFloat(target.data() + length, from);
     target.resize(end - target.data());
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const float &from
+    char8_t *target, std::size_t availableBytes, const float &from
   ) {
     if(availableBytes >= 48U) {
-      char *end = FormatFloat(target, from);
+      char8_t *end = FormatFloat(target, from);
       return static_cast<std::size_t>(end - target);
     } else {
-      char characters[48];
-      char *end = FormatFloat(characters, from);
+      char8_t characters[48];
+      char8_t *end = FormatFloat(characters, from);
 
       std::size_t actualLength = static_cast<std::size_t>(end - characters);
       if(availableBytes >= actualLength) {
@@ -507,25 +507,25 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void lexical_append<>(std::string &target, const double &from) {
-    std::string::size_type length = target.length();
+  template<> void lexical_append<>(std::u8string &target, const double &from) {
+    std::u8string::size_type length = target.length();
     target.resize(length + 325U);
 
-    char *end = FormatFloat(target.data() + length, from);
+    char8_t *end = FormatFloat(target.data() + length, from);
     target.resize(end - target.data());
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const double &from
+    char8_t *target, std::size_t availableBytes, const double &from
   ) {
     if(availableBytes >= 325U) {
-      char *end = FormatFloat(target, from);
+      char8_t *end = FormatFloat(target, from);
       return static_cast<std::size_t>(end - target);
     } else {
-      char characters[325];
-      char *end = FormatFloat(characters, from);
+      char8_t characters[325];
+      char8_t *end = FormatFloat(characters, from);
 
       std::size_t actualLength = static_cast<std::size_t>(end - characters);
       if(availableBytes >= actualLength) {

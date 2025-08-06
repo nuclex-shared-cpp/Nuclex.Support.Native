@@ -28,6 +28,7 @@ limitations under the License.
 
 #include <cassert> // for assert()
 #include <chrono> // for std::chrono::milliseconds
+#include <filesystem> // for std::filesystem
 
 #include <sys/types.h> // for ::pid_t
 

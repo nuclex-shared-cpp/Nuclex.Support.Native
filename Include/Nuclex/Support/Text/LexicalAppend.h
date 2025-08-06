@@ -23,7 +23,7 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Text/StringConverter.h" // UTF-8 and wide char conversion
 
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <cstdint> // for std::uint8_t
 
 namespace Nuclex { namespace Support { namespace Text {
@@ -45,7 +45,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   <para>
   ///     <code>
   ///       int currentScore = 31241;
-  ///       std::string scoreText(14 + 11 + 1, '\0'); // optional: reserve exact length
+  ///       std::u8string scoreText(14 + 11 + 1, '\0'); // optional: reserve exact length
   ///
   ///       scoreText.append(u8"The score is: ");
   ///       lexical_append(scoreText, currentScore);
@@ -64,7 +64,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   </para>
   /// </remarks>
   template<typename TValue>
-  inline void lexical_append(std::string &target, const TValue &from) = delete;
+  inline void lexical_append(std::u8string &target, const TValue &from) = delete;
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -97,7 +97,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///       std::vector&lt;char&gt; scoreCharacters(14 + 11 = 1);
   ///
   ///       {
-  ///         static const std::string message(u8"The score is: ");
+  ///         static const std::u8string message(u8"The score is: ");
   ///
   ///         std::copy_n(message.c_str(), 14, scoreCharacters.data());
   ///         std::size_t characterCount = lexical_append(
@@ -124,7 +124,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// </remarks>
   template<typename TValue>
   inline std::size_t lexical_append(
-    char *target, std::size_t availableBytes, const TValue &from
+    char8_t *target, std::size_t availableBytes, const TValue &from
   ) = delete;
 
   // ------------------------------------------------------------------------------------------- //
@@ -132,7 +132,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <summary>Appends a lexically cast boolean to an existing string</summary>
   /// <param name="target">String to which the boolean will be appended</param>
   /// <param name="from">Boolean that will be lexically cast and appended</param>
-  template<> NUCLEX_SUPPORT_API void lexical_append<>(std::string &target, const bool &from);
+  template<> NUCLEX_SUPPORT_API void lexical_append<>(std::u8string &target, const bool &from);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -142,7 +142,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Boolean that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const bool &from
+    char8_t *target, std::size_t availableBytes, const bool &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -150,7 +150,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <summary>Appends a zero-terminated string to an existing string</summary>
   /// <param name="target">String to which to append</param>
   /// <param name="from">Zero-terminated string that will be appended</param>
-  NUCLEX_SUPPORT_API void lexical_append(std::string &target, const char *from);
+  NUCLEX_SUPPORT_API void lexical_append(std::u8string &target, const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -160,7 +160,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Zero-terminated string that will be appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   NUCLEX_SUPPORT_API std::size_t lexical_append(
-    char *target, std::size_t availableBytes, const char *from
+    char8_t *target, std::size_t availableBytes, const char8_t *from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -169,7 +169,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which to append</param>
   /// <param name="from">Other string that will be appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const std::string &from
+    std::u8string &target, const std::u8string &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -180,7 +180,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Other string that will be appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::string &from
+    char8_t *target, std::size_t availableBytes, const std::u8string &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -189,7 +189,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Integer that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const std::uint8_t &from
+    std::u8string &target, const std::uint8_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -200,7 +200,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Integer that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::uint8_t &from
+    char8_t *target, std::size_t availableBytes, const std::uint8_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -209,7 +209,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Integer that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const std::int8_t &from
+    std::u8string &target, const std::int8_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -220,7 +220,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Integer that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::int8_t &from
+    char8_t *target, std::size_t availableBytes, const std::int8_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -229,7 +229,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Integer that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const std::uint16_t &from
+    std::u8string &target, const std::uint16_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -240,7 +240,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Integer that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::uint16_t &from
+    char8_t *target, std::size_t availableBytes, const std::uint16_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -249,7 +249,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Integer that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const std::int16_t &from
+    std::u8string &target, const std::int16_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -260,7 +260,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Integer that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::int16_t &from
+    char8_t *target, std::size_t availableBytes, const std::int16_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -269,7 +269,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Integer that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const std::uint32_t &from
+    std::u8string &target, const std::uint32_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -280,7 +280,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Integer that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::uint32_t &from
+    char8_t *target, std::size_t availableBytes, const std::uint32_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -289,7 +289,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Integer that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const std::int32_t &from
+    std::u8string &target, const std::int32_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -300,7 +300,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Integer that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::int32_t &from
+    char8_t *target, std::size_t availableBytes, const std::int32_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -309,7 +309,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Integer that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const std::uint64_t &from
+    std::u8string &target, const std::uint64_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -320,7 +320,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Integer that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::uint64_t &from
+    char8_t *target, std::size_t availableBytes, const std::uint64_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -329,7 +329,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Integer that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const std::int64_t &from
+    std::u8string &target, const std::int64_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -340,7 +340,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Integer that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const std::int64_t &from
+    char8_t *target, std::size_t availableBytes, const std::int64_t &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -349,7 +349,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Floating point value that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const float &from
+    std::u8string &target, const float &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -360,7 +360,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Floating point value that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const float &from
+    char8_t *target, std::size_t availableBytes, const float &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -369,7 +369,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="target">String to which the integer will be appended</param>
   /// <param name="from">Floating point value that will be lexically cast and appended</param>
   template<> NUCLEX_SUPPORT_API void lexical_append<>(
-    std::string &target, const double &from
+    std::u8string &target, const double &from
   );
 
   // ------------------------------------------------------------------------------------------- //
@@ -382,7 +382,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">Floating point value that will be lexically cast and appended</param>
   /// <returns>The number of bytes written at the provided address</returns>
   template<> NUCLEX_SUPPORT_API std::size_t lexical_append<>(
-    char *target, std::size_t availableBytes, const double &from
+    char8_t *target, std::size_t availableBytes, const double &from
   );
 
   // ------------------------------------------------------------------------------------------- //

@@ -23,7 +23,7 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Text/StringConverter.h" // UTF-8 and wide char conversion
 
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <cstdint> // for std::uint8_t
 
 namespace Nuclex { namespace Support { namespace Text {
@@ -49,7 +49,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   </para>
   /// </remarks>
   template<typename TTarget>
-  inline TTarget lexical_cast(const char *from) = delete;
+  inline TTarget lexical_cast(const char8_t *from) = delete;
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -137,7 +137,7 @@ namespace Nuclex { namespace Support { namespace Text {
       /// <param name="from">Value that will be cast to a UTF-16 or UTF-32 string</param>
       /// <returns>Resulting UTF-16 or UTF-32 string</returns>
       inline static std::wstring _(const TSource &from) {
-        return StringConverter::WideFromUtf8(lexical_cast<std::string>(from));
+        return StringConverter::WideFromUtf8(lexical_cast<std::u8string>(from));
       }
     };
 
@@ -170,231 +170,231 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <summary>Converts a boolean value into a string</summary>
   /// <param name="from">Boolean value that will be converted</param>
   /// <returns>A string containing the printed boolean value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const bool &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const bool &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a boolean value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The boolean value parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API bool lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API bool lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a boolean value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The boolean value parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API bool lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API bool lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts an 8 bit unsigned integer into a string</summary>
   /// <param name="from">8 bit unsigned integer that will be converted</param>
   /// <returns>A string containing the printed 8 bit unsigned integer value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const std::uint8_t &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const std::uint8_t &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into an 8 bit unsigned integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 8 bit unsigned integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::uint8_t lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API std::uint8_t lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into an 8 bit unsigned integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 8 bit unsigned integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::uint8_t lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API std::uint8_t lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts an 8 bit unsigned integer into a string</summary>
   /// <param name="from">8 bit unsigned integer that will be converted</param>
   /// <returns>A string containing the printed 8 bit unsigned integer value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const std::int8_t &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const std::int8_t &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into an 8 bit signed integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 8 bit signed integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::int8_t lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API std::int8_t lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into an 8 bit signed integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 8 bit signed integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::int8_t lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API std::int8_t lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts an 16 bit unsigned integer into a string</summary>
   /// <param name="from">16 bit unsigned integer that will be converted</param>
   /// <returns>A string containing the printed 16 bit unsigned integer value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const std::uint16_t &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const std::uint16_t &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 16 bit unsigned integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 16 bit unsigned integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::uint16_t lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API std::uint16_t lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 16 bit unsigned integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 16 bit unsigned integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::uint16_t lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API std::uint16_t lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts an 16 bit signed integer into a string</summary>
   /// <param name="from">16 bit signed integer that will be converted</param>
   /// <returns>A string containing the printed 16 bit signed integer value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const std::int16_t &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const std::int16_t &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 16 bit signed integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 16 bit signed integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::int16_t lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API std::int16_t lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 16 bit signed integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 16 bit signed integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::int16_t lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API std::int16_t lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a 32 bit unsigned integer into a string</summary>
   /// <param name="from">32 bit unsigned integer that will be converted</param>
   /// <returns>A string containing the printed 32 bit unsigned integer value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const std::uint32_t &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const std::uint32_t &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 32 bit unsigned integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 32 bit unsigned integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::uint32_t lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API std::uint32_t lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 32 bit unsigned integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 32 bit unsigned integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::uint32_t lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API std::uint32_t lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a 32 bit signed integer into a string</summary>
   /// <param name="from">32 bit signed integer that will be converted</param>
   /// <returns>A string containing the printed 32 bit signed integer value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const std::int32_t &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const std::int32_t &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 32 bit signed integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 32 bit signed integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::int32_t lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API std::int32_t lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 32 bit signed integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 32 bit signed integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::int32_t lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API std::int32_t lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a 64 bit unsigned integer into a string</summary>
   /// <param name="from">64 bit unsigned integer that will be converted</param>
   /// <returns>A string containing the printed 64 bit unsigned integer value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const std::uint64_t &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const std::uint64_t &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 64 bit unsigned integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 64 bit unsigned integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::uint64_t lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API std::uint64_t lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 64 bit unsigned integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 64 bit unsigned integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::uint64_t lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API std::uint64_t lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a 64 bit signed integer into a string</summary>
   /// <param name="from">64 bit signed integer that will be converted</param>
   /// <returns>A string containing the printed 64 bit signed integer value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const std::int64_t &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const std::int64_t &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 64 bit signed integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 64 bit signed integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::int64_t lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API std::int64_t lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a 64 bit signed integer</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The 64 bit signed integer parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API std::int64_t lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API std::int64_t lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a floating point value into a string</summary>
   /// <param name="from">Floating point value that will be converted</param>
   /// <returns>A string containing the printed floating point value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const float &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const float &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API float lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API float lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API float lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API float lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a double precision floating point value into a string</summary>
   /// <param name="from">Double precision Floating point value that will be converted</param>
   /// <returns>A string containing the printed double precision floating point value</returns>
-  template<> NUCLEX_SUPPORT_API std::string lexical_cast<>(const double &from);
+  template<> NUCLEX_SUPPORT_API std::u8string lexical_cast<>(const double &from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a double precision floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API double lexical_cast<>(const char *from);
+  template<> NUCLEX_SUPPORT_API double lexical_cast<>(const char8_t *from);
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Converts a string into a double precision floating point value</summary>
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
-  template<> NUCLEX_SUPPORT_API double lexical_cast<>(const std::string &from);
+  template<> NUCLEX_SUPPORT_API double lexical_cast<>(const std::u8string &from);
 
   // ------------------------------------------------------------------------------------------- //
 

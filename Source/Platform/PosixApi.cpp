@@ -75,22 +75,22 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
 #if defined(NUCLEX_SUPPORT_STRERROR_IS_THREAD_LOCAL)
-  std::string PosixApi::GetErrorMessage(int errorNumber) {
+  std::u8string PosixApi::GetErrorMessage(int errorNumber) {
     errno = 0;
     const char *errorMessageString = ::strerror(errorNumber);
 
     int errorNumberFromStrError = errno;
     if(errorNumberFromStrError != 0) {
-      std::string errorMessage(u8"Error ");
+      std::u8string errorMessage(u8"Error ");
       Text::lexical_append(errorMessage, errorNumber);
       errorMessage.append(u8" (and error message lookup failed)");
       return errorMessage;
     }
 
-    return std::string(errorMessageString);
+    return std::u8string(errorMessageString);
   }
 #else // if we can't be sure strerror() is thread-local, let's do defensive programming
-  std::string PosixApi::GetErrorMessage(int errorNumber) {
+  std::u8string PosixApi::GetErrorMessage(int errorNumber) {
     std::string buffer(256, '\0');
     for(;;) {
 
@@ -104,7 +104,15 @@ namespace Nuclex { namespace Support { namespace Platform {
 
       int errorNumberFromStrError = errno;
       if(errorNumberFromStrError == 0) {
-        return std::string(posixErrorMessage);
+        for(std::string::size_type index = 0; index < buffer.size(); ++index) {
+          if(buffer[index] == '\0') {
+            buffer.resize(index);
+            break;
+          }
+        }
+        if(!buffer.empty()) [[unlikely]] {
+          return std::u8string(buffer.begin(), buffer.end());
+        }
       }
 
       // If the buffer was too small, try again with 1024 bytes, 4096 bytes and
@@ -119,7 +127,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
       // We failed to look up the error message. At least output the original
       // error number and remark that we weren't able to look up the error message.
-      std::string errorMessage(u8"Error ");
+      std::u8string errorMessage(u8"Error ");
       Text::lexical_append(errorMessage, errorNumber);
       errorMessage.append(u8" (and error message lookup failed)");
       return errorMessage;
@@ -131,9 +139,9 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   void PosixApi::ThrowExceptionForFileAccessError(
-    const std::string &errorMessage, int errorNumber
+    const std::u8string &errorMessage, int errorNumber
   ) {
-    std::string combinedErrorMessage(errorMessage);
+    std::u8string combinedErrorMessage(errorMessage);
     combinedErrorMessage.append(u8" - ");
     combinedErrorMessage.append(PosixApi::GetErrorMessage(errorNumber));
 
@@ -166,24 +174,27 @@ namespace Nuclex { namespace Support { namespace Platform {
     );
     if(isFileAccessError) {
       throw Errors::FileAccessError(
-        std::error_code(errorNumber, std::system_category()), combinedErrorMessage
+        std::error_code(errorNumber, std::system_category()),
+        Text::StringConverter::CharFromUtf8(combinedErrorMessage)
       );
     } else {
       throw std::system_error(
-        std::error_code(errorNumber, std::system_category()), combinedErrorMessage
+        std::error_code(errorNumber, std::system_category()),
+        Text::StringConverter::CharFromUtf8(combinedErrorMessage)
       );
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void PosixApi::ThrowExceptionForSystemError(const std::string &errorMessage, int errorNumber) {
-    std::string combinedErrorMessage(errorMessage);
+  void PosixApi::ThrowExceptionForSystemError(const std::u8string &errorMessage, int errorNumber) {
+    std::u8string combinedErrorMessage(errorMessage);
     combinedErrorMessage.append(u8" - ");
     combinedErrorMessage.append(PosixApi::GetErrorMessage(errorNumber));
 
     throw std::system_error(
-      std::error_code(errorNumber, std::system_category()), combinedErrorMessage
+      std::error_code(errorNumber, std::system_category()),
+      Text::StringConverter::CharFromUtf8(combinedErrorMessage)
     );
   }
 

@@ -24,8 +24,9 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
-#include <string> // std::string
+#include <string> // std::u8string
 #include <cstdint> // std::uint8_t and std::size_t
+#include <filesystem> // for std::filesystem
 
 #include <sys/stat.h> // ::fstat() and permission flags
 #include <dirent.h> // struct ::dirent
@@ -52,12 +53,12 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <summary>Opens the specified file for shared reading</summary>
     /// <param name="path">Path of the file that will be opened</param>
     /// <returns>The descriptor (numeric handle) of the opened file</returns>
-    public: static int OpenFileForReading(const std::string &path);
+    public: static int OpenFileForReading(const std::filesystem::path &path);
 
     /// <summary>Creates or opens the specified file for exclusive writing</summary>
     /// <param name="path">Path of the file that will be opened</param>
     /// <returns>The descriptor (numeric handle) of the opened file</returns>
-    public: static int OpenFileForWriting(const std::string &path);
+    public: static int OpenFileForWriting(const std::filesystem::path &path);
 
     /// <summary>Changes the position of the file cursor</summary>
     /// <param name="fileDescriptor">File handle whose file cursor will be moved</param>

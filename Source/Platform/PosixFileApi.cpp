@@ -24,6 +24,7 @@ limitations under the License.
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
 #include "PosixApi.h"
 
 #include <cstdio> // for fopen() and fclose()
@@ -42,15 +43,15 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  FILE *PosixFileApi::OpenFileForReading(const std::string &path) {
+  FILE *PosixFileApi::OpenFileForReading(const std::filesystem::path &path) {
     static const char *fileMode = "rb";
 
     FILE *file = ::fopen(path.c_str(), fileMode);
     if(file == nullptr) [[unlikely]] {
       int errorNumber = errno;
 
-      std::string errorMessage(u8"Could not open file '");
-      errorMessage.append(path);
+      std::u8string errorMessage(u8"Could not open file '");
+      Text::StringConverter::AppendPathAsUtf8(errorMessage, path);
       errorMessage.append(u8"' for reading");
 
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
@@ -61,15 +62,15 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  FILE *PosixFileApi::OpenFileForWriting(const std::string &path, bool truncate) {
+  FILE *PosixFileApi::OpenFileForWriting(const std::filesystem::path &path, bool truncate) {
     static const char *fileMode = truncate ? "wb" : "w+b";
 
     FILE *file = ::fopen(path.c_str(), fileMode);
     if(file == nullptr) [[unlikely]] {
       int errorNumber = errno;
 
-      std::string errorMessage(u8"Could not open file '");
-      errorMessage.append(path);
+      std::u8string errorMessage(u8"Could not open file '");
+      Text::StringConverter::AppendPathAsUtf8(errorMessage, path);
       errorMessage.append(u8"' for writing");
 
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
@@ -90,7 +91,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         return 0; // Read was successful, but end of file has been reached
       }
 
-      std::string errorMessage(u8"Could not read data from file");
+      std::u8string errorMessage(u8"Could not read data from file");
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
@@ -109,7 +110,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         return 0; // Write was successful but no bytes could be written ?_?
       }
 
-      std::string errorMessage(u8"Could not write data to file");
+      std::u8string errorMessage(u8"Could not write data to file");
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
@@ -122,7 +123,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     int result = ::fflush(file);
     if(result == EOF) [[unlikely]] {
       int errorNumber = errno;
-      std::string errorMessage(u8"Could not flush file buffers");
+      std::u8string errorMessage(u8"Could not flush file buffers");
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
   }
@@ -134,7 +135,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(result != 0) [[unlikely]] {
       if(throwOnError) [[likely]] {
         int errorNumber = errno;
-        std::string errorMessage(u8"Could not close file");
+        std::u8string errorMessage(u8"Could not close file");
         Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
       }
     }

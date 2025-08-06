@@ -22,7 +22,6 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 #include <cstdint> // for std::uint32_t, std::int32_t, std::uint64_t, std::int64_t
-#include <string> // for std::string
 
 //
 // Data type       |   Number of mantissa bits     |   Smallest possible exponent (radix 10)
@@ -54,7 +53,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   Used for James Edward Anhalt III.'s integer formatting technique where two digits
   ///   are converted at once, among other tricks.
   /// </remarks>
-  extern const char Radix100[200];
+  extern const char8_t Radix100[200];
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -65,7 +64,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <remarks>
   ///   This does not append a terminating zero to the buffer.
   /// </remarks>
-  char *FormatInteger(char *buffer /* [10] */, std::uint32_t value);
+  char8_t *FormatInteger(char8_t *buffer /* [10] */, std::uint32_t value);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -76,7 +75,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <remarks>
   ///   This does not append a terminating zero to the buffer.
   /// </remarks>
-  char *FormatInteger(char *buffer /* [11] */, std::int32_t value);
+  char8_t *FormatInteger(char8_t *buffer /* [11] */, std::int32_t value);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -87,7 +86,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <remarks>
   ///   This does not append a terminating zero to the buffer.
   /// </remarks>
-  char *FormatInteger(char *buffer /* [20] */, std::uint64_t value);
+  char8_t *FormatInteger(char8_t *buffer /* [20] */, std::uint64_t value);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -98,7 +97,7 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <remarks>
   ///   This does not append a terminating zero to the buffer.
   /// </remarks>
-  char *FormatInteger(char *buffer /* [20] */, std::int64_t value);
+  char8_t *FormatInteger(char8_t *buffer /* [20] */, std::int64_t value);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -112,7 +111,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   Always uses non-exponential notation.
   ///   This does not append a terminating zero to the buffer.
   /// </remarks>
-  char *FormatFloat(char *buffer /* [46] */, float value);
+  char8_t *FormatFloat(char8_t *buffer /* [46] */, float value);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -126,7 +125,7 @@ namespace Nuclex { namespace Support { namespace Text {
   ///   Always uses non-exponential notation.
   ///   This does not append a terminating zero to the buffer.
   /// </remarks>
-  char *FormatFloat(char *buffer /* [325] */, double value);
+  char8_t *FormatFloat(char8_t *buffer /* [325] */, double value);
 
   // ------------------------------------------------------------------------------------------- //
 

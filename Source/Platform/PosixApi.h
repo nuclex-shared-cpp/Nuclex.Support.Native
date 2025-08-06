@@ -24,7 +24,7 @@ limitations under the License.
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include <string> // for std::string
+#include <string> // for std::u8string
 
 namespace Nuclex { namespace Support { namespace Platform {
 
@@ -38,7 +38,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   Error number for which the error message will be looked up
     /// </param>
     /// <returns>The error message for the specified error number</param>
-    public: static std::string GetErrorMessage(int errorNumber);
+    public: static std::u8string GetErrorMessage(int errorNumber);
 
     /// <summary>Throws the appropriate exception for an error reported by the OS</summary>
     /// <param name="errorMessage">
@@ -47,7 +47,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// </param>
     /// <param name="errorNumber">Value that 'errno' had at the time of failure</param>
     public: [[noreturn]] static void ThrowExceptionForSystemError(
-      const std::string &errorMessage, int errorNumber
+      const std::u8string &errorMessage, int errorNumber
     );
 
     /// <summary>Throws the appropriate exception for an error reported by the OS</summary>
@@ -62,7 +62,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   denied errors into FileAccessError exceptions.
     /// </remarks>
     public: [[noreturn]] static void ThrowExceptionForFileAccessError(
-      const std::string &errorMessage, int errorNumber
+      const std::u8string &errorMessage, int errorNumber
     );
 
   };

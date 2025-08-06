@@ -24,6 +24,7 @@ limitations under the License.
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include <filesystem> // for std::filesystem
 #include "PosixApi.h"
 
 namespace Nuclex { namespace Support { namespace Platform {
@@ -36,27 +37,27 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <summary>Checks if the specified path is a relative path</summary>
     /// <param name="path">Path that will be checked</param>
     /// <returns>True if the path is a relative path</returns>
-    public: static bool IsPathRelative(const std::string &path);
+    public: static bool IsPathRelative(const std::u8string &path);
 
     /// <summary>Appends one path to another</summary>
     /// <param name="path">Path to which another path will be appended</param>
     /// <param name="extra">Other path that will be appended</param>
-    public: static void AppendPath(std::string &path, const std::string &extra);
+    public: static void AppendPath(std::u8string &path, const std::u8string &extra);
 
     /// <summary>Removes the file name from a path containing a file name</summary>
     /// <param name="path">Path from which the file name will be removed</param>
-    public: static void RemoveFileFromPath(std::string &path);
+    public: static void RemoveFileFromPath(std::u8string &path);
 
     /// <summary>Checks if the specified path exists and if it is a file</summary>
     /// <param name="path">Path that will be checked</param>
     /// <returns>True if the path exists and is a file, false otherwise</returns>
-    public: static bool DoesFileExist(const std::string &path);
+    public: static bool DoesFileExist(const std::u8string &path);
 
     /// <summary>Determines the path of the user's temporary directory</summary>
     /// <param name="target">
     ///   String in which the full path of the temporary directory will be placed
     /// </param>
-    public: static void GetTemporaryDirectory(std::string &path);
+    public: static void GetTemporaryDirectory(std::u8string &path);
 
   };
 

@@ -24,6 +24,7 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
 #include "PosixApi.h" // Linux uses Posix error handling
 #include "PosixPathApi.h" // Path manipulation stuff for ::mk*temp()
 
@@ -41,7 +42,7 @@ namespace {
   /// <summary>Builds the template string that's passed to ::mkstemp()/::mkdtemp()</summary>
   /// <param name="path">Path vector the template will be stored in</param>
   /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
-  void buildTemplateForMkTemp(std::string &path, const std::string &prefix) {
+  void buildTemplateForMkTemp(std::u8string &path, const std::u8string &prefix) {
     path.reserve(256); // PATH_MAX would be a bit too bloaty usually...
 
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
@@ -49,9 +50,9 @@ namespace {
     {
       Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
 
-      std::string::size_type length = path.size();
-      if(path[length - 1] != '/') {
-        path.push_back('/');
+      std::u8string::size_type length = path.size();
+      if(path[length - 1] != u8'/') {
+        path.push_back(u8'/');
       }
     }
 
@@ -64,7 +65,7 @@ namespace {
     // Append the mandatory placeholder characters
     //   path: "/tmp/myappXXXXXX"
     {
-      static const std::string placeholder(u8"XXXXXX", 6);
+      static const std::u8string placeholder(u8"XXXXXX", 6);
       path.append(placeholder);
     }
   }
@@ -77,13 +78,13 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  int LinuxFileApi::OpenFileForReading(const std::string &path) {
+  int LinuxFileApi::OpenFileForReading(const std::filesystem::path &path) {
     int fileDescriptor = ::open(path.c_str(), O_RDONLY | O_LARGEFILE);
     if(fileDescriptor < 0) [[unlikely]] {
       int errorNumber = errno;
 
-      std::string errorMessage(u8"Could not open file '");
-      errorMessage.append(path);
+      std::u8string errorMessage(u8"Could not open file '");
+      Text::StringConverter::AppendPathAsUtf8(errorMessage, path);
       errorMessage.append(u8"' for reading");
 
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
@@ -94,7 +95,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  int LinuxFileApi::OpenFileForWriting(const std::string &path) {
+  int LinuxFileApi::OpenFileForWriting(const std::filesystem::path &path) {
     int fileDescriptor = ::open(
       path.c_str(),
       O_RDWR | O_CREAT | O_LARGEFILE,
@@ -103,8 +104,8 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(fileDescriptor < 0) [[unlikely]] {
       int errorNumber = errno;
 
-      std::string errorMessage(u8"Could not open file '");
-      errorMessage.append(path);
+      std::u8string errorMessage(u8"Could not open file '");
+      Text::StringConverter::AppendPathAsUtf8(errorMessage, path);
       errorMessage.append(u8"' for writing");
 
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
@@ -119,7 +120,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ::off_t absolutePosition = ::lseek(fileDescriptor, offset, anchor);
     if(absolutePosition == -1) {
       int errorNumber = errno;
-      std::string errorMessage(u8"Could not seek within file");
+      std::u8string errorMessage(u8"Could not seek within file");
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
@@ -134,7 +135,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ssize_t result = ::read(fileDescriptor, buffer, count);
     if(result == static_cast<ssize_t>(-1)) [[unlikely]] {
       int errorNumber = errno;
-      std::string errorMessage(u8"Could not read data from file");
+      std::u8string errorMessage(u8"Could not read data from file");
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
@@ -149,7 +150,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ssize_t result = ::write(fileDescriptor, buffer, count);
     if(result == static_cast<ssize_t>(-1)) [[unlikely]] {
       int errorNumber = errno;
-      std::string errorMessage(u8"Could not write data to file");
+      std::u8string errorMessage(u8"Could not write data to file");
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
@@ -162,7 +163,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     int result = ::ftruncate(fileDescriptor, static_cast<::off_t>(byteCount));
     if(result == -1) {
       int errorNumber = errno;
-      std::string errorMessage(u8"Could not truncate/pad file to specified length");
+      std::u8string errorMessage(u8"Could not truncate/pad file to specified length");
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
@@ -173,7 +174,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     int result = ::fsync(fileDescriptor);
     if(result == -1) [[unlikely]] {
       int errorNumber = errno;
-      std::string errorMessage(u8"Could not flush file buffers");
+      std::u8string errorMessage(u8"Could not flush file buffers");
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
@@ -185,7 +186,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(result == -1) [[unlikely]] {
       if(throwOnError) [[likely]] {
         int errorNumber = errno;
-        std::string errorMessage(u8"Could not close file");
+        std::u8string errorMessage(u8"Could not close file");
         Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
       }
     }

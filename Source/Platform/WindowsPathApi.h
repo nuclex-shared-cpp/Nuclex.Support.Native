@@ -24,6 +24,7 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include <filesystem> // for std::filesystem
 #include "WindowsApi.h"
 
 namespace Nuclex { namespace Support { namespace Platform {

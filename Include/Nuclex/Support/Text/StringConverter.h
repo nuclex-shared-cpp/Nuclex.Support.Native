@@ -23,6 +23,7 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 
 #include <string> // for std::string
+#include <filesystem> // for std::filesystem::path
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -142,6 +143,20 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <returns>A UTF-8 version of the provided UTF-32 string</returns>
     public: NUCLEX_SUPPORT_API static std::u8string Utf8FromUtf32(
       const std::u32string &utf32String
+    );
+
+    /// <summary>Appends a path as UTF-8 characters to a UTF-8 string</summary>
+    /// <param name="target">UTF-8 string to which a string will be appended</param>
+    /// <param name="pathToAppend">Path that will be appended</param>
+    public: NUCLEX_SUPPORT_API static void AppendPathAsUtf8(
+      std::u8string &target, const std::filesystem::path &pathToAppend
+    );
+
+    /// <summary>Appends a path as wide characters to a wide string</summary>
+    /// <param name="target">Wide string to which the path will be appended</param>
+    /// <param name="pathToAppend">Path that will be appended</param>
+    public: NUCLEX_SUPPORT_API static void AppendPathAsWide(
+      std::wstring &target, const std::filesystem::path &pathToAppend
     );
 
     /// <summary>Converts the specified UTF-8 string to &quot;folded lowercase&quot;</summary>

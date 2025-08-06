@@ -48,15 +48,15 @@ namespace {
   ///   of both. False otherwise.
   /// </returns>
   bool startsWith(
-    const std::string_view &text,
-    const char *beginningUppercase,
-    const char *beginningLowercase,
-    std::string_view::size_type length
+    const std::u8string_view &text,
+    const char8_t *beginningUppercase,
+    const char8_t *beginningLowercase,
+    std::u8string_view::size_type length
   ) {
     assert((text.length() >= length) && u8"Text is long enough to compare");
 
-    for(std::string_view::size_type index = 0; index < length; ++index) {
-      char current = text[index];
+    for(std::u8string_view::size_type index = 0; index < length; ++index) {
+      char8_t current = text[index];
       bool match = (
         (current == beginningUppercase[index]) ||
         (current == beginningLowercase[index])
@@ -76,31 +76,31 @@ namespace {
   /// <param nam=e"startIndex">Index at which the search will start</param>
   /// <returns>
   ///   The index of the next forward or backward slash. If no slashes were found,
-  ///   std::string::npos is returned.
+  ///   std::u8string::npos is returned.
   /// </returns>
-  std::string::size_type findNextSlash(
-    const std::string &path, std::string::size_type startIndex = 0
+  std::u8string::size_type findNextSlash(
+    const std::u8string &path, std::u8string::size_type startIndex = 0
   ) {
-    std::string::size_type length = path.length();
-    for(std::string::size_type index = startIndex; index < length; ++index) {
+    std::u8string::size_type length = path.length();
+    for(std::u8string::size_type index = startIndex; index < length; ++index) {
       char current = path[index];
       if((current == '\\') || (current == '/')) {
         return index;
       }
     }
 
-    return std::string::npos;
+    return std::u8string::npos;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Changes all slashes in a UTF-8 string to backward slashes</summary>
   /// <param name="stringToChange">String in which the slashes will be changed</param>
-  void makeAllSlashesBackward(std::string &stringToChange) {
-    std::string::size_type length = stringToChange.length();
-    for(std::string::size_type index = 0; index < length; ++index) {
-      if(stringToChange[index] == '/') {
-        stringToChange[index] = '\\';
+  void makeAllSlashesBackward(std::u8string &stringToChange) {
+    std::u8string::size_type length = stringToChange.length();
+    for(std::u8string::size_type index = 0; index < length; ++index) {
+      if(stringToChange[index] == u8'/') {
+        stringToChange[index] = u8'\\';
       }
     }
   }
@@ -110,8 +110,8 @@ namespace {
   /// <summary>Changes all slashes in a UTF-8 string to backward slashes</summary>
   /// <param name="stringToChange">String in which the slashes will be changed</param>
   void makeAllSlashesBackward(std::wstring &stringToChange) {
-    std::string::size_type length = stringToChange.length();
-    for(std::string::size_type index = 0; index < length; ++index) {
+    std::u8string::size_type length = stringToChange.length();
+    for(std::u8string::size_type index = 0; index < length; ++index) {
       if(stringToChange[index] == L'/') {
         stringToChange[index] = L'\\';
       }
@@ -120,17 +120,16 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::wstring wideFromUtf8AndUseBackwardSlashes(const std::string &utf8String) {
+  std::wstring wideFromUtf8AndUseBackwardSlashes(const std::u8string &utf8String) {
     using Nuclex::Support::Text::UnicodeHelper;
-    typedef UnicodeHelper::Char8Type Char8Type;
 
     std::wstring result;
     {
-      const Char8Type *read = reinterpret_cast<const Char8Type *>(utf8String.c_str());
-      const Char8Type *readEnd = read + utf8String.length();
+      const char8_t *read = utf8String.c_str();
+      const char8_t *readEnd = read + utf8String.length();
 
       // Let's assume 1 UTF-8 characters maps to 1 UTF-16 character. For ASCII strings,
-      // this will be an exact fit, for asian languages, it's probably twice what we need.
+      // this will be an exact fit, for Asian languages, it's probably twice what we need.
       // In any case, it will never come up short, so we don't have to worry about running
       // out of space when writing transcoded UTF characters into the string.
       result.resize(utf8String.length());
@@ -142,7 +141,8 @@ namespace {
         while(read < readEnd) {
           char32_t codePoint = UnicodeHelper::ReadCodePoint(read, readEnd);
           if(codePoint == U'/') [[unlikely]] {
-            UnicodeHelper::WriteCodePoint(write, U'\\');
+            *write = u'\\';
+            ++write;
           } else {
             UnicodeHelper::WriteCodePoint(write, codePoint);
           }
@@ -178,18 +178,18 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   ::HKEY WindowsRegistryApi::GetHiveFromString(
-    const std::string &hiveName, std::string::size_type hiveNameLength
+    const std::u8string &hiveName, std::u8string::size_type hiveNameLength
   ) {
     if(hiveNameLength >= 3) {
       bool isHk = (
-        ((hiveName[0] == 'H') || (hiveName[0] == 'h')) &&
-        ((hiveName[1] == 'K') || (hiveName[1] == 'k'))
+        ((hiveName[0] == u8'H') || (hiveName[0] == u8'h')) &&
+        ((hiveName[1] == u8'K') || (hiveName[1] == u8'k'))
       );
       if(isHk) {
 
         // Is the prefix 'HKU' for HKEY_USERS?
         if(hiveNameLength == 3) {
-          if((hiveName[2] == 'U') || (hiveName[2] == 'u')) {
+          if((hiveName[2] == u8'U') || (hiveName[2] == u8'u')) {
             return HKEY_USERS;
           }
         }
@@ -197,22 +197,22 @@ namespace Nuclex { namespace Support { namespace Platform {
         if(hiveNameLength == 4) {
 
           // Is the prefix 'HKCR', 'HKCU' or 'HKCC'?
-          if((hiveName[2] == 'C') || (hiveName[2] == 'c')) {
-            if((hiveName[3] == 'R') || (hiveName[3] == 'r')) {
+          if((hiveName[2] == u8'C') || (hiveName[2] == u8'c')) {
+            if((hiveName[3] == u8'R') || (hiveName[3] == u8'r')) {
               return HKEY_CLASSES_ROOT;
             }
-            if((hiveName[3] == 'U') || (hiveName[3] == 'u')) {
+            if((hiveName[3] == u8'U') || (hiveName[3] == u8'u')) {
               return HKEY_CURRENT_USER;
             }
-            if((hiveName[3] == 'C') || (hiveName[3] == 'c')) {
+            if((hiveName[3] == u8'C') || (hiveName[3] == u8'c')) {
               return HKEY_CURRENT_CONFIG;
             }
           }
 
           // Is the prefix 'HKLM' for HKEY_LOCAL_MACHINE?
           bool isHklm = (
-            ((hiveName[2] == 'L') || (hiveName[2] == 'l')) &&
-            ((hiveName[3] == 'M') || (hiveName[3] == 'm'))
+            ((hiveName[2] == u8'L') || (hiveName[2] == u8'l')) &&
+            ((hiveName[3] == u8'M') || (hiveName[3] == u8'm'))
           );
           if(isHklm) {
             return HKEY_LOCAL_MACHINE;
@@ -257,7 +257,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::string> WindowsRegistryApi::GetAllSubKeyNames(::HKEY keyHandle) {
+  std::vector<std::u8string> WindowsRegistryApi::GetAllSubKeyNames(::HKEY keyHandle) {
     DWORD subKeyCount, longestSubKeyLength;
     {
       ::LSTATUS result = ::RegQueryInfoKeyW(
@@ -274,7 +274,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     }
 
     // Collect a list of all subkeys below the root settings key
-    std::vector<std::string> results;
+    std::vector<std::u8string> results;
     if(subKeyCount > 0) {
       results.reserve(subKeyCount);
 
@@ -330,7 +330,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::string> WindowsRegistryApi::GetAllValueNames(::HKEY keyHandle) {
+  std::vector<std::u8string> WindowsRegistryApi::GetAllValueNames(::HKEY keyHandle) {
     // Query the number of subkeys in our root settings key
     DWORD valueCount;
     DWORD longestValueNameLength;
@@ -349,7 +349,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     }
 
     // Collect a list of all subkeys below the root settings key
-    std::vector<std::string> results;
+    std::vector<std::u8string> results;
     if(valueCount > 0) {
       results.reserve(valueCount);
 
@@ -406,7 +406,7 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   ::HKEY WindowsRegistryApi::OpenExistingSubKey(
-    ::HKEY parentKeyHandle, const std::string &subKeyName, bool writable /* = true */
+    ::HKEY parentKeyHandle, const std::u8string &subKeyName, bool writable /* = true */
   ) {
     ::HKEY subKeyHandle;
     {
@@ -453,7 +453,7 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   ::HKEY WindowsRegistryApi::OpenOrCreateSubKey(
-    ::HKEY parentKeyHandle, const std::string &subKeyName
+    ::HKEY parentKeyHandle, const std::u8string &subKeyName
   ) {
     ::HKEY openedSubKey;
     {
@@ -481,14 +481,14 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool WindowsRegistryApi::DeleteTree(::HKEY parentKeyHandle, const std::string &subKeyName) {
+  bool WindowsRegistryApi::DeleteTree(::HKEY parentKeyHandle, const std::u8string &subKeyName) {
     std::wstring subKeyNameUtf16 = Text::StringConverter::WideFromUtf8(subKeyName);
 
     ::LSTATUS result = ::RegDeleteTreeW(parentKeyHandle, subKeyNameUtf16.c_str());
     if(result == ERROR_FILE_NOT_FOUND) {
       return false;
     } else if(result != ERROR_SUCCESS) [[unlikely]] {
-      std::string message(u8"Could not delete registry tree at '", 35);
+      std::u8string message(u8"Could not delete registry tree at '", 35);
       message.append(subKeyName);
       message.append(u8"'", 1);
       Platform::WindowsApi::ThrowExceptionForSystemError(message, result);

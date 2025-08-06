@@ -40,8 +40,8 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool PosixPathApi::IsPathRelative(const std::string &path) {
-    std::string::size_type length = path.length();
+  bool PosixPathApi::IsPathRelative(const std::u8string &path) {
+    std::u8string::size_type length = path.length();
     if(length == 0) {
       return true;
     }
@@ -57,8 +57,8 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void PosixPathApi::AppendPath(std::string &path, const std::string &extra) {
-    std::string::size_type length = path.length();
+  void PosixPathApi::AppendPath(std::u8string &path, const std::u8string &extra) {
+    std::u8string::size_type length = path.length();
     if(length == 0) {
       path.assign(extra);
     } else {
@@ -71,16 +71,16 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void PosixPathApi::RemoveFileFromPath(std::string &path) {
-    std::string::size_type lastBackslashIndex = path.find_last_of('/');
-    if(lastBackslashIndex != std::string::npos) {
+  void PosixPathApi::RemoveFileFromPath(std::u8string &path) {
+    std::u8string::size_type lastBackslashIndex = path.find_last_of('/');
+    if(lastBackslashIndex != std::u8string::npos) {
       path.resize(lastBackslashIndex + 1); // Keep the slash on
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool PosixPathApi::DoesFileExist(const std::string &path) {
+  bool PosixPathApi::DoesFileExist(const std::u8string &path) {
     struct ::stat fileStatus;
 
     int result = ::stat(path.c_str(), &fileStatus);
@@ -92,7 +92,7 @@ namespace Nuclex { namespace Support { namespace Platform {
         return false;
       }
 
-      std::string errorMessage(u8"Could not obtain file status for '");
+      std::u8string errorMessage(u8"Could not obtain file status for '");
       errorMessage.append(path);
       errorMessage.append(u8"'");
 
@@ -104,7 +104,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void PosixPathApi::GetTemporaryDirectory(std::string &path) {
+  void PosixPathApi::GetTemporaryDirectory(std::u8string &path) {
     const char *tempDirectory = ::getenv(u8"TMPDIR");
     if(tempDirectory == nullptr) {
       tempDirectory = ::getenv(u8"TMP");
