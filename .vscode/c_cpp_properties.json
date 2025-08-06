@@ -14,7 +14,7 @@
             ],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c11",
-            "cppStandard": "c++17",
+            "cppStandard": "c++20",
             "intelliSenseMode": "gcc-x64",
             "compilerArgs": [
                 "-fvisibility=hidden",
@@ -24,7 +24,7 @@
                 "-Wno-unknown-pragmas",
                 "-fpic",
                 "-funsafe-math-optimizations",
-                "-std=c++17",
+                "-std=c++20",
                 "-fvisibility-inlines-hidden"
             ]
         }

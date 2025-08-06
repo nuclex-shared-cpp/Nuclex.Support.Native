@@ -35,39 +35,31 @@ limitations under the License.
 
 // Compiler support checking
 #if defined(_MSC_VER)
-  #if (_MSC_VER < 1910) // Visual Studio 2017 has the C++17 features we use
-    #error At least Visual Studio 2017 is required to compile Nuclex.Support.Native
-  #elif defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L)
-    #define NUCLEX_SUPPORT_CXX17 1
+  #if (_MSC_VER < 1920) // Visual Studio 2019 has the C++20 features we use
+    #error At least Visual Studio 2019 is required to compile Nuclex.Support.Native
+  #elif defined(_MSVC_LANG) && (_MSVC_LANG >= 202002L)
+    #define NUCLEX_SUPPORT_CXX20 1
   #endif
 #elif defined(__clang__) && defined(__clang_major__)
-  #if (__clang_major__ < 5) // clang 5.0 has the C++17 features we use
-    #error At least clang 5.0 is required to compile Nuclex.Support.Native
-  #elif defined(__cplusplus) && (__cplusplus >= 201703L)
-    #define NUCLEX_SUPPORT_CXX17 1
+  #if (__clang_major__ < 12) // clang 12.0 has the C++20 features we use
+    #error At least clang 12.0 is required to compile Nuclex.Support.Native
+  #elif defined(__cplusplus) && (__cplusplus >= 202002L)
+    #define NUCLEX_SUPPORT_CXX20 1
   #endif
 #elif defined(__GNUC__)
-  #if (__GNUC__ < 8) // GCC 8.0 has the C++17 features we use
-    #error At least GCC 8.0 is required to compile Nuclex.Support.Native
-  #elif defined(__cplusplus) && (__cplusplus >= 201703L)
-    #define NUCLEX_SUPPORT_CXX17 1
+  #if (__GNUC__ < 11) // GCC 11.0 has the C++20 features we use
+    #error At least GCC 11.0 is required to compile Nuclex.Support.Native
+  #elif defined(__cplusplus) && (__cplusplus >= 202002L)
+    #define NUCLEX_SUPPORT_CXX20 1
   #endif
 #else
   #error Unknown compiler. Nuclex.Support.Native is tested with GCC, clang and MSVC only
 #endif
 
-// This library uses writable std::string::data(), 'if constexpr' and new C++17
-// containers, so anything earlier than C++ 17 will only result in compilation errors.
-#if !defined(NUCLEX_SUPPORT_CXX17)
-  #error The Nuclex.Support.Native library must be compiled in at least C++17 mode
-#endif
-
-// We've got tons of u8"hello" strings that will become char8_t in C++20 and fail to build!
-// Bail out instead of letting the user scratch their head over weird compiler errors.
-#if defined(_MSVC_LANG) && (_MSVC_LANG >= 202002)
-  #error The Nuclex.Support.Native library does not work in C++20 mode yet
-#elif defined(__cplusplus) && (__cplusplus >= 202002)
-  #error The Nuclex.Support.Native library does not work in C++20 mode yet
+// This library uses char8_t, std::u8string and other new C++20 features,
+// so anything earlier than C++ 20 would only result in compilation errors.
+#if !defined(NUCLEX_SUPPORT_CXX20)
+  #error The Nuclex.Support.Native library must be compiled in at least C++20 mode
 #endif
 
 // --------------------------------------------------------------------------------------------- >
@@ -133,29 +125,6 @@ limitations under the License.
 #else
 
   #error Unknown compiler, please implement shared library macros for your system
-
-#endif
-
-// --------------------------------------------------------------------------------------------- //
-
-// Optimization macros
-#if defined(__GNUC__) || defined(__clang__)
-
-  #if !defined(likely)
-    #define likely(x) __builtin_expect((x), 1)
-  #endif
-  #if !defined(unlikely)
-    #define unlikely(x) __builtin_expect((x), 0)
-  #endif
-
-#else
-
-  #if !defined(likely)
-    #define likely(x) (x)
-  #endif
-  #if !defined(unlikely)
-    #define unlikely(x) (x)
-  #endif
 
 #endif
 
