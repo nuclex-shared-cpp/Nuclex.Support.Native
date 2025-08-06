@@ -24,7 +24,7 @@ limitations under the License.
 #include "Nuclex/Support/VariantType.h"
 
 #include <cstdint> // for std::int*_t and std::uint*_t
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <any> // for std::any
 
 namespace Nuclex { namespace Support {
@@ -103,9 +103,9 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Initializes a variant to hold a string</summary>
     /// <param name="stringValue">String that the variant will hold</param>
-    public: NUCLEX_SUPPORT_API Variant(const std::string &stringValue) :
-      type(VariantType::String) {
-      new(this->stringValueBytes) std::string(stringValue);
+    public: NUCLEX_SUPPORT_API Variant(const std::u8string &stringValue) :
+      type(VariantType::U8String) {
+      new(this->u8stringValueBytes) std::u8string(stringValue);
     }
 
     /// <summary>Initializes a variant to hold a wide string</summary>
@@ -202,7 +202,7 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Returns the value held by the variant as a string</summary>
     /// <returns>The variasnt's value as a string</returns>
-    public: NUCLEX_SUPPORT_API std::string ToString() const;
+    public: NUCLEX_SUPPORT_API std::u8string ToString() const;
 
     /// <summary>Returns the value held by the variant as a wide string</summary>
     /// <returns>The variasnt's value as a wide string</returns>
@@ -240,7 +240,7 @@ namespace Nuclex { namespace Support {
     /// <returns>True if the variant is holding a string</returns>
     public: NUCLEX_SUPPORT_API bool IsString() const {
       switch(this->type) {
-        case VariantType::String:
+        case VariantType::U8String:
         case VariantType::WString: {
           return true;
         }
@@ -369,10 +369,10 @@ namespace Nuclex { namespace Support {
     /// <summary>Assigns a string to the variant</summary>
     /// <param name="newValue">String that will be assigned</param>
     /// <returns>The variant itself</returns>
-    public: NUCLEX_SUPPORT_API Variant &operator =(const std::string &newValue) {
+    public: NUCLEX_SUPPORT_API Variant &operator =(const std::u8string &newValue) {
       free();
-      new(this->stringValueBytes) std::string(newValue);
-      this->type = VariantType::String;
+      new(this->u8stringValueBytes) std::u8string(newValue);
+      this->type = VariantType::U8String;
       return *this;
     }
 
@@ -419,8 +419,8 @@ namespace Nuclex { namespace Support {
     /// <summary>Frees all memory used by the variant</summary>
     private: void free() {
       switch(this->type) {
-        case VariantType::String: {
-          reinterpret_cast<std::string *>(this->stringValueBytes)->~basic_string();
+        case VariantType::U8String: {
+          reinterpret_cast<std::u8string *>(this->u8stringValueBytes)->~basic_string();
           break;
         }
         case VariantType::WString: {
@@ -463,8 +463,8 @@ namespace Nuclex { namespace Support {
       ///   Double precision floating point value, if the variant is holding that type
       /// </summary>
       double doubleValue;
-      /// <summary>String value, if the variant is holding that type</summary>
-      std::uint8_t stringValueBytes[sizeof(std::string)];
+      /// <summary>UTF-8 string value, if the variant is holding that type</summary>
+      std::uint8_t u8stringValueBytes[sizeof(std::string)];
       /// <summary>Wide string value, if the variant is holding that type</summary>
       std::uint8_t wstringValueBytes[sizeof(std::wstring)];
       /// <summary>Opaque value of an arbitrary type, if the variant is holding that</summary>

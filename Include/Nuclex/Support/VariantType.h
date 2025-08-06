@@ -53,9 +53,13 @@ namespace Nuclex { namespace Support {
     Float = 10,
     /// <summary>A double precision floating point value is being stored</summary>
     Double = 11,
-    /// <summary>A string is being stored</summary>
-    String = 12,
+    /// <summary>A UTF-8 string is being stored</summary>
+    U8String = 12,
     /// <summary>A wide character string is being stored</summary>
+    /// <remarks>
+    ///   This is a crutch for Windows' mess. Wide characters are UTF-16 on Windows and
+    ///   UTF-32 on every other platform/compiler that exists.
+    /// </remarks>
     WString = 13,
     /// <summary>An arbitrary type is being stored</summary>
     Any = 14,

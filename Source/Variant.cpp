@@ -28,8 +28,12 @@ limitations under the License.
 
 namespace {
 
+  // ------------------------------------------------------------------------------------------- //
+
   /// Message used in the exception thrown when the variant is of an unknown type
-  std::string InvalidVariantTypeExceptionMessage(u8"Invalid variant type");
+  std::u8string InvalidVariantTypeExceptionMessage(u8"Invalid variant type");
+
+  // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
@@ -53,9 +57,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { this->int64Value = other.int64Value; break; }
       case VariantType::Float: { this->floatValue = other.floatValue; break; }
       case VariantType::Double: { this->doubleValue = other.doubleValue; break; }
-      case VariantType::String: {
-        new(this->stringValueBytes) std::string(
-          *reinterpret_cast<const std::string *>(other.stringValueBytes)
+      case VariantType::U8String: {
+        new(this->u8stringValueBytes) std::u8string(
+          *reinterpret_cast<const std::u8string *>(other.u8stringValueBytes)
         );
         break;
       }
@@ -93,11 +97,11 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { this->int64Value = other.int64Value; break; }
       case VariantType::Float: { this->floatValue = other.floatValue; break; }
       case VariantType::Double: { this->doubleValue = other.doubleValue; break; }
-      case VariantType::String: {
-        std::string &&otherString = std::move(
-          *reinterpret_cast<std::string *>(other.stringValueBytes)
+      case VariantType::U8String: {
+        std::u8string &&otherString = std::move(
+          *reinterpret_cast<std::u8string *>(other.u8stringValueBytes)
         );
-        new(this->stringValueBytes) std::string(std::move(otherString));
+        new(this->u8stringValueBytes) std::u8string(std::move(otherString));
         otherString.~basic_string(); // move doesn't guarantee that destructor can be omitted
         break;
       }
@@ -140,9 +144,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return this->int64Value != 0; }
       case VariantType::Float: { return this->floatValue != 0.0f; }
       case VariantType::Double: { return this->doubleValue != 0.0; }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<bool>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -172,9 +176,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return static_cast<std::uint8_t>(this->int64Value); }
       case VariantType::Float: { return static_cast<std::uint8_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::uint8_t>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<std::uint8_t>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -210,9 +214,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return static_cast<std::int8_t>(this->int64Value); }
       case VariantType::Float: { return static_cast<std::int8_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::int8_t>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<std::int8_t>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -248,9 +252,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return static_cast<std::uint16_t>(this->int64Value); }
       case VariantType::Float: { return static_cast<std::uint16_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::uint16_t>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<std::uint16_t>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -284,9 +288,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return static_cast<std::int16_t>(this->int64Value); }
       case VariantType::Float: { return static_cast<std::int16_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::int16_t>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<std::int16_t>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -320,9 +324,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return static_cast<std::uint32_t>(this->int64Value); }
       case VariantType::Float: { return static_cast<std::uint32_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::uint32_t>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<std::uint32_t>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -356,9 +360,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return static_cast<std::int32_t>(this->int64Value); }
       case VariantType::Float: { return static_cast<std::int32_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::int32_t>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<std::int32_t>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -392,9 +396,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return static_cast<std::uint64_t>(this->int64Value); }
       case VariantType::Float: { return static_cast<std::uint64_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::uint64_t>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<std::uint64_t>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -428,9 +432,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return this->int64Value; }
       case VariantType::Float: { return static_cast<std::int64_t>(this->floatValue); }
       case VariantType::Double: { return static_cast<std::int64_t>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<std::int64_t>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -464,9 +468,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return static_cast<float>(this->int64Value); }
       case VariantType::Float: { return this->floatValue; }
       case VariantType::Double: { return static_cast<float>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<float>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -500,9 +504,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return static_cast<double>(this->int64Value); }
       case VariantType::Float: { return static_cast<double>(this->floatValue); }
       case VariantType::Double: { return this->doubleValue; }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::lexical_cast<double>(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -522,30 +526,30 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string Variant::ToString() const {
-    static std::string emptyString;
-    static std::string trueString(u8"1", 1);
-    static std::string falseString(u8"0", 1);
+  std::u8string Variant::ToString() const {
+    static std::u8string emptyString;
+    static std::u8string trueString(u8"1", 1);
+    static std::u8string falseString(u8"0", 1);
 
     switch(this->type) {
       case VariantType::Empty: { return emptyString; }
       case VariantType::Boolean: { return this->booleanValue ? trueString : falseString; }
       case VariantType::Uint8: {
-        return Text::lexical_cast<std::string>(static_cast<std::uint16_t>(this->uint8Value));
+        return Text::lexical_cast<std::u8string>(static_cast<std::uint16_t>(this->uint8Value));
       }
       case VariantType::Int8: {
-        return Text::lexical_cast<std::string>(static_cast<std::int16_t>(this->int8Value));
+        return Text::lexical_cast<std::u8string>(static_cast<std::int16_t>(this->int8Value));
       }
-      case VariantType::Uint16: { return Text::lexical_cast<std::string>(this->uint16Value); }
-      case VariantType::Int16: { return Text::lexical_cast<std::string>(this->int16Value); }
-      case VariantType::Uint32: { return Text::lexical_cast<std::string>(this->uint32Value); }
-      case VariantType::Int32: { return Text::lexical_cast<std::string>(this->int32Value); }
-      case VariantType::Uint64: { return Text::lexical_cast<std::string>(this->uint64Value); }
-      case VariantType::Int64: { return Text::lexical_cast<std::string>(this->int64Value); }
-      case VariantType::Float: { return Text::lexical_cast<std::string>(this->floatValue); }
-      case VariantType::Double: { return Text::lexical_cast<std::string>(this->doubleValue); }
-      case VariantType::String: {
-        return *reinterpret_cast<const std::string *>(this->stringValueBytes);
+      case VariantType::Uint16: { return Text::lexical_cast<std::u8string>(this->uint16Value); }
+      case VariantType::Int16: { return Text::lexical_cast<std::u8string>(this->int16Value); }
+      case VariantType::Uint32: { return Text::lexical_cast<std::u8string>(this->uint32Value); }
+      case VariantType::Int32: { return Text::lexical_cast<std::u8string>(this->int32Value); }
+      case VariantType::Uint64: { return Text::lexical_cast<std::u8string>(this->uint64Value); }
+      case VariantType::Int64: { return Text::lexical_cast<std::u8string>(this->int64Value); }
+      case VariantType::Float: { return Text::lexical_cast<std::u8string>(this->floatValue); }
+      case VariantType::Double: { return Text::lexical_cast<std::u8string>(this->doubleValue); }
+      case VariantType::U8String: {
+        return *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes);
       }
       case VariantType::WString: {
         return Text::StringConverter::Utf8FromWide(
@@ -554,7 +558,7 @@ namespace Nuclex { namespace Support {
       }
       case VariantType::Any: { return emptyString; }
       case VariantType::VoidPointer: {
-        return Text::lexical_cast<std::string>(
+        return Text::lexical_cast<std::u8string>(
           reinterpret_cast<std::uintptr_t>(this->pointerValue)
         );
       }
@@ -582,9 +586,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return Text::wlexical_cast<std::wstring>(this->int64Value); }
       case VariantType::Float: { return Text::wlexical_cast<std::wstring>(this->floatValue); }
       case VariantType::Double: { return Text::wlexical_cast<std::wstring>(this->doubleValue); }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return Text::StringConverter::WideFromUtf8(
-          *reinterpret_cast<const std::string *>(this->stringValueBytes)
+          *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
         );
       }
       case VariantType::WString: {
@@ -616,8 +620,8 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { return std::any(this->int64Value); }
       case VariantType::Float: { return std::any(this->floatValue); }
       case VariantType::Double: { return std::any(this->doubleValue); }
-      case VariantType::String: {
-        return std::any(*reinterpret_cast<const std::string *>(this->stringValueBytes));
+      case VariantType::U8String: {
+        return std::any(*reinterpret_cast<const std::u8string *>(this->u8stringValueBytes));
       }
       case VariantType::WString: {
         return std::any(*reinterpret_cast<const std::wstring *>(this->wstringValueBytes));
@@ -667,10 +671,10 @@ namespace Nuclex { namespace Support {
       case VariantType::Double: {
         return reinterpret_cast<void *>(static_cast<std::uintptr_t>(this->doubleValue));
       }
-      case VariantType::String: {
+      case VariantType::U8String: {
         return reinterpret_cast<void *>(
           Text::lexical_cast<std::uintptr_t>(
-            *reinterpret_cast<const std::string *>(this->stringValueBytes)
+            *reinterpret_cast<const std::u8string *>(this->u8stringValueBytes)
           )
         );
       }
@@ -710,9 +714,9 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { this->int64Value = other.int64Value; break; }
       case VariantType::Float: { this->floatValue = other.floatValue; break; }
       case VariantType::Double: { this->doubleValue = other.doubleValue; break; }
-      case VariantType::String: {
-        new(this->stringValueBytes) std::string(
-          *reinterpret_cast<const std::string *>(other.stringValueBytes)
+      case VariantType::U8String: {
+        new(this->u8stringValueBytes) std::u8string(
+          *reinterpret_cast<const std::u8string *>(other.u8stringValueBytes)
         );
         break;
       }
@@ -762,19 +766,19 @@ namespace Nuclex { namespace Support {
       case VariantType::Int64: { this->int64Value = other.int64Value; break; }
       case VariantType::Float: { this->floatValue = other.floatValue; break; }
       case VariantType::Double: { this->doubleValue = other.doubleValue; break; }
-      case VariantType::String: {
-        std::string &&otherString = std::move(
-          *reinterpret_cast<std::string *>(other.stringValueBytes)
+      case VariantType::U8String: {
+        std::u8string &&otherString = std::move(
+          *reinterpret_cast<std::u8string *>(other.u8stringValueBytes)
         );
-        new(this->stringValueBytes) std::string(std::move(otherString));
+        new(this->u8stringValueBytes) std::u8string(std::move(otherString));
         otherString.~basic_string();
         break;
       }
       case VariantType::WString: {
         std::wstring &&otherString = std::move(
-          *reinterpret_cast<std::wstring *>(other.stringValueBytes)
+          *reinterpret_cast<std::wstring *>(other.u8stringValueBytes)
         );
-        new(this->stringValueBytes) std::wstring(std::move(otherString));
+        new(this->u8stringValueBytes) std::wstring(std::move(otherString));
         otherString.~basic_string();
         break;
       }
