@@ -40,13 +40,16 @@ namespace Nuclex { namespace Support { namespace Services {
   // ------------------------------------------------------------------------------------------- //
 
   const std::any &ServiceContainer::Get(const std::type_info &serviceType) const {
+    const static std::u8string serviceOfType(u8"Service of type '", 17);
+    const static std::u8string notPresent(u8"' not present", 13);
+
     ServiceMap::const_iterator iterator = this->services.find(&serviceType);
     if(iterator == this->services.end()) {
       std::string message;
       message.reserve(17 + 32 + 13);
-      message.append(u8"Service of type '", 17);
+      message.append(serviceOfType.begin(), serviceOfType.end());
       message.append(serviceType.name());
-      message.append(u8"' not present", 13);
+      message.append(notPresent.begin(), notPresent.end());
       throw std::logic_error(message);
     }
 
@@ -67,13 +70,16 @@ namespace Nuclex { namespace Support { namespace Services {
   // ------------------------------------------------------------------------------------------- //
 
   void ServiceContainer::Add(const std::type_info &serviceType, const std::any &service) {
+    const static std::u8string serviceTypeString(u8"Service type '", 14);
+    const static std::u8string alreadyAdded(u8"' already added", 15);
+
     ServiceMap::const_iterator iterator = this->services.find(&serviceType);
     if(iterator != this->services.end()) {
       std::string message;
       message.reserve(14 + 32 + 15);
-      message.append(u8"Service type '", 14);
+      message.append(serviceTypeString.begin(), serviceTypeString.end());
       message.append(serviceType.name());
-      message.append(u8"' already added", 15);
+      message.append(alreadyAdded.begin(), alreadyAdded.end());
       throw std::logic_error(message);
     }
 

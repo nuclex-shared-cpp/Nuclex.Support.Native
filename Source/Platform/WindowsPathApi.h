@@ -79,7 +79,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <summary>Creates a temporary file with a unique name on Windows systems</summary>
     /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
     /// <returns>The full path to the newly created temporary file</returns>
-    public: static std::wstring CreateTemporaryFile(const std::string &prefix);
+    public: static std::wstring CreateTemporaryFile(const std::u8string &prefix);
 
     /// <summary>Creates a new directory in the specified location</summary>
     /// <param name="path">Path in which the new directory will be created</param>

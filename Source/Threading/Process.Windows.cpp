@@ -97,10 +97,10 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string Process::GetExecutableDirectory() {
+  std::filesystem::path Process::GetExecutableDirectory() {
     std::wstring result;
     Platform::WindowsProcessApi::GetOwnExecutablePath(result);
-    return Text::StringConverter::Utf8FromWide(result);
+    return std::filesystem::path(result);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -168,7 +168,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   void Process::Start(
-    const std::vector<std::string> &arguments /* = std::vector<std::string>() */,
+    const std::vector<std::u8string> &arguments /* = std::vector<std::string>() */,
     bool prependExecutableName /* = true */
   ) {
     using Nuclex::Support::Platform::WindowsProcessApi;
@@ -176,7 +176,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle != INVALID_HANDLE_VALUE) {
-      throw std::logic_error(u8"Child process is still running or not joined yet");
+      throw std::logic_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Child process is still running or not joined yet"
+        )
+      );
     }
 
     // Set up a security attribute structure that tells Windows that handles should
@@ -233,7 +237,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       // Launch the new process. We're using the UTF-16 version (and convert everything
       // from UTF-8 to UTF-16) to ensure we can deal with unicode paths and executable names.
       {
-        std::wstring utf16ExecutablePath = StringConverter::WideFromUtf8(this->executablePath);
+        std::wstring utf16ExecutablePath;
+        StringConverter::AppendPathAsWide(utf16ExecutablePath, this->executablePath);
         std::wstring absoluteUtf16ExecutablePath;
         WindowsProcessApi::GetAbsoluteExecutablePath(
           absoluteUtf16ExecutablePath, utf16ExecutablePath
@@ -261,9 +266,9 @@ namespace Nuclex { namespace Support { namespace Threading {
         // path is used, it will be relative to the running application executable.
         std::wstring utf16WorkingDirectory;
         if(!this->workingDirectory.empty()) {
-          WindowsProcessApi::GetAbsoluteWorkingDirectory(
-            utf16WorkingDirectory, StringConverter::WideFromUtf8(this->workingDirectory)
-          );
+          std::wstring temp;
+          StringConverter::AppendPathAsWide(temp, this->workingDirectory);
+          WindowsProcessApi::GetAbsoluteWorkingDirectory(utf16WorkingDirectory, temp);
         }
 
         BOOL result = ::CreateProcessW(
@@ -382,7 +387,11 @@ namespace Nuclex { namespace Support { namespace Threading {
   ) const {
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
-      throw std::logic_error(u8"Process was not started or is already joined");
+      throw std::logic_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Process was not started or is already joined"
+        )
+      );
     }
 
     // Wait for the process to exit, but keep servicing the output streams so
@@ -421,7 +430,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
-      throw std::logic_error(u8"Process was not started or is already joined");
+      throw std::logic_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Process was not started or is already joined"
+        )
+      );
     }
 
     DWORD exitCode = WindowsProcessApi::GetProcessExitCode(impl.ChildProcessHandle);
@@ -449,7 +462,9 @@ namespace Nuclex { namespace Support { namespace Threading {
         DWORD waitedTilliseconds = ::GetTickCount() - startTickCount;
         if(waitedTilliseconds >= timeoutMilliseconds) {
           throw Nuclex::Support::Errors::TimeoutError(
-            u8"Timed out waiting for external process to exit"
+            Text::StringConverter::CharFromUtf8(
+              u8"Timed out waiting for external process to exit"
+            )
           );
         }
 
@@ -607,7 +622,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
-      throw std::logic_error(u8"Process was not started or is already joined");
+      throw std::logic_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Process was not started or is already joined"
+        )
+      );
     }
 
     WindowsProcessApi::RequestProcessToTerminate(impl.ChildProcessHandle);
@@ -622,7 +641,11 @@ namespace Nuclex { namespace Support { namespace Threading {
   std::size_t Process::Write(const char *characters, std::size_t characterCount) {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
-      throw std::logic_error(u8"Process was not started or is already joined");
+      throw std::logic_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Process was not started or is already joined"
+        )
+      );
     }
 
     DWORD writtenByteCount;

@@ -26,13 +26,13 @@ limitations under the License.
 namespace Nuclex { namespace Support { namespace Errors {
 
   // ------------------------------------------------------------------------------------------- //
-
+#if 0
   CanceledError::CanceledError(const std::u8string &message) :
     std::future_error(std::future_errc::broken_promise),
     message(Text::StringConverter::Utf16FromUtf8)
 
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
 
 }}} // namespace Nuclex::Support::Errors

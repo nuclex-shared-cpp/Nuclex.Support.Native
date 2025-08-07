@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <vector> // for std::vector
 #include <cstdint> // for std::uint8_t
 #include <filesystem> // for std::filesystem::path
@@ -62,18 +62,20 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Reserves and creates a unique temporary file</summary>
     /// <param name="namePrefix">Prefix for the temporary filename</param>
-    public: NUCLEX_SUPPORT_API TemporaryFileScope(const std::string &namePrefix = u8"tmp");
+    public: NUCLEX_SUPPORT_API TemporaryFileScope(const std::u8string &namePrefix = u8"tmp");
 
     /// <summary>Deletes the temporary file again</summary>
     public: NUCLEX_SUPPORT_API ~TemporaryFileScope();
 
     /// <summary>Returns the full, absolute path to the temporary file</summary>
     /// <returns>The absolute path of the temporary file as an UTF-8 string</returns>
-    public: NUCLEX_SUPPORT_API const std::string &GetPath() const { return this->path; }
+    public: NUCLEX_SUPPORT_API const std::filesystem::path &GetPath() const {
+      return this->path;
+    }
 
     /// <summary>Reads the current contents of the file as a string</summary>
     /// <returns>The current contents of the file as a string</returns>
-    public: NUCLEX_SUPPORT_API std::string GetFileContentsAsString() const;
+    public: NUCLEX_SUPPORT_API std::u8string GetFileContentsAsString() const;
 
     /// <summary>Reads the current contents of the file as a vector</summary>
     /// <returns>The current contents of the file as a vector</returns>
@@ -81,7 +83,7 @@ namespace Nuclex { namespace Support {
 
     /// <summary>Replaces the file contents with the specified string</summary>
     /// <param name="text">String whose contents will be written into the file</param>
-    public: NUCLEX_SUPPORT_API void SetFileContents(const std::string &text) {
+    public: NUCLEX_SUPPORT_API void SetFileContents(const std::u8string &text) {
       SetFileContents(reinterpret_cast<const std::byte *>(text.c_str()), text.length());
     }
 
@@ -99,7 +101,7 @@ namespace Nuclex { namespace Support {
     );
 
     /// <summary>The full path to the temporary file</summary>
-    private: std::string path;
+    private: std::filesystem::path path;
     /// <summary>Memory used to store the open file handle</summary>
     private: std::uint8_t privateImplementationData[sizeof(std::uintptr_t)];
 

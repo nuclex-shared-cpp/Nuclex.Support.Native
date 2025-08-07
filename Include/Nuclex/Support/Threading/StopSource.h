@@ -137,8 +137,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     assert((IsCanceled() == false) && u8"Cancellation is triggered only once");
 
     this->CancellationReason = reason;
-    std::atomic_thread_fence(std::memory_order::memory_order_release);
-    this->Canceled.store(true, std::memory_order::memory_order_release);
+    std::atomic_thread_fence(std::memory_order::release);
+    this->Canceled.store(true, std::memory_order::release);
     this->CancellationGate.Open();
   }
 

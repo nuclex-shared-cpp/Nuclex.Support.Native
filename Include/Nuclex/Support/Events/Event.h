@@ -26,6 +26,7 @@ limitations under the License.
 #include <algorithm> // for std::copy_n()
 #include <vector> // for std::vector
 #include <cstdint> // for std::uint8_t
+#include <iterator> // for std::back_inserter
 
 namespace Nuclex { namespace Support { namespace Events {
 
@@ -102,11 +103,11 @@ namespace Nuclex { namespace Support { namespace Events {
   ///     🛈 Optimized for granular events (many event instances w/few subscribers)<br />
   ///     🛈 Optimized for fast broadcast performance over subscribe/unsubscribe<br />
   ///     🛈 No allocations up to <see cref="BuiltInSubscriberCount" /> subscribers<br />
-  ///     ⚫ Can optionally collect return values from all event callbacks<br />
-  ///     ⚫ New subscribers can be added freely even during event broadcast<br />
-  ///     ⚫ Subscribers can unsubscribe themselves even from within event callback<br />
+  ///     ● Can optionally collect return values from all event callbacks<br />
+  ///     ● New subscribers can be added freely even during event broadcast<br />
+  ///     ● Subscribers can unsubscribe themselves even from within event callback<br />
   ///     🛇 UNDEFINED BEHAVIOR on unsubscribing any other than self from within callback<br />
-  ///     ⚫ For single-threaded use (publishers and subscribers share a single thread)<br />
+  ///     ● For single-threaded use (publishers and subscribers share a single thread)<br />
   ///     🛇 UNDEFINED BEHAVIOR when accessed from multiple threads<br />
   ///        -> Multi-threaded broadcast is okay if no subscribe/unsubscribe happens
   ///        (i.e. subscribe phase, then threads run, threads end, then unsubscribe phase)<br />

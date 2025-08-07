@@ -512,7 +512,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     // Place the property name in the declaration line and also properly initialize
     // a string we can use to look up or insert this property into the index.
-    std::string propertyName;
+    std::u8string propertyName;
     {
       if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
         newPropertyLine->NameStartIndex = this->nameStart - this->lineStart;
@@ -550,7 +550,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     // Place the section name in the declaration line and also properly initialize
     // a string we can use to look up or insert this section into the index.
-    std::string sectionName;
+    std::u8string sectionName;
     {
       if((this->nameStart != nullptr) && (this->nameEnd != nullptr)) {
         newSectionLine->NameStartIndex = this->nameStart - this->lineStart;
@@ -588,12 +588,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::IndexedSection *IniDocumentModel::FileParser::getOrCreateDefaultSection() {
-    SectionMap::iterator sectionIterator = this->target->sections.find(std::string());
+    SectionMap::iterator sectionIterator = this->target->sections.find(std::u8string());
     if(sectionIterator == this->target->sections.end()) {
       IndexedSection *newSection = allocateChunked<IndexedSection>(0);
       new(newSection) IndexedSection();
       this->target->sections.insert(
-        SectionMap::value_type(std::string(), newSection)
+        SectionMap::value_type(std::u8string(), newSection)
       );
       return newSection;
     } else {

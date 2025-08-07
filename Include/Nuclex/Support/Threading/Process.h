@@ -33,6 +33,7 @@ limitations under the License.
 #include <chrono> // for std::chrono::milliseconds
 #include <vector> // for std::vector
 #include <string> // for std::string
+#include <filesystem> // for std::filesystem
 
 namespace Nuclex { namespace Support { namespace Threading {
 
@@ -79,7 +80,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///     application in '/usr/bin' and its data files in '/usr/share').
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API static std::string GetExecutableDirectory();
+    public: NUCLEX_SUPPORT_API static std::filesystem::path GetExecutableDirectory();
 
     /// <summary>Event that is fired whenever the process writes to stdout</summary>
     public: Nuclex::Support::Events::ConcurrentEvent<
@@ -144,7 +145,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   whatever directory the parent process was in when the child process started.
     /// </remarks>
     public: NUCLEX_SUPPORT_API void SetWorkingDirectory(
-      const std::string &newWorkingDirectory
+      const std::filesystem::path &newWorkingDirectory
     ) {
       this->workingDirectory = newWorkingDirectory;
     }
@@ -165,7 +166,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   is no way to distinguish between an argument containing a space and two arguments.
     /// </remarks>
     public: NUCLEX_SUPPORT_API void Start(
-      const std::vector<std::string> &arguments = std::vector<std::string>(),
+      const std::vector<std::u8string> &arguments = std::vector<std::u8string>(),
       bool prependExecutableName = true
     );
 
@@ -269,9 +270,9 @@ namespace Nuclex { namespace Support { namespace Threading {
     //public: static std::string SearchExternalExecutable(const std::string &executableName);
 
     /// <summary>Path to the executable this process instance is launching</summary>
-    private: std::string executablePath;
+    private: std::filesystem::path executablePath;
     /// <summary>Working directory the child process will start in</summary>
-    private: std::string workingDirectory;
+    private: std::filesystem::path workingDirectory;
     /// <summary>Pipe buffer (uses round-robin to flush stdout and stderr)</summary>
     private: mutable std::vector<char> buffer;
     /// <summary>Whether the stdout of the child process is intercepted</summary>

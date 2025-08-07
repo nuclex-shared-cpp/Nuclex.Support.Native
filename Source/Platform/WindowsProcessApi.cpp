@@ -416,7 +416,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     // If the function returned 0, something went wrong
     if(result == 0) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      std::string errorMessage(u8"Could not determine executable module path");
+      std::u8string errorMessage(u8"Could not determine executable module path");
       Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
@@ -448,12 +448,12 @@ namespace Nuclex { namespace Support { namespace Platform {
         if(throwOnError) {
           DWORD lastErrorCode = ::GetLastError();
 
-          std::string message;
+          std::u8string message;
           {
-            static const std::string errorMessageBegin(u8"Could not locate executable '", 29);
-            static const std::string errorMessageEnd(u8"' in standard search paths", 26);
+            static const std::u8string errorMessageBegin(u8"Could not locate executable '", 29);
+            static const std::u8string errorMessageEnd(u8"' in standard search paths", 26);
 
-            std::string utf8Executable = Nuclex::Support::Text::StringConverter::Utf8FromWide(
+            std::u8string utf8Executable = Nuclex::Support::Text::StringConverter::Utf8FromWide(
               executable
             );
 

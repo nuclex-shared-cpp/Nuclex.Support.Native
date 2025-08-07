@@ -40,8 +40,8 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::string> MemorySettingsStore::GetAllCategories() const {
-    std::vector<std::string> results;
+  std::vector<std::u8string> MemorySettingsStore::GetAllCategories() const {
+    std::vector<std::u8string> results;
     results.reserve(this->categories.size()); // Size is an O:1 operation on all imps I checked
 
     for(
@@ -57,15 +57,15 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::string> MemorySettingsStore::GetAllProperties(
-    const std::string &categoryName /* = std::string() */
+  std::vector<std::u8string> MemorySettingsStore::GetAllProperties(
+    const std::u8string &categoryName /* = std::u8string() */
   ) const {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
-      return std::vector<std::string>();
+      return std::vector<std::u8string>();
     }
 
-    std::vector<std::string> results;
+    std::vector<std::u8string> results;
     results.reserve(categoryIterator->second->size());
 
     for(
@@ -81,7 +81,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool MemorySettingsStore::DeleteCategory(const std::string &categoryName) {
+  bool MemorySettingsStore::DeleteCategory(const std::u8string &categoryName) {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
       return false;
@@ -95,7 +95,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   bool MemorySettingsStore::DeleteProperty(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -114,7 +114,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   std::optional<bool> MemorySettingsStore::RetrieveBooleanProperty(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -132,7 +132,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   std::optional<std::uint32_t> MemorySettingsStore::RetrieveUInt32Property(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -150,7 +150,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   std::optional<std::int32_t> MemorySettingsStore::RetrieveInt32Property(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -168,7 +168,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   std::optional<std::uint64_t> MemorySettingsStore::RetrieveUInt64Property(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -186,7 +186,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   std::optional<std::int64_t> MemorySettingsStore::RetrieveInt64Property(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -203,17 +203,17 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::optional<std::string> MemorySettingsStore::RetrieveStringProperty(
-    const std::string &categoryName, const std::string &propertyName
+  std::optional<std::u8string> MemorySettingsStore::RetrieveStringProperty(
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
-      return std::optional<std::string>();
+      return std::optional<std::u8string>();
     }
 
     PropertyMap::const_iterator propertyIterator = categoryIterator->second->find(propertyName);
     if(propertyIterator == categoryIterator->second->end()) {
-      return std::optional<std::string>();
+      return std::optional<std::u8string>();
     } else {
       return propertyIterator->second.ToString();
     }
@@ -222,7 +222,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void MemorySettingsStore::StoreBooleanProperty(
-    const std::string &categoryName, const std::string &propertyName, bool value
+    const std::u8string &categoryName, const std::u8string &propertyName, bool value
   ) {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -242,7 +242,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void MemorySettingsStore::StoreUInt32Property(
-    const std::string &categoryName, const std::string &propertyName, std::uint32_t value
+    const std::u8string &categoryName, const std::u8string &propertyName, std::uint32_t value
   ) {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -262,7 +262,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void MemorySettingsStore::StoreInt32Property(
-    const std::string &categoryName, const std::string &propertyName, std::int32_t value
+    const std::u8string &categoryName, const std::u8string &propertyName, std::int32_t value
   ) {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -282,7 +282,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void MemorySettingsStore::StoreUInt64Property(
-    const std::string &categoryName, const std::string &propertyName, std::uint64_t value
+    const std::u8string &categoryName, const std::u8string &propertyName, std::uint64_t value
   ) {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -302,7 +302,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void MemorySettingsStore::StoreInt64Property(
-    const std::string &categoryName, const std::string &propertyName, std::int64_t value
+    const std::u8string &categoryName, const std::u8string &propertyName, std::int64_t value
   ) {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {
@@ -322,7 +322,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void MemorySettingsStore::StoreStringProperty(
-    const std::string &categoryName, const std::string &propertyName, const std::string &value
+    const std::u8string &categoryName, const std::u8string &propertyName, const std::u8string &value
   ) {
     CategoryMap::const_iterator categoryIterator = this->categories.find(categoryName);
     if(categoryIterator == this->categories.end()) {

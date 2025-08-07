@@ -209,7 +209,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void RollingLogger::Append(const char *buffer, std::size_t count) {
+  void RollingLogger::Append(const char8_t *buffer, std::size_t count) {
     this->currentLine->append(buffer, count);
   }
 
@@ -320,9 +320,7 @@ namespace Nuclex { namespace Support { namespace Text {
       if(result != 0) {
         int errorNumber = errno;
         Platform::PosixApi::ThrowExceptionForSystemError(
-          Text::StringConverter::CharFromUtf8(
-            u8"Could not obtain the current wall clock via ::clock_gettime(CLOCK_REALTIME...)"
-          ),
+          u8"Could not obtain the current wall clock via ::clock_gettime(CLOCK_REALTIME...)",
           errorNumber
         );
       }

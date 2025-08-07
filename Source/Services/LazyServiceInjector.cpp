@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Services/LazyServiceInjector.h"
 #include "Nuclex/Support/Errors/UnresolvedDependencyError.h"
+#include "Nuclex/Support/Text/StringConverter.h"
 
 #include <stdexcept>
 
@@ -33,6 +34,14 @@ namespace {
 
   /// <summary>An any instance that does not carry any value</summary>
   static const std::any EmptyAny;
+
+  /// <summary>First part of an error message indicating the service name</summary>
+  static const std::u8string service(u8"Service '", 9);
+
+  /// <summary>Second part of an error message stating the service is unregistered</summary>
+  static const std::u8string isNotKnown(
+    u8"' is not known to the injector. Please register it before requesting.", 69
+  );
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -68,10 +77,13 @@ namespace Nuclex { namespace Support { namespace Services {
     // speaking against doing so: a) we don't have the type in template form anymore,
     // b) the service is not registered as a container singleton and creating a per-request
     // service would be confusing.
-    std::string message = u8"Service '";
-    message += serviceType.name();
-    message += u8" is not known to the injector. Please register it before requesting.";
-    throw Errors::UnresolvedDependencyError(message);
+    {
+      std::string message;
+      message.append(service.begin(), service.end());
+      message.append(serviceType.name());
+      message.append(isNotKnown.begin(), isNotKnown.end());
+      throw Errors::UnresolvedDependencyError(message);
+    }
 
   }
 
@@ -118,10 +130,13 @@ namespace Nuclex { namespace Support { namespace Services {
     // speaking against doing so: a) we don't have the type in template form anymore,
     // b) the service is not registered as a container singleton and creating a per-request
     // service would be confusing.
-    std::string message = u8"Service '";
-    message += serviceType.name();
-    message += u8" is not known to the injector. Please register it before requesting.";
-    throw Errors::UnresolvedDependencyError(message);
+    {
+      std::string message;
+      message.append(service.begin(), service.end());
+      message.append(serviceType.name());
+      message.append(isNotKnown.begin(), isNotKnown.end());
+      throw Errors::UnresolvedDependencyError(message);
+    }
 
   }
 

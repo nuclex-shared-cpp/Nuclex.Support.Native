@@ -24,7 +24,7 @@ limitations under the License.
 #include "Nuclex/Support/Text/StringMatcher.h"
 
 #include <vector> // for std::vector
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <cstdint> // for std::uint8_t
 #include <optional> // for std::optional
 
@@ -88,19 +88,19 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     /// <summary>Retrieves a list of all sections that exist in the .ini file</summary>
     /// <returns>A list of all sections contained in the .ini file</returns>
-    public: std::vector<std::string> GetAllSections() const;
+    public: std::vector<std::u8string> GetAllSections() const;
 
     /// <summary>Retrieves a list of all properties defined within a section</summary>
     /// <param name="sectionName">Name of the section whose properties will be liste</param>
     /// <returns>A list of all properties defined in the specified section</returns>
-    public: std::vector<std::string> GetAllProperties(const std::string &sectionName) const;
+    public: std::vector<std::u8string> GetAllProperties(const std::u8string &sectionName) const;
 
     /// <summary>Looks up the value of a property</summary>
     /// <param name="sectionName">Name of the section in which the property exists</param>
     /// <param name="propertyName">Name of the property that will be looked up</param>
     /// <returns>The value of the property if the property exists</returns>
-    public: std::optional<std::string> GetPropertyValue(
-      const std::string &sectionName, const std::string &propertyName
+    public: std::optional<std::u8string> GetPropertyValue(
+      const std::u8string &sectionName, const std::u8string &propertyName
     ) const;
 
     /// <summary>Creates a property or updates an existing property's value</summary>
@@ -108,9 +108,9 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property that will be set</param>
     /// <param name="propertyValue">Value that will be assigned to the property</param>
     public: void SetPropertyValue(
-      const std::string &sectionName,
-      const std::string &propertyName,
-      const std::string &propertyValue
+      const std::u8string &sectionName,
+      const std::u8string &propertyName,
+      const std::u8string &propertyValue
     );
 
     /// <summary>Deletes a property if it exists</summary>
@@ -118,14 +118,14 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property that will be deleted</param>
     /// <returns>True if the property existed and was deleted, false otherwise</returns>
     public: bool DeleteProperty(
-      const std::string &sectionName,
-      const std::string &propertyName
+      const std::u8string &sectionName,
+      const std::u8string &propertyName
     );
 
     /// <summary>Deletes an entire section from the document if it exists</summary>
     /// <param name="sectionName">Name of the section that will be deleted</param>
     /// <returns>True if the section existed and was deleted, false otherwise</returns>
-    public: bool DeleteSection(const std::string &sectionName);
+    public: bool DeleteSection(const std::u8string &sectionName);
 
     #pragma region struct Line
 
@@ -185,7 +185,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
       /// <summary>Map from (case-insensitive) property name to property line</summary>
       public: typedef std::unordered_map<
-        std::string, PropertyLine *,
+        std::u8string, PropertyLine *,
         Text::CaseInsensitiveUtf8Hash, Text::CaseInsensitiveUtf8EqualTo
       > PropertyMap;
 
@@ -218,14 +218,14 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Retrieves or creates the section with the specified name</summary>
     /// <param name="sectionName">Name of the section that will be retrieved or created</param>
     /// <returns>The new or existing section of the specified name</returns>
-    private: IndexedSection *getOrCreateSection(const std::string &sectionName);
+    private: IndexedSection *getOrCreateSection(const std::u8string &sectionName);
 
     /// <summary>Creates a new line to declare the specified property</summary>
     /// <param name="propertyName">Name of the property the line will declare</param>
     /// <param name="propertyValue">Value that will be assigned to the property</param>
     /// <returns>The new property declaration line</returns>
     private: PropertyLine *createPropertyLine(
-      const std::string &propertyName, const std::string &propertyValue
+      const std::u8string &propertyName, const std::u8string &propertyValue
     );
 
     /// <summary>Integrates a line into the linked list of lines</summary>
@@ -249,7 +249,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="newValue">New property value that will be stored in the line</param>
     /// <param name="addQuotes">Whether quotes will be added around the property line</param>
     private: static void updateExistingPropertyLine(
-      PropertyLine *existingPropertyLine, const std::string &newValue, bool addQuotes
+      PropertyLine *existingPropertyLine, const std::u8string &newValue, bool addQuotes
     );
 
     /// <summary>Checks whether the specified property's value has quotes around it</summary>
@@ -260,27 +260,27 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <summary>Checks whether the specified property value requires quotes</summary>
     /// <param name="propertyValue">Value that will be checked for requiring quotes</param>
     /// <returns>True if the property value has to be surrounded with quotes</returns>
-    private: static bool requiresQuotes(const std::string &propertyValue);
+    private: static bool requiresQuotes(const std::u8string &propertyValue);
 
     /// <summary>Calculates the serialized length of the property value</summary>
     /// <param name="propertyValue">Value whose serialized length will be calculated</param>
     /// <returns>The length the value will have when serialized into an .ini file</returns>
-    private: static std::string::size_type getSerializedLength(const std::string &propertyValue);
+    private: static std::u8string::size_type getSerializedLength(const std::u8string &propertyValue);
 
     /// <summary>Copies the string, escaping any backslashes and quotes</summary>
     /// <param name="target">Address that which the escaped string will be written</param>
     /// <param name="source">Address at which the untouched string begins</param>
     /// <param name="length">Length fo the untouched string</param>
     /// <returns>The number of bytes written at the target address</returns>
-    private: static std::string::size_type escape(
-      std::byte *target, const char *source, std::string::size_type length
+    private: static std::u8string::size_type escape(
+      std::byte *target, const char8_t *source, std::u8string::size_type length
     );
 
     /// <summary>Copies the string, unescaping any backslash-escaped characters</summary>
     /// <param name="begin">First character that should be copied and unescaped</param>
     /// <param name="end">One past the last character should be copied and unescaped</param>
     /// <returns>A string with the unescaped characters from the specified range</returns>
-    private: static std::string unescape(const std::byte *begin, const std::byte *end);
+    private: static std::u8string unescape(const std::byte *begin, const std::byte *end);
 
     /// <summary>Allocates memory for a single line</summary>
     /// <typeparam name="TLine">Type of line that will be allocated</typeparam>
@@ -311,7 +311,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     private: typedef IndexedSection::PropertyMap PropertyMap;
     /// <summary>Map from section name to a type holding the properties in the section</summary>
     private: typedef std::unordered_map<
-      std::string, IndexedSection *,
+      std::u8string, IndexedSection *,
       Text::CaseInsensitiveUtf8Hash, Text::CaseInsensitiveUtf8EqualTo
     > SectionMap;
 

@@ -294,9 +294,10 @@ namespace Nuclex { namespace Support { namespace Text {
     std::u8string &target, const std::filesystem::path &pathToAppend
   ) {
     typedef std::filesystem::path::string_type path_string_type;
-    if constexpr(std::is_same<path_string_type, std::u8string>::value) {
-      target.append(pathToAppend.native());
-    } else if constexpr(std::is_same<path_string_type, std::string>::value) {
+    if constexpr(
+      (std::is_same<path_string_type, std::u8string>::value) ||
+      (std::is_same<path_string_type, std::string>::value)
+    ) {
       const path_string_type &pathChars = pathToAppend.native();
       target.append(pathChars.begin(), pathChars.end());
     } else {
@@ -311,7 +312,8 @@ namespace Nuclex { namespace Support { namespace Text {
   ) {
     typedef std::filesystem::path::string_type path_string_type;
     if constexpr(std::is_same<path_string_type, std::wstring>::value) {
-      target.append(pathToAppend.native());
+      const path_string_type &pathChars = pathToAppend.native();
+      target.append(pathChars.begin(), pathChars.end());
     } else {
       target.append(pathToAppend.wstring());
     }

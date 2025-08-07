@@ -49,7 +49,7 @@ namespace {
   /// <summary>Builds the full template string that's passed to ::mkstemp()</summary>
   /// <param name="path">Path vector the template will be stored in</param>
   /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
-  void buildTemplateForMksTemp(std::string &path, const std::string &prefix) {
+  void buildTemplateForMksTemp(std::u8string &path, const std::u8string &prefix) {
     path.reserve(256); // PATH_MAX would be a bit too bloaty usually...
 
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
@@ -57,7 +57,7 @@ namespace {
     {
       Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
 
-      std::string::size_type length = path.size();
+      std::u8string::size_type length = path.size();
       if(path[length -1] != u8'/') {
         path.push_back(u8'/');
       }
@@ -72,14 +72,14 @@ namespace {
     // Append the mandatory placeholder characters
     //   path: "/tmp/myappXXXXXX"
     {
-      static const std::string placeholder(u8"XXXXXX", 6);
+      static const std::u8string placeholder(u8"XXXXXX", 6);
       path.append(placeholder);
     }
   }
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_LINUX)
-  /// <summary>Reads the contents of a file into an std::string or std::vector</summary>
+  /// <summary>Reads the contents of a file into an std::u8string or std::vector</summary>
   /// <param name="fileDescriptor">File number of the open file that will be read</param>
   /// <param name="container">Container into which the file's contents will be written</param>
   template<typename TVectorOrString>
@@ -107,11 +107,11 @@ namespace {
 #endif // defined(NUCLEX_SUPPORT_LINUX)
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-  /// <summary>Reads the contents of a file into an std::string or std::vector</summary>
+  /// <summary>Reads the contents of a file into an std::u8string or std::vector</summary>
   /// <param name="path">Path to the file that will be read}</param>
   /// <param name="container">Container into which the file's contents will be written</param>
   template<typename TVectorOrString>
-  void readFileIntoContainer(const std::string &path, TVectorOrString &container) {
+  void readFileIntoContainer(const std::filesystem::path &path, TVectorOrString &container) {
     using Nuclex::Support::Platform::WindowsFileApi;
 
     HANDLE fileHandle = WindowsFileApi::OpenFileForReading(path);
@@ -140,7 +140,7 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TemporaryFileScope::TemporaryFileScope(const std::string &namePrefix /* = u8"tmp" */) :
+  TemporaryFileScope::TemporaryFileScope(const std::u8string &namePrefix /* = u8"tmp" */) :
     path(),
     privateImplementationData {0} {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
@@ -168,7 +168,7 @@ namespace Nuclex { namespace Support {
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result != FALSE) && u8"Temporary file is successfully deleted in error handler");
 
-      std::string errorMessage(u8"Could not open temporary file '");
+      std::u8string errorMessage(u8"Could not open temporary file '");
       errorMessage.append(Text::StringConverter::Utf8FromWide(fullPath));
       errorMessage.append(u8"' for writing");
 
@@ -187,15 +187,16 @@ namespace Nuclex { namespace Support {
     );
 
     // Build the path template including the system's temporary directory
-    std::string pathTemplate;
+    std::u8string pathTemplate;
     buildTemplateForMksTemp(pathTemplate, namePrefix);
 
     // Select and open a unique temporary filename
-    int fileDescriptor = ::mkstemp(pathTemplate.data());
+    std::string pathTemplateChars(pathTemplate.begin(), pathTemplate.end());
+    int fileDescriptor = ::mkstemp(pathTemplateChars.data());
     if(fileDescriptor == -1) [[unlikely]] {
       int errorNumber = errno;
 
-      std::string errorMessage(u8"Could not create temporary file '");
+      std::u8string errorMessage(u8"Could not create temporary file '");
       errorMessage.append(pathTemplate);
       errorMessage.append(u8"'");
 
@@ -214,8 +215,9 @@ namespace Nuclex { namespace Support {
   TemporaryFileScope::~TemporaryFileScope() {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     if(!this->path.empty()) [[likely]] {
-      std::wstring utf16Path = Text::StringConverter::WideFromUtf8(this->path);
-      BOOL result = ::DeleteFileW(utf16Path.c_str());
+      std::wstring widePath;
+      Text::StringConverter::AppendPathAsWide(widePath, this->path);
+      BOOL result = ::DeleteFileW(widePath.c_str());
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result != FALSE) && u8"Temporary file is successfully deleted after use");
     }
@@ -242,8 +244,8 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string TemporaryFileScope::GetFileContentsAsString() const {
-    std::string contents;
+  std::u8string TemporaryFileScope::GetFileContentsAsString() const {
+    std::u8string contents;
 
 #if defined(NUCLEX_SUPPORT_LINUX)
     {

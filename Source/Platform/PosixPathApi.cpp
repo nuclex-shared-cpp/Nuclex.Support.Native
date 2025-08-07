@@ -83,7 +83,8 @@ namespace Nuclex { namespace Support { namespace Platform {
   bool PosixPathApi::DoesFileExist(const std::u8string &path) {
     struct ::stat fileStatus;
 
-    int result = ::stat(path.c_str(), &fileStatus);
+    std::string pathChars(path.begin(), path.end());
+    int result = ::stat(pathChars.c_str(), &fileStatus);
     if(result == -1) {
       int errorNumber = errno;
 
@@ -105,20 +106,28 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   void PosixPathApi::GetTemporaryDirectory(std::u8string &path) {
-    const char *tempDirectory = ::getenv(u8"TMPDIR");
+    const static char8_t *tmpDir = u8"TMPDIR";
+    const static std::string tmpDirString(tmpDir, tmpDir + 6);
+    const static char8_t *tmp = u8"TMP";
+    const static std::string tmpString(tmp, tmp + 3);
+    const static char8_t *temp = u8"TEMP";
+    const static std::string tempString(temp, temp + 4);
+
+    const char *tempDirectory = ::getenv(tmpDirString.c_str());
     if(tempDirectory == nullptr) {
-      tempDirectory = ::getenv(u8"TMP");
+      tempDirectory = ::getenv(tmpString.c_str());
       if(tempDirectory == nullptr) {
-        tempDirectory = ::getenv(u8"TEMP");
+        tempDirectory = ::getenv(tempString.c_str());
         if(tempDirectory == nullptr) {
           // This is safe (part of the file system standard and Linux standard base),
           // but we wanted to honor any possible user preferences first.
-          tempDirectory = u8"/tmp";
+          path = std::u8string(u8"/tmp", 4);
+          return;
         }
       }
     }
 
-    path.append(tempDirectory);
+    path.assign(std::move(Text::StringConverter::Utf8FromChar(tempDirectory)));
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -172,14 +172,14 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::string> IniDocumentModel::GetAllSections() const {
-    std::vector<std::string> sectionNames;
+  std::vector<std::u8string> IniDocumentModel::GetAllSections() const {
+    std::vector<std::u8string> sectionNames;
     sectionNames.reserve(this->sections.size());
 
     // If the default (global) section exists, list it first
-    SectionMap::const_iterator firstSectionIterator = this->sections.find(std::string());
+    SectionMap::const_iterator firstSectionIterator = this->sections.find(std::u8string());
     if(firstSectionIterator != this->sections.end()) { // If default section exists
-      sectionNames.push_back(std::string());
+      sectionNames.push_back(std::u8string());
     }
 
     // Then add the remaining sections (in undefined order, thanks to unordered_map)
@@ -188,7 +188,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       iterator != this->sections.end();
       ++iterator
     ) {
-      const std::string &sectionName = iterator->first;
+      const std::u8string &sectionName = iterator->first;
       if(!sectionName.empty()) { // Don't add the default (global) a second time
         sectionNames.push_back(sectionName);
       }
@@ -199,16 +199,16 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::vector<std::string> IniDocumentModel::GetAllProperties(
-    const std::string &sectionName
+  std::vector<std::u8string> IniDocumentModel::GetAllProperties(
+    const std::u8string &sectionName
   ) const {
     SectionMap::const_iterator sectionIterator = this->sections.find(sectionName);
     if(sectionIterator == this->sections.end()) { // If section doesn't exist
-      return std::vector<std::string>();
+      return std::vector<std::u8string>();
     } else { // Section exists
       const PropertyMap &properties = sectionIterator->second->Properties;
 
-      std::vector<std::string> propertyNames;
+      std::vector<std::u8string> propertyNames;
       propertyNames.reserve(properties.size());
 
       for(
@@ -225,17 +225,17 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::optional<std::string> IniDocumentModel::GetPropertyValue(
-    const std::string &sectionName, const std::string &propertyName
+  std::optional<std::u8string> IniDocumentModel::GetPropertyValue(
+    const std::u8string &sectionName, const std::u8string &propertyName
   ) const {
     SectionMap::const_iterator sectionIterator = this->sections.find(sectionName);
     if(sectionIterator == this->sections.end()) { // If section doesn't exist
-      return std::optional<std::string>();
+      return std::optional<std::u8string>();
     } else { // Section exists
       const PropertyMap &properties = sectionIterator->second->Properties;
       PropertyMap::const_iterator propertyIterator = properties.find(propertyName);
       if(propertyIterator == properties.end()) { // If property doesn't exist
-        return std::optional<std::string>();
+        return std::optional<std::u8string>();
       } else { // Property exists
         PropertyLine *propertyLine = propertyIterator->second;
         if(propertyLine->ValueLength > 0) { // Is value present?
@@ -244,7 +244,7 @@ namespace Nuclex { namespace Support { namespace Settings {
             propertyLine->Contents + propertyLine->ValueStartIndex + propertyLine->ValueLength
           );
         } else { // Property has empty value
-          return std::string();
+          return std::u8string();
         }
       }
     }
@@ -253,9 +253,9 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void IniDocumentModel::SetPropertyValue(
-    const std::string &sectionName,
-    const std::string &propertyName,
-    const std::string &propertyValue
+    const std::u8string &sectionName,
+    const std::u8string &propertyName,
+    const std::u8string &propertyValue
   ) {
     IndexedSection *section = getOrCreateSection(sectionName);
     PropertyMap::iterator propertyIterator = section->Properties.find(propertyName);
@@ -294,7 +294,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         freeLine(existingPropertyLine);
       } else {
         bool addsQuotes = requiresQuotes(propertyValue) && !hasQuotes(existingPropertyLine);
-        std::string::size_type requiredLength = propertyValue.length();
+        std::u8string::size_type requiredLength = propertyValue.length();
         if(addsQuotes) {
           requiredLength += 2;
         }
@@ -316,8 +316,8 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   bool IniDocumentModel::DeleteProperty(
-    const std::string &sectionName,
-    const std::string &propertyName
+    const std::u8string &sectionName,
+    const std::u8string &propertyName
   ) {
     SectionMap::iterator sectionIterator = this->sections.find(sectionName);
     if(sectionIterator == this->sections.end()) {
@@ -362,7 +362,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool IniDocumentModel::DeleteSection(const std::string &sectionName) {
+  bool IniDocumentModel::DeleteSection(const std::u8string &sectionName) {
     SectionMap::iterator sectionIterator = this->sections.find(sectionName);
     if(sectionIterator == this->sections.end()) {
       return false;
@@ -449,7 +449,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::IndexedSection *IniDocumentModel::getOrCreateSection(
-    const std::string &sectionName
+    const std::u8string &sectionName
   ) {
     SectionMap::iterator sectionIterator = this->sections.find(sectionName);
     if(sectionIterator == this->sections.end()) {
@@ -469,7 +469,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         return newSection;
 
       } else { // Section has a name, explicit declaration needed
-        std::string::size_type nameLength = sectionName.length();
+        std::u8string::size_type nameLength = sectionName.length();
         SectionLine *newDeclarationLine = allocateLine<SectionLine>(
           nullptr, nameLength + (this->usesCrLf ? 4 : 3)
         );
@@ -522,7 +522,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   IniDocumentModel::PropertyLine *IniDocumentModel::createPropertyLine(
-    const std::string &propertyName, const std::string &propertyValue
+    const std::u8string &propertyName, const std::u8string &propertyValue
   ) {
     bool requiresQuotes = IniDocumentModel::requiresQuotes(propertyValue);
 
@@ -634,12 +634,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   void IniDocumentModel::updateExistingPropertyLine(
-    PropertyLine *line, const std::string &newValue, bool addQuotes
+    PropertyLine *line, const std::u8string &newValue, bool addQuotes
   ) {
 
     // Number of bytes from the end of the value to the end of the line
-    std::string::size_type remainderStartIndex = line->ValueStartIndex + line->ValueLength;
-    std::string::size_type remainderLength = line->Length - remainderStartIndex;
+    std::u8string::size_type remainderStartIndex = line->ValueStartIndex + line->ValueLength;
+    std::u8string::size_type remainderLength = line->Length - remainderStartIndex;
 
     // Write the new property value over the old one (and add quotes if required)
     std::byte *writeStart = (line->Contents + line->ValueStartIndex);
@@ -685,8 +685,8 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool IniDocumentModel::requiresQuotes(const std::string &propertyValue) {
-    std::string::size_type length = propertyValue.length();
+  bool IniDocumentModel::requiresQuotes(const std::u8string &propertyValue) {
+    std::u8string::size_type length = propertyValue.length();
     if(length > 0) {
       bool startsOrEndsWithSpace = (
         Text::ParserHelper::IsWhitespace(propertyValue[0]) ||
@@ -695,7 +695,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       if(startsOrEndsWithSpace) {
         return true;
       }
-      for(std::string::size_type index = 0; index < length; ++index) {
+      for(std::u8string::size_type index = 0; index < length; ++index) {
         char current = propertyValue[index];
         if((current == '"') || (current == '=') || (current == '\n')) {
           return true;
@@ -708,11 +708,11 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string::size_type IniDocumentModel::getSerializedLength(const std::string &propertyValue) {
-    std::string::size_type serializedLength = 0;
+  std::u8string::size_type IniDocumentModel::getSerializedLength(const std::u8string &propertyValue) {
+    std::u8string::size_type serializedLength = 0;
 
-    std::string::size_type length = propertyValue.length();
-    for(std::string::size_type index = 0; index < length; ++index) {
+    std::u8string::size_type length = propertyValue.length();
+    for(std::u8string::size_type index = 0; index < length; ++index) {
       switch(propertyValue[index]) {
         case '\\':
         case '"': { serializedLength += 2; break; }
@@ -725,24 +725,24 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string::size_type IniDocumentModel::escape(
-    std::byte *target, const char *source, std::string::size_type length
+  std::u8string::size_type IniDocumentModel::escape(
+    std::byte *target, const char8_t *source, std::u8string::size_type length
   ) {
-    std::string::size_type targetIndex = 0;
+    std::u8string::size_type targetIndex = 0;
 
-    for(std::string::size_type sourceIndex = 0; sourceIndex < length; ++sourceIndex) {
+    for(std::u8string::size_type sourceIndex = 0; sourceIndex < length; ++sourceIndex) {
       switch(source[sourceIndex]) {
-        case '\\': {
-          target[targetIndex] = static_cast<std::byte>('\\');
+        case u8'\\': {
+          target[targetIndex] = static_cast<std::byte>(u8'\\');
           ++targetIndex;
-          target[targetIndex] = static_cast<std::byte>('\\');
+          target[targetIndex] = static_cast<std::byte>(u8'\\');
           ++targetIndex;
           break;
         }
-        case '"': {
-          target[targetIndex] = static_cast<std::byte>('\\');
+        case u8'"': {
+          target[targetIndex] = static_cast<std::byte>(u8'\\');
           ++targetIndex;
-          target[targetIndex] = static_cast<std::byte>('\"');
+          target[targetIndex] = static_cast<std::byte>(u8'\"');
           ++targetIndex;
           break;
         }
@@ -759,19 +759,19 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string IniDocumentModel::unescape(const std::byte *begin, const std::byte *end) {
-    std::string result;
+  std::u8string IniDocumentModel::unescape(const std::byte *begin, const std::byte *end) {
+    std::u8string result;
     result.reserve(end - begin); // Should be a very close guess for the line's length
 
     bool escapeMode = false;
     while(begin < end) {
       if(escapeMode) {
-        result.push_back(static_cast<char>(*begin));
+        result.push_back(static_cast<char8_t>(*begin));
         escapeMode = false;
-      } else if(*begin == static_cast<std::byte>('\\')) {
+      } else if(*begin == static_cast<std::byte>(u8'\\')) {
         escapeMode = true;
       } else {
-        result.push_back(static_cast<char>(*begin));
+        result.push_back(static_cast<char8_t>(*begin));
       }
 
       ++begin;
@@ -782,7 +782,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     // a line as a continuation (i.e. continue after line break), but I haven't ever
     // seen that convention used in .ini files. Principle of least surprise and all.
     if(escapeMode) {
-      result.push_back('\\');
+      result.push_back(u8'\\');
     }
 
     return result;

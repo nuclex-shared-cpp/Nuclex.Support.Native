@@ -30,8 +30,18 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// Message used in the exception thrown when the variant is of an unknown type
-  std::u8string InvalidVariantTypeExceptionMessage(u8"Invalid variant type");
+  /// <summary>
+  ///   Message used in the exception thrown when the variant is of an unknown type
+  /// </summary>
+  const std::u8string invalidVariantType(u8"Invalid variant type");
+
+  /// <summary>
+  ///   Message used in the exception thrown when the variant is of an unknown type
+  ///   as UTF-8 characters stored in a 'char'-based string.
+  /// </summary>
+  const std::string InvalidVariantTypeExceptionMessage(
+    invalidVariantType.begin(), invalidVariantType.end()
+  );
 
   // ------------------------------------------------------------------------------------------- //
 

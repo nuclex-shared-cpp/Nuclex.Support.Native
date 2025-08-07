@@ -102,7 +102,11 @@ namespace {
       this->stats = other.stats; // No move, we want to still track destruction
       ++this->stats->MoveCount;
       if(this->stats->ThrowOnMove) {
-        throw std::runtime_error(u8"Simulated error for unit testing");
+        throw std::runtime_error(
+          Nuclex::Support::Text::StringConverter::CharsFromUtf8(
+            u8"Simulated error for unit testing")
+          )
+        );
       }
       return *this;
     }

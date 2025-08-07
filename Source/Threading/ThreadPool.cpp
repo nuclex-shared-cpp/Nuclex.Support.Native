@@ -28,6 +28,7 @@ limitations under the License.
 #include "Nuclex/Support/ScopeGuard.h" // for ScopeGuard
 #include "Nuclex/Support/Threading/Gate.h" // for Gate
 #include "Nuclex/Support/Threading/Semaphore.h" // for Semaphore
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
 
 #include "ThreadPoolTaskPool.h" // thread pool settings + task pool
 
@@ -540,7 +541,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     } else {
       submittedTask->Task->~Task();
       this->implementation->SubmittedTaskPool.DeleteTask(submittedTask);
-      throw std::runtime_error(u8"Could not schedule task for thread pool execution");
+      throw std::runtime_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Could not schedule task for thread pool execution"
+        )
+      );
     }
 
     // Wake up a worker thread (or prevent the next thread finishing

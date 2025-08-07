@@ -88,14 +88,14 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   inline bool StopToken::IsCanceled() const {
-    return this->Canceled.load(std::memory_order::memory_order_relaxed);
+    return this->Canceled.load(std::memory_order::relaxed);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   inline void StopToken::ThrowIfCanceled() const {
     if(IsCanceled()) {
-      std::atomic_thread_fence(std::memory_order::memory_order_acquire);
+      std::atomic_thread_fence(std::memory_order::acquire);
       throw Nuclex::Support::Errors::CanceledError(this->CancellationReason);
     }
   }

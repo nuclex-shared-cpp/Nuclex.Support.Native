@@ -26,10 +26,9 @@ limitations under the License.
 
 #include "PosixPathApi.h"
 
-#include "Nuclex/Support/Text/LexicalAppend.h"
+//#include "Nuclex/Support/Text/LexicalAppend.h"
 
 #include <cstdlib> // for ::getenv(), ::ldiv(), ::ldiv_t
-
 #include <unistd.h> // for ::pipe(), ::readlink()
 #include <fcntl.h> // for ::fcntl()
 #include <signal.h> // for ::kill()
@@ -43,15 +42,15 @@ namespace {
   ///   Determines the path of the process image file for the runnign application
   /// </summary>
   /// <param name="target">String that will receive the path of the executable</param>
-  void getExecutablePath(std::string &target) {
-    target.resize(PATH_MAX);
+  void getExecutablePath(std::filesystem::path &target) {
+    const static std::u8string procSelfExe(u8"/proc/self/exe", 14);
+    const static std::u8string slashExe(u8"/exe", 4);
 
-    std::string ownProcessLink;
-    ownProcessLink.reserve(16);
-    ownProcessLink.assign(u8"/proc/self/exe", 14);
+    std::string buffer(PATH_MAX, ' ');
 
     // Try to read the symlink to obtain the path to the running executable
-    ::ssize_t characterCount = ::readlink(ownProcessLink.c_str(), target.data(), PATH_MAX);
+    std::string ownProcessLink(procSelfExe.begin(), procSelfExe.end());
+    ::ssize_t characterCount = ::readlink(ownProcessLink.c_str(), buffer.data(), PATH_MAX);
     if(characterCount == -1) {
       int errorNumber = errno;
       if((errorNumber != EACCES) && (errorNumber != ENOTDIR) && (errorNumber != ENOENT)) {
@@ -60,26 +59,13 @@ namespace {
         );
       }
 
-      // Make another attempt with the PID file accessed directly (no recursive symlink).
+      // Try it using the numeric process id in case /proc/self/exe isn't found
       {
-        ownProcessLink.resize(6);
-
-        ::pid_t ownPid = ::getpid();
-        Nuclex::Support::Text::lexical_append(target, ownPid);
-
-        ownProcessLink.append(u8"/exe", 4);
+        ownProcessLink.resize(6); // leaves '/proc/' behind
+        ownProcessLink.append(std::to_string(::getpid()));
+        ownProcessLink.append(slashExe.begin(), slashExe.end());
       }
-      characterCount = ::readlink(ownProcessLink.c_str(), target.data(), PATH_MAX);
       if(characterCount == -1) {
-        errorNumber = errno;
-
-        //std::string message;
-        //message.reserve(18 + ownProcessLink.size() + 13 + 1);
-        //message.append(u8"Could not follow '", 18);
-        //message.append(ownProcessLink);
-        //message.append(u8"' to own path", 13);
-        //Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(message, errorNumber);
-
         // Let's stay with the original error message, /proc/self/exe gives
         // the user a much better idea at what the application wanted to do than
         // a random PID that doesn't exist anymore after the error is printed.
@@ -89,9 +75,8 @@ namespace {
       }
     }
 
-    target.resize(characterCount);
-
-    Nuclex::Support::Platform::PosixPathApi::RemoveFileFromPath(target);
+    buffer.resize(characterCount);
+    target = std::filesystem::path(buffer).remove_filename();
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -204,14 +189,14 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void PosixProcessApi::GetOwnExecutablePath(std::string &target) {
+  void PosixProcessApi::GetOwnExecutablePath(std::filesystem::path &target) {
     getExecutablePath(target);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void PosixProcessApi::GetAbsoluteExecutablePath(
-    std::string &target, const std::string &executable
+    std::filesystem::path &target, const std::string &executable
   ) {
     if(PosixPathApi::IsPathRelative(executable)) {
       getExecutablePath(target);
@@ -229,7 +214,7 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   void PosixProcessApi::GetAbsoluteWorkingDirectory(
-    std::string &target, const std::string &workingDirectory
+    std::filesystem::path &target, const std::string &workingDirectory
   ) {
     if(PosixPathApi::IsPathRelative(workingDirectory)) {
       getExecutablePath(target);
@@ -242,7 +227,7 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   void PosixProcessApi::searchExecutableInPath(
-    std::string &target, const std::string &executable
+    std::filesystem::path &target, const std::string &executable
   ) {
     const char *path = ::getenv(u8"PATH");
     if(path != nullptr) {

@@ -166,7 +166,7 @@ namespace Nuclex { namespace Support { namespace Text {
     /// <summary>Appends text from a buffer to the line currently being formed</summary>
     /// <param name="buffer">Buffer holding the characters that will be appended</param>
     /// <param name="count">Number of bytes to append from the buffer</param>
-    public: NUCLEX_SUPPORT_API void Append(const char *buffer, std::size_t count);
+    public: NUCLEX_SUPPORT_API void Append(const char8_t *buffer, std::size_t count);
 
     /// <summary>Removes all history and clears the line currently being formed</summary>
     public: NUCLEX_SUPPORT_API void Clear();

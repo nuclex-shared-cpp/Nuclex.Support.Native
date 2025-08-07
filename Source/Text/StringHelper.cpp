@@ -37,7 +37,7 @@ namespace {
   template<typename CharType>
   void requireValidCodePoint(char32_t codePoint) {
     static_assert(
-      std::is_same<CharType, Nuclex::Support::Text::UnicodeHelper::Char8Type>::value ||
+      std::is_same<CharType, char8_t>::value ||
       std::is_same<CharType, wchar_t>::value,
       u8"This method is intended only for UTF-8 characters and wide characters"
     );
@@ -406,7 +406,7 @@ namespace {
 
       // We may land on a trailing character in the middle of a multi-character code point,
       // so keep stepping back until we're on the leading character.
-      if constexpr(std::is_same<CharType, UnicodeHelper::Char8Type>::value) {
+      if constexpr(std::is_same<CharType, char8_t>::value) {
         if((*current & 0xc0) == 0x80) {
           continue; // Go further back if we're on a UTF-8 trailing byte
         }

@@ -176,7 +176,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::wstring WindowsPathApi::CreateTemporaryFile(const std::string &prefix) {
+  std::wstring WindowsPathApi::CreateTemporaryFile(const std::u8string &prefix) {
     std::wstring fullPath;
     {
       fullPath.resize(MAX_PATH);
@@ -210,7 +210,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       }
 
       // Truncate the MAX_PATH-sized string back to the actual number of characters
-      std::string::size_type zeroTerminator = fullPath.find(L'\0');
+      std::u8string::size_type zeroTerminator = fullPath.find(L'\0');
       if(zeroTerminator != std::wstring::npos) {
         fullPath.resize(zeroTerminator);
       }
@@ -226,7 +226,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
 
-      std::string errorMessage(u8"Could not create directory '");
+      std::u8string errorMessage(u8"Could not create directory '");
       errorMessage.append(Text::StringConverter::Utf8FromWide(path));
       errorMessage.append(u8"'");
 

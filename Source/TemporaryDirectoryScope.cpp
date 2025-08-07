@@ -26,7 +26,6 @@ limitations under the License.
 #include "Platform/WindowsApi.h" // for WindowsApi
 #include "Platform/WindowsPathApi.h" // for WindowsPathApi
 #include "Platform/WindowsFileApi.h" // for WindowsFileApi
-#include "Nuclex/Support/Text/StringConverter.h"
 #else
 #include "Platform/PosixApi.h" // for PosixApi
 #include "Platform/PosixPathApi.h" // for PosixPathApi
@@ -38,6 +37,7 @@ limitations under the License.
 #include <cstdlib> // for ::getenv(), ::mkdtemp()
 #endif
 
+#include "Nuclex/Support/Text/StringConverter.h"
 #include "Nuclex/Support/ScopeGuard.h"
 
 #include <vector> // for std::vector
@@ -50,7 +50,7 @@ namespace {
   /// <summary>Builds the full template string that's passed to ::mkdtemp()</summary>
   /// <param name="path">Path vector the template will be stored in</param>
   /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
-  void buildTemplateForMkdTemp(std::string &path, const std::string &prefix) {
+  void buildTemplateForMkdTemp(std::u8string &path, const std::u8string &prefix) {
     path.reserve(256); // PATH_MAX would be a bit too bloaty usually...
 
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
@@ -58,7 +58,7 @@ namespace {
     {
       Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
 
-      std::string::size_type length = path.size();
+      std::u8string::size_type length = path.size();
       if(path[length -1] != '/') {
         path.push_back('/');
       }
@@ -73,7 +73,7 @@ namespace {
     // Append the mandatory placeholder characters
     //   path: "/tmp/myappXXXXXX"
     {
-      static const std::string placeholder(u8"XXXXXX", 6);
+      static const std::u8string placeholder(u8"XXXXXX", 6);
       path.insert(path.end(), placeholder.begin(), placeholder.end());
     }
   }
@@ -187,7 +187,7 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   TemporaryDirectoryScope::TemporaryDirectoryScope(
-    const std::string &namePrefix /* = u8"tmp" */
+    const std::u8string &namePrefix /* = u8"tmp" */
   ) : path() {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
@@ -196,7 +196,7 @@ namespace Nuclex { namespace Support {
     auto temporaryFileDeleter = ON_SCOPE_EXIT_TRANSACTION {
       BOOL result = ::DeleteFileW(filePath.c_str());
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-      assert((result != FALSE) && u8"Temporary file is deleted successfull in error handler");
+      assert((result != FALSE) && u8"Temporary file is deleted successfully in error handler");
     };
 
     // Leave the file in place and add a '.dir' to the end for the temporary directory
@@ -211,7 +211,7 @@ namespace Nuclex { namespace Support {
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
 
-      std::string errorMessage(u8"Could not create directory '");
+      std::u8string errorMessage(u8"Could not create directory '");
       errorMessage.append(Text::StringConverter::Utf8FromWide(directoryPath));
       errorMessage.append(u8"'");
 
@@ -225,15 +225,16 @@ namespace Nuclex { namespace Support {
 #else
 
     // Build a template string in the system's temp directory to call ::mkdtemp()
-    std::string pathTemplate;
+    std::u8string pathTemplate;
     buildTemplateForMkdTemp(pathTemplate, namePrefix);
 
     // Select and open a unique temporary directory name
-    const char *path = ::mkdtemp(pathTemplate.data());
+    std::string pathTemplateChars(pathTemplate.begin(), pathTemplate.end());
+    const char *path = ::mkdtemp(pathTemplateChars.data());
     if(path == nullptr) [[unlikely]] {
       int errorNumber = errno;
 
-      std::string errorMessage(u8"Could not create temporary directory '");
+      std::u8string errorMessage(u8"Could not create temporary directory '");
       errorMessage.append(pathTemplate);
       errorMessage.append(u8"'");
 
@@ -241,8 +242,8 @@ namespace Nuclex { namespace Support {
     }
 
     // Store the full path to the temporary directory we just created
-    assert((path == pathTemplate.c_str()) && u8"Original path buffer is modified");
-    this->path.assign(pathTemplate);
+    assert((path == pathTemplateChars.c_str()) && u8"Original path buffer is modified");
+    this->path.assign(pathTemplateChars);
 #endif
   }
 
@@ -250,13 +251,14 @@ namespace Nuclex { namespace Support {
 
   TemporaryDirectoryScope::~TemporaryDirectoryScope() {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(this->path);
-    deleteDirectoryWithContents(utf16Path);
+    std::wstring widePath;
+    Text::StringConverter::AppendPathAsWide(widePath, this->path);
+    deleteDirectoryWithContents(widePath);
 
-    std::wstring::size_type length = utf16Path.length();
+    std::wstring::size_type length = widePath.length();
     if(length > 4) {
-      utf16Path.resize(length - 4);
-      BOOL result = ::DeleteFileW(utf16Path.c_str());
+      widePath.resize(length - 4);
+      BOOL result = ::DeleteFileW(widePath.c_str());
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result != FALSE) && u8"Temporary directory scope file is deleted successfully");
     }
@@ -268,7 +270,7 @@ namespace Nuclex { namespace Support {
       int errorNumber = errno;
 
       std::u8string errorMessage(u8"Could not erase temporary directory contents in '");
-      errorMessage.append(this->path);
+      Text::StringConverter::AppendPathAsUtf8(errorMessage, this->path);
       errorMessage.append(u8"'");
 
       Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
@@ -278,52 +280,20 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string TemporaryDirectoryScope::GetPath(const std::string &filename) const {
-    std::string fullPath = this->path;
-    {
-      if(fullPath.length() > 0) {
-#if defined(NUCLEX_SUPPORT_WINDOWS)
-        char lastCharacter = fullPath[fullPath.length() - 1];
-        if((lastCharacter != '\\') && (lastCharacter != '/')) {
-          fullPath.push_back('\\');
-        }
-#else
-        if(fullPath[fullPath.length() - 1] != '/') {
-          fullPath.push_back('/');
-        }
-#endif
-      }
-      fullPath.append(filename);
-    }
-
-    return fullPath;
+  std::filesystem::path TemporaryDirectoryScope::GetPath(const std::u8string &filename) const {
+    return (this->path / filename);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string TemporaryDirectoryScope::PlaceFile(
-    const std::string &name, const std::byte *contents, std::size_t byteCount
+  std::filesystem::path TemporaryDirectoryScope::PlaceFile(
+    const std::u8string &filename, const std::byte *contents, std::size_t byteCount
   ) {
-    std::string fullPath = this->path;
-    {
-      if(fullPath.length() > 0) {
-#if defined(NUCLEX_SUPPORT_WINDOWS)
-        char lastCharacter = fullPath[fullPath.length() - 1];
-        if((lastCharacter != '\\') && (lastCharacter != '/')) {
-          fullPath.push_back('\\');
-        }
-#else
-        if(fullPath[fullPath.length() - 1] != '/') {
-          fullPath.push_back('/');
-        }
-#endif
-      }
-      fullPath.append(name);
-    }
+    std::filesystem::path filePath = GetPath(filename);
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(fullPath);
+      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(filePath);
       ON_SCOPE_EXIT {
         Platform::WindowsFileApi::CloseFile(fileHandle);
       };
@@ -333,7 +303,7 @@ namespace Nuclex { namespace Support {
     }
 #elif defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Platform::LinuxFileApi::OpenFileForWriting(fullPath);
+      int fileDescriptor = Platform::LinuxFileApi::OpenFileForWriting(filePath);
       ON_SCOPE_EXIT {
         Platform::LinuxFileApi::Close(fileDescriptor);
       };
@@ -343,34 +313,19 @@ namespace Nuclex { namespace Support {
     }
 #endif
 
-    return fullPath;
+    return filePath;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void TemporaryDirectoryScope::ReadFile(
-    const std::string &name, std::vector<std::byte> &contents
+    const std::u8string &filename, std::vector<std::byte> &contents
   ) const {
-    std::string fullPath = this->path;
-    {
-      if(fullPath.length() > 0) {
-#if defined(NUCLEX_SUPPORT_WINDOWS)
-        char lastCharacter = fullPath[fullPath.length() - 1];
-        if((lastCharacter != '\\') && (lastCharacter != '/')) {
-          fullPath.push_back('\\');
-        }
-#else
-        if(fullPath[fullPath.length() - 1] != '/') {
-          fullPath.push_back('/');
-        }
-#endif
-      }
-      fullPath.append(name);
-    }
+    std::filesystem::path filePath = GetPath(filename);
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(fullPath);
+      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(filePath);
       ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
 
       contents.resize(4096);
@@ -383,13 +338,13 @@ namespace Nuclex { namespace Support {
           contents.resize(offset);
           break;
         } else { // 1 or more bytes returned, increase buffer for another round
-          contents.resize(offset + 4096); // extend so that 4k bytes are vailable again
+          contents.resize(offset + 4096); // extend so that 4k bytes are available again
         }
       }
     }
 #elif defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(fullPath);
+      int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(filePath);
       ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
 
       contents.resize(4096);
@@ -402,7 +357,7 @@ namespace Nuclex { namespace Support {
           contents.resize(offset);
           break;
         } else { // 1 or more bytes returned, increase buffer for another round
-          contents.resize(offset + 4096); // extend so that 4k bytes are vailable again
+          contents.resize(offset + 4096); // extend so that 4k bytes are available again
         }
       }
     }
@@ -411,27 +366,14 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void TemporaryDirectoryScope::ReadFile(const std::string &name, std::string &contents) const {
-    std::string fullPath = this->path;
-    {
-      if(fullPath.length() > 0) {
-#if defined(NUCLEX_SUPPORT_WINDOWS)
-        char lastCharacter = fullPath[fullPath.length() - 1];
-        if((lastCharacter != '\\') && (lastCharacter != '/')) {
-          fullPath.push_back('\\');
-        }
-#else
-        if(fullPath[fullPath.length() - 1] != '/') {
-          fullPath.push_back('/');
-        }
-#endif
-      }
-      fullPath.append(name);
-    }
+  void TemporaryDirectoryScope::ReadFile(
+    const std::u8string &filename, std::u8string &contents
+  ) const {
+    std::filesystem::path filePath = GetPath(filename);
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(fullPath);
+      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(filePath);
       ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
 
       contents.resize(4096);
@@ -445,13 +387,13 @@ namespace Nuclex { namespace Support {
           break;
         } else { // 1 or more bytes returned, increase buffer for another round
           offset += readByteCount;
-          contents.resize(offset + 4096); // extend so that 4k bytes are vailable again
+          contents.resize(offset + 4096); // extend so that 4k bytes are available again
         }
       }
     }
 #elif defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(fullPath);
+      int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(filePath);
       ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
 
       contents.resize(4096);
@@ -465,7 +407,7 @@ namespace Nuclex { namespace Support {
           contents.resize(offset);
           break;
         } else { // 1 or more bytes returned, increase buffer for another round
-          contents.resize(offset + 4096); // extend so that 4k bytes are vailable again
+          contents.resize(offset + 4096); // extend so that 4k bytes are available again
         }
       }
     }

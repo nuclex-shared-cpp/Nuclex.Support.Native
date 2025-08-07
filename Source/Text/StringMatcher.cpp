@@ -135,8 +135,8 @@ namespace {
   /// <returns>True if the 'haystack' ended with the 'needle' string</returns>
   template<typename TString, bool CaseSensitive>
   bool doesUtf8StringEndWith(const TString &haystack, const std::u8string &needle) {
-    const my_char8_t *haystackStart, *haystackEnd;
-    const my_char8_t *needleStart, *needleEnd;
+    const char8_t *haystackStart, *haystackEnd;
+    const char8_t *needleStart, *needleEnd;
     {
       std::u8string::size_type needleLength = needle.length();
       std::u8string::size_type haystackLength = haystack.length();
@@ -214,9 +214,9 @@ namespace {
 
     // Go through the haystack and look for code points matching the first code point
     // of the needle. Any matches are investigated further in a nested loop.
-    const my_char8_t *needleFromSecondCodePoint = needle;
+    const char8_t *needleFromSecondCodePoint = needle;
     while(haystack < haystackEnd) {
-      const my_char8_t *haystackAtStart = haystack;
+      const char8_t *haystackAtStart = haystack;
 
       // Fetch the next haystack code point to compare against the first needle code point
       char32_t haystackCodePoint = UnicodeHelper::ReadCodePoint(haystack, haystackEnd);
@@ -228,7 +228,7 @@ namespace {
       // In the outer loop, scan only for the a match of the first needle codepoint.
       // Keeping this loop tight allows the compiler to optimize it into a simple scan.
       if(haystackCodePoint == firstNeedleCodePoint) [[unlikely]] {
-        const my_char8_t *haystackInner = haystack;
+        const char8_t *haystackInner = haystack;
         for(;;) {
           if(needle >= needleEnd) { // Needle ended? We've got a full match!
             return haystackAtStart;
@@ -320,7 +320,7 @@ namespace {
     } // letterwise comparison loop
 
     // If we encountered a star, first skip any redundant stars directly following
-    const my_char8_t *wildcardAfterStar = wildcard;
+    const char8_t *wildcardAfterStar = wildcard;
     for(;;) {
       if(wildcard >= wildcardEnd) {
         return true; // If the wildcard ends with a star, any remaining text is okay!

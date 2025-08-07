@@ -23,7 +23,7 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 
 #include <vector> // for std::vector
-#include <string> // for std::string
+#include <string> // for std::u8string
 #include <cstdint> // for std::uint32_t, std::int32_t, std::uint64_t, std::int64_t
 #include <optional> // for std::optional
 #include <type_traits> // for std::is_same
@@ -75,7 +75,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   ///       // a MemorySettingStore as a mock from some unit test.
   ///       void applySettings(const SettingsStore &settings) {
   ///         int theMagicNumber = (
-  ///           settings.Retrieve&lt;int&gt;(std::string(), u8"MagicNumber").value_or(0)
+  ///           settings.Retrieve&lt;int&gt;(std::u8string(), u8"MagicNumber").value_or(0)
   ///         );
   ///         setMagicNumber(theMagicNumber);
   ///       }
@@ -94,7 +94,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   See the remarks section of the <see cref="SettingsStore" /> class for
     ///   a detailed explanation of categories.
     /// </remarks>
-    public: virtual std::vector<std::string> GetAllCategories() const = 0;
+    public: virtual std::vector<std::u8string> GetAllCategories() const = 0;
 
     /// <summary>Returns a list of all properties found within a category</summary>
     /// <param name="categoryName">Name of the category whose properties will be returned</param>
@@ -104,15 +104,15 @@ namespace Nuclex { namespace Support { namespace Settings {
     ///   the category name. Specifying the name of a category that doesn't exist will
     ///   simply return an empty list (because )
     /// </remarks>
-    public: virtual std::vector<std::string> GetAllProperties(
-      const std::string &categoryName = std::string()
+    public: virtual std::vector<std::u8string> GetAllProperties(
+      const std::u8string &categoryName = std::u8string()
     ) const = 0;
 
     /// <summary>Deletes an entire category with all its properties from the store</summary>
     /// <param name="categoryName">Name of the category that will be deleted</param>
     /// <returns>True if the category existed and was deleted, false otherwise</returns>
     public: virtual bool DeleteCategory(
-      const std::string &categoryName
+      const std::u8string &categoryName
     ) = 0;
 
     /// <summary>Deletes the specified property from the store</summary>
@@ -122,7 +122,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property that will be deleted</param>
     /// <returns>True if the property existed and was deleted, false otherwise</returns>
     public: virtual bool DeleteProperty(
-      const std::string &categoryName, const std::string &propertyName
+      const std::u8string &categoryName, const std::u8string &propertyName
     ) = 0;
 
     /// <summary>Retrieves the value of a property from the store</summary>
@@ -138,7 +138,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <returns>The value of the requested property or nothing if it didn't exist</returns>
     public: template<typename TValue>
     NUCLEX_SUPPORT_API inline std::optional<TValue> Retrieve(
-      const std::string &categoryName, const std::string &propertyName
+      const std::u8string &categoryName, const std::u8string &propertyName
     ) const;
 
     /// <summary>Stores a property's value in the store or updates it</summary>
@@ -154,7 +154,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="value">Value that will be stored in the settings store</param>
     public: template<typename TValue>
     NUCLEX_SUPPORT_API inline void Store(
-      const std::string &categoryName, const std::string &propertyName, const TValue &value
+      const std::u8string &categoryName, const std::u8string &propertyName, const TValue &value
     );
 
     //
@@ -166,7 +166,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <returns>The value of the requested property or nothing if it didn't exist</returns>
     protected: virtual std::optional<bool> RetrieveBooleanProperty(
-      const std::string &categoryName, const std::string &propertyName
+      const std::u8string &categoryName, const std::u8string &propertyName
     ) const = 0;
 
     /// <summary>Retrieves the value of a 32 bit integer property from the store</summary>
@@ -174,7 +174,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <returns>The value of the requested property or nothing if it didn't exist</returns>
     protected: virtual std::optional<std::uint32_t> RetrieveUInt32Property(
-      const std::string &categoryName, const std::string &propertyName
+      const std::u8string &categoryName, const std::u8string &propertyName
     ) const = 0;
 
     /// <summary>Retrieves the value of a 32 bit integer property from the store</summary>
@@ -182,7 +182,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <returns>The value of the requested property or nothing if it didn't exist</returns>
     protected: virtual std::optional<std::int32_t> RetrieveInt32Property(
-      const std::string &categoryName, const std::string &propertyName
+      const std::u8string &categoryName, const std::u8string &propertyName
     ) const = 0;
 
     /// <summary>Retrieves the value of a 64 bit integer property from the store</summary>
@@ -190,7 +190,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <returns>The value of the requested property or nothing if it didn't exist</returns>
     protected: virtual std::optional<std::uint64_t> RetrieveUInt64Property(
-      const std::string &categoryName, const std::string &propertyName
+      const std::u8string &categoryName, const std::u8string &propertyName
     ) const = 0;
 
     /// <summary>Retrieves the value of a 64 bit integer property from the store</summary>
@@ -198,15 +198,15 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <returns>The value of the requested property or nothing if it didn't exist</returns>
     protected: virtual std::optional<std::int64_t> RetrieveInt64Property(
-      const std::string &categoryName, const std::string &propertyName
+      const std::u8string &categoryName, const std::u8string &propertyName
     ) const = 0;
 
     /// <summary>Retrieves the value of a string property from the store</summary>
     /// <param name="categoryName">Category from which the property will be read</param>
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <returns>The value of the requested property or nothing if it didn't exist</returns>
-    protected: virtual std::optional<std::string> RetrieveStringProperty(
-      const std::string &categoryName, const std::string &propertyName
+    protected: virtual std::optional<std::u8string> RetrieveStringProperty(
+      const std::u8string &categoryName, const std::u8string &propertyName
     ) const = 0;
 
     /// <summary>Stores or updates a boolean property in the settings store</summary>
@@ -214,7 +214,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <param name="value">Value that will be stored</param>
     protected: virtual void StoreBooleanProperty(
-      const std::string &categoryName, const std::string &propertyName, bool value
+      const std::u8string &categoryName, const std::u8string &propertyName, bool value
     ) = 0;
 
     /// <summary>Stores or updates a 32 bit integer property in the settings store</summary>
@@ -222,7 +222,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <param name="value">Value that will be stored</param>
     protected: virtual void StoreUInt32Property(
-      const std::string &categoryName, const std::string &propertyName, std::uint32_t value
+      const std::u8string &categoryName, const std::u8string &propertyName, std::uint32_t value
     ) = 0;
 
     /// <summary>Stores or updates a 32 bit integer property in the settings store</summary>
@@ -230,7 +230,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <param name="value">Value that will be stored</param>
     protected: virtual void StoreInt32Property(
-      const std::string &categoryName, const std::string &propertyName, std::int32_t value
+      const std::u8string &categoryName, const std::u8string &propertyName, std::int32_t value
     ) = 0;
 
     /// <summary>Stores or updates a 64 bit integer property in the settings store</summary>
@@ -238,7 +238,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <param name="value">Value that will be stored</param>
     protected: virtual void StoreUInt64Property(
-      const std::string &categoryName, const std::string &propertyName, std::uint64_t value
+      const std::u8string &categoryName, const std::u8string &propertyName, std::uint64_t value
     ) = 0;
 
     /// <summary>Stores or updates a 64 bit integer property in the settings store</summary>
@@ -246,7 +246,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <param name="value">Value that will be stored</param>
     protected: virtual void StoreInt64Property(
-      const std::string &categoryName, const std::string &propertyName, std::int64_t value
+      const std::u8string &categoryName, const std::u8string &propertyName, std::int64_t value
     ) = 0;
 
     /// <summary>Stores or updates a string property in the settings store</summary>
@@ -254,7 +254,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     /// <param name="propertyName">Name of the property whose value will be read</param>
     /// <param name="value">Value that will be stored</param>
     protected: virtual void StoreStringProperty(
-      const std::string &categoryName, const std::string &propertyName, const std::string &value
+      const std::u8string &categoryName, const std::u8string &propertyName, const std::u8string &value
     ) = 0;
 
   };
@@ -263,7 +263,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<typename TValue>
   NUCLEX_SUPPORT_API inline std::optional<TValue> SettingsStore::Retrieve(
-    const std::string &, const std::string &
+    const std::u8string &, const std::u8string &
   ) const {
     static_assert(
       std::is_same<TValue, bool>::value ||
@@ -271,8 +271,8 @@ namespace Nuclex { namespace Support { namespace Settings {
       std::is_same<TValue, std::int32_t>::value ||
       std::is_same<TValue, std::uint64_t>::value ||
       std::is_same<TValue, std::int64_t>::value ||
-      std::is_same<TValue, std::string>::value,
-      u8"Only boolean, 32/64 bit integer and std::string properties are supported"
+      std::is_same<TValue, std::u8string>::value,
+      u8"Only boolean, 32/64 bit integer and std::u8string properties are supported"
     );
   }
 
@@ -280,7 +280,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline std::optional<bool> SettingsStore::Retrieve(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     return RetrieveBooleanProperty(categoryName, propertyName);
   }
@@ -289,7 +289,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline std::optional<std::uint32_t> SettingsStore::Retrieve(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     return RetrieveUInt32Property(categoryName, propertyName);
   }
@@ -298,7 +298,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline std::optional<std::int32_t> SettingsStore::Retrieve(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     return RetrieveInt32Property(categoryName, propertyName);
   }
@@ -307,7 +307,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline std::optional<std::uint64_t> SettingsStore::Retrieve(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     return RetrieveUInt64Property(categoryName, propertyName);
   }
@@ -316,7 +316,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline std::optional<std::int64_t> SettingsStore::Retrieve(
-    const std::string &categoryName, const std::string &propertyName
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     return RetrieveInt64Property(categoryName, propertyName);
   }
@@ -324,8 +324,8 @@ namespace Nuclex { namespace Support { namespace Settings {
   // ------------------------------------------------------------------------------------------- //
 
   template<>
-  NUCLEX_SUPPORT_API inline std::optional<std::string> SettingsStore::Retrieve(
-    const std::string &categoryName, const std::string &propertyName
+  NUCLEX_SUPPORT_API inline std::optional<std::u8string> SettingsStore::Retrieve(
+    const std::u8string &categoryName, const std::u8string &propertyName
   ) const {
     return RetrieveStringProperty(categoryName, propertyName);
   }
@@ -334,7 +334,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<typename TValue>
   NUCLEX_SUPPORT_API inline void SettingsStore::Store(
-    const std::string &, const std::string &, const TValue &
+    const std::u8string &, const std::u8string &, const TValue &
   ) {
     static_assert(
       std::is_same<TValue, bool>::value ||
@@ -342,8 +342,8 @@ namespace Nuclex { namespace Support { namespace Settings {
       std::is_same<TValue, std::int32_t>::value ||
       std::is_same<TValue, std::uint64_t>::value ||
       std::is_same<TValue, std::int64_t>::value ||
-      std::is_same<TValue, std::string>::value,
-      u8"Only boolean, 32/64 bit integer and std::string properties are supported"
+      std::is_same<TValue, std::u8string>::value,
+      u8"Only boolean, 32/64 bit integer and std::u8string properties are supported"
     );
   }
 
@@ -351,7 +351,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline void SettingsStore::Store(
-    const std::string &categoryName, const std::string &propertyName, const bool &value
+    const std::u8string &categoryName, const std::u8string &propertyName, const bool &value
   ) {
     StoreBooleanProperty(categoryName, propertyName, value);
   }
@@ -360,7 +360,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline void SettingsStore::Store(
-    const std::string &categoryName, const std::string &propertyName, const std::uint32_t &value
+    const std::u8string &categoryName, const std::u8string &propertyName, const std::uint32_t &value
   ) {
     StoreUInt32Property(categoryName, propertyName, value);
   }
@@ -369,7 +369,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline void SettingsStore::Store(
-    const std::string &categoryName, const std::string &propertyName, const std::int32_t &value
+    const std::u8string &categoryName, const std::u8string &propertyName, const std::int32_t &value
   ) {
     StoreInt32Property(categoryName, propertyName, value);
   }
@@ -378,7 +378,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline void SettingsStore::Store(
-    const std::string &categoryName, const std::string &propertyName, const std::uint64_t &value
+    const std::u8string &categoryName, const std::u8string &propertyName, const std::uint64_t &value
   ) {
     StoreUInt64Property(categoryName, propertyName, value);
   }
@@ -387,7 +387,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline void SettingsStore::Store(
-    const std::string &categoryName, const std::string &propertyName, const std::int64_t &value
+    const std::u8string &categoryName, const std::u8string &propertyName, const std::int64_t &value
   ) {
     StoreInt64Property(categoryName, propertyName, value);
   }
@@ -396,7 +396,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   template<>
   NUCLEX_SUPPORT_API inline void SettingsStore::Store(
-    const std::string &categoryName, const std::string &propertyName, const std::string &value
+    const std::u8string &categoryName, const std::u8string &propertyName, const std::u8string &value
   ) {
     StoreStringProperty(categoryName, propertyName, value);
   }

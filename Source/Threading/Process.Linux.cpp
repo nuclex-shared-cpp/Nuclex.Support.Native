@@ -123,16 +123,16 @@ namespace {
   ///   File number of the file that will replace the standard file
   /// </param>
   void replaceStandardFile(
-    const std::string &standardFileName, int standardFileNumber, int replacementFileNumber
+    const std::u8string &standardFileName, int standardFileNumber, int replacementFileNumber
   ) {
-    static const std::string errorMessage(u8"Error redirecting ", 18);
+    static const std::u8string errorMessage(u8"Error redirecting ", 18);
 
     // See the documentation for dup2(), this drops the target file number's
     // current file and makes it points to the same file as our replacement file number.
     int result = ::dup2(replacementFileNumber, standardFileNumber);
     if(result == -1) [[unlikely]] {
       int errorNumber = errno;
-      std::string message;
+      std::u8string message;
       message.reserve(18 + standardFileName.length() + 1);
       message.append(errorMessage);
       message.append(standardFileName);
@@ -151,12 +151,12 @@ namespace {
   ///   Command line arguments that will be passed to the new executable
   /// </param>
   [[noreturn]] void executeChildProcess(
-    const std::string &workingDirectory,
-    const std::string &executablePath,
-    const std::string &prependedExecutablePath,
-    const std::vector<std::string> &arguments
+    const std::u8string &workingDirectory,
+    const std::u8string &executablePath,
+    const std::u8string &prependedExecutablePath,
+    const std::vector<std::u8string> &arguments
   ) {
-    static const std::string errorMessage(u8"Could not execute ", 18);
+    static const std::u8string errorMessage(u8"Could not execute ", 18);
 
     // Build an array with the (non-const) values of all arguments. Using const_cast
     // here is safe so long as the OS is POSIX-compatible, which promises not to
@@ -194,7 +194,7 @@ namespace {
     int result = ::execvp(executablePath.c_str(), &argumentValues[0]);
     if(result == -1) [[likely]] {
       int errorNumber = errno;
-      std::string message;
+      std::u8string message;
       message.reserve(18 + executablePath.length() + 1);
       message.append(errorMessage);
       message.append(executablePath);
@@ -242,8 +242,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::string Process::GetExecutableDirectory() {
-    std::string result;
+  std::u8string Process::GetExecutableDirectory() {
+    std::u8string result;
     Platform::PosixProcessApi::GetOwnExecutablePath(result);
     return result;
   }
@@ -251,7 +251,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   Process::Process(
-    const std::string &executablePath,
+    const std::u8string &executablePath,
     bool interceptStdErr /* = true */,
     bool interceptStdOut /* = true */
   ) :
@@ -313,7 +313,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   void Process::Start(
-    const std::vector<std::string> &arguments /* = std::vector<std::string>() */,
+    const std::vector<std::u8string> &arguments /* = std::vector<std::u8string>() */,
     bool prependExecutableName /* = true */
   ) {
     using Nuclex::Support::Platform::Pipe;
@@ -327,7 +327,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     // paths are interpreted as relative to the running process and if we do it after
     // the call to fork(), the running process for the code interested in these
     // variables happens to be the child process.
-    std::string absoluteWorkingDirectory, absoluteExecutablePath;
+    std::u8string absoluteWorkingDirectory, absoluteExecutablePath;
 
     Nuclex::Support::Platform::PosixProcessApi::GetAbsoluteExecutablePath(
       absoluteExecutablePath, this->executablePath
@@ -418,7 +418,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       executeChildProcess(
         absoluteWorkingDirectory,
         absoluteExecutablePath,
-        prependExecutableName ? executablePath : std::string(),
+        prependExecutableName ? executablePath : std::u8string(),
         arguments
       );
       std::terminate(); // Should never be reached, executeChildProcess() doesn't return
@@ -556,7 +556,11 @@ namespace Nuclex { namespace Support { namespace Threading {
   int Process::Join(std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */) {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
-      throw std::logic_error(u8"Process was not started or is already joined");
+      throw std::logic_error(
+        Text::StringConverter::CharsFromUtf8(
+          u8"Process was not started or is already joined"
+        )
+      );
     }
 
     // If the process is potentially still running, wait for it to exit
@@ -565,7 +569,9 @@ namespace Nuclex { namespace Support { namespace Threading {
       bool hasFinished = Wait(patience);
       if(!hasFinished) {
         throw Nuclex::Support::Errors::TimeoutError(
-          u8"Timed out waiting for external process to exit"
+          Text::StringConverter::CharsFromUtf8(
+            u8"Timed out waiting for external process to exit"
+          )
         );
       }
     }
@@ -597,8 +603,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     // If the process was terminated due to a signal (i.e. crashed or killed), there is
     // no exit code. So in the case of abnormal termination, we instead throw an exception.
     if(WIFSIGNALED(impl.ExitCode)) {
-      const std::string errorMessage("Child process terminated by signal ", 35);
-      std::string message;
+      const std::u8string errorMessage("Child process terminated by signal ", 35);
+      std::u8string message;
       message.reserve(35 + 7 + 1);
       message.append(errorMessage);
       message.append(::strsignal(WTERMSIG(impl.ExitCode)));
@@ -615,7 +621,11 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
-      throw std::logic_error(u8"Process was not started or is already joined");
+      throw std::logic_error(
+        Text::StringConverter::CharsFromUtf8(
+          u8"Process was not started or is already joined"
+        )
+      );
     }
 
     if(patience > std::chrono::milliseconds::zero()) {

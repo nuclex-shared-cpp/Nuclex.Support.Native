@@ -316,7 +316,7 @@ namespace Nuclex { namespace Support { namespace Events {
         // the active subscriber list, the reference counter will not reach 0. Otherwise,
         // it was already replaced by another thread, so we don't even need to check.
         std::size_t totalReferences = this->queueToRelease->ReferenceCount.fetch_sub(
-          1, std::memory_order::memory_order_release
+          1, std::memory_order::release
         );
 
         // Did we just release the last reference to the queue?
@@ -407,12 +407,12 @@ namespace Nuclex { namespace Support { namespace Events {
       for(;;) {
 
         // Optimistically assume the lock is free on the first try
-        if(!this->spinLock.exchange(true, std::memory_order::memory_order_acquire)) {
+        if(!this->spinLock.exchange(true, std::memory_order::acquire)) {
           return;
         }
 
         // Wait for lock to be released without generating cache misses
-        while(this->spinLock.load(std::memory_order::memory_order_relaxed)) {
+        while(this->spinLock.load(std::memory_order::relaxed)) {
           // Issue X86 PAUSE or ARM YIELD instruction to reduce contention
           // between hyper-threads
           NUCLEX_SUPPORT_CPU_YIELD;
@@ -423,7 +423,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
     /// <summary>Releases the spinlock again</summary>
     private: inline void releaseSpinLock() const noexcept {
-      this->spinLock.store(false, std::memory_order::memory_order_release);
+      this->spinLock.store(false, std::memory_order::release);
     }
 
     /// <summary>Micro-spinlock to synchronize access to the subscriber list + refcount</summary>
@@ -450,14 +450,14 @@ namespace Nuclex { namespace Support { namespace Events {
     // the class that owns the event, this humble destructor can do little about that anyway)
 
     BroadcastQueue *currentQueue = this->subscribers.load(
-      std::memory_order::memory_order_relaxed
+      std::memory_order::relaxed
     );
     if(currentQueue != nullptr) {
       freeBroadcastQueue(currentQueue);
     }
 
     currentQueue = this->recyclableSubscribers.load(
-      std::memory_order::memory_order_relaxed
+      std::memory_order::relaxed
     );
     if(currentQueue != nullptr) {
       freeBroadcastQueue(currentQueue);
@@ -472,7 +472,7 @@ namespace Nuclex { namespace Support { namespace Events {
     acquireSpinLock();
 
     const BroadcastQueue *currentQueue = this->subscribers.load(
-      std::memory_order::memory_order_consume // if carries dependency
+      std::memory_order::consume // if carries dependency
     );
     if(currentQueue == nullptr) [[unlikely]] {
       releaseSpinLock();
@@ -497,13 +497,13 @@ namespace Nuclex { namespace Support { namespace Events {
     // without touching anything else (anticipated zero-subscriber case)
     acquireSpinLock();
     BroadcastQueue *currentQueue = this->subscribers.load(
-      std::memory_order::memory_order_consume // if carries dependency
+      std::memory_order::consume // if carries dependency
     );
     if(currentQueue == nullptr) [[likely]] {
       releaseSpinLock();
       return results;
     } else { // A queue is present, increment its reference count so it isn't deleted
-      currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
+      currentQueue->ReferenceCount.fetch_add(1, std::memory_order::release);
       releaseSpinLock();
     }
 
@@ -538,13 +538,13 @@ namespace Nuclex { namespace Support { namespace Events {
     // without touching anything else (anticipated zero-subscriber case)
     acquireSpinLock();
     BroadcastQueue *currentQueue = this->subscribers.load(
-      std::memory_order::memory_order_consume // if carries dependency
+      std::memory_order::consume // if carries dependency
     );
     if(currentQueue == nullptr) [[likely]] {
       releaseSpinLock();
       return;
     } else { // A queue is present, increment its reference count so it isn't deleted
-      currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
+      currentQueue->ReferenceCount.fetch_add(1, std::memory_order::release);
       releaseSpinLock();
     }
 
@@ -574,13 +574,13 @@ namespace Nuclex { namespace Support { namespace Events {
     // Get a hold of the current queue.
     acquireSpinLock();
     BroadcastQueue *currentQueue = this->subscribers.load(
-      std::memory_order::memory_order_consume // if carries dependency
+      std::memory_order::consume // if carries dependency
     );
     if(currentQueue == nullptr) [[likely]] {
       releaseSpinLock();
       return;
     } else { // A queue is present, increment its reference count so it isn't deleted
-      currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
+      currentQueue->ReferenceCount.fetch_add(1, std::memory_order::release);
       releaseSpinLock();
     }
 
@@ -615,7 +615,7 @@ namespace Nuclex { namespace Support { namespace Events {
       // Get a hold of the current queue.
       acquireSpinLock();
       BroadcastQueue *currentQueue = this->subscribers.load(
-        std::memory_order::memory_order_consume // if carries dependency
+        std::memory_order::consume // if carries dependency
       );
       if(currentQueue == nullptr) [[likely]] {
         releaseSpinLock();
@@ -631,7 +631,7 @@ namespace Nuclex { namespace Support { namespace Events {
 
         newQueue->Callbacks[0] = delegate;
       } else { // A queue is present, increment its reference count so it isn't deleted
-        currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
+        currentQueue->ReferenceCount.fetch_add(1, std::memory_order::release);
         releaseSpinLock();
 
         ReleaseBroadcastQueueScope releaseActiveQueue(*this, currentQueue);
@@ -646,7 +646,7 @@ namespace Nuclex { namespace Support { namespace Events {
           freeBroadcastQueue(newQueue);
           newQueue = allocateBroadcastQueue(subscriberCount + 1);
         } else { // Recycled queue can be reused, raise its reference count
-          newQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_relaxed);
+          newQueue->ReferenceCount.fetch_add(1, std::memory_order::relaxed);
           newQueue->Count = subscriberCount + 1;
         }
 
@@ -671,7 +671,7 @@ namespace Nuclex { namespace Support { namespace Events {
       if(wasReplaced) [[likely]] {
         if(currentQueue != nullptr) [[likely]] {
           std::size_t totalReferences = currentQueue->ReferenceCount.fetch_sub(
-            1, std::memory_order::memory_order_release
+            1, std::memory_order::release
           );
           if(totalReferences == 1) [[unlikely]] { // We just released the last reference
             currentQueue = this->recyclableSubscribers.exchange(currentQueue);
@@ -682,7 +682,7 @@ namespace Nuclex { namespace Support { namespace Events {
         }
         return; // Edited version of broadcast queue is in place, we're done
       } else { // Put our queue back into the loop, hopefully we can still reuse it above
-        newQueue->ReferenceCount.store(0, std::memory_order::memory_order_relaxed);
+        newQueue->ReferenceCount.store(0, std::memory_order::relaxed);
         newQueue = this->recyclableSubscribers.exchange(newQueue);
         if(newQueue != nullptr) [[unlikely]] {
           freeBroadcastQueue(newQueue);
@@ -706,13 +706,13 @@ namespace Nuclex { namespace Support { namespace Events {
       // Get a hold of the current queue.
       acquireSpinLock();
       BroadcastQueue *currentQueue = this->subscribers.load(
-        std::memory_order::memory_order_consume // if carries dependency
+        std::memory_order::consume // if carries dependency
       );
       if(currentQueue == nullptr) [[unlikely]] {
         releaseSpinLock();
         return false; // No queue -> no subscribers -> subscriber not found -> exit!
       } else {
-        currentQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_release);
+        currentQueue->ReferenceCount.fetch_add(1, std::memory_order::release);
         releaseSpinLock();
       }
 
@@ -736,7 +736,7 @@ namespace Nuclex { namespace Support { namespace Events {
                 freeBroadcastQueue(newQueue);
                 newQueue = allocateBroadcastQueue(currentSubscriberCount - 1);
               } else {
-                newQueue->ReferenceCount.fetch_add(1, std::memory_order::memory_order_relaxed);
+                newQueue->ReferenceCount.fetch_add(1, std::memory_order::relaxed);
                 newQueue->Count = currentSubscriberCount - 1;
               }
 
@@ -763,7 +763,7 @@ namespace Nuclex { namespace Support { namespace Events {
             if(wasReplaced) [[likely]] {
               if(currentQueue != nullptr) [[likely]] {
                 std::size_t totalReferences = currentQueue->ReferenceCount.fetch_sub(
-                  1, std::memory_order::memory_order_release
+                  1, std::memory_order::release
                 );
                 if(totalReferences == 1) [[unlikely]] { // We just released the last reference
                   currentQueue = this->recyclableSubscribers.exchange(currentQueue);
@@ -774,7 +774,7 @@ namespace Nuclex { namespace Support { namespace Events {
               }
               return true; // Edited version of broadcast queue is in place, we're done
             } else { // Put our queue back into the loop, hopefully we can still reuse it above
-              newQueue->ReferenceCount.store(0, std::memory_order::memory_order_relaxed);
+              newQueue->ReferenceCount.store(0, std::memory_order::relaxed);
               newQueue = this->recyclableSubscribers.exchange(newQueue);
               if(newQueue != nullptr) [[unlikely]] {
                 freeBroadcastQueue(newQueue);

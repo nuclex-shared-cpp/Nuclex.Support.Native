@@ -97,17 +97,15 @@ namespace {
       {
         std::unique_lock<std::mutex> stateMutexScope(*stateMutex);
 
-        int currentStatus = status->load(std::memory_order::memory_order_consume);
+        int currentStatus = status->load(std::memory_order::consume);
         if(currentStatus == static_cast<int>(Status::Canceling)) {
           status->store(
-            static_cast<int>(Status::Stopped),
-            std::memory_order::memory_order_release
+            static_cast<int>(Status::Stopped), std::memory_order::release
           );
           notifyAllAndReturn = true;
         } else {
           status->store(
-            static_cast<int>(Status::Running),
-            std::memory_order::memory_order_release
+            static_cast<int>(Status::Running), std::memory_order::release
           );
 
           stopToken = stopTrigger->get()->GetToken();
@@ -140,11 +138,10 @@ namespace {
       {
         std::unique_lock<std::mutex> stateMutexScope(*stateMutex);
 
-        int currentStatus = status->load(std::memory_order::memory_order_consume);
+        int currentStatus = status->load(std::memory_order::consume);
         if(currentStatus == static_cast<int>(Status::CancelingWithRestart)) {
           status->store(
-            static_cast<int>(Status::Running),
-            std::memory_order::memory_order_release
+            static_cast<int>(Status::Running), std::memory_order::release
           );
 
           // If the status was 'Canceling' or 'CancelingWithRestart', a new stop source
@@ -158,13 +155,11 @@ namespace {
         if(static_cast<bool>(currentError)) {
           *error = currentError;
           status->store(
-            static_cast<int>(Status::Failed),
-            std::memory_order::memory_order_release
+            static_cast<int>(Status::Failed), std::memory_order::release
           );
         } else {
           status->store(
-            static_cast<int>(Status::Succeeded),
-            std::memory_order::memory_order_release
+            static_cast<int>(Status::Succeeded), std::memory_order::release
           );
         }
 
@@ -217,7 +212,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       {
         std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
 
-        int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+        int currentStatus = this->status.load(std::memory_order::consume);
         if(currentStatus >= 0) {
           break;
         }
@@ -237,7 +232,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   bool ConcurrentJob::IsRunning() const {
-    int currentStatus = this->status.load(std::memory_order::memory_order_relaxed);
+    int currentStatus = this->status.load(std::memory_order::relaxed);
     return (currentStatus < 0);
   }
 
@@ -250,16 +245,14 @@ namespace Nuclex { namespace Support { namespace Threading {
     {
       std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
 
-      int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+      int currentStatus = this->status.load(std::memory_order::consume);
       if(currentStatus == static_cast<int>(Status::Canceling)) {
         this->status.store( // Already canceled, ask to repeat DoWork() call
-          static_cast<int>(Status::CancelingWithRestart),
-          std::memory_order::memory_order_release
+          static_cast<int>(Status::CancelingWithRestart), std::memory_order::release
         );
       } else if(currentStatus >= 0) { // If the worker was not running, start a new one
         this->status.store(
-          static_cast<int>(Status::Scheduled),
-          std::memory_order::memory_order_release
+          static_cast<int>(Status::Scheduled), std::memory_order::release
         );
         if(!static_cast<bool>(this->stopTrigger)) {
           this->stopTrigger = StopSource::Create();
@@ -313,23 +306,20 @@ namespace Nuclex { namespace Support { namespace Threading {
     {
       std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
 
-      int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+      int currentStatus = this->status.load(std::memory_order::consume);
       if(currentStatus == static_cast<int>(Status::Running)) {
         this->status.store( // Currently running, cancel and repeat DoWork() call
-          static_cast<int>(Status::CancelingWithRestart),
-          std::memory_order::memory_order_release
+          static_cast<int>(Status::CancelingWithRestart), std::memory_order::release
         );
         this->stopTrigger->Cancel();
         this->stopTrigger = StopSource::Create();
       } else if(currentStatus == static_cast<int>(Status::Canceling)) {
         this->status.store( // Already canceled, ask to repeat DoWork() call
-          static_cast<int>(Status::CancelingWithRestart),
-          std::memory_order::memory_order_release
+          static_cast<int>(Status::CancelingWithRestart), std::memory_order::release
         );
       } else if(currentStatus >= 0) { // If the worker was not running, start a new one
         this->status.store(
-          static_cast<int>(Status::Scheduled),
-          std::memory_order::memory_order_release
+          static_cast<int>(Status::Scheduled), std::memory_order::release
         );
         if(!static_cast<bool>(this->stopTrigger)) {
           this->stopTrigger = StopSource::Create();
@@ -378,21 +368,19 @@ namespace Nuclex { namespace Support { namespace Threading {
   void ConcurrentJob::Cancel() {
     std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
 
-    int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+    int currentStatus = this->status.load(std::memory_order::consume);
     if(
       (currentStatus == static_cast<int>(Status::Running)) ||
       (currentStatus == static_cast<int>(Status::Scheduled))
     ) {
       this->status.store(
-        static_cast<int>(Status::Canceling),
-        std::memory_order::memory_order_release
+        static_cast<int>(Status::Canceling), std::memory_order::release
       );
       this->stopTrigger->Cancel();
       this->stopTrigger = StopSource::Create();
     } else if(currentStatus == static_cast<int>(Status::CancelingWithRestart)) {
       this->status.store(
-        static_cast<int>(Status::Canceling),
-        std::memory_order::memory_order_release
+        static_cast<int>(Status::Canceling), std::memory_order::release
       );
     }
   }
@@ -411,7 +399,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       {
         std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
 
-        int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+        int currentStatus = this->status.load(std::memory_order::consume);
         switch(currentStatus) {
           case static_cast<int>(Status::Stopped):
           case static_cast<int>(Status::Succeeded):
@@ -453,22 +441,20 @@ namespace Nuclex { namespace Support { namespace Threading {
       {
         std::unique_lock<std::mutex> stateMutexScope(this->stateMutex);
 
-        int currentStatus = this->status.load(std::memory_order::memory_order_consume);
+        int currentStatus = this->status.load(std::memory_order::consume);
         switch(currentStatus) {
           case static_cast<int>(Status::Stopped): {
             return true;
           }
           case static_cast<int>(Status::Succeeded): {
             this->status.store(
-              static_cast<int>(Status::Stopped),
-              std::memory_order::memory_order_release
+              static_cast<int>(Status::Stopped), std::memory_order::release
             );
             return true;
           }
           case static_cast<int>(Status::Failed): {
             this->status.store(
-              static_cast<int>(Status::Stopped),
-              std::memory_order::memory_order_release
+              static_cast<int>(Status::Stopped), std::memory_order::release
             );
             std::rethrow_exception(this->error);
           }

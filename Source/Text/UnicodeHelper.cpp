@@ -503,17 +503,15 @@ namespace {
     TConstOrNonConstChar8 *&current,
     typename std::add_const<TConstOrNonConstChar8>::type *end
   ) {
-    typedef Nuclex::Support::Text::UnicodeHelper::Char8Type Char8Type;
-
     assert((current < end) && u8"At least one byte of input must be available");
 
-    Char8Type leadCharacter = *current;
+    char8_t leadCharacter = *current;
     if(leadCharacter < 128) {
       ++current;
       return static_cast<char32_t>(leadCharacter);
     } else if((leadCharacter & 0xE0) == 0xC0) {
       if(current + 1 < end) {
-        Char8Type secondCharacter = *(current + 1);
+        char8_t secondCharacter = *(current + 1);
         if((secondCharacter & 0xC0) == 0x80) {
           current += 2;
           return (
@@ -524,11 +522,11 @@ namespace {
       }
     } else if((leadCharacter & 0xF0) == 0xE0) {
       if(current + 2 < end) {
-        Char8Type secondCharacter = *(current + 1);
-        Char8Type thirdCharacter = *(current + 2);
+        char8_t secondCharacter = *(current + 1);
+        char8_t thirdCharacter = *(current + 2);
         bool allCharactersValid = (
-          (static_cast<Char8Type>(secondCharacter & 0xC0) == 0x80) &&
-          (static_cast<Char8Type>(thirdCharacter & 0xC0) == 0x80)
+          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80)
         );
         if(allCharactersValid) {
           current += 3;
@@ -541,13 +539,13 @@ namespace {
       }
     } else if((leadCharacter & 0xF8) == 0xF0) {
       if(current + 3 < end) {
-        Char8Type secondCharacter = *(current + 1);
-        Char8Type thirdCharacter = *(current + 2);
-        Char8Type fourthCharacter = *(current + 3);
+        char8_t secondCharacter = *(current + 1);
+        char8_t thirdCharacter = *(current + 2);
+        char8_t fourthCharacter = *(current + 3);
         bool allCharactersValid = (
-          (static_cast<Char8Type>(secondCharacter & 0xC0) == 0x80) &&
-          (static_cast<Char8Type>(thirdCharacter & 0xC0) == 0x80) &&
-          (static_cast<Char8Type>(fourthCharacter & 0xC0) == 0x80)
+          (static_cast<char8_t>(secondCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(thirdCharacter & 0xC0) == 0x80) &&
+          (static_cast<char8_t>(fourthCharacter & 0xC0) == 0x80)
         );
         if(allCharactersValid) {
           current += 4;

@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-#include <string> // for std::string
+#include <string> // for std::u8string
 
 namespace Nuclex { namespace Support { namespace Text {
 
@@ -134,7 +134,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   things are indeed happening the way you intended to. These messages typically
     ///   go into some log, a details window or are discarded outright.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void Inform(const std::string &message) {
+    public: NUCLEX_SUPPORT_API virtual void Inform(const std::u8string &message) {
       (void)message;
     }
 
@@ -152,7 +152,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     the operation completed with warnings.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void Warn(const std::string &warning) {
+    public: NUCLEX_SUPPORT_API virtual void Warn(const std::u8string &warning) {
       (void)warning;
     }
 
@@ -169,7 +169,7 @@ namespace Nuclex { namespace Support { namespace Text {
     ///     the operation has failed.
     ///   </para>
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual void Complain(const std::string &error) {
+    public: NUCLEX_SUPPORT_API virtual void Complain(const std::u8string &error) {
       (void)error;
     }
 
