@@ -24,8 +24,9 @@ limitations under the License.
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include <filesystem> // for std::filesystem
 #include "PosixApi.h"
+
+#include <filesystem> // for std::filesystem
 
 namespace Nuclex { namespace Support { namespace Platform {
 
@@ -51,7 +52,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <summary>Checks if the specified path exists and if it is a file</summary>
     /// <param name="path">Path that will be checked</param>
     /// <returns>True if the path exists and is a file, false otherwise</returns>
-    public: static bool DoesFileExist(const std::u8string &path);
+    public: static bool DoesFileExist(const std::filesystem::path &path);
 
     /// <summary>Determines the path of the user's temporary directory</summary>
     /// <param name="target">

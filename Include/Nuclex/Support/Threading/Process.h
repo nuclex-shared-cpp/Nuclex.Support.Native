@@ -125,7 +125,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   </para>
     /// </remarks>
     public: NUCLEX_SUPPORT_API Process(
-      const std::string &executablePath,
+      const std::filesystem::path &executablePath,
       bool interceptStdErr = true,
       bool interceptStdOut = true
     );

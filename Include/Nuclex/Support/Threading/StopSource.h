@@ -31,6 +31,11 @@ limitations under the License.
 #define NUCLEX_SUPPORT_THREADING_STOPSOURCE_H
 
 #include "Nuclex/Support/Config.h"
+
+#if !defined(NUCLEX_SUPPORT_SOURCE)
+  #warning Nuclex::Support::Threading::StopSource has been deprecated in favor of C++20 std::stop_source
+#endif
+
 #include "Nuclex/Support/Threading/StopToken.h"
 
 #include <cassert> // for assert()

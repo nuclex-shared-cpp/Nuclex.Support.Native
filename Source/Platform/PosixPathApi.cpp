@@ -80,10 +80,10 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool PosixPathApi::DoesFileExist(const std::u8string &path) {
+  bool PosixPathApi::DoesFileExist(const std::filesystem::path &path) {
     struct ::stat fileStatus;
 
-    std::string pathChars(path.begin(), path.end());
+    std::string pathChars = path.string();
     int result = ::stat(pathChars.c_str(), &fileStatus);
     if(result == -1) {
       int errorNumber = errno;
@@ -94,7 +94,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       }
 
       std::u8string errorMessage(u8"Could not obtain file status for '");
-      errorMessage.append(path);
+      errorMessage.append(pathChars.begin(), pathChars.end());
       errorMessage.append(u8"'");
 
       Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);

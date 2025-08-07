@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Errors/EmptyDelegateCallError.h"
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
 
 #include <cassert> // for assert()
 
@@ -297,8 +298,11 @@ namespace Nuclex { namespace Support { namespace Events {
       // Since we don't know the return type and there's no guarantee that we can
       // default-construct one out of thin air (or that that would be the right course
       // of action), we cannot 'return' and our only choice is to throw.
-      static const std::string message(u8"No call target has been assigned to the delegate");
-      throw Errors::EmptyDelegateCallError(message);
+      throw Errors::EmptyDelegateCallError(
+        Text::StringConverter::CharFromUtf8(
+          u8"No call target has been assigned to the delegate"
+        )
+      );
 
     }
 
@@ -336,7 +340,11 @@ namespace Nuclex { namespace Support { namespace Events {
     private: TResult errorDelegateDestroyed(TArguments...) const {
       using namespace std;
       assert(!u8"Call to destroyed delegate (post-destructor or move operator)");
-      throw std::logic_error(u8"Call to destroyed delegate (post-destructor or move operator)");
+      throw std::logic_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Call to destroyed delegate (post-destructor or move operator)"
+        )
+      );
     }
 #endif
 

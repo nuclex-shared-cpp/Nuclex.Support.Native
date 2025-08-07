@@ -24,6 +24,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Collections/Cache.h" // for Cache
 #include "Nuclex/Support/Errors/KeyNotFoundError.h" // for KeyNotFoundError
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
 
 #include <cstdint> // for std::uint8_t
 
@@ -292,7 +293,9 @@ namespace Nuclex { namespace Support { namespace Collections {
       makeMostRecentlyUsed(state);
       return this->values[key];
     } else {
-      throw Errors::KeyNotFoundError(std::string(u8"Requested cache slot is empty", 29));
+      throw Errors::KeyNotFoundError(
+        Text::StringConverter::CharFromUtf8(u8"Requested cache slot is empty")
+      );
     }
   }
 

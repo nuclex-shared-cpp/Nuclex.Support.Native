@@ -26,7 +26,8 @@ limitations under the License.
   #warning Nuclex::Support::Optional has been deprecated in favor of C++17 std::optional
 #endif
 
-//#include <type_traits> //
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
+
 #include <stdexcept> // for std::logic_error
 #include <cstdint> // for std::uint8_t
 
@@ -159,7 +160,9 @@ namespace Nuclex { namespace Support {
     /// <returns>The value stored by the any</returns>
     public: NUCLEX_SUPPORT_API TValue &Get() {
       if(!this->carriesValue) {
-        throw std::logic_error(u8"Optional does not contain a value");
+        throw std::logic_error(
+          Text::StringConverter::CharFromUtf8(u8"Optional does not contain a value")
+        );
       }
 
       return *reinterpret_cast<TValue *>(this->valueMemory);

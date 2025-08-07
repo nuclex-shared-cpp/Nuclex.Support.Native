@@ -117,7 +117,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   </para>
     /// </remarks>
     public: static void GetAbsoluteExecutablePath(
-      std::filesystem::path &target, const std::u8string &executable
+      std::filesystem::path &target, const std::filesystem::path &executable
     );
 
     /// <summary>Determines the absolute path of the working directory</summary>
@@ -128,14 +128,14 @@ namespace Nuclex { namespace Support { namespace Platform {
     ///   interprets it relative to the executable's path for consistent behavior.
     /// </remarks>
     public: static void GetAbsoluteWorkingDirectory(
-      std::filesystem::path &target, const std::u8string &workingDirectory
+      std::filesystem::path &target, const std::filesystem::path &workingDirectory
     );
 
     /// <summary>Searches for an executable using the PATH environment variable</summary>
     /// <param name="target">String into which the absolute path will be written</param>
     /// <param name="executable">Relative path to the executable that will be searched</param>
     private: static void searchExecutableInPath(
-      std::filesystem::path &target, const std::u8string &executable
+      std::filesystem::path &target, const std::filesystem::path &executable
     );
 
   };

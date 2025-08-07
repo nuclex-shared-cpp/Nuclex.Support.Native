@@ -196,47 +196,52 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   void PosixProcessApi::GetAbsoluteExecutablePath(
-    std::filesystem::path &target, const std::string &executable
+    std::filesystem::path &target, const std::filesystem::path &executable
   ) {
-    if(PosixPathApi::IsPathRelative(executable)) {
+    if(executable.is_relative()) {
       getExecutablePath(target);
-      PosixPathApi::AppendPath(target, executable);
+      target /= executable;
+
       if(PosixPathApi::DoesFileExist(target)) {
         return;
       }
 
       searchExecutableInPath(target, executable);
     } else {
-      target.assign(executable);
+      target = executable;
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void PosixProcessApi::GetAbsoluteWorkingDirectory(
-    std::filesystem::path &target, const std::string &workingDirectory
+    std::filesystem::path &target, const std::filesystem::path &workingDirectory
   ) {
-    if(PosixPathApi::IsPathRelative(workingDirectory)) {
+    if(workingDirectory.is_relative()) {
       getExecutablePath(target);
-      PosixPathApi::AppendPath(target, workingDirectory);
+      target /= workingDirectory;
     } else {
-      target.assign(workingDirectory);
+      target = workingDirectory;
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void PosixProcessApi::searchExecutableInPath(
-    std::filesystem::path &target, const std::string &executable
+    std::filesystem::path &target, const std::filesystem::path &executable
   ) {
-    const char *path = ::getenv(u8"PATH");
+    static const std::u8string pathText(u8"PATH", 4);
+
+    std::string temp(pathText.begin(), pathText.end());
+    const char *path = ::getenv(temp.c_str());
     if(path != nullptr) {
       const char *start = path;
       while(*path != 0) {
         if(*path == ':') {
           if(path > start) {
             target.assign(start, path);
-            PosixPathApi::AppendPath(target, executable);
+            target /= executable;
+
             if(PosixPathApi::DoesFileExist(target)) {
               return;
             }
@@ -250,7 +255,8 @@ namespace Nuclex { namespace Support { namespace Platform {
       // Final path in list.
       if(path > start) {
         target.assign(start, path);
-        PosixPathApi::AppendPath(target, executable);
+        target /= executable;
+
         if(PosixPathApi::DoesFileExist(target)) {
           return;
         }

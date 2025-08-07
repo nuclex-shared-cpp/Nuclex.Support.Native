@@ -144,16 +144,23 @@ namespace {
 
 
   /// <summary>Replaces the running process with the specified executable</summary>
+  /// <param name="workingDirectory">
+  ///   If non-empty, directory set as the current working directory
+  /// </param>
   /// <param name="executablePath">
   ///   Path ot the executable with which the running process will continue
+  /// </param>
+  /// <param name="prependedExecutablePath">
+  ///   I non-empty: executable path that will be prepended to the argument list to match
+  ///   the standard method of launched processes being told hteir own name and invocation
   /// </param>
   /// <param name="arguments">
   ///   Command line arguments that will be passed to the new executable
   /// </param>
   [[noreturn]] void executeChildProcess(
-    const std::u8string &workingDirectory,
-    const std::u8string &executablePath,
-    const std::u8string &prependedExecutablePath,
+    const std::filesystem::path &workingDirectory,
+    const std::filesystem::path &executablePath,
+    const std::string &prependedExecutablePath,
     const std::vector<std::u8string> &arguments
   ) {
     static const std::u8string errorMessage(u8"Could not execute ", 18);
@@ -171,12 +178,18 @@ namespace {
         argumentValues.push_back(const_cast<char *>(prependedExecutablePath.c_str()));
       }
       for(std::size_t index = 0; index < arguments.size(); ++index) {
-        argumentValues.push_back(const_cast<char *>(arguments[index].c_str()));
+        argumentValues.push_back(
+          const_cast<char *>(
+            reinterpret_cast<const char *>(arguments[index].c_str())
+          )
+        );
       }
       argumentValues.push_back(nullptr); // Terminator
     }
 
     // Change into the desired working directory before handing off to the new executable
+    // At this time, we're already the forked child process, so this does not affect
+    // the working directory of the application using the 'Process' class.
     if(!workingDirectory.empty()) {
       int result = ::chdir(workingDirectory.c_str());
       if(result == -1) {
@@ -191,13 +204,14 @@ namespace {
     // executable, so if it succeeds, this code is no longer running or even present.
     // Some system resources, such as stdin, stdout and stderr do propagate to the
     // switched-out process, however.
-    int result = ::execvp(executablePath.c_str(), &argumentValues[0]);
+    std::string executablePathString = executablePath.string();
+    int result = ::execvp(executablePathString.c_str(), &argumentValues[0]);
     if(result == -1) [[likely]] {
       int errorNumber = errno;
       std::u8string message;
-      message.reserve(18 + executablePath.length() + 1);
+      message.reserve(18 + executablePathString.length() + 1);
       message.append(errorMessage);
-      message.append(executablePath);
+      message.append(executablePathString.begin(), executablePathString.end());
       Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(message, errorNumber);
     } else { // execvp() should only return if an error occurs
       assert((result == -1) && u8"execvp() returned and reported a result that was not -1");
@@ -242,8 +256,8 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::u8string Process::GetExecutableDirectory() {
-    std::u8string result;
+  std::filesystem::path Process::GetExecutableDirectory() {
+    std::filesystem::path result;
     Platform::PosixProcessApi::GetOwnExecutablePath(result);
     return result;
   }
@@ -251,7 +265,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   Process::Process(
-    const std::u8string &executablePath,
+    const std::filesystem::path &executablePath,
     bool interceptStdErr /* = true */,
     bool interceptStdOut /* = true */
   ) :
@@ -320,14 +334,18 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId != 0) {
-      throw std::logic_error(u8"Child process is still running or not joined yet");
+      throw std::logic_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Child process is still running or not joined yet"
+        )
+      );
     }
 
     // These directories need to be resolved in the parent process because relative
     // paths are interpreted as relative to the running process and if we do it after
     // the call to fork(), the running process for the code interested in these
     // variables happens to be the child process.
-    std::u8string absoluteWorkingDirectory, absoluteExecutablePath;
+    std::filesystem::path absoluteWorkingDirectory, absoluteExecutablePath;
 
     Nuclex::Support::Platform::PosixProcessApi::GetAbsoluteExecutablePath(
       absoluteExecutablePath, this->executablePath
@@ -472,8 +490,12 @@ namespace Nuclex { namespace Support { namespace Threading {
     using Nuclex::Support::Platform::PosixProcessApi;
 
     const PlatformDependentImplementationData &impl = getImplementationData();
-    if(impl.ChildProcessId == 0) {
-      throw std::logic_error(u8"Process was not started or is already joined");
+    if(impl.ChildProcessId == 0) [[unlikely]] {
+      throw std::logic_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Process was not started or is already joined"
+        )
+      );
     }
 
     // If we already saw the process finish, don't wall ::waitpaid() again (it wouldn't work)
@@ -557,7 +579,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
       throw std::logic_error(
-        Text::StringConverter::CharsFromUtf8(
+        Text::StringConverter::CharFromUtf8(
           u8"Process was not started or is already joined"
         )
       );
@@ -569,7 +591,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       bool hasFinished = Wait(patience);
       if(!hasFinished) {
         throw Nuclex::Support::Errors::TimeoutError(
-          Text::StringConverter::CharsFromUtf8(
+          Text::StringConverter::CharFromUtf8(
             u8"Timed out waiting for external process to exit"
           )
         );
@@ -603,10 +625,11 @@ namespace Nuclex { namespace Support { namespace Threading {
     // If the process was terminated due to a signal (i.e. crashed or killed), there is
     // no exit code. So in the case of abnormal termination, we instead throw an exception.
     if(WIFSIGNALED(impl.ExitCode)) {
-      const std::u8string errorMessage("Child process terminated by signal ", 35);
-      std::u8string message;
+      const std::u8string errorMessage(u8"Child process terminated by signal ", 35);
+
+      std::string message;
       message.reserve(35 + 7 + 1);
-      message.append(errorMessage);
+      message.append(errorMessage.begin(), errorMessage.end());
       message.append(::strsignal(WTERMSIG(impl.ExitCode)));
       throw std::runtime_error(message);
     }
@@ -622,7 +645,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
       throw std::logic_error(
-        Text::StringConverter::CharsFromUtf8(
+        Text::StringConverter::CharFromUtf8(
           u8"Process was not started or is already joined"
         )
       );
@@ -642,7 +665,11 @@ namespace Nuclex { namespace Support { namespace Threading {
   std::size_t Process::Write(const char *characters, std::size_t characterCount) {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
-      throw std::logic_error(u8"Process was not started or is already joined");
+      throw std::logic_error(
+        Text::StringConverter::CharFromUtf8(
+          u8"Process was not started or is already joined"
+        )
+      );
     }
 
     ssize_t writtenByteCount = ::write(impl.StdinFileNumber, characters, characterCount);
