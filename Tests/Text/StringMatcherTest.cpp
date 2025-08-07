@@ -204,24 +204,24 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringMatcherTest, CanMatchAsciiStringToWildcard) {
-    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hello World"));
-    EXPECT_FALSE(StringMatcher::FitsWildcard("Hello World", ""));
-    EXPECT_TRUE(StringMatcher::FitsWildcard("", ""));
-    EXPECT_FALSE(StringMatcher::FitsWildcard("", "Hello World"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"Hello World"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"Hello World", u8""));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"", u8""));
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"", u8"Hello World"));
 
-    EXPECT_TRUE(StringMatcher::FitsWildcard("", "*"));
-    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "He*o World"));
-    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hell*o World"));
-    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "*"));
-    EXPECT_FALSE(StringMatcher::FitsWildcard("Hello World", "W*"));
-    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "*W*"));
-    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hello World*"));
-    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "*Hello World"));
-    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hello***World"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"", u8"*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"He*o World"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"Hell*o World"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"*"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"Hello World", u8"W*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"*W*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"Hello World*"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"*Hello World"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"Hello***World"));
 
-    EXPECT_TRUE(StringMatcher::FitsWildcard("Hello World", "Hell? W?rld"));
-    EXPECT_FALSE(StringMatcher::FitsWildcard("Hello World", "?Hello World"));
-    EXPECT_FALSE(StringMatcher::FitsWildcard("Hello World", "Hello World?"));
+    EXPECT_TRUE(StringMatcher::FitsWildcard(u8"Hello World", u8"Hell? W?rld"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"Hello World", u8"?Hello World"));
+    EXPECT_FALSE(StringMatcher::FitsWildcard(u8"Hello World", u8"Hello World?"));
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -31,12 +31,12 @@ namespace {
   /// <summary>Checks if a string starts with the letters NaN (ignoring case)</summary>
   /// <param name="text">String that will be checked for NaN</param>
   /// <returns>True if the string started with NaN, false otherwise</returns>
-  bool textStartsWithNaN(const std::string &text) {
+  bool textStartsWithNaN(const std::u8string &text) {
     if(text.length() >= 3) {
       return (
-        ((text[0] == 'n') || (text[0] == 'N')) &&
-        ((text[1] == 'a') || (text[1] == 'A')) &&
-        ((text[2] == 'n') || (text[2] == 'N'))
+        ((text[0] == u8'n') || (text[0] == u8'N')) &&
+        ((text[1] == u8'a') || (text[1] == u8'A')) &&
+        ((text[2] == u8'n') || (text[2] == u8'N'))
       );
     } else {
       return false;
@@ -48,18 +48,18 @@ namespace {
   /// <summary>Checks if a string starts with the letters Inf or -Inf (ignoring case)</summary>
   /// <param name="text">String that will be checked for Inf</param>
   /// <returns>True if the string started with Inf or -Inf, false otherwise</returns>
-  bool textStartsWithInfOrMinusInf(const std::string &text) {
+  bool textStartsWithInfOrMinusInf(const std::u8string &text) {
     bool startsWithInf, startsWithMinusInf;
 
-    std::string::size_type length = text.length();
+    std::u8string::size_type length = text.length();
 
     // Check for -inf
     if(length >= 4) {
       startsWithMinusInf = (
-        ((text[0] == '+') || (text[0] == '-')) &&
-        ((text[1] == 'i') || (text[1] == 'I')) &&
-        ((text[2] == 'n') || (text[2] == 'N')) &&
-        ((text[3] == 'f') || (text[3] == 'F'))
+        ((text[0] == u8'+') || (text[0] == u8'-')) &&
+        ((text[1] == u8'i') || (text[1] == u8'I')) &&
+        ((text[2] == u8'n') || (text[2] == u8'N')) &&
+        ((text[3] == u8'f') || (text[3] == u8'F'))
       );
     } else {
       startsWithMinusInf = false;
@@ -68,9 +68,9 @@ namespace {
     // Check for inf
     if(length >= 3) {
       startsWithInf = (
-        ((text[0] == 'i') || (text[0] == 'I')) &&
-        ((text[1] == 'n') || (text[1] == 'N')) &&
-        ((text[2] == 'f') || (text[2] == 'F'))
+        ((text[0] == u8'i') || (text[0] == u8'I')) &&
+        ((text[1] == u8'n') || (text[1] == u8'N')) &&
+        ((text[2] == u8'f') || (text[2] == u8'F'))
       );
     } else {
       startsWithInf = false;
@@ -84,9 +84,9 @@ namespace {
   /// <summary>Checks if a string starts with a minus character</summary>
   /// <param name="text">String that will be checked for starting with a minus</param>
   /// <returns>True if the string starts with a minus character, false otherwise</returns>
-  bool textStartsWithMinus(const std::string &text) {
+  bool textStartsWithMinus(const std::u8string &text) {
     if(text.size() >= 1) {
-      return text[0] == '-';
+      return text[0] == u8'-';
     } else {
       return false;
     }
@@ -101,10 +101,10 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertBooleanToString) {
-    std::string text = lexical_cast<std::string>(true);
-    EXPECT_EQ(text, u8"true");
-    text = lexical_cast<std::string>(false);
-    EXPECT_EQ(text, u8"false");
+    std::u8string text = lexical_cast<std::u8string>(true);
+    EXPECT_EQ(text, std::u8string(u8"true"));
+    text = lexical_cast<std::u8string>(false);
+    EXPECT_EQ(text, std::u8string(u8"false"));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -122,7 +122,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertUInt8ToString) {
-    std::string text = lexical_cast<std::string>(std::uint8_t(234));
+    std::u8string text = lexical_cast<std::u8string>(std::uint8_t(234));
     EXPECT_EQ(text, u8"234");
   }
 
@@ -132,15 +132,15 @@ namespace Nuclex { namespace Support { namespace Text {
     std::uint8_t value = lexical_cast<std::uint8_t>(u8"235");
     EXPECT_EQ(value, std::uint8_t(235));
 
-    value = lexical_cast<std::uint8_t>(std::string(u8"236"));
+    value = lexical_cast<std::uint8_t>(std::u8string(u8"236"));
     EXPECT_EQ(value, std::uint8_t(236));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertInt8ToString) {
-    std::string text = lexical_cast<std::string>(std::int8_t(-123));
-    EXPECT_EQ(text, "-123");
+    std::u8string text = lexical_cast<std::u8string>(std::int8_t(-123));
+    EXPECT_EQ(text, std::u8string(u8"-123"));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -149,15 +149,15 @@ namespace Nuclex { namespace Support { namespace Text {
     std::int8_t value = lexical_cast<std::int8_t>(u8"-124");
     EXPECT_EQ(value, std::int8_t(-124));
 
-    value = lexical_cast<std::int8_t>(std::string(u8"-125"));
+    value = lexical_cast<std::int8_t>(std::u8string(u8"-125"));
     EXPECT_EQ(value, std::int8_t(-125));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertUInt16ToString) {
-    std::string text = lexical_cast<std::string>(std::uint16_t(56789));
-    EXPECT_EQ(text, u8"56789");
+    std::u8string text = lexical_cast<std::u8string>(std::uint16_t(56789));
+    EXPECT_EQ(text, std::u8string(u8"56789"));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -166,15 +166,15 @@ namespace Nuclex { namespace Support { namespace Text {
     std::uint16_t value = lexical_cast<std::uint16_t>(u8"56790");
     EXPECT_EQ(value, std::uint16_t(56790));
 
-    value = lexical_cast<std::uint16_t>(std::string(u8"56791"));
+    value = lexical_cast<std::uint16_t>(std::u8string(u8"56791"));
     EXPECT_EQ(value, std::uint16_t(56791));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertInt16ToString) {
-    std::string text = lexical_cast<std::string>(std::int16_t(-23456));
-    EXPECT_EQ(text, u8"-23456");
+    std::u8string text = lexical_cast<std::u8string>(std::int16_t(-23456));
+    EXPECT_EQ(text, std::u8string(u8"-23456"));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -183,109 +183,109 @@ namespace Nuclex { namespace Support { namespace Text {
     std::int16_t value = lexical_cast<std::int16_t>(u8"-23457");
     EXPECT_EQ(value, std::int16_t(-23457));
 
-    value = lexical_cast<std::int16_t>(std::string(u8"-23458"));
+    value = lexical_cast<std::int16_t>(std::u8string(u8"-23458"));
     EXPECT_EQ(value, std::int16_t(-23458));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertUInt32ToString) {
-    std::string text = lexical_cast<std::string>(std::uint32_t(3456789012));
-    EXPECT_EQ(text, u8"3456789012");
+    std::u8string text = lexical_cast<std::u8string>(std::uint32_t(3456789012));
+    EXPECT_EQ(text, std::u8string(u8"3456789012"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertStringToUInt32) {
-    std::uint32_t value = lexical_cast<std::uint32_t>("3456789013");
+    std::uint32_t value = lexical_cast<std::uint32_t>(u8"3456789013");
     EXPECT_EQ(value, std::uint32_t(3456789013));
 
-    value = lexical_cast<std::uint32_t>(std::string("3456789014"));
+    value = lexical_cast<std::uint32_t>(std::u8string(u8"3456789014"));
     EXPECT_EQ(value, std::uint32_t(3456789014));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertInt32ToString) {
-    std::string text = lexical_cast<std::string>(std::int32_t(-1234567890));
-    EXPECT_EQ(text, "-1234567890");
+    std::u8string text = lexical_cast<std::u8string>(std::int32_t(-1234567890));
+    EXPECT_EQ(text, std::u8string(u8"-1234567890"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertStringToInt32) {
-    std::int32_t value = lexical_cast<std::int32_t>("-1234567891");
+    std::int32_t value = lexical_cast<std::int32_t>(u8"-1234567891");
     EXPECT_EQ(value, std::int32_t(-1234567891));
 
-    value = lexical_cast<std::int32_t>(std::string("-1234567892"));
+    value = lexical_cast<std::int32_t>(std::u8string(u8"-1234567892"));
     EXPECT_EQ(value, std::int32_t(-1234567892));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertUInt64ToString) {
-    std::string text = lexical_cast<std::string>(std::uint64_t(12345678901234567890ULL));
-    EXPECT_EQ(text, "12345678901234567890");
+    std::u8string text = lexical_cast<std::u8string>(std::uint64_t(12345678901234567890ULL));
+    EXPECT_EQ(text, std::u8string(u8"12345678901234567890"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertStringToUInt64) {
-    std::uint64_t value = lexical_cast<std::uint64_t>("12345678901234567891");
+    std::uint64_t value = lexical_cast<std::uint64_t>(u8"12345678901234567891");
     EXPECT_EQ(value, std::uint64_t(12345678901234567891ULL));
 
-    value = lexical_cast<std::uint64_t>(std::string("12345678901234567892"));
+    value = lexical_cast<std::uint64_t>(std::u8string(u8"12345678901234567892"));
     EXPECT_EQ(value, std::uint64_t(12345678901234567892ULL));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertInt64ToString) {
-    std::string text = lexical_cast<std::string>(std::int64_t(-8901234567890123456LL));
-    EXPECT_EQ(text, "-8901234567890123456");
+    std::u8string text = lexical_cast<std::u8string>(std::int64_t(-8901234567890123456LL));
+    EXPECT_EQ(text, std::u8string(u8"-8901234567890123456"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertStringToInt64) {
-    std::int64_t value = lexical_cast<std::int64_t>("-8901234567890123457");
+    std::int64_t value = lexical_cast<std::int64_t>(u8"-8901234567890123457");
     EXPECT_EQ(value, std::int64_t(-8901234567890123457LL));
 
-    value = lexical_cast<std::int64_t>(std::string("-8901234567890123458"));
+    value = lexical_cast<std::int64_t>(std::u8string(u8"-8901234567890123458"));
     EXPECT_EQ(value, std::int64_t(-8901234567890123458LL));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertFloatToString) {
-    std::string text = lexical_cast<std::string>(float(0.0009765625f));
-    EXPECT_EQ(text, "0.0009765625");
+    std::u8string text = lexical_cast<std::u8string>(float(0.0009765625f));
+    EXPECT_EQ(text, std::u8string(u8"0.0009765625"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertStringToFloat) {
-    float value = lexical_cast<float>("0.0009765625");
+    float value = lexical_cast<float>(u8"0.0009765625");
     EXPECT_EQ(value, float(0.0009765625));
 
-    value = lexical_cast<float>(std::string("0.0009765625"));
+    value = lexical_cast<float>(std::u8string(u8"0.0009765625"));
     EXPECT_EQ(value, float(0.0009765625));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertDoubleToString) {
-    std::string text = lexical_cast<std::string>(double(0.00000190735));
-    EXPECT_EQ(text, "0.00000190735");
+    std::u8string text = lexical_cast<std::u8string>(double(0.00000190735));
+    EXPECT_EQ(text, std::u8string(u8"0.00000190735"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, CanConvertStringToDouble) {
-    double value = lexical_cast<double>("0.00000190735");
+    double value = lexical_cast<double>(u8"0.00000190735");
     EXPECT_EQ(value, double(0.00000190735));
 
-    value = lexical_cast<double>(std::string("0.00000190735"));
+    value = lexical_cast<double>(std::u8string(u8"0.00000190735"));
     EXPECT_EQ(value, double(0.00000190735));
   }
 
@@ -296,41 +296,41 @@ namespace Nuclex { namespace Support { namespace Text {
       using namespace std;
       setlocale(LC_NUMERIC, "de_DE.UTF-8");
     }
-    std::string text = lexical_cast<std::string>(0.125f);
-    EXPECT_EQ(text, "0.125");
+    std::u8string text = lexical_cast<std::u8string>(0.125f);
+    EXPECT_EQ(text, std::u8string(u8"0.125"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, FloatToStringAlwaysIncludesLeadingZero) {
-    std::string text = lexical_cast<std::string>(0.1f);
-    EXPECT_EQ(text, "0.1");
+    std::u8string text = lexical_cast<std::u8string>(0.1f);
+    EXPECT_EQ(text, std::u8string(u8"0.1"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, FloatToStringDecimalsAreMandatory) {
-    std::string text = lexical_cast<std::string>(1.0f);
-    EXPECT_EQ(text, "1.0");
+    std::u8string text = lexical_cast<std::u8string>(1.0f);
+    EXPECT_EQ(text, std::u8string(u8"1.0"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, FloatToStringHandlesNaN) {
-    std::string text = lexical_cast<std::string>(std::numeric_limits<float>::quiet_NaN());
+    std::u8string text = lexical_cast<std::u8string>(std::numeric_limits<float>::quiet_NaN());
     EXPECT_TRUE(textStartsWithNaN(text));
 
-    text = lexical_cast<std::string>(std::numeric_limits<float>::signaling_NaN());
+    text = lexical_cast<std::u8string>(std::numeric_limits<float>::signaling_NaN());
     EXPECT_TRUE(textStartsWithNaN(text));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, FloatToStringHandlesInfinity) {
-    std::string text = lexical_cast<std::string>(std::numeric_limits<float>::infinity());
+    std::u8string text = lexical_cast<std::u8string>(std::numeric_limits<float>::infinity());
     EXPECT_TRUE(textStartsWithInfOrMinusInf(text));
 
-    text = lexical_cast<std::string>(-std::numeric_limits<float>::infinity());
+    text = lexical_cast<std::u8string>(-std::numeric_limits<float>::infinity());
     EXPECT_TRUE(textStartsWithMinus(text));
     EXPECT_TRUE(textStartsWithInfOrMinusInf(text));
   }
@@ -339,7 +339,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(LexicalCastTest, FloatToStringOutputCanBeLong) {
     const float PI = 3.14159265358979323846264338327950288419716939937510582097494459230781640628f;
-    std::string text = lexical_cast<std::string>(PI);
+    std::u8string text = lexical_cast<std::u8string>(PI);
 
     // Why this number and this many decimals? Floating point numbers can only represent
     // certain values exactly (specifically binary fractions, i.e. 1/1024 or 5/4096 but not
@@ -348,7 +348,7 @@ namespace Nuclex { namespace Support { namespace Text {
     // This is the number of decimals after which adding decimals that selects the closest
     // respresentable float (for round-trip parsing) and adding more decimals would not
     // actually change the resulting floating point value.
-    EXPECT_EQ(text, "3.1415927");
+    EXPECT_EQ(text, std::u8string(u8"3.1415927"));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -358,41 +358,41 @@ namespace Nuclex { namespace Support { namespace Text {
       using namespace std;
       setlocale(LC_NUMERIC, "de_DE.UTF-8");
     }
-    std::string text = lexical_cast<std::string>(0.125);
-    EXPECT_EQ(text, "0.125");
+    std::u8string text = lexical_cast<std::u8string>(0.125);
+    EXPECT_EQ(text, std::u8string(u8"0.125"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, DoubleToStringAlwaysIncludesLeadingZero) {
-    std::string text = lexical_cast<std::string>(0.1);
-    EXPECT_EQ(text, "0.1");
+    std::u8string text = lexical_cast<std::u8string>(0.1);
+    EXPECT_EQ(text, std::u8string(u8"0.1"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, DoubleToStringDecimalsAreMandatory) {
-    std::string text = lexical_cast<std::string>(1.0);
-    EXPECT_EQ(text, "1.0");
+    std::u8string text = lexical_cast<std::u8string>(1.0);
+    EXPECT_EQ(text, std::u8string(u8"1.0"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, DoubleToStringHandlesNaN) {
-    std::string text = lexical_cast<std::string>(std::numeric_limits<double>::quiet_NaN());
+    std::u8string text = lexical_cast<std::u8string>(std::numeric_limits<double>::quiet_NaN());
     EXPECT_TRUE(textStartsWithNaN(text));
 
-    text = lexical_cast<std::string>(std::numeric_limits<double>::signaling_NaN());
+    text = lexical_cast<std::u8string>(std::numeric_limits<double>::signaling_NaN());
     EXPECT_TRUE(textStartsWithNaN(text));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalCastTest, DoubleToStringHandlesInfinity) {
-    std::string text = lexical_cast<std::string>(std::numeric_limits<double>::infinity());
+    std::u8string text = lexical_cast<std::u8string>(std::numeric_limits<double>::infinity());
     EXPECT_TRUE(textStartsWithInfOrMinusInf(text));
 
-    text = lexical_cast<std::string>(-std::numeric_limits<double>::infinity());
+    text = lexical_cast<std::u8string>(-std::numeric_limits<double>::infinity());
     EXPECT_TRUE(textStartsWithMinus(text));
     EXPECT_TRUE(textStartsWithInfOrMinusInf(text));
   }
@@ -401,7 +401,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(LexicalCastTest, DoubleToStringOutputCanBeLong) {
     const double PI = 3.14159265358979323846264338327950288419716939937510582097494459230781640628;
-    std::string text = lexical_cast<std::string>(PI);
+    std::u8string text = lexical_cast<std::string>(PI);
 
     // Why this number and this many decimals? Floating point numbers can only represent
     // certain values exactly (specifically binary fractions, i.e. 1/1024 or 5/4096 but not

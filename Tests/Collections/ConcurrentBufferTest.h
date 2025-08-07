@@ -28,6 +28,7 @@ limitations under the License.
 #include <memory> // for std::unique_ptr
 #include <thread> // for std::thread
 #include <atomic> // for std::atomic
+#include <chrono> // for std::chrono::high_resolution_clock
 #include <cassert> // for assert()
 
 namespace Nuclex { namespace Support { namespace Collections {

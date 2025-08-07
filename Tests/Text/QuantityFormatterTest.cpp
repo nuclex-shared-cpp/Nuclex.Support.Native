@@ -29,216 +29,216 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(QuantityFormatterTest, CanPrintMetricByteCount) {
-    std::string smallBytes = QuantityFormatter::StringFromByteCount(234, false);
-    EXPECT_NE(smallBytes.find(u8"234"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"bytes"), std::string::npos);
+    std::u8string smallBytes = QuantityFormatter::StringFromByteCount(234, false);
+    EXPECT_NE(smallBytes.find(u8"234"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"bytes"), std::u8string::npos);
 
-    std::string bigBytes = QuantityFormatter::StringFromByteCount(789, false);
-    EXPECT_NE(bigBytes.find(u8"789"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"bytes"), std::string::npos);
+    std::u8string bigBytes = QuantityFormatter::StringFromByteCount(789, false);
+    EXPECT_NE(bigBytes.find(u8"789"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"bytes"), std::u8string::npos);
 
     smallBytes = QuantityFormatter::StringFromByteCount(324'123, false);
-    EXPECT_NE(smallBytes.find(u8"324.1"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"KB"), std::string::npos);
+    EXPECT_NE(smallBytes.find(u8"324.1"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"KB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(876'456, false);
-    EXPECT_NE(bigBytes.find(u8"876.5"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"KB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"876.5"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"KB"), std::u8string::npos);
 
     smallBytes = QuantityFormatter::StringFromByteCount(139'432'174, false);
-    EXPECT_NE(smallBytes.find(u8"139.4"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"MB"), std::string::npos);
+    EXPECT_NE(smallBytes.find(u8"139.4"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"MB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(977'341'931, false);
-    EXPECT_NE(bigBytes.find(u8"977.3"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"MB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"977.3"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"MB"), std::u8string::npos);
 
     smallBytes = QuantityFormatter::StringFromByteCount(412'523'934'812, false);
-    EXPECT_NE(smallBytes.find(u8"412.5"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"GB"), std::string::npos);
+    EXPECT_NE(smallBytes.find(u8"412.5"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"GB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(634'839'012'517, false);
-    EXPECT_NE(bigBytes.find(u8"634.8"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"GB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"634.8"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"GB"), std::u8string::npos);
 
     smallBytes = QuantityFormatter::StringFromByteCount(347'104'194'387'594, false);
-    EXPECT_NE(smallBytes.find(u8"347.1"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"TB"), std::string::npos);
+    EXPECT_NE(smallBytes.find(u8"347.1"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"TB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(893'270'909'743'209, false);
-    EXPECT_NE(bigBytes.find(u8"893.3"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"TB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"893.3"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"TB"), std::u8string::npos);
 
     smallBytes = QuantityFormatter::StringFromByteCount(36'093'248'903'249'082, false);
-    EXPECT_NE(smallBytes.find(u8"36.1"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"PB"), std::string::npos);
+    EXPECT_NE(smallBytes.find(u8"36.1"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"PB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(936'582'932'385'623'894, false);
-    EXPECT_NE(bigBytes.find(u8"936.6"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"PB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"936.6"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"PB"), std::u8string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(QuantityFormatterTest, CanPrintBinaryByteCount) {
-    std::string smallBytes = QuantityFormatter::StringFromByteCount(234);
-    EXPECT_NE(smallBytes.find(u8"234"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"bytes"), std::string::npos);
+    std::u8string smallBytes = QuantityFormatter::StringFromByteCount(234);
+    EXPECT_NE(smallBytes.find(u8"234"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"bytes"), std::u8string::npos);
 
-    std::string bigBytes = QuantityFormatter::StringFromByteCount(789);
-    EXPECT_NE(bigBytes.find(u8"789"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"bytes"), std::string::npos);
+    std::u8string bigBytes = QuantityFormatter::StringFromByteCount(789);
+    EXPECT_NE(bigBytes.find(u8"789"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"bytes"), std::u8string::npos);
 
     smallBytes = QuantityFormatter::StringFromByteCount(324'123);
-    EXPECT_NE(smallBytes.find(u8"316.5"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"KiB"), std::string::npos);
+    EXPECT_NE(smallBytes.find(u8"316.5"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"KiB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(876'456);
-    EXPECT_NE(bigBytes.find(u8"855.9"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"KiB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"855.9"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"KiB"), std::u8string::npos);
 
     smallBytes = QuantityFormatter::StringFromByteCount(139'432'174);
-    EXPECT_NE(smallBytes.find(u8"133.0"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"MiB"), std::string::npos);
+    EXPECT_NE(smallBytes.find(u8"133.0"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"MiB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(977'341'931);
-    EXPECT_NE(bigBytes.find(u8"932.1"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"MiB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"932.1"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"MiB"), std::u8string::npos);
 
     smallBytes = QuantityFormatter::StringFromByteCount(412'523'934'812);
-    EXPECT_NE(smallBytes.find(u8"384.2"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"GiB"), std::string::npos);
+    EXPECT_NE(smallBytes.find(u8"384.2"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"GiB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(634'839'012'517);
-    EXPECT_NE(bigBytes.find(u8"591.3"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"GiB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"591.3"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"GiB"), std::u8string::npos);
 
     smallBytes = QuantityFormatter::StringFromByteCount(347'104'194'387'594);
-    EXPECT_NE(smallBytes.find(u8"315.7"), std::string::npos);
-    EXPECT_NE(smallBytes.find(u8"TiB"), std::string::npos);
+    EXPECT_NE(smallBytes.find(u8"315.7"), std::u8string::npos);
+    EXPECT_NE(smallBytes.find(u8"TiB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(893'270'909'743'209);
-    EXPECT_NE(bigBytes.find(u8"812.4"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"TiB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"812.4"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"TiB"), std::u8string::npos);
 
     bigBytes = QuantityFormatter::StringFromByteCount(936'582'932'385'623'894);
-    EXPECT_NE(bigBytes.find(u8"831.9"), std::string::npos);
-    EXPECT_NE(bigBytes.find(u8"PiB"), std::string::npos);
+    EXPECT_NE(bigBytes.find(u8"831.9"), std::u8string::npos);
+    EXPECT_NE(bigBytes.find(u8"PiB"), std::u8string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(QuantityFormatterTest, CanPrintSimpleDuration) {
-    std::string smallDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(18));
-    EXPECT_NE(smallDuration.find(u8"18"), std::string::npos);
-    EXPECT_NE(smallDuration.find(u8"seconds"), std::string::npos);
+    std::u8string smallDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(18));
+    EXPECT_NE(smallDuration.find(u8"18"), std::u8string::npos);
+    EXPECT_NE(smallDuration.find(u8"seconds"), std::u8string::npos);
 
-    std::string bigDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(46));
-    EXPECT_NE(bigDuration.find(u8"46"), std::string::npos);
-    EXPECT_NE(bigDuration.find(u8"seconds"), std::string::npos);
+    std::u8string bigDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(46));
+    EXPECT_NE(bigDuration.find(u8"46"), std::u8string::npos);
+    EXPECT_NE(bigDuration.find(u8"seconds"), std::u8string::npos);
 
     smallDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(1'423));
-    EXPECT_NE(smallDuration.find(u8"23.7"), std::string::npos);
-    EXPECT_NE(smallDuration.find(u8"minutes"), std::string::npos);
+    EXPECT_NE(smallDuration.find(u8"23.7"), std::u8string::npos);
+    EXPECT_NE(smallDuration.find(u8"minutes"), std::u8string::npos);
 
     bigDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(3'390));
-    EXPECT_NE(bigDuration.find(u8"56.5"), std::string::npos);
-    EXPECT_NE(bigDuration.find(u8"minutes"), std::string::npos);
+    EXPECT_NE(bigDuration.find(u8"56.5"), std::u8string::npos);
+    EXPECT_NE(bigDuration.find(u8"minutes"), std::u8string::npos);
 
     smallDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(28'123));
-    EXPECT_NE(smallDuration.find(u8"7.8"), std::string::npos);
-    EXPECT_NE(smallDuration.find(u8"hours"), std::string::npos);
+    EXPECT_NE(smallDuration.find(u8"7.8"), std::u8string::npos);
+    EXPECT_NE(smallDuration.find(u8"hours"), std::u8string::npos);
 
     bigDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(67'803));
-    EXPECT_NE(bigDuration.find(u8"18.8"), std::string::npos);
-    EXPECT_NE(bigDuration.find(u8"hours"), std::string::npos);
+    EXPECT_NE(bigDuration.find(u8"18.8"), std::u8string::npos);
+    EXPECT_NE(bigDuration.find(u8"hours"), std::u8string::npos);
 
     smallDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(248'824));
-    EXPECT_NE(smallDuration.find(u8"2.9"), std::string::npos);
-    EXPECT_NE(smallDuration.find(u8"days"), std::string::npos);
+    EXPECT_NE(smallDuration.find(u8"2.9"), std::u8string::npos);
+    EXPECT_NE(smallDuration.find(u8"days"), std::u8string::npos);
 
     bigDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(432'430));
-    EXPECT_NE(bigDuration.find(u8"5.0"), std::string::npos);
-    EXPECT_NE(bigDuration.find(u8"days"), std::string::npos);
+    EXPECT_NE(bigDuration.find(u8"5.0"), std::u8string::npos);
+    EXPECT_NE(bigDuration.find(u8"days"), std::u8string::npos);
 
     smallDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(2'113'029));
-    EXPECT_NE(smallDuration.find(u8"3.5"), std::string::npos);
-    EXPECT_NE(smallDuration.find(u8"weeks"), std::string::npos);
+    EXPECT_NE(smallDuration.find(u8"3.5"), std::u8string::npos);
+    EXPECT_NE(smallDuration.find(u8"weeks"), std::u8string::npos);
 
     bigDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(4'431'029));
-    EXPECT_NE(bigDuration.find(u8"7.3"), std::string::npos);
-    EXPECT_NE(bigDuration.find(u8"weeks"), std::string::npos);
+    EXPECT_NE(bigDuration.find(u8"7.3"), std::u8string::npos);
+    EXPECT_NE(bigDuration.find(u8"weeks"), std::u8string::npos);
 
     smallDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(13'329'083));
-    EXPECT_NE(smallDuration.find(u8"5.1"), std::string::npos);
-    EXPECT_NE(smallDuration.find(u8"months"), std::string::npos);
+    EXPECT_NE(smallDuration.find(u8"5.1"), std::u8string::npos);
+    EXPECT_NE(smallDuration.find(u8"months"), std::u8string::npos);
 
     bigDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(30'382'901));
-    EXPECT_NE(bigDuration.find(u8"11.5"), std::string::npos);
-    EXPECT_NE(bigDuration.find(u8"months"), std::string::npos);
+    EXPECT_NE(bigDuration.find(u8"11.5"), std::u8string::npos);
+    EXPECT_NE(bigDuration.find(u8"months"), std::u8string::npos);
 
     bigDuration = QuantityFormatter::StringFromDuration(std::chrono::seconds(130'382'901));
-    EXPECT_NE(bigDuration.find(u8"4.1"), std::string::npos);
-    EXPECT_NE(bigDuration.find(u8"years"), std::string::npos);
+    EXPECT_NE(bigDuration.find(u8"4.1"), std::u8string::npos);
+    EXPECT_NE(bigDuration.find(u8"years"), std::u8string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(QuantityFormatterTest, CanPrintFullDuration) {
-    std::string smallDuration = QuantityFormatter::StringFromDuration(
+    std::u8string smallDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(18), false
     );
-    EXPECT_EQ(smallDuration, std::string(u8"18s"));
+    EXPECT_EQ(smallDuration, std::u8string(u8"18s"));
 
-    std::string bigDuration = QuantityFormatter::StringFromDuration(
+    std::u8string bigDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(46), false
     );
-    EXPECT_EQ(bigDuration, std::string(u8"46s"));
+    EXPECT_EQ(bigDuration, std::u8string(u8"46s"));
 
     smallDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(1'423), false
     );
-    EXPECT_EQ(smallDuration, std::string(u8"23m43s"));
+    EXPECT_EQ(smallDuration, std::u8string(u8"23m43s"));
 
     bigDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(3'390), false
     );
-    EXPECT_EQ(bigDuration, std::string(u8"56m30s"));
+    EXPECT_EQ(bigDuration, std::u8string(u8"56m30s"));
 
     smallDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(28'123), false
     );
-    EXPECT_EQ(smallDuration, std::string(u8"7h48m43s"));
+    EXPECT_EQ(smallDuration, std::u8string(u8"7h48m43s"));
 
     bigDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(67'803), false
     );
-    EXPECT_EQ(bigDuration, std::string(u8"18h50m03s"));
+    EXPECT_EQ(bigDuration, std::u8string(u8"18h50m03s"));
 
     smallDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(248'824), false
     );
-    EXPECT_EQ(smallDuration, std::string(u8"2d 21h07m04s"));
+    EXPECT_EQ(smallDuration, std::u8string(u8"2d 21h07m04s"));
 
     bigDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(432'430), false
     );
-    EXPECT_EQ(bigDuration, std::string(u8"5d 0h07m10s"));
+    EXPECT_EQ(bigDuration, std::u8string(u8"5d 0h07m10s"));
 
     smallDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(13'329'083), false
     );
-    EXPECT_EQ(smallDuration, std::string(u8"5m1d 18h31m23s"));
+    EXPECT_EQ(smallDuration, std::u8string(u8"5m1d 18h31m23s"));
 
     bigDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(30'382'901), false
     );
-    EXPECT_EQ(bigDuration, std::string(u8"11m16d 3h41m41s"));
+    EXPECT_EQ(bigDuration, std::u8string(u8"11m16d 3h41m41s"));
 
     bigDuration = QuantityFormatter::StringFromDuration(
       std::chrono::seconds(130'382'901), false
     );
-    EXPECT_EQ(bigDuration, std::string(u8"4y1m20d 15h52m21s"));
+    EXPECT_EQ(bigDuration, std::u8string(u8"4y1m20d 15h52m21s"));
   }
 
   // ------------------------------------------------------------------------------------------- //

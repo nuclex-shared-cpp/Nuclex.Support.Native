@@ -298,8 +298,14 @@ namespace Nuclex { namespace Support { namespace Text {
       (std::is_same<path_string_type, std::u8string>::value) ||
       (std::is_same<path_string_type, std::string>::value)
     ) {
-      const path_string_type &pathChars = pathToAppend.native();
-      target.append(pathChars.begin(), pathChars.end());
+      const path_string_type &pathString = pathToAppend.native();
+      path_string_type::size_type pathLength = pathString.length();
+      std::u8string::size_type targetLength = target.length();
+
+      target.resize(targetLength + pathLength);
+      for(path_string_type::size_type index = 0; index < pathLength; ++index) {
+        target[targetLength + index] = static_cast<char8_t>(pathString[index]);
+      }
     } else {
       target.append(pathToAppend.u8string());
     }

@@ -32,9 +32,12 @@ namespace Nuclex { namespace Support { namespace Collections {
   TEST(ShiftQueueDeathTest, SkippingOnEmptyBufferTriggersAssertion) {
     ShiftQueue<std::uint8_t> test;
 
+    std::u8string expectedErrorText(
+      u8".*Amount of data skipped must be less or equal to the amount of data in the buffer.*"
+    );
     ASSERT_DEATH(
       test.Skip(1),
-      u8".*Amount of data skipped must be less or equal to the amount of data in the buffer.*"
+      std::string(expectedErrorText.begin(), expectedErrorText.end())
     );
   }
 #endif
@@ -45,9 +48,12 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     std::uint8_t retrieved[1];
 
+    std::u8string expectedErrorText(
+      u8".*Amount of data read must be less or equal to the amount of data in the buffer.*"
+    );
     ASSERT_DEATH(
       test.Read(retrieved, 1),
-      u8".*Amount of data read must be less or equal to the amount of data in the buffer.*"
+      std::string(expectedErrorText.begin(), expectedErrorText.end())
     );
   }
 #endif

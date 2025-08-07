@@ -33,9 +33,11 @@ namespace Nuclex { namespace Support { namespace Collections {
     RingQueue<std::uint8_t> test;
 
     std::uint8_t items[128];
+
+    std::u8string expectedErrorText(u8"");
     ASSERT_DEATH(
       test.Read(items, 1),
-      u8""
+      std::string(expectedErrorText.begin(), expectedErrorText.end())
     );
   }
 #endif
@@ -47,9 +49,10 @@ namespace Nuclex { namespace Support { namespace Collections {
     std::uint8_t items[100];
     test.Write(items, 99);
 
+    std::u8string expectedErrorText(u8"");
     ASSERT_DEATH(
       test.Read(items, 100),
-      u8""
+      std::string(expectedErrorText.begin(), expectedErrorText.end())
     );
   }
 #endif
@@ -75,9 +78,10 @@ namespace Nuclex { namespace Support { namespace Collections {
 
     EXPECT_EQ(test.Count(), oneThirdCapacity * 2);
 
+    std::u8string expectedErrorText(u8"");
     ASSERT_DEATH(
       test.Read(&items[0], oneThirdCapacity * 2 + 1),
-      u8""
+      std::string(expectedErrorText.begin(), expectedErrorText.end())
     );
   }
 #endif

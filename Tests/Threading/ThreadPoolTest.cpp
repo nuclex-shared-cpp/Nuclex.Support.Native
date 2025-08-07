@@ -26,6 +26,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Threading/Thread.h" // for Thread
 #include "Nuclex/Support/Threading/Gate.h" // for Gate
+#include "Nuclex/Support/Text/StringConverter.h" // StringConverter
 
 #include <memory> // for std::unique_ptr
 
@@ -54,7 +55,11 @@ namespace {
 
   /// <summary>Method that fails with an exception</summary>
   int failingMethod() {
-    throw std::underflow_error(u8"Hur dur, I'm an underflow error");
+    throw std::underflow_error(
+      Nuclex::Support::Text::StringConverter::CharFromUtf8(
+        u8"Hur dur, I'm an underflow error"
+      )
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //

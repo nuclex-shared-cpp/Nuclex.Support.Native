@@ -106,7 +106,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   Process::Process(
-    const std::string &executablePath,
+    const std::filesystem::path &executablePath,
     bool interceptStdErr /* = true */,
     bool interceptStdOut /* = true */
   ) :

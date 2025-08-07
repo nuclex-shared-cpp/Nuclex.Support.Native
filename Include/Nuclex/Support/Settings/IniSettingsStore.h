@@ -24,6 +24,7 @@ limitations under the License.
 #include "Nuclex/Support/Settings/SettingsStore.h"
 
 #include <vector> // for std::vector
+#include <filesystem> // for std::filesystem::path
 
 namespace Nuclex { namespace Support { namespace Settings {
 
@@ -112,7 +113,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     /// <summary>Loads the settings from an .ini file</summary>
     /// <param name="iniFilePath">Absolute path to the .ini file that will be loaded</param>
-    public: NUCLEX_SUPPORT_API void Load(const std::u8string &iniFilePath);
+    public: NUCLEX_SUPPORT_API void Load(const std::filesystem::path &iniFilePath);
 
     /// <summary>
     ///   Loads the settings from an .ini file that has already been copied into memory
@@ -125,7 +126,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     /// <summary>Saves the settings into an .ini file with the specified name</summary>
     /// <param name="iniFilePath">Absolute path where the .ini file will be saved</param>
-    public: NUCLEX_SUPPORT_API void Save(const std::u8string &iniFilePath) const;
+    public: NUCLEX_SUPPORT_API void Save(const std::filesystem::path &iniFilePath) const;
 
     /// <summary>Saves the settings into an .ini file that is created in memory</summary>
     /// <returns>A memory block holding the file contents of the .ini file</returns>

@@ -72,7 +72,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void IniSettingsStore::Load(const std::u8string &iniFilePath) {
+  void IniSettingsStore::Load(const std::filesystem::path &iniFilePath) {
     std::vector<std::byte> contents;
 
 #if defined(NUCLEX_SUPPORT_LINUX)
@@ -154,7 +154,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void IniSettingsStore::Save(const std::u8string &iniFilePath) const {
+  void IniSettingsStore::Save(const std::filesystem::path &iniFilePath) const {
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
       int fileDescriptor = Platform::LinuxFileApi::OpenFileForWriting(iniFilePath);

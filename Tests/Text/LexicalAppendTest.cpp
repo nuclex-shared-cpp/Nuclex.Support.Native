@@ -84,48 +84,48 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendBooleanToString) {
-    std::string trueString(u8"is ");
+    std::u8string trueString(u8"is ");
     lexical_append(trueString, true);
     EXPECT_EQ(trueString.length(), 7U);
-    EXPECT_EQ(trueString, u8"is true");
+    EXPECT_EQ(trueString, std::u8string(u8"is true"));
 
-    std::string falseString(u8"might be ");
+    std::u8string falseString(u8"might be ");
     lexical_append(falseString, false);
     EXPECT_EQ(falseString.length(), 14U);
-    EXPECT_EQ(falseString, u8"might be false");
+    EXPECT_EQ(falseString, std::u8string(u8"might be false"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendBooleanToCharArray) {
-    char characters[7] = { 0 };
+    char8_t characters[7] = { 0 };
 
     characters[0] = 121;
     characters[5] = 122;
     EXPECT_EQ(lexical_append(characters + 1, 4U, true), 4U);
     EXPECT_EQ(characters[0], 121);
-    EXPECT_EQ(characters[1], 't');
-    EXPECT_EQ(characters[2], 'r');
-    EXPECT_EQ(characters[3], 'u');
-    EXPECT_EQ(characters[4], 'e');
+    EXPECT_EQ(characters[1], u8't');
+    EXPECT_EQ(characters[2], u8'r');
+    EXPECT_EQ(characters[3], u8'u');
+    EXPECT_EQ(characters[4], u8'e');
     EXPECT_EQ(characters[5], 122);
 
     characters[0] = 122;
     characters[6] = 123;
     EXPECT_EQ(lexical_append(characters + 1, 5U, false), 5U);
     EXPECT_EQ(characters[0], 122);
-    EXPECT_EQ(characters[1], 'f');
-    EXPECT_EQ(characters[2], 'a');
-    EXPECT_EQ(characters[3], 'l');
-    EXPECT_EQ(characters[4], 's');
-    EXPECT_EQ(characters[5], 'e');
+    EXPECT_EQ(characters[1], u8'f');
+    EXPECT_EQ(characters[2], u8'a');
+    EXPECT_EQ(characters[3], u8'l');
+    EXPECT_EQ(characters[4], u8's');
+    EXPECT_EQ(characters[5], u8'e');
     EXPECT_EQ(characters[6], 123);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForBoolean) {
-    char characters[1] = { 0 };
+    char8_t characters[1] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 1U, true), 4U);
     EXPECT_EQ(lexical_append(characters, 1U, false), 5U);
@@ -134,19 +134,19 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendCharactersToString) {
-    const char *appended = u8"Hello World";
+    const char8_t *appended = u8"Hello World";
 
-    std::string messageString("Hello Sky, ");
+    std::u8string messageString(u8"Hello Sky, ");
     lexical_append(messageString, appended);
     EXPECT_EQ(messageString.length(), 22U);
-    EXPECT_EQ(messageString, u8"Hello Sky, Hello World");
+    EXPECT_EQ(messageString, std::u8string(u8"Hello Sky, Hello World"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendCharactersToCharArray) {
-    const char *appended = u8"Hello World";
-    char characters[14] = { 0 };
+    const char8_t *appended = u8"Hello World";
+    char8_t characters[14] = { 0 };
 
     characters[0] = 123;
     characters[12] = 124;
@@ -162,8 +162,8 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForCharacters) {
-    const char *appended = u8"Hello World";
-    char characters[1] = { 0 };
+    const char8_t *appended = u8"Hello World";
+    char8_t characters[1] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 1U, appended), 11U);
   }
@@ -171,25 +171,25 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendNullPointerToString) {
-    const char *appended = nullptr;
+    const char8_t *appended = nullptr;
 
-    std::string resultString(u8"The appended part is a ");
+    std::u8string resultString(u8"The appended part is a ");
     lexical_append(resultString, appended);
     EXPECT_EQ(resultString.length(), 32U);
-    EXPECT_EQ(resultString, u8"The appended part is a <nullptr>");
+    EXPECT_EQ(resultString, std::u8string(u8"The appended part is a <nullptr>"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendNullPointerToCharArray) {
-    const char *appended = nullptr;
-    char characters[14] = { 0 };
+    const char8_t *appended = nullptr;
+    char8_t characters[14] = { 0 };
 
     characters[0] = 124;
     characters[10] = 125;
     EXPECT_EQ(lexical_append(characters + 1, 9U, appended), 9U);
 
-    const char *expected = u8"<nullptr>";
+    const char8_t *expected = u8"<nullptr>";
 
     EXPECT_EQ(characters[0], 124);
     for(std::size_t index = 0; index < 9; ++index) {
@@ -201,39 +201,39 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForNullPointer) {
-    const char *appended = nullptr;
-    char characters[1] = { 0 };
+    const char8_t *appended = nullptr;
+    char8_t characters[1] = { 0 };
     EXPECT_EQ(lexical_append(characters, 1U, appended), 9U);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendUInt8ToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
     lexical_append(resultString, std::uint8_t(234));
     EXPECT_EQ(resultString.length(), 16U);
-    EXPECT_EQ(resultString, u8"Value equals 234");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 234"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendUInt8ToCharacterArray) {
-    char characters[5] = { 0 };
+    char8_t characters[5] = { 0 };
 
     characters[0] = 125;
     characters[4] = 126;
     EXPECT_EQ(lexical_append(characters + 1, 3U, std::uint8_t(234)), 3U);
     EXPECT_EQ(characters[0], 125);
-    EXPECT_EQ(characters[1], '2');
-    EXPECT_EQ(characters[2], '3');
-    EXPECT_EQ(characters[3], '4');
+    EXPECT_EQ(characters[1], u8'2');
+    EXPECT_EQ(characters[2], u8'3');
+    EXPECT_EQ(characters[3], u8'4');
     EXPECT_EQ(characters[4], 126);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForUInt8) {
-    char characters[1] = { 0 };
+    char8_t characters[1] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 1U, std::uint8_t(9)), 1U);
     EXPECT_EQ(lexical_append(characters, 1U, std::uint8_t(10)), 2U);
@@ -244,32 +244,32 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendInt8ToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
     lexical_append(resultString, std::int8_t(-123));
     EXPECT_EQ(resultString.length(), 17U);
-    EXPECT_EQ(resultString, u8"Value equals -123");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals -123"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendInt8ToCharacterArray) {
-    char characters[6] = { 0 };
+    char8_t characters[6] = { 0 };
 
     characters[0] = 126;
     characters[5] = 127;
     EXPECT_EQ(lexical_append(characters + 1, 4U, std::int8_t(-123)), 4U);
     EXPECT_EQ(characters[0], 126);
-    EXPECT_EQ(characters[1], '-');
-    EXPECT_EQ(characters[2], '1');
-    EXPECT_EQ(characters[3], '2');
-    EXPECT_EQ(characters[4], '3');
+    EXPECT_EQ(characters[1], u8'-');
+    EXPECT_EQ(characters[2], u8'1');
+    EXPECT_EQ(characters[3], u8'2');
+    EXPECT_EQ(characters[4], u8'3');
     EXPECT_EQ(characters[5], 127);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForInt8) {
-    char characters[1] = { 0 };
+    char8_t characters[1] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 1U, std::int8_t(-9)), 2U);
     EXPECT_EQ(lexical_append(characters, 1U, std::int8_t(-10)), 3U);
@@ -280,33 +280,33 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendUInt16ToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
     lexical_append(resultString, std::uint16_t(56789));
     EXPECT_EQ(resultString.length(), 18U);
-    EXPECT_EQ(resultString, u8"Value equals 56789");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 56789"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendUInt16ToCharacterArray) {
-    char characters[7] = { 0 };
+    char8_t characters[7] = { 0 };
 
     characters[0] = 120;
     characters[6] = 121;
     EXPECT_EQ(lexical_append(characters + 1, 5U, std::uint16_t(56789)), 5U);
     EXPECT_EQ(characters[0], 120);
-    EXPECT_EQ(characters[1], '5');
-    EXPECT_EQ(characters[2], '6');
-    EXPECT_EQ(characters[3], '7');
-    EXPECT_EQ(characters[4], '8');
-    EXPECT_EQ(characters[5], '9');
+    EXPECT_EQ(characters[1], u8'5');
+    EXPECT_EQ(characters[2], u8'6');
+    EXPECT_EQ(characters[3], u8'7');
+    EXPECT_EQ(characters[4], u8'8');
+    EXPECT_EQ(characters[5], u8'9');
     EXPECT_EQ(characters[6], 121);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForUInt16) {
-    char characters[1] = { 0 };
+    char8_t characters[1] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 1U, std::uint16_t(0)), 1U);
 
@@ -322,34 +322,34 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendInt16ToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
     lexical_append(resultString, std::int16_t(-23456));
     EXPECT_EQ(resultString.length(), 19U);
-    EXPECT_EQ(resultString, u8"Value equals -23456");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals -23456"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendInt16ToCharacterArray) {
-    char characters[8] = { 0 };
+    char8_t characters[8] = { 0 };
 
     characters[0] = 121;
     characters[7] = 122;
     EXPECT_EQ(lexical_append(characters + 1, 6U, std::int16_t(-23456)), 6U);
     EXPECT_EQ(characters[0], 121);
-    EXPECT_EQ(characters[1], '-');
-    EXPECT_EQ(characters[2], '2');
-    EXPECT_EQ(characters[3], '3');
-    EXPECT_EQ(characters[4], '4');
-    EXPECT_EQ(characters[5], '5');
-    EXPECT_EQ(characters[6], '6');
+    EXPECT_EQ(characters[1], u8'-');
+    EXPECT_EQ(characters[2], u8'2');
+    EXPECT_EQ(characters[3], u8'3');
+    EXPECT_EQ(characters[4], u8'4');
+    EXPECT_EQ(characters[5], u8'5');
+    EXPECT_EQ(characters[6], u8'6');
     EXPECT_EQ(characters[7], 122);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForInt16) {
-    char characters[1] = { 0 };
+    char8_t characters[1] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 1U, std::int16_t(0)), 1U);
 
@@ -373,21 +373,21 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendUInt32ToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
 
     lexical_append(resultString, std::uint32_t(0));
     EXPECT_EQ(resultString.length(), 14U);
-    EXPECT_EQ(resultString, u8"Value equals 0");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0"));
 
     lexical_append(resultString, std::uint32_t(1234567890));
     EXPECT_EQ(resultString.length(), 24U);
-    EXPECT_EQ(resultString, u8"Value equals 01234567890");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 01234567890"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendUInt32ToCharacterArray) {
-    char characters[12] = { 0 };
+    char8_t characters[12] = { 0 };
 
     {
       characters[0] = 122;
@@ -403,7 +403,7 @@ namespace Nuclex { namespace Support { namespace Text {
       characters[11] = 124;
       EXPECT_EQ(lexical_append(characters + 1, 10U, std::uint32_t(1234567890)), 10U);
 
-      const char *expected = u8"1234567890";
+      const char8_t *expected = u8"1234567890";
 
       EXPECT_EQ(characters[0], 123);
       for(std::size_t index = 0; index < 10; ++index) {
@@ -417,9 +417,9 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForUInt32) {
 #if defined(__GNUC__) // GCC 11+ emits a spurious stringop-overflow warning otherwise
-    char characters[2] = { 0 };
+    char8_t characters[2] = { 0 };
 #else
-    char characters[1] = { 0 };
+    char8_t characters[1] = { 0 };
 #endif
 
     EXPECT_EQ(lexical_append(characters, 1U, std::uint32_t(0)), 1U);
@@ -436,32 +436,32 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendInt32ToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
 
     lexical_append(resultString, std::int32_t(0));
     EXPECT_EQ(resultString.length(), 14U);
-    EXPECT_EQ(resultString, u8"Value equals 0");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0"));
 
     lexical_append(resultString, std::int32_t(1234567890));
     EXPECT_EQ(resultString.length(), 24U);
-    EXPECT_EQ(resultString, u8"Value equals 01234567890");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 01234567890"));
 
     lexical_append(resultString, std::int32_t(-1234567890));
     EXPECT_EQ(resultString.length(), 35U);
-    EXPECT_EQ(resultString, u8"Value equals 01234567890-1234567890");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 01234567890-1234567890"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendInt32ToCharacterArray) {
-    char characters[13] = { 0 };
+    char8_t characters[13] = { 0 };
 
     {
       characters[0] = 124;
       characters[2] = 125;
       EXPECT_EQ(lexical_append(characters + 1, 1U, std::int32_t(0)), 1U);
       EXPECT_EQ(characters[0], 124);
-      EXPECT_EQ(characters[1], '0');
+      EXPECT_EQ(characters[1], u8'0');
       EXPECT_EQ(characters[2], 125);
     }
 
@@ -470,7 +470,7 @@ namespace Nuclex { namespace Support { namespace Text {
       characters[11] = 126;
       EXPECT_EQ(lexical_append(characters + 1, 10U, std::int32_t(1234567890)), 10U);
 
-      const char *expected = u8"1234567890";
+      const char8_t *expected = u8"1234567890";
 
       EXPECT_EQ(characters[0], 125);
       for(std::size_t index = 0; index < 10; ++index) {
@@ -484,7 +484,7 @@ namespace Nuclex { namespace Support { namespace Text {
       characters[12] = 127;
       EXPECT_EQ(lexical_append(characters + 1, 11U, std::int32_t(-1234567890)), 11U);
 
-      const char *expected = u8"-1234567890";
+      const char8_t *expected = u8"-1234567890";
 
       EXPECT_EQ(characters[0], 126);
       for(std::size_t index = 0; index < 11; ++index) {
@@ -498,9 +498,9 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForInt32) {
 #if defined(__GNUC__) // GCC 11+ emits a spurious stringop-overflow warning otherwise
-    char characters[2] = { 0 };
+    char8_t characters[2] = { 0 };
 #else
-    char characters[1] = { 0 };
+    char8_t characters[1] = { 0 };
 #endif
 
     EXPECT_EQ(lexical_append(characters, 1U, std::int32_t(0)), 1U);
@@ -525,21 +525,21 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendUInt64ToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
 
     lexical_append(resultString, std::uint64_t(0));
     EXPECT_EQ(resultString.length(), 14U);
-    EXPECT_EQ(resultString, u8"Value equals 0");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0"));
 
     lexical_append(resultString, std::uint64_t(12345678901234567890U));
     EXPECT_EQ(resultString.length(), 34U);
-    EXPECT_EQ(resultString, u8"Value equals 012345678901234567890");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 012345678901234567890"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendUInt64ToCharacterArray) {
-    char characters[22] = { 0 };
+    char8_t characters[22] = { 0 };
 
     {
       characters[0] = 120;
@@ -560,7 +560,7 @@ namespace Nuclex { namespace Support { namespace Text {
       );
       EXPECT_EQ(characterCount, 20U);
 
-      const char *expected = u8"12345678901234567890";
+      const char8_t *expected = u8"12345678901234567890";
 
       EXPECT_EQ(characters[0], 121);
       for(std::size_t index = 0; index < 20; ++index) {
@@ -574,9 +574,9 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForUInt64) {
 #if defined(__GNUC__) // GCC 11+ emits a spurious stringop-overflow warning here
-    char characters[2] = { 0 };
+    char8_t characters[2] = { 0 };
 #else
-    char characters[1] = { 0 };
+    char8_t characters[1] = { 0 };
 #endif
 
     EXPECT_EQ(lexical_append(characters, 1U, std::uint64_t(0)), 1U);
@@ -593,25 +593,28 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendInt64ToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
 
     lexical_append(resultString, std::int64_t(0));
     EXPECT_EQ(resultString.length(), 14U);
-    EXPECT_EQ(resultString, u8"Value equals 0");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0"));
 
     lexical_append(resultString, std::int64_t(1234567890123456789));
     EXPECT_EQ(resultString.length(), 33U);
-    EXPECT_EQ(resultString, u8"Value equals 01234567890123456789");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 01234567890123456789"));
 
     lexical_append(resultString, std::int64_t(-1234567890123456789));
     EXPECT_EQ(resultString.length(), 53U);
-    EXPECT_EQ(resultString, u8"Value equals 01234567890123456789-1234567890123456789");
+    EXPECT_EQ(
+      resultString,
+      std::u8string(u8"Value equals 01234567890123456789-1234567890123456789")
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendInt64ToCharacterArray) {
-    char characters[23] = { 0 };
+    char8_t characters[23] = { 0 };
 
     {
       characters[0] = 122;
@@ -627,7 +630,7 @@ namespace Nuclex { namespace Support { namespace Text {
       characters[21] = 124;
       EXPECT_EQ(lexical_append(characters + 1, 19U, std::int64_t(1234567890123456789)), 19U);
 
-      const char *expected = u8"1234567890123456789";
+      const char8_t *expected = u8"1234567890123456789";
 
       EXPECT_EQ(characters[0], 123);
       for(std::size_t index = 0; index < 19; ++index) {
@@ -641,7 +644,7 @@ namespace Nuclex { namespace Support { namespace Text {
       characters[22] = 126;
       EXPECT_EQ(lexical_append(characters + 1, 20U, std::int64_t(-1234567890123456789)), 20U);
 
-      const char *expected = u8"-1234567890123456789";
+      const char8_t *expected = u8"-1234567890123456789";
 
       EXPECT_EQ(characters[0], 125);
       for(std::size_t index = 0; index < 20; ++index) {
@@ -654,7 +657,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForInt64) {
-    char characters[1] = { 0 };
+    char8_t characters[1] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 1U, std::int64_t(0)), 1U);
 
@@ -678,34 +681,34 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendFloatToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
 
     lexical_append(resultString, float(0.0f));
     EXPECT_EQ(resultString.length(), 16U);
-    EXPECT_EQ(resultString, u8"Value equals 0.0");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0.0"));
 
     lexical_append(resultString, float(123.456f));
     EXPECT_EQ(resultString.length(), 23U);
-    EXPECT_EQ(resultString, u8"Value equals 0.0123.456");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0.0123.456"));
 
     lexical_append(resultString, float(-123.456f));
     EXPECT_EQ(resultString.length(), 31U);
-    EXPECT_EQ(resultString, u8"Value equals 0.0123.456-123.456");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0.0123.456-123.456"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendFloatToCharacterArray) {
-    char characters[10] = { 0 };
+    char8_t characters[10] = { 0 };
 
     {
       characters[0] = 126;
       characters[4] = 127;
       EXPECT_EQ(lexical_append(characters + 1, 3U, float(0.0f)), 3U);
       EXPECT_EQ(characters[0], 126);
-      EXPECT_EQ(characters[1], '0');
-      EXPECT_EQ(characters[2], '.');
-      EXPECT_EQ(characters[3], '0');
+      EXPECT_EQ(characters[1], u8'0');
+      EXPECT_EQ(characters[2], u8'.');
+      EXPECT_EQ(characters[3], u8'0');
       EXPECT_EQ(characters[4], 127);
     }
 
@@ -714,7 +717,7 @@ namespace Nuclex { namespace Support { namespace Text {
       characters[8] = 121;
       EXPECT_EQ(lexical_append(characters + 1, 7U, float(123.456f)), 7U);
 
-      const char *expected = u8"123.456";
+      const char8_t *expected = u8"123.456";
 
       EXPECT_EQ(characters[0], 120);
       for(std::size_t index = 0; index < 7; ++index) {
@@ -728,7 +731,7 @@ namespace Nuclex { namespace Support { namespace Text {
       characters[9] = 122;
       EXPECT_EQ(lexical_append(characters + 1, 8U, float(-123.456f)), 8U);
 
-      const char *expected = u8"-123.456";
+      const char8_t *expected = u8"-123.456";
 
       EXPECT_EQ(characters[0], 121);
       for(std::size_t index = 0; index < 8; ++index) {
@@ -741,7 +744,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForFloat) {
-    char characters[3] = { 0 };
+    char8_t characters[3] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 1U, float(0.0f)), 3U);
     EXPECT_EQ(lexical_append(characters, 1U, float(123.456f)), 7U);
@@ -752,7 +755,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, BufferFitsExtremeFloatLengths) {
-    std::string resultString(u8"Longest float: ");
+    std::u8string resultString(u8"Longest float: ");
 
     // Doubles can print as up to 64 decimal digits, so test these edge cases
     lexical_append(resultString, std::numeric_limits<float>::min());
@@ -762,34 +765,34 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendDoubleToString) {
-    std::string resultString(u8"Value equals ");
+    std::u8string resultString(u8"Value equals ");
 
     lexical_append(resultString, double(0.0));
     EXPECT_EQ(resultString.length(), 16U);
-    EXPECT_EQ(resultString, u8"Value equals 0.0");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0.0"));
 
     lexical_append(resultString, double(12345.06789));
     EXPECT_EQ(resultString.length(), 27U);
-    EXPECT_EQ(resultString, u8"Value equals 0.012345.06789");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0.012345.06789"));
 
     lexical_append(resultString, double(-12345.06789));
     EXPECT_EQ(resultString.length(), 39U);
-    EXPECT_EQ(resultString, u8"Value equals 0.012345.06789-12345.06789");
+    EXPECT_EQ(resultString, std::u8string(u8"Value equals 0.012345.06789-12345.06789"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, CanAppendDoubleToCharacterArray) {
-    char characters[14] = { 0 };
+    char8_t characters[14] = { 0 };
 
     {
       characters[0] = 122;
       characters[4] = 123;
       EXPECT_EQ(lexical_append(characters + 1, 3U, double(0.0)), 3U);
       EXPECT_EQ(characters[0], 122);
-      EXPECT_EQ(characters[1], '0');
-      EXPECT_EQ(characters[2], '.');
-      EXPECT_EQ(characters[3], '0');
+      EXPECT_EQ(characters[1], u8'0');
+      EXPECT_EQ(characters[2], u8'.');
+      EXPECT_EQ(characters[3], u8'0');
       EXPECT_EQ(characters[4], 123);
     }
 
@@ -798,7 +801,7 @@ namespace Nuclex { namespace Support { namespace Text {
       characters[12] = 124;
       EXPECT_EQ(lexical_append(characters + 1, 11U, double(12345.06789)), 11U);
 
-      const char *expected = u8"12345.06789";
+      const char8_t *expected = u8"12345.06789";
 
       EXPECT_EQ(characters[0], 123);
       for(std::size_t index = 0; index < 11; ++index) {
@@ -812,7 +815,7 @@ namespace Nuclex { namespace Support { namespace Text {
       characters[13] = 125;
       EXPECT_EQ(lexical_append(characters + 1, 12U, double(-12345.06789)), 12U);
 
-      const char *expected = u8"-12345.06789";
+      const char8_t *expected = u8"-12345.06789";
 
       EXPECT_EQ(characters[0], 124);
       for(std::size_t index = 0; index < 12; ++index) {
@@ -826,7 +829,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, ReturnsNeededByteCountForDouble) {
-    char characters[3] = { 0 };
+    char8_t characters[3] = { 0 };
 
     EXPECT_EQ(lexical_append(characters, 3U, double(0.0)), 3U);
     EXPECT_EQ(lexical_append(characters, 3U, double(12345.06789)), 11U);
@@ -836,7 +839,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(LexicalAppendTest, BufferFitsExtremeDoubleLengths) {
-    std::string resultString(u8"Longest double: ");
+    std::u8string resultString(u8"Longest double: ");
 
     // Doubles can print as up to 256 decimal digits, so test these edge cases
     lexical_append(resultString, std::numeric_limits<double>::min());

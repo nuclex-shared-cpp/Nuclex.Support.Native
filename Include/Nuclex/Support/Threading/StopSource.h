@@ -63,7 +63,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>
     ///   Builds a new stop source, required to prevent stack allocations
-    /// </suimmary>
+    /// </summary>
     /// <returns>The new stop source</returns>
     public: NUCLEX_SUPPORT_API static std::shared_ptr<StopSource> Create();
 
@@ -86,7 +86,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ///   Optional reason for the cancellation, included in exception message when
     ///   <see cref="StopToken.ThrowIfCanceled" /> is used.
     /// </param>
-    public: NUCLEX_SUPPORT_API inline void Cancel(const std::string &reason = std::string());
+    public: NUCLEX_SUPPORT_API inline void Cancel(const std::u8string &reason = std::u8string());
 
     // ----------------------------------------------------------------------------------------- //
 
@@ -138,7 +138,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-  inline void StopSource::Cancel(const std::string &reason /* = std::string() */) {
+  inline void StopSource::Cancel(const std::u8string &reason /* = std::u8string() */) {
     assert((IsCanceled() == false) && u8"Cancellation is triggered only once");
 
     this->CancellationReason = reason;

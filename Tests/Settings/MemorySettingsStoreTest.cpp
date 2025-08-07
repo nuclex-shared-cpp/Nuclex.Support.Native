@@ -39,7 +39,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(MemorySettingsStoreTest, StartsOutWithNoCategories) {
     MemorySettingsStore settings;
 
-    std::vector<std::string> categories = settings.GetAllCategories();
+    std::vector<std::u8string> categories = settings.GetAllCategories();
     EXPECT_EQ(categories.size(), 0U);
   }
 
@@ -48,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(MemorySettingsStoreTest, CanQueryNonExistentCategory) {
     MemorySettingsStore settings;
 
-    std::vector<std::string> properties = settings.GetAllProperties(u8"Does not exist");
+    std::vector<std::u8string> properties = settings.GetAllProperties(u8"Does not exist");
     EXPECT_EQ(properties.size(), 0U);
   }
 
@@ -57,9 +57,9 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(MemorySettingsStoreTest, CanStorePropertiesInDefaultCategory) {
     MemorySettingsStore settings;
 
-    std::optional<bool> beforeStore = settings.Retrieve<bool>(std::string(), u8"Hello");
-    settings.Store<bool>(std::string(), u8"Hello", true);
-    std::optional<bool> afterStore = settings.Retrieve<bool>(std::string(), u8"Hello");
+    std::optional<bool> beforeStore = settings.Retrieve<bool>(std::u8string(), u8"Hello");
+    settings.Store<bool>(std::u8string(), u8"Hello", true);
+    std::optional<bool> afterStore = settings.Retrieve<bool>(std::u8string(), u8"Hello");
 
     EXPECT_FALSE(beforeStore.has_value());
     EXPECT_TRUE(afterStore.has_value());
@@ -71,14 +71,14 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(MemorySettingsStoreTest, CanRetrievePropertyUnderDifferentType) {
     MemorySettingsStore settings;
 
-    settings.Store<bool>(std::string(), u8"Bool", true);
-    std::optional<std::string> myBool = settings.Retrieve<std::string>(std::string(), u8"Bool");
+    settings.Store<bool>(std::u8string(), u8"Bool", true);
+    std::optional<std::u8string> myBool = settings.Retrieve<std::u8string>(std::u8string(), u8"Bool");
 
     EXPECT_TRUE(myBool.has_value());
     EXPECT_EQ(myBool.value(), u8"1");
 
-    settings.Store<std::int32_t>(std::string(), u8"Int", -123);
-    std::optional<std::string> myInt = settings.Retrieve<std::string>(std::string(), u8"Int");
+    settings.Store<std::int32_t>(std::u8string(), u8"Int", -123);
+    std::optional<std::u8string> myInt = settings.Retrieve<std::u8string>(std::u8string(), u8"Int");
 
     EXPECT_TRUE(myInt.has_value());
     EXPECT_EQ(myInt.value(), u8"-123");
@@ -89,14 +89,14 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(MemorySettingsStoreTest, CanDeleteProperty) {
     MemorySettingsStore settings;
 
-    settings.Store<bool>(std::string(), u8"Test", true);
+    settings.Store<bool>(std::u8string(), u8"Test", true);
 
-    std::optional<bool> beforeDelete = settings.Retrieve<bool>(std::string(), u8"Test");
+    std::optional<bool> beforeDelete = settings.Retrieve<bool>(std::u8string(), u8"Test");
     EXPECT_TRUE(beforeDelete.has_value());
 
-    settings.DeleteProperty(std::string(), u8"Test");
+    settings.DeleteProperty(std::u8string(), u8"Test");
 
-    std::optional<bool> afterDelete = settings.Retrieve<bool>(std::string(), u8"Test");
+    std::optional<bool> afterDelete = settings.Retrieve<bool>(std::u8string(), u8"Test");
     EXPECT_FALSE(afterDelete.has_value());
   }
 
@@ -105,12 +105,12 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(MemorySettingsStoreTest, CanCreateNewCategory) {
     MemorySettingsStore settings;
 
-    std::vector<std::string> categoriesBefore = settings.GetAllCategories();
+    std::vector<std::u8string> categoriesBefore = settings.GetAllCategories();
     EXPECT_EQ(categoriesBefore.size(), 0U);
 
     settings.Store<bool>(u8"MyCategory", u8"Test", true);
 
-    std::vector<std::string> categoriesAfter = settings.GetAllCategories();
+    std::vector<std::u8string> categoriesAfter = settings.GetAllCategories();
     ASSERT_EQ(categoriesAfter.size(), 1U);
     EXPECT_EQ(categoriesAfter[0], u8"MyCategory");
   }
@@ -122,14 +122,14 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     settings.Store<bool>(u8"MyCategory", u8"Test", true);
 
-    std::vector<std::string> beforeDelete = settings.GetAllCategories();
+    std::vector<std::u8string> beforeDelete = settings.GetAllCategories();
     EXPECT_EQ(beforeDelete.size(), 1U);
     std::optional<bool> valueBeforeDelete = settings.Retrieve<bool>(u8"MyCategory", u8"Test");
     EXPECT_TRUE(valueBeforeDelete.has_value());
 
     settings.DeleteCategory(u8"MyCategory");
 
-    std::vector<std::string> afterDelete = settings.GetAllCategories();
+    std::vector<std::u8string> afterDelete = settings.GetAllCategories();
     EXPECT_EQ(afterDelete.size(), 0U);
     std::optional<bool> valueAfterDelete = settings.Retrieve<bool>(u8"MyCategory", u8"Test");
     EXPECT_FALSE(valueAfterDelete.has_value());
@@ -164,16 +164,16 @@ namespace Nuclex { namespace Support { namespace Settings {
 
     settings.Store<bool>(u8"MyCategory", u8"Test", true);
 
-    std::vector<std::string> categoriesBefore = settings.GetAllCategories();
+    std::vector<std::u8string> categoriesBefore = settings.GetAllCategories();
     ASSERT_EQ(categoriesBefore.size(), 1U);
-    std::vector<std::string> propertiesBefore = settings.GetAllProperties(u8"MyCategory");
+    std::vector<std::u8string> propertiesBefore = settings.GetAllProperties(u8"MyCategory");
     ASSERT_EQ(propertiesBefore.size(), 1U);
 
     settings.DeleteProperty(u8"MyCategory", u8"Test");
 
-    std::vector<std::string> categoriesAfter = settings.GetAllCategories();
+    std::vector<std::u8string> categoriesAfter = settings.GetAllCategories();
     ASSERT_EQ(categoriesAfter.size(), 1U);
-    std::vector<std::string> propertiesAfter = settings.GetAllProperties(u8"MyCategory");
+    std::vector<std::u8string> propertiesAfter = settings.GetAllProperties(u8"MyCategory");
     ASSERT_EQ(propertiesAfter.size(), 0U);
   }
 
@@ -182,18 +182,18 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(MemorySettingsStoreTest, PropertyValueCanChange) {
     MemorySettingsStore settings;
 
-    settings.Store<std::string>(std::string(), u8"Test", u8"Hello");
+    settings.Store<std::u8string>(std::u8string(), u8"Test", u8"Hello");
 
-    std::optional<std::string> valueBeforeChange = (
-      settings.Retrieve<std::string>(std::string(), u8"Test")
+    std::optional<std::u8string> valueBeforeChange = (
+      settings.Retrieve<std::u8string>(std::u8string(), u8"Test")
     );
     ASSERT_TRUE(valueBeforeChange.has_value());
     EXPECT_EQ(valueBeforeChange.value(), u8"Hello");
 
-    settings.Store<std::string>(std::string(), u8"Test", u8"World");
+    settings.Store<std::u8string>(std::u8string(), u8"Test", u8"World");
 
-    std::optional<std::string> valueAfterChange = (
-      settings.Retrieve<std::string>(std::string(), u8"Test")
+    std::optional<std::u8string> valueAfterChange = (
+      settings.Retrieve<std::u8string>(std::u8string(), u8"Test")
     );
     ASSERT_TRUE(valueAfterChange.has_value());
     EXPECT_EQ(valueAfterChange.value(), u8"World");

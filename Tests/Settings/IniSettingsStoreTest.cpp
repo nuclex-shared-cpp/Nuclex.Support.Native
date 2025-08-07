@@ -31,7 +31,7 @@ namespace {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>An average .ini file without any special or ambiguous contents</summary>
-  const char ExampleIniFile[] =
+  const char8_t ExampleIniFile[] =
     u8"NumericBoolean = 1\n"
     u8"TrueFalseBoolean = TRUE\n"
     u8"YesNoBoolean = YES\n"
@@ -94,10 +94,10 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   TEST(IniSettingsStoreTest, FileCanBeWrittenToHardDrive) {
     IniSettingsStore settings;
-    settings.Store<bool>(std::string(), u8"FirstValue", true);
+    settings.Store<bool>(std::u8string(), u8"FirstValue", true);
     settings.Store<std::uint32_t>(u8"MyCategory", u8"SecondValue", 12345);
 
-    std::string savedFileContents;
+    std::u8string savedFileContents;
     {
       TemporaryDirectoryScope testDirectory(u8"ini");
       settings.Save(testDirectory.GetPath(u8"test.ini"));
@@ -105,9 +105,9 @@ namespace Nuclex { namespace Support { namespace Settings {
       testDirectory.ReadFile(u8"test.ini", savedFileContents);
     }
 
-    EXPECT_NE(savedFileContents.find(u8"FirstValue"), std::string::npos);
-    EXPECT_NE(savedFileContents.find(u8"SecondValue"), std::string::npos);
-    EXPECT_NE(savedFileContents.find(u8"[MyCategory]"), std::string::npos);
+    EXPECT_NE(savedFileContents.find(u8"FirstValue"), std::u8string::npos);
+    EXPECT_NE(savedFileContents.find(u8"SecondValue"), std::u8string::npos);
+    EXPECT_NE(savedFileContents.find(u8"[MyCategory]"), std::u8string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -119,7 +119,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       sizeof(ExampleIniFile) - 1
     );
 
-    std::string none;
+    std::u8string none;
     std::optional<bool> numericBoolean = settings.Retrieve<bool>(none, u8"NumericBoolean");
     ASSERT_TRUE(numericBoolean.has_value());
     EXPECT_TRUE(numericBoolean.value());
@@ -245,7 +245,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       sizeof(ExampleIniFile) - 1
     );
 
-    std::vector<std::string> categories = settings.GetAllCategories();
+    std::vector<std::u8string> categories = settings.GetAllCategories();
     EXPECT_EQ(categories.size(), 3U); // default, integers, strings
   }
 
@@ -258,10 +258,10 @@ namespace Nuclex { namespace Support { namespace Settings {
       sizeof(ExampleIniFile) - 1
     );
 
-    std::vector<std::string> rootProperties = settings.GetAllProperties();
+    std::vector<std::u8string> rootProperties = settings.GetAllProperties();
     EXPECT_EQ(rootProperties.size(), 4U);
 
-    std::vector<std::string> stringProperties = settings.GetAllProperties(u8"Strings");
+    std::vector<std::u8string> stringProperties = settings.GetAllProperties(u8"Strings");
     EXPECT_EQ(stringProperties.size(), 2U);
   }
 
@@ -270,7 +270,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, PropertiesInDefaultCategoryCanBeDeleted) {
     IniSettingsStore settings;
 
-    bool wasDeleted = settings.DeleteProperty(std::string(), u8"DoesNotExist");
+    bool wasDeleted = settings.DeleteProperty(std::u8string(), u8"DoesNotExist");
     EXPECT_FALSE(wasDeleted);
 
     settings.Load(
@@ -278,10 +278,10 @@ namespace Nuclex { namespace Support { namespace Settings {
       sizeof(ExampleIniFile) - 1
     );
 
-    wasDeleted = settings.DeleteProperty(std::string(), u8"NumericBoolean");
+    wasDeleted = settings.DeleteProperty(std::u8string(), u8"NumericBoolean");
     EXPECT_TRUE(wasDeleted);
 
-    std::vector<std::string> rootProperties = settings.GetAllProperties();
+    std::vector<std::u8string> rootProperties = settings.GetAllProperties();
     EXPECT_EQ(rootProperties.size(), 3U);
   }
 
@@ -290,7 +290,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, DefaultCategoryCanBeDeleted) {
     IniSettingsStore settings;
 
-    bool wasDeleted = settings.DeleteCategory(std::string());
+    bool wasDeleted = settings.DeleteCategory(std::u8string());
     EXPECT_FALSE(wasDeleted);
 
     settings.Load(
@@ -298,13 +298,13 @@ namespace Nuclex { namespace Support { namespace Settings {
       sizeof(ExampleIniFile) - 1
     );
 
-    wasDeleted = settings.DeleteCategory(std::string());
+    wasDeleted = settings.DeleteCategory(std::u8string());
     EXPECT_TRUE(wasDeleted);
 
-    std::vector<std::string> rootProperties = settings.GetAllProperties();
+    std::vector<std::u8string> rootProperties = settings.GetAllProperties();
     EXPECT_EQ(rootProperties.size(), 0U);
 
-    std::vector<std::string> integerProperties = settings.GetAllProperties(u8"Integers");
+    std::vector<std::u8string> integerProperties = settings.GetAllProperties(u8"Integers");
     EXPECT_EQ(integerProperties.size(), 4U);
   }
 
@@ -324,10 +324,10 @@ namespace Nuclex { namespace Support { namespace Settings {
     wasDeleted = settings.DeleteCategory(u8"Integers");
     EXPECT_TRUE(wasDeleted);
 
-    std::vector<std::string> rootProperties = settings.GetAllProperties();
+    std::vector<std::u8string> rootProperties = settings.GetAllProperties();
     EXPECT_EQ(rootProperties.size(), 4U);
 
-    std::vector<std::string> integerProperties = settings.GetAllProperties(u8"Integers");
+    std::vector<std::u8string> integerProperties = settings.GetAllProperties(u8"Integers");
     EXPECT_EQ(integerProperties.size(), 0U);
   }
 
@@ -336,22 +336,22 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(IniSettingsStoreTest, LongValuesCanBeShortened) {
     IniSettingsStore settings;
 
-    settings.Store<std::string>(
-      std::string(), u8"SomeValue", u8"A very long text that will get lost!"
+    settings.Store<std::u8string>(
+      std::u8string(), u8"SomeValue", u8"A very long text that will get lost!"
     );
 
-    std::string fileContentsAfterSave;
+    std::u8string fileContentsAfterSave;
     {
       TemporaryFileScope testIniFile(u8"ini");
 
       settings.Save(testIniFile.GetPath());
-      settings.Store<std::string>(std::string(), u8"SomeValue", u8"Short text");
+      settings.Store<std::u8string>(std::u8string(), u8"SomeValue", u8"Short text");
       settings.Save(testIniFile.GetPath());
 
       fileContentsAfterSave = testIniFile.GetFileContentsAsString();
     }
 
-    EXPECT_EQ(fileContentsAfterSave.find(u8"lost"), std::string::npos);
+    EXPECT_EQ(fileContentsAfterSave.find(u8"lost"), std::u8string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //

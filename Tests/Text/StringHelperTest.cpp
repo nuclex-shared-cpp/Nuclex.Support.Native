@@ -29,131 +29,131 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, RemovingNothingIsFine) {
-    std::string expected(u8"This is a test", 14);
+    std::u8string expected(u8"This is a test", 14);
 
     // The main point of this test is to verify that there are no out-of-bounds
     // accesses (as would happen when reading from the empty substring).
-    std::string test = expected;
-    StringHelper::EraseSubstrings(test, std::string());
+    std::u8string test = expected;
+    StringHelper::EraseSubstrings(test, std::u8string());
 
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, SingleOccurrenceOfSubstringCanBeRemoved) {
-    std::string test(u8"This test did not succeed", 25);
-    std::string expected(u8"This test did succeed", 21);
+    std::u8string test(u8"This test did not succeed", 25);
+    std::u8string expected(u8"This test did succeed", 21);
 
     StringHelper::EraseSubstrings(test, u8" not");
 
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, WholeStringCanMatchSubstring) {
-    std::string test(u8"Test", 4);
-    std::string expected(u8"", 0);
+    std::u8string test(u8"Test", 4);
+    std::u8string expected(u8"", 0);
 
     StringHelper::EraseSubstrings(test, u8"Test");
 
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, DuplicateWhitespaceCanBeCollapsedWithoutTrim) {
-    std::string test(u8" This  is   an example  ", 24);
-    std::string expected(u8" This is an example ", 20);
+    std::u8string test(u8" This  is   an example  ", 24);
+    std::u8string expected(u8" This is an example ", 20);
 
     StringHelper::CollapseDuplicateWhitespace(test, false);
 
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, DuplicateWhitespaceCanBeCollapsedWithTrim) {
-    std::string test(u8"  This  is   an example ", 24);
-    std::string expected(u8"This is an example", 18);
+    std::u8string test(u8"  This  is   an example ", 24);
+    std::u8string expected(u8"This is an example", 18);
 
     StringHelper::CollapseDuplicateWhitespace(test, true);
 
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, EmptyStringCanBeWhitespaceCollapsed) {
-    std::string test(u8"", 0);
-    std::string test2(test);
-    std::string expected(u8"", 0);
+    std::u8string test(u8"", 0);
+    std::u8string test2(test);
+    std::u8string expected(u8"", 0);
 
     StringHelper::CollapseDuplicateWhitespace(test, false);
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
 
     StringHelper::CollapseDuplicateWhitespace(test2, true);
-    ASSERT_STREQ(test2.c_str(), expected.c_str());
+    ASSERT_EQ(test2, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, SingleSpaceCanBeWhitespaceCollapsed) {
-    std::string test(u8" ", 1);
-    std::string test2(test);
+    std::u8string test(u8" ", 1);
+    std::u8string test2(test);
 
-    std::string expected(u8" ", 1);
+    std::u8string expected(u8" ", 1);
     StringHelper::CollapseDuplicateWhitespace(test, false);
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
 
-    std::string expected2(u8"", 0);
+    std::u8string expected2(u8"", 0);
     StringHelper::CollapseDuplicateWhitespace(test2, true);
-    ASSERT_STREQ(test2.c_str(), expected2.c_str());
+    ASSERT_EQ(test2, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, SpacesOnlyCanBeWhitespaceCollapsed) {
-    std::string test(u8"   ", 3);
-    std::string test2(test);
+    std::u8string test(u8"   ", 3);
+    std::u8string test2(test);
 
-    std::string expected(u8" ", 1);
+    std::u8string expected(u8" ", 1);
     StringHelper::CollapseDuplicateWhitespace(test, false);
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
 
-    std::string expected2(u8"", 0);
+    std::u8string expected2(u8"", 0);
     StringHelper::CollapseDuplicateWhitespace(test2, true);
-    ASSERT_STREQ(test2.c_str(), expected2.c_str());
+    ASSERT_EQ(test2, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, StringEndingInWhitespaceCanBeCollapsedWithTrim) {
-    std::string test(u8"Hello World ", 12);
-    std::string expected(u8"Hello World", 11);
+    std::u8string test(u8"Hello World ", 12);
+    std::u8string expected(u8"Hello World", 11);
 
     StringHelper::CollapseDuplicateWhitespace(test, true);
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, SingleCharacterSurvivesWhitespaceCollapse) {
-    std::string test(u8"d", 1);
-    std::string expected(u8"d", 1);
+    std::u8string test(u8"d", 1);
+    std::u8string expected(u8"d", 1);
 
     StringHelper::CollapseDuplicateWhitespace(test, false);
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
 
     StringHelper::CollapseDuplicateWhitespace(test, true);
-    ASSERT_STREQ(test.c_str(), expected.c_str());
+    ASSERT_EQ(test, expected);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, TrimmedEmptyStringIsStillEmpty) {
-    std::string_view trimmedEmpty = StringHelper::GetTrimmed(std::string());
+    std::u8string_view trimmedEmpty = StringHelper::GetTrimmed(std::u8string());
     EXPECT_TRUE(trimmedEmpty.empty());
     EXPECT_EQ(trimmedEmpty.length(), 0U);
   }
@@ -161,7 +161,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, TrimmedPurWhitespaceBecomesEmpty) {
-    std::string_view trimmedPureWhitespace = StringHelper::GetTrimmed(u8" \t \t ");
+    std::u8string_view trimmedPureWhitespace = StringHelper::GetTrimmed(u8" \t \t ");
     EXPECT_TRUE(trimmedPureWhitespace.empty());
     EXPECT_EQ(trimmedPureWhitespace.length(), 0U);
   }
@@ -169,17 +169,17 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, UntrimmableStringRemainsUnchanged) {
-    std::string_view untrimmed(u8"x \t\n y");
-    std::string_view trimmed = StringHelper::GetTrimmed(untrimmed);
-    EXPECT_TRUE(untrimmed == trimmed);
+    std::u8string_view untrimmed(u8"x \t\n y");
+    std::u8string_view trimmed = StringHelper::GetTrimmed(untrimmed);
+    EXPECT_EQ(untrimmed, trimmed);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StringHelperTest, CanTrimUtf8StringEndingWithMultiCharacterCodePoint) {
-    std::string_view untrimmed(u8"M𐍈𐍈  ");
-    std::string_view trimmed = StringHelper::GetTrimmed(untrimmed);
-    EXPECT_TRUE(trimmed == std::string_view(u8"M𐍈𐍈"));
+    std::u8string_view untrimmed(u8"M𐍈𐍈  ");
+    std::u8string_view trimmed = StringHelper::GetTrimmed(untrimmed);
+    EXPECT_EQ(trimmed, std::u8string_view(u8"M𐍈𐍈"));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -187,7 +187,7 @@ namespace Nuclex { namespace Support { namespace Text {
   TEST(StringHelperTest, CanTrimUtf16StringEndingWithMultiCharacterCodePoint) {
     std::wstring_view untrimmed(L" 😄😄 ");
     std::wstring_view trimmed = StringHelper::GetTrimmed(untrimmed);
-    EXPECT_TRUE(trimmed == std::wstring_view(L"😄😄"));
+    EXPECT_EQ(trimmed, std::wstring_view(L"😄😄"));
   }
 
   // ------------------------------------------------------------------------------------------- //

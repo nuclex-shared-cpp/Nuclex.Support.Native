@@ -22,6 +22,8 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
+
 #include <vector> // for std::vector
 #include <memory> // for std::shared_ptr
 
@@ -62,7 +64,11 @@ namespace {
       stats(other.stats) {
       ++this->stats->CopyCount;
       if(this->stats->ThrowOnCopy) {
-        throw std::runtime_error(u8"Simulated error for unit testing");
+        throw std::runtime_error(
+          Nuclex::Support::Text::StringConverter::CharFromUtf8(
+            u8"Simulated error for unit testing"
+          )
+        );
       }
     }
 
@@ -72,7 +78,11 @@ namespace {
       stats(other.stats) { // No move, we want to still track destruction
       ++this->stats->MoveCount;
       if(this->stats->ThrowOnMove) {
-        throw std::runtime_error(u8"Simulated error for unit testing");
+        throw std::runtime_error(
+          Nuclex::Support::Text::StringConverter::CharFromUtf8(
+            u8"Simulated error for unit testing"
+          )
+        );
       }
     }
 
@@ -89,7 +99,11 @@ namespace {
       this->stats = other.stats;
       ++this->stats->CopyCount;
       if(this->stats->ThrowOnCopy) {
-        throw std::runtime_error(u8"Simulated error for unit testing");
+        throw std::runtime_error(
+          Nuclex::Support::Text::StringConverter::CharFromUtf8(
+            u8"Simulated error for unit testing"
+          )
+        );
       }
       return *this;
     }
@@ -103,8 +117,8 @@ namespace {
       ++this->stats->MoveCount;
       if(this->stats->ThrowOnMove) {
         throw std::runtime_error(
-          Nuclex::Support::Text::StringConverter::CharsFromUtf8(
-            u8"Simulated error for unit testing")
+          Nuclex::Support::Text::StringConverter::CharFromUtf8(
+            u8"Simulated error for unit testing"
           )
         );
       }

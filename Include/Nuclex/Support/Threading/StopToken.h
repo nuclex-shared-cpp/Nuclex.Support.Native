@@ -86,7 +86,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     /// <summary>Gate that will be opened when the token is cancelled</summary>
     protected: Gate CancellationGate;
     /// <summary>Why cancellation happened, optionally provided by the canceling side</summary>
-    protected: std::string CancellationReason;
+    protected: std::u8string CancellationReason;
 
   };
 

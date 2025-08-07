@@ -68,7 +68,7 @@ namespace Nuclex { namespace Support {
     { Variant int64Variant(std::int64_t(1234567890000LL)); }
     { Variant floatVariant(float(12.34f)); }
     { Variant doubleVariant(double(1234.5678)); }
-    { Variant stringVariant(std::string("Hello World")); }
+    { Variant stringVariant(std::u8string(u8"Hello World")); }
     { Variant wstringVariant(std::wstring(L"Hello World")); }
 #if defined(NUCLEX_SUPPORT_VARIANT_WITH_STDANY_CONSTRUCTOR)
     { Variant anyVariant(std::any(12345)); }
@@ -92,7 +92,7 @@ namespace Nuclex { namespace Support {
     EXPECT_FALSE(Variant(std::int64_t(1234567890000LL)).IsEmpty());
     EXPECT_FALSE(Variant(float(12.34f)).IsEmpty());
     EXPECT_FALSE(Variant(double(1234.5678)).IsEmpty());
-    EXPECT_FALSE(Variant(std::string(u8"Hello World")).IsEmpty());
+    EXPECT_FALSE(Variant(std::u8string(u8"Hello World")).IsEmpty());
     EXPECT_FALSE(Variant(std::wstring(L"Hello World")).IsEmpty());
 #if defined(NUCLEX_SUPPORT_VARIANT_WITH_STDANY_CONSTRUCTOR)
     EXPECT_FALSE(Variant(std::any(12345)).IsEmpty());
@@ -127,8 +127,8 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(float(1.0f), trueVariant.ToFloat());
     EXPECT_EQ(double(0.0), falseVariant.ToDouble());
     EXPECT_EQ(double(1.0), trueVariant.ToDouble());
-    EXPECT_EQ(std::string(u8"0"), falseVariant.ToString());
-    EXPECT_EQ(std::string(u8"1"), trueVariant.ToString());
+    EXPECT_EQ(std::u8string(u8"0"), falseVariant.ToString());
+    EXPECT_EQ(std::u8string(u8"1"), trueVariant.ToString());
     EXPECT_EQ(std::wstring(L"0"), falseVariant.ToWString());
     EXPECT_EQ(std::wstring(L"1"), trueVariant.ToWString());
     EXPECT_EQ(false, std::any_cast<bool>(falseVariant.ToAny()));
@@ -154,7 +154,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int64_t(222), uint8Variant.ToInt64());
     EXPECT_EQ(float(222.0f), uint8Variant.ToFloat());
     EXPECT_EQ(double(222.0), uint8Variant.ToDouble());
-    EXPECT_EQ(std::string(u8"222"), uint8Variant.ToString());
+    EXPECT_EQ(std::u8string(u8"222"), uint8Variant.ToString());
     EXPECT_EQ(std::wstring(L"222"), uint8Variant.ToWString());
     EXPECT_EQ(std::uint8_t(222), std::any_cast<std::uint8_t>(uint8Variant.ToAny()));
     EXPECT_EQ(reinterpret_cast<void *>(std::uintptr_t(222)), uint8Variant.ToVoidPointer());
@@ -177,7 +177,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int64_t(-123), int8Variant.ToInt64());
     EXPECT_EQ(float(-123.0f), int8Variant.ToFloat());
     EXPECT_EQ(double(-123.0), int8Variant.ToDouble());
-    EXPECT_EQ(std::string(u8"-123"), int8Variant.ToString());
+    EXPECT_EQ(std::u8string(u8"-123"), int8Variant.ToString());
     EXPECT_EQ(std::wstring(L"-123"), int8Variant.ToWString());
     EXPECT_EQ(std::int8_t(-123), std::any_cast<std::int8_t>(int8Variant.ToAny()));
     EXPECT_EQ(reinterpret_cast<void *>(std::intptr_t(-123)), int8Variant.ToVoidPointer());
@@ -200,7 +200,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int64_t(55555), uint16Variant.ToInt64());
     EXPECT_EQ(float(55555.0f), uint16Variant.ToFloat());
     EXPECT_EQ(double(55555.0), uint16Variant.ToDouble());
-    EXPECT_EQ(std::string(u8"55555"), uint16Variant.ToString());
+    EXPECT_EQ(std::u8string(u8"55555"), uint16Variant.ToString());
     EXPECT_EQ(std::wstring(L"55555"), uint16Variant.ToWString());
     EXPECT_EQ(std::uint16_t(55555), std::any_cast<std::uint16_t>(uint16Variant.ToAny()));
     EXPECT_EQ(reinterpret_cast<void *>(std::uintptr_t(55555)), uint16Variant.ToVoidPointer());
@@ -223,7 +223,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int64_t(-22222), int16Variant.ToInt64());
     EXPECT_EQ(float(-22222.0f), int16Variant.ToFloat());
     EXPECT_EQ(double(-22222.0), int16Variant.ToDouble());
-    EXPECT_EQ(std::string(u8"-22222"), int16Variant.ToString());
+    EXPECT_EQ(std::u8string(u8"-22222"), int16Variant.ToString());
     EXPECT_EQ(std::wstring(L"-22222"), int16Variant.ToWString());
     EXPECT_EQ(std::int16_t(-22222), std::any_cast<std::int16_t>(int16Variant.ToAny()));
     EXPECT_EQ(reinterpret_cast<void *>(std::intptr_t(-22222)), int16Variant.ToVoidPointer());
@@ -246,7 +246,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int64_t(3333333333), uint32Variant.ToInt64());
     EXPECT_EQ(float(3333333333), uint32Variant.ToFloat());
     EXPECT_EQ(double(3333333333), uint32Variant.ToDouble());
-    EXPECT_EQ(std::string(u8"3333333333"), uint32Variant.ToString());
+    EXPECT_EQ(std::u8string(u8"3333333333"), uint32Variant.ToString());
     EXPECT_EQ(std::wstring(L"3333333333"), uint32Variant.ToWString());
     EXPECT_EQ(std::uint32_t(3333333333), std::any_cast<std::uint32_t>(uint32Variant.ToAny()));
     EXPECT_EQ(
@@ -272,7 +272,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int64_t(-1111111111), int32Variant.ToInt64());
     EXPECT_EQ(float(-1111111111), int32Variant.ToFloat());
     EXPECT_EQ(double(-1111111111), int32Variant.ToDouble());
-    EXPECT_EQ(std::string(u8"-1111111111"), int32Variant.ToString());
+    EXPECT_EQ(std::u8string(u8"-1111111111"), int32Variant.ToString());
     EXPECT_EQ(std::wstring(L"-1111111111"), int32Variant.ToWString());
     EXPECT_EQ(std::int32_t(-1111111111), std::any_cast<std::int32_t>(int32Variant.ToAny()));
     EXPECT_EQ(
@@ -302,7 +302,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(float(1.11111115e+19f), uint64Variant.ToFloat());
 #endif
     EXPECT_EQ(double(11111111111111111111.0), uint64Variant.ToDouble());
-    EXPECT_EQ(std::string(u8"11111111111111111111"), uint64Variant.ToString());
+    EXPECT_EQ(std::u8string(u8"11111111111111111111"), uint64Variant.ToString());
     EXPECT_EQ(std::wstring(L"11111111111111111111"), uint64Variant.ToWString());
     EXPECT_EQ(
       std::uint64_t(11111111111111111111ULL),
@@ -331,7 +331,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int64_t(-8888888888888888888LL), int64Variant.ToInt64());
     EXPECT_EQ(float(-8.88888905e+18f), int64Variant.ToFloat());
     EXPECT_EQ(double(-8888888888888888888.0), int64Variant.ToDouble());
-    EXPECT_EQ(std::string(u8"-8888888888888888888"), int64Variant.ToString());
+    EXPECT_EQ(std::u8string(u8"-8888888888888888888"), int64Variant.ToString());
     EXPECT_EQ(std::wstring(L"-8888888888888888888"), int64Variant.ToWString());
     EXPECT_EQ(
       std::int64_t(-8888888888888888888LL),
@@ -360,7 +360,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int64_t(123LL), floatVariant.ToInt64());
     EXPECT_EQ(float(123.75f), floatVariant.ToFloat());
     EXPECT_EQ(double(123.75), floatVariant.ToDouble());
-    EXPECT_EQ(std::string(u8"123.75"), floatVariant.ToString());
+    EXPECT_EQ(std::u8string(u8"123.75"), floatVariant.ToString());
     EXPECT_EQ(std::wstring(L"123.75"), floatVariant.ToWString());
     EXPECT_EQ(float(123.75f), std::any_cast<float>(floatVariant.ToAny()));
     EXPECT_EQ(
@@ -386,7 +386,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(std::int64_t(12345LL), doubleVariant.ToInt64());
     EXPECT_EQ(float(12345.84375f), doubleVariant.ToFloat());
     EXPECT_EQ(double(12345.84375), doubleVariant.ToDouble());
-    EXPECT_EQ(std::string(u8"12345.84375"), doubleVariant.ToString());
+    EXPECT_EQ(std::u8string(u8"12345.84375"), doubleVariant.ToString());
     EXPECT_EQ(std::wstring(L"12345.84375"), doubleVariant.ToWString());
     EXPECT_EQ(double(12345.84375), std::any_cast<double>(doubleVariant.ToAny()));
     EXPECT_EQ(
@@ -411,7 +411,7 @@ namespace Nuclex { namespace Support {
     EXPECT_TRUE(Variant(std::int64_t(1234567890000LL)).IsNumber());
     EXPECT_TRUE(Variant(float(12.34f)).IsNumber());
     EXPECT_TRUE(Variant(double(1234.5678)).IsNumber());
-    EXPECT_FALSE(Variant(std::string(u8"Hello World")).IsNumber());
+    EXPECT_FALSE(Variant(std::u8string(u8"Hello World")).IsNumber());
     EXPECT_FALSE(Variant(std::wstring(L"Hello World")).IsNumber());
 #if defined(NUCLEX_SUPPORT_VARIANT_WITH_STDANY_CONSTRUCTOR)
     EXPECT_FALSE(Variant(std::any(12345)).IsNumber());
@@ -435,7 +435,7 @@ namespace Nuclex { namespace Support {
     EXPECT_FALSE(Variant(std::int64_t(1234567890000LL)).IsString());
     EXPECT_FALSE(Variant(float(12.34f)).IsString());
     EXPECT_FALSE(Variant(double(1234.5678)).IsString());
-    EXPECT_TRUE(Variant(std::string(u8"Hello World")).IsString());
+    EXPECT_TRUE(Variant(std::u8string(u8"Hello World")).IsString());
     EXPECT_TRUE(Variant(std::wstring(L"Hello World")).IsString());
 #if defined(NUCLEX_SUPPORT_VARIANT_WITH_STDANY_CONSTRUCTOR)
     EXPECT_FALSE(Variant(std::any(12345)).IsString());
@@ -459,7 +459,7 @@ namespace Nuclex { namespace Support {
     EXPECT_EQ(VariantType::Int64, Variant(std::int64_t(1234567890000LL)).GetType());
     EXPECT_EQ(VariantType::Float, Variant(float(12.34f)).GetType());
     EXPECT_EQ(VariantType::Double, Variant(double(1234.5678)).GetType());
-    EXPECT_EQ(VariantType::String, Variant(std::string(u8"Hello World")).GetType());
+    EXPECT_EQ(VariantType::U8String, Variant(std::u8string(u8"Hello World")).GetType());
     EXPECT_EQ(VariantType::WString, Variant(std::wstring(L"Hello World")).GetType());
 #if defined(NUCLEX_SUPPORT_VARIANT_WITH_STDANY_CONSTRUCTOR)
     EXPECT_EQ(VariantType::Any, Variant(std::any(12345)).GetType());
@@ -470,13 +470,13 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(VariantTest, SupportsMoveAssignment) {
-    Variant source(std::string(u8"Hello World"));
+    Variant source(std::u8string(u8"Hello World"));
 
     Variant target(123);
     target = std::move(source);
 
-    EXPECT_EQ(target.GetType(), VariantType::String);
-    EXPECT_EQ(target.ToString(), std::string(u8"Hello World"));
+    EXPECT_EQ(target.GetType(), VariantType::U8String);
+    EXPECT_EQ(target.ToString(), std::u8string(u8"Hello World"));
   }
 
   // ------------------------------------------------------------------------------------------- //

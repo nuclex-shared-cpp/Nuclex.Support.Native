@@ -99,7 +99,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(RegistrySettingsStoreTest, CanEnumerateCategories) {
     const RegistrySettingsStore settings(u8"hklm/SOFTWARE/Microsoft", false);
 
-    std::vector<std::string> categories = settings.GetAllCategories();
+    std::vector<std::u8string> categories = settings.GetAllCategories();
     EXPECT_GE(categories.size(), 10U);
   }
 
@@ -108,7 +108,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   TEST(RegistrySettingsStoreTest, CanEnumerateProperties) {
     const RegistrySettingsStore settings(u8"HKLM/SYSTEM/CurrentControlSet/Control", false);
 
-    std::vector<std::string> properties = settings.GetAllProperties();
+    std::vector<std::u8string> properties = settings.GetAllProperties();
     EXPECT_GE(properties.size(), 5U);
   }
 
@@ -143,13 +143,13 @@ namespace Nuclex { namespace Support { namespace Settings {
     {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/BooleanTest");
 
-      std::optional<bool> missingValue = settings.Retrieve<bool>(std::string(), u8"TestValue");
+      std::optional<bool> missingValue = settings.Retrieve<bool>(std::u8string(), u8"TestValue");
       EXPECT_FALSE(missingValue.has_value());
 
-      settings.Store<bool>(std::string(), u8"A", true);
+      settings.Store<bool>(std::u8string(), u8"A", true);
       settings.Store<bool>(u8"TestCategory", u8"B", true);
 
-      std::optional<bool> rootValue = settings.Retrieve<bool>(std::string(), u8"A");
+      std::optional<bool> rootValue = settings.Retrieve<bool>(std::u8string(), u8"A");
       EXPECT_TRUE(rootValue.has_value());
       EXPECT_EQ(rootValue.value_or(false), true);
 
@@ -167,15 +167,15 @@ namespace Nuclex { namespace Support { namespace Settings {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/UInt32Test");
 
       std::optional<std::uint32_t> missingValue = settings.Retrieve<std::uint32_t>(
-        std::string(), u8"TestValue"
+        std::u8string(), u8"TestValue"
       );
       EXPECT_FALSE(missingValue.has_value());
 
-      settings.Store<std::uint32_t>(std::string(), u8"A", 2345678901U);
+      settings.Store<std::uint32_t>(std::u8string(), u8"A", 2345678901U);
       settings.Store<std::uint32_t>(u8"TestCategory", u8"B", 3456789012U);
 
       std::optional<std::uint32_t> rootValue = (
-        settings.Retrieve<std::uint32_t>(std::string(), u8"A")
+        settings.Retrieve<std::uint32_t>(std::u8string(), u8"A")
       );
       EXPECT_TRUE(rootValue.has_value());
       EXPECT_EQ(rootValue.value_or(0), 2345678901U);
@@ -196,15 +196,15 @@ namespace Nuclex { namespace Support { namespace Settings {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/Int32Test");
 
       std::optional<std::int32_t> missingValue = settings.Retrieve<std::int32_t>(
-        std::string(), u8"TestValue"
+        std::u8string(), u8"TestValue"
       );
       EXPECT_FALSE(missingValue.has_value());
 
-      settings.Store<std::int32_t>(std::string(), u8"A", -1234567890);
+      settings.Store<std::int32_t>(std::u8string(), u8"A", -1234567890);
       settings.Store<std::int32_t>(u8"TestCategory", u8"B", -1234567891);
 
       std::optional<std::int32_t> rootValue = (
-        settings.Retrieve<std::int32_t>(std::string(), u8"A")
+        settings.Retrieve<std::int32_t>(std::u8string(), u8"A")
       );
       EXPECT_TRUE(rootValue.has_value());
       EXPECT_EQ(rootValue.value_or(0), -1234567890);
@@ -225,15 +225,15 @@ namespace Nuclex { namespace Support { namespace Settings {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/UInt64Test");
 
       std::optional<std::uint64_t> missingValue = settings.Retrieve<std::uint64_t>(
-        std::string(), u8"TestValue"
+        std::u8string(), u8"TestValue"
       );
       EXPECT_FALSE(missingValue.has_value());
 
-      settings.Store<std::uint64_t>(std::string(), u8"A", 12345678901234567890ULL);
+      settings.Store<std::uint64_t>(std::u8string(), u8"A", 12345678901234567890ULL);
       settings.Store<std::uint64_t>(u8"TestCategory", u8"B", 12345678901234567891ULL);
 
       std::optional<std::uint64_t> rootValue = (
-        settings.Retrieve<std::uint64_t>(std::string(), u8"A")
+        settings.Retrieve<std::uint64_t>(std::u8string(), u8"A")
       );
       EXPECT_TRUE(rootValue.has_value());
       EXPECT_EQ(rootValue.value_or(0), 12345678901234567890ULL);
@@ -254,15 +254,15 @@ namespace Nuclex { namespace Support { namespace Settings {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/Int64Test");
 
       std::optional<std::int64_t> missingValue = settings.Retrieve<std::int64_t>(
-        std::string(), u8"TestValue"
+        std::u8string(), u8"TestValue"
       );
       EXPECT_FALSE(missingValue.has_value());
 
-      settings.Store<std::int64_t>(std::string(), u8"A", -8901234567890123456LL);
+      settings.Store<std::int64_t>(std::u8string(), u8"A", -8901234567890123456LL);
       settings.Store<std::int64_t>(u8"TestCategory", u8"B", -9012345678901234567LL);
 
       std::optional<std::int64_t> rootValue = (
-        settings.Retrieve<std::int64_t>(std::string(), u8"A")
+        settings.Retrieve<std::int64_t>(std::u8string(), u8"A")
       );
       EXPECT_TRUE(rootValue.has_value());
       EXPECT_EQ(rootValue.value_or(0), -8901234567890123456LL);
@@ -282,25 +282,25 @@ namespace Nuclex { namespace Support { namespace Settings {
     {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/StringTest");
 
-      std::optional<std::string> missingValue = settings.Retrieve<std::string>(
-        std::string(), u8"TestValue"
+      std::optional<std::u8string> missingValue = settings.Retrieve<std::u8string>(
+        std::u8string(), u8"TestValue"
       );
       EXPECT_FALSE(missingValue.has_value());
 
-      settings.Store<std::string>(std::string(), u8"A", u8"Hello World!");
-      settings.Store<std::string>(u8"TestCategory", u8"B", u8"Hello Subkey!");
+      settings.Store<std::u8string>(std::u8string(), u8"A", u8"Hello World!");
+      settings.Store<std::u8string>(u8"TestCategory", u8"B", u8"Hello Subkey!");
 
-      std::optional<std::string> rootValue = (
-        settings.Retrieve<std::string>(std::string(), u8"A")
+      std::optional<std::u8string> rootValue = (
+        settings.Retrieve<std::u8string>(std::u8string(), u8"A")
       );
       EXPECT_TRUE(rootValue.has_value());
-      EXPECT_EQ(rootValue.value_or(std::string()), u8"Hello World!");
+      EXPECT_EQ(rootValue.value_or(std::u8string()), u8"Hello World!");
 
-      std::optional<std::string> nestedValue = (
-        settings.Retrieve<std::string>(u8"TestCategory", u8"B")
+      std::optional<std::u8string> nestedValue = (
+        settings.Retrieve<std::u8string>(u8"TestCategory", u8"B")
       );
       EXPECT_TRUE(nestedValue.has_value());
-      EXPECT_EQ(nestedValue.value_or(std::string()), u8"Hello Subkey!");
+      EXPECT_EQ(nestedValue.value_or(std::u8string()), u8"Hello Subkey!");
     }
     RegistrySettingsStore::DeleteKey(u8"HKCU/UnitTesting/Nuclex.Support.Native");
   }
@@ -311,7 +311,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/SubkeyTest");
 
-      std::vector<std::string> emptyCategories = settings.GetAllCategories();
+      std::vector<std::u8string> emptyCategories = settings.GetAllCategories();
       EXPECT_TRUE(emptyCategories.empty());
 
       settings.Store<bool>(u8"Category1", u8"A", true);
@@ -319,7 +319,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       settings.Store<bool>(u8"Category2", u8"C", true);
       settings.Store<bool>(u8"Category3", u8"D", false);
 
-      std::vector<std::string> threeCategories = settings.GetAllCategories();
+      std::vector<std::u8string> threeCategories = settings.GetAllCategories();
       EXPECT_EQ(threeCategories.size(), 3U);
     }
     RegistrySettingsStore::DeleteKey(u8"HKCU/UnitTesting/Nuclex.Support.Native");
@@ -331,17 +331,17 @@ namespace Nuclex { namespace Support { namespace Settings {
     {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/ValueTest");
 
-      std::vector<std::string> emptyValues = settings.GetAllProperties();
+      std::vector<std::u8string> emptyValues = settings.GetAllProperties();
       EXPECT_TRUE(emptyValues.empty());
 
-      settings.Store<bool>(std::string(), u8"A", true);
-      settings.Store<bool>(std::string(), u8"B", false);
+      settings.Store<bool>(std::u8string(), u8"A", true);
+      settings.Store<bool>(std::u8string(), u8"B", false);
       settings.Store<bool>(u8"SomeCategory", u8"C", true);
 
-      std::vector<std::string> twoValues = settings.GetAllProperties();
+      std::vector<std::u8string> twoValues = settings.GetAllProperties();
       EXPECT_EQ(twoValues.size(), 2U);
 
-      std::vector<std::string> oneValue = settings.GetAllProperties(u8"SomeCategory");
+      std::vector<std::u8string> oneValue = settings.GetAllProperties(u8"SomeCategory");
       EXPECT_EQ(oneValue.size(), 1U);
     }
     RegistrySettingsStore::DeleteKey(u8"HKCU/UnitTesting/Nuclex.Support.Native");
@@ -353,20 +353,20 @@ namespace Nuclex { namespace Support { namespace Settings {
     {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/DeleteTest");
 
-      bool wasEmptyDeleted = settings.DeleteCategory(std::string());
+      bool wasEmptyDeleted = settings.DeleteCategory(std::u8string());
       EXPECT_FALSE(wasEmptyDeleted);
 
-      settings.Store<bool>(std::string(), u8"A", true);
-      settings.Store<bool>(std::string(), u8"B", false);
+      settings.Store<bool>(std::u8string(), u8"A", true);
+      settings.Store<bool>(std::u8string(), u8"B", false);
       settings.Store<bool>(u8"SomeCategory", u8"C", true);
 
-      bool wasDeleted = settings.DeleteCategory(std::string());
+      bool wasDeleted = settings.DeleteCategory(std::u8string());
       EXPECT_TRUE(wasDeleted);
 
-      std::vector<std::string> noValues = settings.GetAllProperties();
+      std::vector<std::u8string> noValues = settings.GetAllProperties();
       EXPECT_TRUE(noValues.empty());
 
-      std::vector<std::string> oneValue = settings.GetAllProperties(u8"SomeCategory");
+      std::vector<std::u8string> oneValue = settings.GetAllProperties(u8"SomeCategory");
       EXPECT_EQ(oneValue.size(), 1U);
     }
     RegistrySettingsStore::DeleteKey(u8"HKCU/UnitTesting/Nuclex.Support.Native");
@@ -381,17 +381,17 @@ namespace Nuclex { namespace Support { namespace Settings {
       bool wasEmptyDeleted = settings.DeleteCategory(u8"SomeCategory");
       EXPECT_FALSE(wasEmptyDeleted);
 
-      settings.Store<bool>(std::string(), u8"A", true);
+      settings.Store<bool>(std::u8string(), u8"A", true);
       settings.Store<bool>(u8"SomeCategory", u8"B", false);
       settings.Store<bool>(u8"SomeCategory", u8"C", true);
 
       bool wasDeleted = settings.DeleteCategory(u8"SomeCategory");
       EXPECT_TRUE(wasDeleted);
 
-      std::vector<std::string> oneValue = settings.GetAllProperties();
+      std::vector<std::u8string> oneValue = settings.GetAllProperties();
       EXPECT_EQ(oneValue.size(), 1U);
 
-      std::vector<std::string> noValues = settings.GetAllProperties(u8"SomeCategory");
+      std::vector<std::u8string> noValues = settings.GetAllProperties(u8"SomeCategory");
       EXPECT_TRUE(noValues.empty());
     }
     RegistrySettingsStore::DeleteKey(u8"HKCU/UnitTesting/Nuclex.Support.Native");
@@ -403,21 +403,21 @@ namespace Nuclex { namespace Support { namespace Settings {
     {
       RegistrySettingsStore settings(u8"HKCU/UnitTesting/Nuclex.Support.Native/DeleteValueTest");
 
-      bool wasDeleted = settings.DeleteProperty(std::string(), u8"DoesntExist");
+      bool wasDeleted = settings.DeleteProperty(std::u8string(), u8"DoesntExist");
       EXPECT_FALSE(wasDeleted);
       wasDeleted = settings.DeleteProperty(u8"SomeCategory", u8"DoesntExist");
       EXPECT_FALSE(wasDeleted);
 
-      settings.Store<bool>(std::string(), u8"A", true);
-      settings.Store<bool>(std::string(), u8"B", false);
+      settings.Store<bool>(std::u8string(), u8"A", true);
+      settings.Store<bool>(std::u8string(), u8"B", false);
       settings.Store<bool>(u8"SomeCategory", u8"C", true);
       settings.Store<bool>(u8"SomeCategory", u8"D", false);
 
-      std::vector<std::string> twoValues = settings.GetAllProperties();
+      std::vector<std::u8string> twoValues = settings.GetAllProperties();
       EXPECT_EQ(twoValues.size(), 2U);
-      wasDeleted = settings.DeleteProperty(std::string(), u8"A");
+      wasDeleted = settings.DeleteProperty(std::u8string(), u8"A");
       EXPECT_TRUE(wasDeleted);
-      std::vector<std::string> oneValue = settings.GetAllProperties();
+      std::vector<std::u8string> oneValue = settings.GetAllProperties();
       EXPECT_EQ(oneValue.size(), 1U);
 
       twoValues = settings.GetAllProperties(u8"SomeCategory");

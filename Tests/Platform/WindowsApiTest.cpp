@@ -32,7 +32,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   TEST(WindowsApiTest, CanGetPosixErrorMessage) {
     int errorNumber = EACCES;
-    std::string errorMessage = WindowsApi::GetErrorMessage(errorNumber);
+    std::u8string errorMessage = WindowsApi::GetErrorMessage(errorNumber);
     EXPECT_GT(errorMessage.length(), 10); // We can expect 10 letters at least, eh?
   }
 
@@ -40,7 +40,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   TEST(WindowsApiTest, CanGetWindowsErrorMessage) {
     DWORD errorCode = ERROR_OUTOFMEMORY;
-    std::string errorMessage = WindowsApi::GetErrorMessage(errorCode);
+    std::u8string errorMessage = WindowsApi::GetErrorMessage(errorCode);
     EXPECT_GT(errorMessage.length(), 10);
   }
 
@@ -48,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   TEST(WindowsApiTest, CanGetComErrorMessage) {
     HRESULT resultHandle = E_NOINTERFACE;
-    std::string errorMessage = WindowsApi::GetErrorMessage(resultHandle);
+    std::u8string errorMessage = WindowsApi::GetErrorMessage(resultHandle);
     EXPECT_GT(errorMessage.length(), 10);
   }
 
