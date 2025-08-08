@@ -27,6 +27,7 @@ limitations under the License.
 #include "Nuclex/Support/Threading/Latch.h"
 #include "Nuclex/Support/Threading/StopToken.h"
 #include "Nuclex/Support/Threading/ThreadPool.h"
+#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
 
 #include <gtest/gtest.h>
 
@@ -75,15 +76,17 @@ namespace {
       }
 
       // If we're supposed to simulate a failure, do so
-      if(this->ThrowException.load(std::memory_order::memory_order_acquire)) {
-        throw std::length_error(u8"Dummy error");
+      if(this->ThrowException.load(std::memory_order::acquire)) {
+        throw std::length_error(
+          Nuclex::Support::Text::StringConverter::CharFromUtf8(u8"Dummy error")
+        );
       }
 
       // Wait 3 times 250 microseconds to avoid a race condition for when the unit test
       // wishes to test canceling a job while it is already running
       for(std::size_t index = 0; index < 10; ++index) {
         if(canceler->IsCanceled()) {
-          this->WasCanceled.store(true, std::memory_order::memory_order_release);
+          this->WasCanceled.store(true, std::memory_order::release);
           break;
         }
         this->WaitLatch.WaitFor(std::chrono::microseconds(2500));
@@ -133,8 +136,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     test.Start();
     test.Join();
     
-    EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
-    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+    EXPECT_EQ(test.RunCount.load(std::memory_order::acquire), 1U);
+    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::acquire));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -144,8 +147,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     test.Start();
     test.Wait();
     
-    EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
-    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+    EXPECT_EQ(test.RunCount.load(std::memory_order::acquire), 1U);
+    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::acquire));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -162,8 +165,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     // If this fails with wasRunning==false, RunCount==0, then the background job didn't
     // start within the 25 milliseconds given for it to launch.
     EXPECT_TRUE(wasRunning);
-    EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
-    EXPECT_TRUE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+    EXPECT_EQ(test.RunCount.load(std::memory_order::acquire), 1U);
+    EXPECT_TRUE(test.WasCanceled.load(std::memory_order::acquire));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -181,8 +184,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     // If this fails with wasRunning==false, RunCount==0, then the background job didn't
     // start within the 25 milliseconds given for it to launch.
     EXPECT_TRUE(wasRunning);
-    EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 2U);
-    EXPECT_TRUE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+    EXPECT_EQ(test.RunCount.load(std::memory_order::acquire), 2U);
+    EXPECT_TRUE(test.WasCanceled.load(std::memory_order::acquire));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -200,15 +203,15 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     // If this fails with wasRunning==false, RunCount==0, then the background job didn't
     // start within the 25 milliseconds given for it to launch.
-    EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
-    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+    EXPECT_EQ(test.RunCount.load(std::memory_order::acquire), 1U);
+    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::acquire));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(ConcurrentJobTest, ExceptionsAreRethrownInJoin) {
     ExampleJob test;
-    test.ThrowException.store(true, std::memory_order::memory_order_release);
+    test.ThrowException.store(true, std::memory_order::release);
 
     test.Start();
     EXPECT_THROW(
@@ -216,8 +219,8 @@ namespace Nuclex { namespace Support { namespace Threading {
       std::length_error
     );
 
-    EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
-    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+    EXPECT_EQ(test.RunCount.load(std::memory_order::acquire), 1U);
+    EXPECT_FALSE(test.WasCanceled.load(std::memory_order::acquire));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -226,7 +229,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     ThreadPool threadPool(1, 2);
     {
       ExampleJob test(threadPool);
-      test.ThrowException.store(true, std::memory_order::memory_order_release);
+      test.ThrowException.store(true, std::memory_order::release);
 
       test.Start();
       EXPECT_THROW(
@@ -234,8 +237,8 @@ namespace Nuclex { namespace Support { namespace Threading {
         std::length_error
       );
 
-      EXPECT_EQ(test.RunCount.load(std::memory_order::memory_order_acquire), 1U);
-      EXPECT_FALSE(test.WasCanceled.load(std::memory_order::memory_order_acquire));
+      EXPECT_EQ(test.RunCount.load(std::memory_order::acquire), 1U);
+      EXPECT_FALSE(test.WasCanceled.load(std::memory_order::acquire));
     }
   }
 

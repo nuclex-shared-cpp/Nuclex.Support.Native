@@ -58,12 +58,14 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(StopSourceTest, ExceptionMessageCanBeProvided) {
+    static const std::u8string cancelMessage(u8"This is my custom cancellation message");
+
     std::shared_ptr<StopSource> source = StopSource::Create();
 
     std::shared_ptr<const StopToken> token = source->GetToken();
     EXPECT_FALSE(token->IsCanceled());
 
-    source->Cancel(u8"This is my custom cancellation message");
+    source->Cancel(cancelMessage);
     EXPECT_TRUE(token->IsCanceled());
 
     bool exceptionThrown = false;
@@ -72,7 +74,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     }
     catch(const std::future_error &error) {
       exceptionThrown = true;
-      EXPECT_STREQ(error.what(), u8"This is my custom cancellation message");
+      std::string expected(cancelMessage.begin(), cancelMessage.end());
+      EXPECT_EQ(std::string(error.what()), expected);
     }
     EXPECT_TRUE(exceptionThrown);
   }

@@ -196,7 +196,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     Process test(u8"cmd.exe");
     test.StdOut.Subscribe<Observer, &Observer::AcceptStdOut>(&observer);
-    test.Start({ u8"/c", "dir", "/b" });
+    test.Start({ u8"/c", u8"dir", u8"/b" });
 #else
     Process test(u8"ls");
     test.StdOut.Subscribe<Observer, &Observer::AcceptStdOut>(&observer);
@@ -214,11 +214,12 @@ namespace Nuclex { namespace Support { namespace Threading {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(ProcessTest, ProvidesPathOfRunningExecutable) {
-    std::string executableDirectory = Process::GetExecutableDirectory();
+    std::filesystem::path executableDirectory = Process::GetExecutableDirectory();
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring executablePathUtf16 = Text::StringConverter::WideFromUtf8(
-      executableDirectory + std::string(u8"Nuclex.Support.Native.Tests.exe")
+    std::wstring executablePathUtf16 = (
+      executableDirectory.wstring() +
+      Text::StringConverter::WideFromUtf8(u8"Nuclex.Support.Native.Tests.exe")
     );
 
     ::WIN32_FILE_ATTRIBUTE_DATA fileInformation;
@@ -228,12 +229,13 @@ namespace Nuclex { namespace Support { namespace Threading {
     ASSERT_NE(result, FALSE);
     EXPECT_GE(fileInformation.nFileSizeLow, 10000U); // We should be more than 10000 bytes long
 #else
-    std::string executablePath = (
-      executableDirectory + std::string(u8"NuclexSupportNativeTests")
+    std::u8string executablePath = (
+      executableDirectory.u8string() + std::u8string(u8"NuclexSupportNativeTests")
     );
 
+    std::string executablePathChars(executablePath.begin(), executablePath.end());
     struct ::stat fileStatus;
-    int result = ::stat(executablePath.c_str(), &fileStatus);
+    int result = ::stat(executablePathChars.c_str(), &fileStatus);
     ASSERT_EQ(result, 0);
     EXPECT_GE(fileStatus.st_size, 10000); // We should be more than 10000 bytes long
 #endif

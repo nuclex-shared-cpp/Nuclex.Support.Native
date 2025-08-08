@@ -401,7 +401,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   TEST(LexicalCastTest, DoubleToStringOutputCanBeLong) {
     const double PI = 3.14159265358979323846264338327950288419716939937510582097494459230781640628;
-    std::u8string text = lexical_cast<std::string>(PI);
+    std::u8string text = lexical_cast<std::u8string>(PI);
 
     // Why this number and this many decimals? Floating point numbers can only represent
     // certain values exactly (specifically binary fractions, i.e. 1/1024 or 5/4096 but not

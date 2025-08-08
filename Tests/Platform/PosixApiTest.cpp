@@ -32,7 +32,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   TEST(PosixApiTest, CanGetErrorMessage) {
     int errorNumber = EACCES;
-    std::string errorMessage = PosixApi::GetErrorMessage(errorNumber);
+    std::u8string errorMessage = PosixApi::GetErrorMessage(errorNumber);
     EXPECT_GT(errorMessage.length(), 10U); // We can expect 10 letters at least, eh?
   }
 

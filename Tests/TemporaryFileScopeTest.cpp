@@ -47,7 +47,7 @@ namespace Nuclex { namespace Support {
     TemporaryFileScope scope(u8"tst");
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(scope.GetPath());
+    std::wstring utf16Path = scope.GetPath().wstring();
     DWORD attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_NE(attributes, INVALID_FILE_ATTRIBUTES);
 #else
@@ -59,14 +59,14 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(TemporaryFileScopeTest, TemporaryFileIsDeletedOnDestruction) {
-    std::string path;
+    std::filesystem::path path;
     {
       TemporaryFileScope scope(u8"tst");
       path = scope.GetPath();
     }
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(path);
+    std::wstring utf16Path = path.wstring();
     DWORD attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_EQ(attributes, INVALID_FILE_ATTRIBUTES);
 #else
@@ -80,10 +80,10 @@ namespace Nuclex { namespace Support {
   TEST(TemporaryFileScopeTest, CanWriteStringToTemporaryFile) {
     TemporaryFileScope scope(u8"tst");
 
-    scope.SetFileContents(std::string(u8"Hello World"));
+    scope.SetFileContents(std::u8string(u8"Hello World"));
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(scope.GetPath());
+    std::wstring utf16Path = scope.GetPath().wstring();
     ::WIN32_FILE_ATTRIBUTE_DATA fileInformation;
     BOOL result = GetFileAttributesExW(
       utf16Path.c_str(), GetFileExInfoStandard, &fileInformation
@@ -113,7 +113,7 @@ namespace Nuclex { namespace Support {
     scope.SetFileContents(contents);
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(scope.GetPath());
+    std::wstring utf16Path = scope.GetPath().wstring();
     ::WIN32_FILE_ATTRIBUTE_DATA fileInformation;
     BOOL result = GetFileAttributesExW(
       utf16Path.c_str(), GetFileExInfoStandard, &fileInformation
@@ -133,14 +133,17 @@ namespace Nuclex { namespace Support {
   TEST(TemporaryFileScopeTest, WritingTwiceCanTruncateTemporaryFile) {
     TemporaryFileScope scope(u8"tst");
 
-    scope.SetFileContents(std::string(u8"This is a long string that's written to the file"));
-    scope.SetFileContents(std::string(u8"This one is short"));
+    scope.SetFileContents(std::u8string(u8"This is a long string that's written to the file"));
+    scope.SetFileContents(std::u8string(u8"This one is short"));
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    struct ::stat fileStatus;
-    int result = ::stat(scope.GetPath().c_str(), &fileStatus);
-    ASSERT_EQ(result, 0);
-    EXPECT_EQ(fileStatus.st_size, 17);
+    std::wstring utf16Path = scope.GetPath().wstring();
+    ::WIN32_FILE_ATTRIBUTE_DATA fileInformation;
+    BOOL result = GetFileAttributesExW(
+      utf16Path.c_str(), GetFileExInfoStandard, &fileInformation
+    );
+    ASSERT_NE(result, FALSE);
+    EXPECT_EQ(fileInformation.nFileSizeLow, 17U);
 #else
     struct ::stat fileStatus;
     int result = ::stat(scope.GetPath().c_str(), &fileStatus);

@@ -33,6 +33,32 @@ limitations under the License.
 #include <sys/types.h> // for S_ISDIR
 #endif
 
+namespace {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Removes the final character from a path if it is a directory separator</summary>
+  /// <param name="pathString">
+  ///   Path string from which a trailing directory separator will be removed
+  /// </param>
+  void removeTrailingDirectorySeparator(std::u8string &pathString) {
+    std::u8string::size_type length = pathString.length();
+    if(0 < length) {
+      char8_t lastCharacter = pathString[length -1];
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+      if((lastCharacter == '/') || (lastCharacter == '\\')) {
+#else
+      if(lastCharacter == '/') {
+#endif
+        pathString.erase(pathString.begin() + (length - 1));
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // anonymous namespace
+
 namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
@@ -48,28 +74,20 @@ namespace Nuclex { namespace Support {
   TEST(TemporaryDirectoryScopeTest, CreatesTemporaryDirectory) {
     TemporaryDirectoryScope scope(u8"tst");
 
-#if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::string path = scope.GetPath();
-    if(path.length() > 0) {
-      char current = path[path.length() - 1];
-      if((current == '/') || (current == '\\')) {
-        path.erase(path.begin() + (path.length() - 1));
-      }
-    }
+    std::filesystem::path path = scope.GetPath();
+    ASSERT_FALSE(path.empty());
 
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(path);
+    std::u8string pathString = path.u8string();
+    removeTrailingDirectorySeparator(pathString);
+
+#if defined(NUCLEX_SUPPORT_WINDOWS)
+    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(pathString);
     DWORD attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_NE(attributes, INVALID_FILE_ATTRIBUTES);
 #else
-    std::string path = scope.GetPath();
-    if(path.length() > 0) {
-      if(path[path.length() - 1] == '/') {
-        path.erase(path.begin() + (path.length() - 1));
-      }
-    }
-
+    std::string pathStringChars(pathString.begin(), pathString.end());
     struct ::stat fileStatus;
-    int result = ::stat(path.c_str(), &fileStatus);
+    int result = ::stat(pathStringChars.c_str(), &fileStatus);
     ASSERT_EQ(result, 0);
     EXPECT_TRUE(S_ISDIR(fileStatus.st_mode));
 #endif
@@ -78,32 +96,23 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(TemporaryDirectoryScopeTest, TemporaryFileIsDeletedOnDestruction) {
-    std::string path;
+    std::filesystem::path path;
     {
       TemporaryDirectoryScope scope(u8"tst");
-
       path = scope.GetPath();
-      if(path.length() > 0) {
-#if defined(NUCLEX_SUPPORT_WINDOWS)
-        char current = path[path.length() - 1];
-        if((current == '/') || (current == '\\')) {
-          path.erase(path.begin() + (path.length() - 1));
-        }
-#else
-        if(path[path.length() - 1] == '/') {
-          path.erase(path.begin() + (path.length() - 1));
-        }
-#endif
-      }
     }
 
+    std::u8string pathString = path.u8string();
+    removeTrailingDirectorySeparator(pathString);
+
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(path);
+    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(pathString);
     DWORD attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_EQ(attributes, INVALID_FILE_ATTRIBUTES);
 #else
+    std::string pathStringChars(pathString.begin(), pathString.end());
     struct ::stat fileStatus;
-    int result = ::stat(path.c_str(), &fileStatus);
+    int result = ::stat(pathStringChars.c_str(), &fileStatus);
     EXPECT_LT(result, 0); // the directory should not exist anymore in any form
 #endif
   }
@@ -113,21 +122,27 @@ namespace Nuclex { namespace Support {
   TEST(TemporaryDirectoryScopeTest, CanCreateFilesFromStrings) {
     TemporaryDirectoryScope scope(u8"tst");
 
-    std::string firstFilePath = scope.PlaceFile(u8"first", std::string(u8"First file."));
-    std::string secondFilePath = scope.PlaceFile(u8"second", std::string(u8"Second file."));
+    std::filesystem::path firstFilePath = scope.PlaceFile(
+      u8"first", std::u8string(u8"First file.")
+    );
+    std::filesystem::path secondFilePath = scope.PlaceFile(
+      u8"second", std::u8string(u8"Second file.")
+    );
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(firstFilePath);
+    std::wstring utf16Path = firstFilePath.wstring();
     DWORD attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_NE(attributes, INVALID_FILE_ATTRIBUTES);
 
-    utf16Path = Text::StringConverter::WideFromUtf8(secondFilePath);
+    utf16Path = secondFilePath.wstring();
     attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_NE(attributes, INVALID_FILE_ATTRIBUTES);
 #else
-    int result = ::access(firstFilePath.c_str(), R_OK);
+    std::string firstFilePathChars(firstFilePath.begin(), firstFilePath.end());
+    int result = ::access(firstFilePathChars.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 
+    std::string secondFilePathChars(secondFilePath.begin(), secondFilePath.end());
     result = ::access(secondFilePath.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 #endif
@@ -151,22 +166,24 @@ namespace Nuclex { namespace Support {
       static_cast<std::byte>(0x2), static_cast<std::byte>(0x1)
     };
 
-    std::string firstFilePath = scope.PlaceFile(u8"first", firstContents);
-    std::string secondFilePath = scope.PlaceFile(u8"second", secondContents);
+    std::filesystem::path firstFilePath = scope.PlaceFile(u8"first", firstContents);
+    std::filesystem::path secondFilePath = scope.PlaceFile(u8"second", secondContents);
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(firstFilePath);
+    std::wstring utf16Path = firstFilePath.wstring();
     DWORD attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_NE(attributes, INVALID_FILE_ATTRIBUTES);
 
-    utf16Path = Text::StringConverter::WideFromUtf8(secondFilePath);
+    utf16Path = secondFilePath.wstring();
     attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_NE(attributes, INVALID_FILE_ATTRIBUTES);
 #else
-    int result = ::access(firstFilePath.c_str(), R_OK);
+    std::string firstFilePathChars(firstFilePath.begin(), firstFilePath.end());
+    int result = ::access(firstFilePathChars.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 
-    result = ::access(secondFilePath.c_str(), R_OK);
+    std::string secondFilePathChars(secondFilePath.begin(), secondFilePath.end());
+    result = ::access(secondFilePathChars.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 #endif
   }
@@ -176,15 +193,15 @@ namespace Nuclex { namespace Support {
   TEST(TemporaryDirectoryScopeTest, CanReadFilesIntoStrings) {
     TemporaryDirectoryScope scope(u8"tst");
 
-    scope.PlaceFile(u8"first", std::string(u8"First file."));
-    scope.PlaceFile(u8"second", std::string(u8"Second file."));
+    scope.PlaceFile(u8"first", std::u8string(u8"First file."));
+    scope.PlaceFile(u8"second", std::u8string(u8"Second file."));
 
-    std::string contents1, contents2;
+    std::u8string contents1, contents2;
     scope.ReadFile(u8"second", contents2);
     scope.ReadFile(u8"first", contents1);
 
-    ASSERT_EQ(contents1, std::string(u8"First file."));
-    ASSERT_EQ(contents2, std::string(u8"Second file."));
+    ASSERT_EQ(contents1, std::u8string(u8"First file."));
+    ASSERT_EQ(contents2, std::u8string(u8"Second file."));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -209,20 +226,20 @@ namespace Nuclex { namespace Support {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(TemporaryDirectoryScopeTest, FilesGetDeletedWithTemporaryDirectory) {
-    std::string firstFilePath, secondFilePath;
+    std::filesystem::path firstFilePath, secondFilePath;
     {
       TemporaryDirectoryScope scope(u8"tst");
 
-      firstFilePath = scope.PlaceFile(u8"a.txt", std::string(u8"First file."));
-      secondFilePath = scope.PlaceFile(u8"b.txt", std::string(u8"Second file."));
+      firstFilePath = scope.PlaceFile(u8"a.txt", std::u8string(u8"First file."));
+      secondFilePath = scope.PlaceFile(u8"b.txt", std::u8string(u8"Second file."));
     }
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    std::wstring utf16Path = Text::StringConverter::WideFromUtf8(firstFilePath);
+    std::wstring utf16Path = firstFilePath.wstring();
     DWORD attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_EQ(attributes, INVALID_FILE_ATTRIBUTES);
 
-    utf16Path = Text::StringConverter::WideFromUtf8(secondFilePath);
+    utf16Path = secondFilePath.wstring();
     attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_EQ(attributes, INVALID_FILE_ATTRIBUTES);
 #else

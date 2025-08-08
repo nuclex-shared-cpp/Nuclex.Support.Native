@@ -34,15 +34,15 @@ namespace {
 
   /// <summary>Replaces the decimal point with its localized equivalent</summary>
   /// <param name="numberAsText">String containing an unlocalized decimal point</param>
-  void localizeDecimalPoint(std::string &numberAsText) {
-    char localizedDecimalPoint = u8','; // std::numpunct::decimal_point()
+  void localizeDecimalPoint(std::u8string &numberAsText) {
+    char8_t localizedDecimalPoint = u8','; // std::numpunct::decimal_point()
     std::string silly = std::to_string(1.2f);
     localizedDecimalPoint = silly[1];
 
-    std::string::size_type length = numberAsText.length();
-    for(std::string::size_type index = 0; index < length; ++index) {
+    std::u8string::size_type length = numberAsText.length();
+    for(std::u8string::size_type index = 0; index < length; ++index) {
       if(numberAsText[index] == u8'.') {
-        numberAsText[index] = localizedDecimalPoint;
+        numberAsText[index] = static_cast<char8_t>(localizedDecimalPoint);
       }
     }
   }
@@ -74,11 +74,12 @@ namespace Nuclex { namespace Support { namespace Text {
 
       std::string expected = std::to_string(number);
 
-      char buffer[40];
-      char *end = FormatInteger(buffer, number);
-      std::string actual(buffer, end);
+      char8_t buffer[40];
+      char8_t *end = FormatInteger(buffer, number);
+      std::u8string actual(buffer, end);
 
-      EXPECT_EQ(expected, actual);
+      std::u8string expectedUtf8(expected.begin(), expected.end());
+      EXPECT_EQ(expectedUtf8, actual);
     }
   }
 
@@ -94,11 +95,12 @@ namespace Nuclex { namespace Support { namespace Text {
     for(std::size_t index = 8; index < 13; ++index) {
       std::string expected = std::to_string(index);
 
-      char buffer[40];
-      char *end = FormatInteger(buffer, static_cast<std::uint32_t>(index));
-      std::string actual(buffer, end);
+      char8_t buffer[40];
+      char8_t *end = FormatInteger(buffer, static_cast<std::uint32_t>(index));
+      std::u8string actual(buffer, end);
 
-      EXPECT_EQ(expected, actual);
+      std::u8string expectedUtf8(expected.begin(), expected.end());
+      EXPECT_EQ(expectedUtf8, actual);
     }
 
     for(std::size_t index = 0; index < SampleCount; ++index) {
@@ -108,10 +110,11 @@ namespace Nuclex { namespace Support { namespace Text {
 
       std::string expected = std::to_string(number);
 
-      char buffer[40];
-      char *end = FormatInteger(buffer, number);
-      std::string actual(buffer, end);
+      char8_t buffer[40];
+      char8_t *end = FormatInteger(buffer, number);
+      std::u8string actual(buffer, end);
 
+      std::u8string expectedUtf8(expected.begin(), expected.end());
       EXPECT_EQ(expected, actual);
     }
   }
@@ -129,11 +132,12 @@ namespace Nuclex { namespace Support { namespace Text {
 
       std::string expected = std::to_string(number);
 
-      char buffer[40];
-      char *end = FormatInteger(buffer, number);
-      std::string actual(buffer, end);
+      char8_t buffer[40];
+      char8_t *end = FormatInteger(buffer, number);
+      std::u8string actual(buffer, end);
 
-      EXPECT_EQ(expected, actual);
+      std::u8string expectedUtf8(expected.begin(), expected.end());
+      EXPECT_EQ(expectedUtf8, actual);
     }
   }
 
@@ -153,11 +157,12 @@ namespace Nuclex { namespace Support { namespace Text {
 
       std::string expected = std::to_string(number);
 
-      char buffer[40];
-      char *end = FormatInteger(buffer, number);
-      std::string actual(buffer, end);
+      char8_t buffer[40];
+      char8_t *end = FormatInteger(buffer, number);
+      std::u8string actual(buffer, end);
 
-      EXPECT_EQ(expected, actual);
+      std::u8string expectedUtf8(expected.begin(), expected.end());
+      EXPECT_EQ(expectedUtf8, actual);
     }
   }
 
@@ -168,11 +173,12 @@ namespace Nuclex { namespace Support { namespace Text {
 
     std::string expected = std::to_string(lowestValue);
 
-    char buffer[40];
-    char *end = FormatInteger(buffer, lowestValue);
-    std::string actual(buffer, end);
+    char8_t buffer[40];
+    char8_t *end = FormatInteger(buffer, lowestValue);
+    std::u8string actual(buffer, end);
 
-    EXPECT_EQ(expected, actual);
+    std::u8string expectedUtf8(expected.begin(), expected.end());
+    EXPECT_EQ(expectedUtf8, actual);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -182,11 +188,12 @@ namespace Nuclex { namespace Support { namespace Text {
 
     std::string expected = std::to_string(lowestValue);
 
-    char buffer[40];
-    char *end = FormatInteger(buffer, lowestValue);
-    std::string actual(buffer, end);
+    char8_t buffer[40];
+    char8_t *end = FormatInteger(buffer, lowestValue);
+    std::u8string actual(buffer, end);
 
-    EXPECT_EQ(expected, actual);
+    std::u8string expectedUtf8(expected.begin(), expected.end());
+    EXPECT_EQ(expectedUtf8, actual);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -208,14 +215,16 @@ namespace Nuclex { namespace Support { namespace Text {
     };
 
     for(float number : numbers) {
-      char buffer[48];
+      char8_t buffer[48];
       std::memset(buffer, 0, 48);
 
-      char *end = FormatFloat(buffer, number);
-      std::string formatted(buffer, end);
+      char8_t *end = FormatFloat(buffer, number);
+      std::u8string formatted(buffer, end);
       localizeDecimalPoint(formatted);
 
-      float actual = std::strtof(formatted.c_str(), &end);
+      std::string formattedChars(formatted.begin(), formatted.end());
+      char *endChar = formattedChars.data() + (end - static_cast<char8_t *>(buffer));
+      float actual = std::strtof(formattedChars.data(), &endChar);
       float expected = number;
       EXPECT_FLOAT_EQ(actual, expected);
     }
@@ -240,14 +249,16 @@ namespace Nuclex { namespace Support { namespace Text {
     };
 
     for(double number : numbers) {
-      char buffer[325];
+      char8_t buffer[325];
       std::memset(buffer, 0, 325);
 
-      char *end = FormatFloat(buffer, number);
-      std::string formatted(buffer, end);
+      char8_t *end = FormatFloat(buffer, number);
+      std::u8string formatted(buffer, end);
       localizeDecimalPoint(formatted);
 
-      double actual = std::strtod(formatted.c_str(), &end);
+      std::string formattedChars(formatted.begin(), formatted.end());
+      char *endChar = formattedChars.data() + (end - static_cast<char8_t *>(buffer));
+      double actual = std::strtod(formattedChars.data(), &endChar);
       double expected = number;
       EXPECT_DOUBLE_EQ(actual, expected);
     }
@@ -262,12 +273,14 @@ namespace Nuclex { namespace Support { namespace Text {
     for(std::size_t index = 0; index < SampleCount; ++index) {
       float number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
 
-      char buffer[48];
-      char *end = FormatFloat(buffer, number);
-      std::string formatted(buffer, end);
+      char8_t buffer[48];
+      char8_t *end = FormatFloat(buffer, number);
+      std::u8string formatted(buffer, end);
       localizeDecimalPoint(formatted);
 
-      float actual = std::strtof(formatted.c_str(), &end);
+      std::string formattedChars(formatted.begin(), formatted.end());
+      char *endChar = formattedChars.data() + (end - static_cast<char8_t *>(buffer));
+      float actual = std::strtof(formattedChars.data(), &endChar);
       float expected = number;
       EXPECT_EQ(actual, expected);
     }
@@ -284,12 +297,14 @@ namespace Nuclex { namespace Support { namespace Text {
     for(std::size_t index = 0; index < SampleCount; ++index) {
       float number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
 
-      char buffer[48];
-      char *end = FormatFloat(buffer, number);
-      std::string formatted(buffer, end);
+      char8_t buffer[48];
+      char8_t *end = FormatFloat(buffer, number);
+      std::u8string formatted(buffer, end);
       localizeDecimalPoint(formatted);
 
-      float actual = std::strtof(formatted.c_str(), &end);
+      std::string formattedChars(formatted.begin(), formatted.end());
+      char *endChar = formattedChars.data() + (end - static_cast<char8_t *>(buffer));
+      float actual = std::strtof(formattedChars.data(), &endChar);
       float expected = number;
       EXPECT_FLOAT_EQ(actual, expected);
     }
@@ -304,12 +319,14 @@ namespace Nuclex { namespace Support { namespace Text {
     for(std::size_t index = 0; index < SampleCount; ++index) {
       double number = static_cast<double>(randomNumberDistribution(randomNumberGenerator));
 
-      char buffer[325];
-      char *end = FormatFloat(buffer, number);
-      std::string formatted(buffer, end);
+      char8_t buffer[325];
+      char8_t *end = FormatFloat(buffer, number);
+      std::u8string formatted(buffer, end);
       localizeDecimalPoint(formatted);
 
-      double actual = std::strtod(formatted.c_str(), &end);
+      std::string formattedChars(formatted.begin(), formatted.end());
+      char *endChar = formattedChars.data() + (end - static_cast<char8_t *>(buffer));
+      double actual = std::strtod(formattedChars.data(), &endChar);
       double expected = number;
       EXPECT_EQ(actual, expected);
     }
@@ -326,12 +343,14 @@ namespace Nuclex { namespace Support { namespace Text {
     for(std::size_t index = 0; index < SampleCount; ++index) {
       double number = static_cast<float>(randomNumberDistribution(randomNumberGenerator));
 
-      char buffer[325];
-      char *end = FormatFloat(buffer, number);
-      std::string formatted(buffer, end);
+      char8_t buffer[325];
+      char8_t *end = FormatFloat(buffer, number);
+      std::u8string formatted(buffer, end);
       localizeDecimalPoint(formatted);
 
-      double actual = std::strtod(formatted.c_str(), &end);
+      std::string formattedChars(formatted.begin(), formatted.end());
+      char *endChar = formattedChars.data() + (end - static_cast<char8_t *>(buffer));
+      double actual = std::strtod(formattedChars.data(), &endChar);
       double expected = number;
       EXPECT_DOUBLE_EQ(actual, expected);
     }

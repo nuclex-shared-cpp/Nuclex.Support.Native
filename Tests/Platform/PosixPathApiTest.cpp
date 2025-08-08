@@ -40,22 +40,22 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(PosixPathApiTest, CanAppendPath) {
-    std::string testPath = u8"/home";
+    std::u8string testPath = u8"/home";
 
     PosixPathApi::AppendPath(testPath, u8"nobody");
-    EXPECT_EQ(testPath, u8"/home/nobody");
+    EXPECT_EQ(testPath, std::u8string(u8"/home/nobody"));
 
-    testPath.push_back('/');
+    testPath.push_back(u8'/');
     PosixPathApi::AppendPath(testPath, u8".bashrc");
-    EXPECT_EQ(testPath, u8"/home/nobody/.bashrc");
+    EXPECT_EQ(testPath, std::u8string(u8"/home/nobody/.bashrc"));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(PosixPathApiTest, CanRemoveFilenameFromPath) {
-    std::string testPath = u8"/home/nobody/random-file";
+    std::u8string testPath = u8"/home/nobody/random-file";
     PosixPathApi::RemoveFileFromPath(testPath);
-    EXPECT_EQ(testPath, u8"/home/nobody/");
+    EXPECT_EQ(testPath, std::u8string(u8"/home/nobody/"));
   }
 
   // ------------------------------------------------------------------------------------------- //

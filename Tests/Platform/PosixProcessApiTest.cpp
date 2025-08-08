@@ -33,47 +33,51 @@ namespace Nuclex { namespace Support { namespace Platform {
   // ------------------------------------------------------------------------------------------- //
 
   TEST(PosixProcessApiTest, ExecutableIsResolvedInUsrBinDirectory) {
-    std::string path;
+    std::filesystem::path path;
     PosixProcessApi::GetAbsoluteExecutablePath(path, u8"ls");
 
-    EXPECT_GT(path.length(), 5U); // shortest possible valid path
+    std::u8string pathString = path.u8string();
+    EXPECT_GT(pathString.length(), 5U); // shortest possible valid path
     EXPECT_TRUE(PosixPathApi::DoesFileExist(path));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(PosixProcessApiTest, ExecutableIsResolvedInOwnDirectory) {
-    std::string path;
+    std::filesystem::path path;
     PosixProcessApi::GetAbsoluteExecutablePath(path, u8"NuclexSupportNativeTests");
 
-    EXPECT_GT(path.length(), 26U); // shortest possible valid path
+    std::u8string pathString = path.u8string();
+    EXPECT_GT(pathString.length(), 26U); // shortest possible valid path
     EXPECT_TRUE(PosixPathApi::DoesFileExist(path));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   TEST(PosixProcessApiTest, RelativeWorkingDirectoryStartsInOwnDirectory) {
-    std::string path;
+    std::filesystem::path path;
     PosixProcessApi::GetAbsoluteExecutablePath(path, u8"NuclexSupportNativeTests");
 
-    std::string directory;
+    std::filesystem::path directory;
     PosixProcessApi::GetAbsoluteWorkingDirectory(directory, u8".");
 
     // The directory may end with a /. since we specified '.' as the target.
     // This isn't required, so we accept both variants. In case the dot is returned,
     // remove it so the path can be compared against the executable path.
-    if(directory.length() >= 2) {
-      if(directory[directory.length() - 1] == '.') {
-        if(directory[directory.length() - 2] == '/') {
-          directory.resize(directory.length() - 2);
+    std::u8string directoryString = directory.u8string();
+    if(directoryString.length() >= 2) {
+      if(directoryString[directoryString.length() - 1] == '.') {
+        if(directoryString[directoryString.length() - 2] == '/') {
+          directoryString.resize(directoryString.length() - 2);
         } else {
-          directory.resize(directory.length() - 1);
+          directoryString.resize(directoryString.length() - 1);
         }
       }
     }
 
-    EXPECT_GT(directory.length(), 2U); // shortest possible valid path
-    EXPECT_NE(path.find(directory), std::string::npos);
+    EXPECT_GT(directoryString.length(), 2U); // shortest possible valid path
+    std::u8string pathString = path.u8string();
+    EXPECT_NE(pathString.find(directoryString), std::string::npos);
   }
 
   // ------------------------------------------------------------------------------------------- //

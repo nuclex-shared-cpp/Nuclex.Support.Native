@@ -223,17 +223,17 @@ namespace Nuclex { namespace Support { namespace Settings {
       sizeof(ExampleIniFile) - 1
     );
 
-    std::optional<std::string> simpleString = settings.Retrieve<std::string>(
+    std::optional<std::u8string> simpleString = settings.Retrieve<std::u8string>(
       u8"Strings", u8"Simple"
     );
     ASSERT_TRUE(simpleString.has_value());
-    EXPECT_EQ(simpleString.value(), u8"Hello");
+    EXPECT_EQ(simpleString.value(), std::u8string(u8"Hello"));
 
-    std::optional<std::string> quotedString = settings.Retrieve<std::string>(
+    std::optional<std::u8string> quotedString = settings.Retrieve<std::u8string>(
       u8"Strings", u8"Quoted"
     );
     ASSERT_TRUE(quotedString.has_value());
-    EXPECT_EQ(quotedString.value(), u8"World");
+    EXPECT_EQ(quotedString.value(), std::u8string(u8"World"));
   }
 
   // ------------------------------------------------------------------------------------------- //
