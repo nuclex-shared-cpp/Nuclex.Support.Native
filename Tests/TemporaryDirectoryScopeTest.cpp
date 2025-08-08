@@ -138,12 +138,14 @@ namespace Nuclex { namespace Support {
     attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_NE(attributes, INVALID_FILE_ATTRIBUTES);
 #else
-    std::string firstFilePathChars(firstFilePath.begin(), firstFilePath.end());
+    std::u8string firstFilePathString = firstFilePath.u8string();
+    std::string firstFilePathChars(firstFilePathString.begin(), firstFilePathString.end());
     int result = ::access(firstFilePathChars.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 
-    std::string secondFilePathChars(secondFilePath.begin(), secondFilePath.end());
-    result = ::access(secondFilePath.c_str(), R_OK);
+    std::u8string secondFilePathString = secondFilePath.u8string();
+    std::string secondFilePathChars(secondFilePathString.begin(), secondFilePathString.end());
+    result = ::access(secondFilePathChars.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 #endif
   }
@@ -178,11 +180,13 @@ namespace Nuclex { namespace Support {
     attributes = ::GetFileAttributesW(utf16Path.c_str());
     EXPECT_NE(attributes, INVALID_FILE_ATTRIBUTES);
 #else
-    std::string firstFilePathChars(firstFilePath.begin(), firstFilePath.end());
+    std::u8string firstFilePathString = firstFilePath.u8string();
+    std::string firstFilePathChars(firstFilePathString.begin(), firstFilePathString.end());
     int result = ::access(firstFilePathChars.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 
-    std::string secondFilePathChars(secondFilePath.begin(), secondFilePath.end());
+    std::u8string secondFilePathString = secondFilePath.u8string();
+    std::string secondFilePathChars(secondFilePathString.begin(), secondFilePathString.end());
     result = ::access(secondFilePathChars.c_str(), R_OK);
     EXPECT_EQ(result, 0);
 #endif

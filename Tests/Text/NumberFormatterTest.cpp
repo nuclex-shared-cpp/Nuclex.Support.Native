@@ -115,7 +115,7 @@ namespace Nuclex { namespace Support { namespace Text {
       std::u8string actual(buffer, end);
 
       std::u8string expectedUtf8(expected.begin(), expected.end());
-      EXPECT_EQ(expected, actual);
+      EXPECT_EQ(expectedUtf8, actual);
     }
   }
 
