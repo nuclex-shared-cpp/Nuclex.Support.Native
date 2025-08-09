@@ -80,26 +80,26 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</OutDir>
-    <IntDir>obj\windows-msvc14.2-$(SanePlatform)-$(Configuration)-benchmark\</IntDir>
+    <OutDir>bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</OutDir>
+    <IntDir>obj\windows-msvc14.3-$(SanePlatform)-$(Configuration)-benchmark\</IntDir>
     <TargetName>Nuclex.Support.Native.Benchmark</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</OutDir>
-    <IntDir>obj\windows-msvc14.2-$(SanePlatform)-$(Configuration)-benchmark\</IntDir>
+    <OutDir>bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</OutDir>
+    <IntDir>obj\windows-msvc14.3-$(SanePlatform)-$(Configuration)-benchmark\</IntDir>
     <TargetName>Nuclex.Support.Native.Benchmark</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</OutDir>
-    <IntDir>obj\windows-msvc14.2-$(SanePlatform)-$(Configuration)-benchmark\</IntDir>
+    <OutDir>bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</OutDir>
+    <IntDir>obj\windows-msvc14.3-$(SanePlatform)-$(Configuration)-benchmark\</IntDir>
     <TargetName>Nuclex.Support.Native.Benchmark</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</OutDir>
-    <IntDir>obj\windows-msvc14.2-$(SanePlatform)-$(Configuration)-benchmark\</IntDir>
+    <OutDir>bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</OutDir>
+    <IntDir>obj\windows-msvc14.3-$(SanePlatform)-$(Configuration)-benchmark\</IntDir>
     <TargetName>Nuclex.Support.Native.Benchmark</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

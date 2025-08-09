@@ -80,26 +80,26 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</OutDir>
-    <IntDir>obj\windows-msvc14.2-$(SanePlatform)-$(Configuration)-tests\</IntDir>
+    <OutDir>bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</OutDir>
+    <IntDir>obj\windows-msvc14.3-$(SanePlatform)-$(Configuration)-tests\</IntDir>
     <TargetName>Nuclex.Support.Native.Tests</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</OutDir>
-    <IntDir>obj\windows-msvc14.2-$(SanePlatform)-$(Configuration)-tests\</IntDir>
+    <OutDir>bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</OutDir>
+    <IntDir>obj\windows-msvc14.3-$(SanePlatform)-$(Configuration)-tests\</IntDir>
     <TargetName>Nuclex.Support.Native.Tests</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</OutDir>
-    <IntDir>obj\windows-msvc14.2-$(SanePlatform)-$(Configuration)-tests\</IntDir>
+    <OutDir>bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</OutDir>
+    <IntDir>obj\windows-msvc14.3-$(SanePlatform)-$(Configuration)-tests\</IntDir>
     <TargetName>Nuclex.Support.Native.Tests</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</OutDir>
-    <IntDir>obj\windows-msvc14.2-$(SanePlatform)-$(Configuration)-tests\</IntDir>
+    <OutDir>bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</OutDir>
+    <IntDir>obj\windows-msvc14.3-$(SanePlatform)-$(Configuration)-tests\</IntDir>
     <TargetName>Nuclex.Support.Native.Tests</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -118,7 +118,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>gtest.lib;gtest_main.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -137,7 +137,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>gtest.lib;gtest_main.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -164,7 +164,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>gtest.lib;gtest_main.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
@@ -191,7 +191,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>gtest.lib;gtest_main.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.2-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>

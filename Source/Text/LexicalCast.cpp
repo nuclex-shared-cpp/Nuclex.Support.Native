@@ -126,6 +126,51 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Causes undefined behavior or converts a string to a 64-bit long</summary>
+  /// <param name="start">
+  ///   Address of the first character of the null-terminated string that will be parsed
+  /// </param>
+  /// <returns>The unsigned long integer value parsed out of the string</returns>
+  inline unsigned long long u8strtoull(const char8_t *start) {
+    return std::strtoull(
+      reinterpret_cast<const char *>(start),
+      nullptr, // end pointer
+      10 // numeric base
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Causes undefined behavior or converts a string to a long</summary>
+  /// <param name="start">
+  ///   Address of the first character of the null-terminated string that will be parsed
+  /// </param>
+  /// <returns>The unsigned long integer value parsed out of the string</returns>
+  inline unsigned long u8strtol(const char8_t *start) {
+    return std::strtol(
+      reinterpret_cast<const char *>(start),
+      nullptr, // end pointer
+      10 // numeric base
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Causes undefined behavior or converts a string to a 64-bit long</summary>
+  /// <param name="start">
+  ///   Address of the first character of the null-terminated string that will be parsed
+  /// </param>
+  /// <returns>The unsigned long integer value parsed out of the string</returns>
+  inline unsigned long long u8strtoll(const char8_t *start) {
+    return std::strtoll(
+      reinterpret_cast<const char *>(start),
+      nullptr, // end pointer
+      10 // numeric base
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 }
 
 namespace Nuclex { namespace Support { namespace Text {
@@ -206,14 +251,14 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::int8_t>(u8strtoul(from));
+      return static_cast<std::int8_t>(u8strtol(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int8_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::int8_t>(u8strtoul(from.c_str()));
+    return static_cast<std::int8_t>(u8strtol(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -254,14 +299,14 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::int16_t>(u8strtoul(from));
+      return static_cast<std::int16_t>(u8strtol(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int16_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::int16_t>(u8strtoul(from.c_str()));
+    return static_cast<std::int16_t>(u8strtol(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -302,14 +347,14 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::int32_t>(u8strtoul(from));
+      return static_cast<std::int32_t>(u8strtol(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int32_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::int32_t>(u8strtoul(from.c_str()));
+    return static_cast<std::int32_t>(u8strtol(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -326,14 +371,14 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0ULL;
     } else {
-      return static_cast<std::uint64_t>(u8strtoul(from));
+      return static_cast<std::uint64_t>(u8strtoull(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint64_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::uint64_t>(u8strtoul(from.c_str()));
+    return static_cast<std::uint64_t>(u8strtoull(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -350,14 +395,14 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0LL;
     } else {
-      return static_cast<std::int64_t>(u8strtoul(from));
+      return static_cast<std::int64_t>(u8strtoll(from));
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int64_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::int64_t>(u8strtoul(from.c_str()));
+    return static_cast<std::int64_t>(u8strtoll(from.c_str()));
   }
 
   // ------------------------------------------------------------------------------------------- //
