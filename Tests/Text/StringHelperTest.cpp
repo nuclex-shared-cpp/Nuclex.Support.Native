@@ -109,7 +109,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
     std::u8string expected2(u8"", 0);
     StringHelper::CollapseDuplicateWhitespace(test2, true);
-    ASSERT_EQ(test2, expected);
+    ASSERT_EQ(test2, expected2);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -124,7 +124,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
     std::u8string expected2(u8"", 0);
     StringHelper::CollapseDuplicateWhitespace(test2, true);
-    ASSERT_EQ(test2, expected);
+    ASSERT_EQ(test2, expected2);
   }
 
   // ------------------------------------------------------------------------------------------- //

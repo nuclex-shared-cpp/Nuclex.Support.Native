@@ -52,7 +52,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     public: NUCLEX_SUPPORT_API inline bool IsCanceled() const;
 
     /// <summary>Throws an exception if a cancellation has occured</summary>
-    public: NUCLEX_SUPPORT_API inline void ThrowIfCanceled() const;
+    public: NUCLEX_SUPPORT_API void ThrowIfCanceled() const;
 
     // ----------------------------------------------------------------------------------------- //
 
@@ -94,15 +94,6 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   inline bool StopToken::IsCanceled() const {
     return this->Canceled.load(std::memory_order::relaxed);
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  inline void StopToken::ThrowIfCanceled() const {
-    if(IsCanceled()) {
-      std::atomic_thread_fence(std::memory_order::acquire);
-      throw Nuclex::Support::Errors::CanceledError(this->CancellationReason);
-    }
   }
 
   // ------------------------------------------------------------------------------------------- //

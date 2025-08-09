@@ -206,7 +206,7 @@ namespace Nuclex { namespace Support {
     // Store the file handle in the private implementation data block and
     // remember the full path for when the user queries it later
     *reinterpret_cast<int *>(this->privateImplementationData) = fileDescriptor;
-    this->path.assign(pathTemplate);
+    this->path.assign(pathTemplateChars.begin(), pathTemplateChars.end());
 #endif
   }
 

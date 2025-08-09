@@ -22,9 +22,23 @@ limitations under the License.
 
 #include "Nuclex/Support/Threading/StopToken.h"
 
-// --------------------------------------------------------------------------------------------- //
+#include "Nuclex/Support/Text/StringConverter.h"
 
-// This file is only here to guarantee that its associated header has no hidden
-// dependencies and can be included on its own
+namespace Nuclex { namespace Support { namespace Threading {
 
-// --------------------------------------------------------------------------------------------- //
+  // ------------------------------------------------------------------------------------------- //
+
+  void StopToken::ThrowIfCanceled() const {
+    if(IsCanceled()) {
+      std::atomic_thread_fence(std::memory_order::acquire);
+      throw Nuclex::Support::Errors::CanceledError(
+        Nuclex::Support::Text::StringConverter::CharFromUtf8(
+          this->CancellationReason
+        )
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+}}} // namespace Nuclex::Support::Threading

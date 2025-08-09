@@ -36,9 +36,11 @@ namespace Nuclex { namespace Support { namespace Errors {
   /// </remarks>
   class NUCLEX_SUPPORT_TYPE CanceledError : public std::future_error {
 
+#if 0
     /// <summary>Initializes a cancellation-indicating error</summary>
     /// <param name="message">Message that describes the error</param>
     public: NUCLEX_SUPPORT_API explicit CanceledError(const std::u8string &message);
+#endif
 
     /// <summary>Initializes a cancellation-indicating error</summary>
     /// <param name="message">Message that describes the error</param>
