@@ -34,6 +34,7 @@ limitations under the License.
 #include "Nuclex/Support/Text/UnicodeHelper.h" // for UTF-16 <-> UTF-8 conversion
 
 #include <vector> // for std::vector
+#include <system_error> // for std::system_error
 
 namespace {
 

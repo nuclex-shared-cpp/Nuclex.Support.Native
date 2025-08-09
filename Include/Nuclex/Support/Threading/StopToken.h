@@ -23,7 +23,11 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 
 #if !defined(NUCLEX_SUPPORT_SOURCE)
-  #warning Nuclex::Support::Threading::StopToken has been deprecated in favor of C++20 std::stop_token
+namespace {
+  [[deprecated("Nuclex::Support::Threading::StopToken has been deprecated in favor of C++20 std::stop_token")]]
+  constexpr int deprecated_header_warning = 0;
+  constexpr int trigger_warning = deprecated_header_warning;
+}
 #endif
 
 #include "Nuclex/Support/Threading/Gate.h"

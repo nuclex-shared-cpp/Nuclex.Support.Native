@@ -23,7 +23,11 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 
 #if !defined(NUCLEX_SUPPORT_SOURCE)
-  #warning Nuclex::Support::Optional has been deprecated in favor of C++17 std::optional
+namespace {
+  [[deprecated("Nuclex::Support::Optional has been deprecated in favor of C++17 std::optional")]]
+  constexpr int deprecated_header_warning = 0;
+  constexpr int trigger_warning = deprecated_header_warning;
+}
 #endif
 
 #include "Nuclex/Support/Text/StringConverter.h" // for StringConverter

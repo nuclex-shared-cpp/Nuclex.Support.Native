@@ -23,7 +23,11 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 
 #if !defined(NUCLEX_SUPPORT_SOURCE)
-  #warning Nuclex::Support::Any has been deprecated in favor of C++17 std::any
+namespace {
+  [[deprecated("Nuclex::Support::Any has been deprecated in favor of C++17 std::any")]]
+  constexpr int deprecated_header_warning = 0;
+  constexpr int trigger_warning = deprecated_header_warning;
+}
 #endif
 
 #include <typeinfo>
