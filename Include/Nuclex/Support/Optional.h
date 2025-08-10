@@ -153,7 +153,9 @@ namespace Nuclex { namespace Support {
     /// <returns>The value stored by the any</returns>
     public: NUCLEX_SUPPORT_API const TValue &Get() const {
       if(!this->carriesValue) {
-        throw std::logic_error(u8"Optional does not contain a value");
+        throw std::logic_error(
+          reinterpret_cast<const char *>(u8"Optional does not contain a value")
+        );
       }
 
       return *reinterpret_cast<TValue *>(this->valueMemory);
@@ -165,7 +167,7 @@ namespace Nuclex { namespace Support {
     public: NUCLEX_SUPPORT_API TValue &Get() {
       if(!this->carriesValue) {
         throw std::logic_error(
-          Text::StringConverter::CharFromUtf8(u8"Optional does not contain a value")
+          reinterpret_cast<const char *>(u8"Optional does not contain a value")
         );
       }
 

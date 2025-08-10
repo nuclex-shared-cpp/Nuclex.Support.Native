@@ -32,8 +32,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     if(IsCanceled()) {
       std::atomic_thread_fence(std::memory_order::acquire);
       throw Nuclex::Support::Errors::CanceledError(
-        Nuclex::Support::Text::StringConverter::CharFromUtf8(
-          this->CancellationReason
+        reinterpret_cast<const char *>(
+          this->CancellationReason.c_str()
         )
       );
     }

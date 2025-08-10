@@ -177,7 +177,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle != INVALID_HANDLE_VALUE) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Child process is still running or not joined yet"
         )
       );
@@ -388,7 +388,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Process was not started or is already joined"
         )
       );
@@ -431,7 +431,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Process was not started or is already joined"
         )
       );
@@ -462,7 +462,7 @@ namespace Nuclex { namespace Support { namespace Threading {
         DWORD waitedTilliseconds = ::GetTickCount() - startTickCount;
         if(waitedTilliseconds >= timeoutMilliseconds) {
           throw Nuclex::Support::Errors::TimeoutError(
-            Text::StringConverter::CharFromUtf8(
+            reinterpret_cast<const char *>(
               u8"Timed out waiting for external process to exit"
             )
           );
@@ -623,7 +623,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Process was not started or is already joined"
         )
       );
@@ -642,7 +642,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessHandle == INVALID_HANDLE_VALUE) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Process was not started or is already joined"
         )
       );

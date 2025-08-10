@@ -48,7 +48,7 @@ namespace Nuclex { namespace Support { namespace Text {
       std::size_t sequenceLength = UnicodeHelper::GetSequenceLength(*current);
       if(sequenceLength == std::size_t(-1)) {
         throw std::invalid_argument(
-          StringConverter::CharFromUtf8(u8"String contains invalid UTF-8")
+          reinterpret_cast<const char *>(u8"String contains invalid UTF-8")
         );
       }
 

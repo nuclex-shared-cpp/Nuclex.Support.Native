@@ -262,10 +262,14 @@ namespace Nuclex { namespace Support { namespace Threading {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if defined(MICROSOFTS_API_ISNT_DESIGNED_SO_POORLY)
+#if defined(MICROSOFTS_API_WASNT_DESIGNED_SO_POORLY)
   std::uintptr_t Thread::GetCurrentThreadId() {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    throw std::logic_error(u8"This method cannot be implementation on Windows");
+    throw std::logic_error(
+      reinterpret_cast<const char *>(
+        u8"This method cannot be implementation on Windows"
+      )
+    );
 
     thread_local static HANDLE duplicatedThreadHandle = INVALID_HANDLE_VALUE;
     assert(

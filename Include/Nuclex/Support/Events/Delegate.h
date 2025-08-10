@@ -299,7 +299,7 @@ namespace Nuclex { namespace Support { namespace Events {
       // default-construct one out of thin air (or that that would be the right course
       // of action), we cannot 'return' and our only choice is to throw.
       throw Errors::EmptyDelegateCallError(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"No call target has been assigned to the delegate"
         )
       );
@@ -341,7 +341,7 @@ namespace Nuclex { namespace Support { namespace Events {
       using namespace std;
       assert(!u8"Call to destroyed delegate (post-destructor or move operator)");
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Call to destroyed delegate (post-destructor or move operator)"
         )
       );

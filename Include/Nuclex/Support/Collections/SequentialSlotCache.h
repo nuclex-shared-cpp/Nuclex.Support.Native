@@ -294,7 +294,7 @@ namespace Nuclex { namespace Support { namespace Collections {
       return this->values[key];
     } else {
       throw Errors::KeyNotFoundError(
-        Text::StringConverter::CharFromUtf8(u8"Requested cache slot is empty")
+        reinterpret_cast<const char *>(u8"Requested cache slot is empty")
       );
     }
   }

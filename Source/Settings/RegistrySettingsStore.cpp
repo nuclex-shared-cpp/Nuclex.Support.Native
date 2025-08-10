@@ -111,9 +111,7 @@ namespace {
       }
       default: {
         throw std::runtime_error(
-          Nuclex::Support::Text::StringConverter::CharFromUtf8(
-            u8"Read registry value had a type we don't support"
-          )
+          reinterpret_cast<const char *>(u8"Read registry value had a type we don't support")
         );
       }
     }
@@ -144,9 +142,7 @@ namespace {
       }
       default: {
         throw std::runtime_error(
-          Nuclex::Support::Text::StringConverter::CharFromUtf8(
-            u8"Read registry value had a type we don't support"
-          )
+          reinterpret_cast<const char *>u8"Read registry value had a type we don't support")
         );
       }
     }
@@ -183,9 +179,7 @@ namespace {
       }
       default: {
         throw std::runtime_error(
-          Nuclex::Support::Text::StringConverter::CharFromUtf8(
-            u8"Read registry value had a type we don't support"
-          )
+          reinterpret_cast<const char *>(u8"Read registry value had a type we don't support")
         );
       }
     }
@@ -439,7 +433,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       std::u8string message(u8"Refusing to delete '", 20);
       message.append(registryPath);
       message.append(u8"' because it does not contain a path to a subkey", 48);
-      throw std::invalid_argument(Text::StringConverter::CharFromUtf8(message));
+      throw std::invalid_argument(reinterpret_cast<const char *>(message.c_str()));
     } else { // Slashes present, separate the registry hive from the rest
       ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
         registryPath, firstSlashIndex
@@ -575,7 +569,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   bool RegistrySettingsStore::DeleteCategory(const std::u8string &categoryName) {
     if(this->settingsKeyHandle == 0) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Registry settings store was not opened as writable"
         )
       );
@@ -628,7 +622,7 @@ namespace Nuclex { namespace Support { namespace Settings {
   ) {
     if(this->settingsKeyHandle == 0) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Registry settings store was not opened as writable"
         )
       );
@@ -757,7 +751,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
     if(thisSettingsKeyHandle == nullptr) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Registry settings store was not opened as writable"
         )
       );
@@ -774,7 +768,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
     if(thisSettingsKeyHandle == nullptr) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Registry settings store was not opened as writable"
         )
       );
@@ -791,7 +785,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
     if(thisSettingsKeyHandle == nullptr) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Registry settings store was not opened as writable"
         )
       );
@@ -808,7 +802,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
     if(thisSettingsKeyHandle == nullptr) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Registry settings store was not opened as writable"
         )
       );
@@ -825,7 +819,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
     if(thisSettingsKeyHandle == nullptr) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Registry settings store was not opened as writable"
         )
       );
@@ -842,7 +836,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     ::HKEY thisSettingsKeyHandle = *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle);
     if(thisSettingsKeyHandle == nullptr) {
       throw std::logic_error(
-        Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Registry settings store was not opened as writable"
         )
       );

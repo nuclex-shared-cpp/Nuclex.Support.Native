@@ -268,7 +268,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
     throw std::system_error(
       std::error_code(errorCode, std::system_category()),
-      Text::StringConverter::CharFromUtf8(combinedErrorMessage)
+      reinterpret_cast<const char *>(combinedErrorMessage.c_str())
     );
   }
 
@@ -339,12 +339,12 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(isFileAccessError) {
       throw Errors::FileAccessError(
         std::error_code(errorCode, std::system_category()),
-        Text::StringConverter::CharFromUtf8(combinedErrorMessage)
+        reinterpret_cast<const char *>(combinedErrorMessage.c_str())
       );
     } else {
       throw std::system_error(
         std::error_code(errorCode, std::system_category()),
-        Text::StringConverter::CharFromUtf8(combinedErrorMessage)
+        reinterpret_cast<const char *>(combinedErrorMessage.c_str())
       );
     }
   }
@@ -360,7 +360,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
     throw std::system_error(
       std::error_code(resultHandle, std::system_category()),
-      Text::StringConverter::CharFromUtf8(combinedErrorMessage)
+      reinterpret_cast<const char *>(combinedErrorMessage.c_str())
     );
   }
 

@@ -54,7 +54,7 @@ namespace {
   ) {
     if(codePoint == char32_t(-1)) {
       throw Nuclex::Support::Errors::CorruptStringError(
-        Nuclex::Support::Text::StringConverter::CharFromUtf8(u8"Corrupt UTF-8 string")
+        reinterpret_cast<const char *>(u8"Corrupt UTF-8 string")
       );
     }
   }
@@ -68,7 +68,7 @@ namespace {
   void requireValidCodePoint<char16_t>(char32_t codePoint) {
     if(codePoint == char32_t(-1)) {
       throw Nuclex::Support::Errors::CorruptStringError(
-        Nuclex::Support::Text::StringConverter::CharFromUtf8(u8"Corrupt UTF-16 string")
+        reinterpret_cast<const char *>(u8"Corrupt UTF-16 string")
       );
     }
   }
@@ -82,7 +82,7 @@ namespace {
   void requireValidCodePoint<char32_t>(char32_t codePoint) {
     if(codePoint == char32_t(-1)) {
       throw Nuclex::Support::Errors::CorruptStringError(
-        Nuclex::Support::Text::StringConverter::CharFromUtf8(u8"Corrupt UTF-32 string")
+        reinterpret_cast<const char *>(u8"Corrupt UTF-32 string")
       );
     }
   }

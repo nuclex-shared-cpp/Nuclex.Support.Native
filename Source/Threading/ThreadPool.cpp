@@ -542,9 +542,7 @@ namespace Nuclex { namespace Support { namespace Threading {
       submittedTask->Task->~Task();
       this->implementation->SubmittedTaskPool.DeleteTask(submittedTask);
       throw std::runtime_error(
-        Text::StringConverter::CharFromUtf8(
-          u8"Could not schedule task for thread pool execution"
-        )
+        reinterpret_cast<const char *>(u8"Could not schedule task for thread pool execution")
       );
     }
 

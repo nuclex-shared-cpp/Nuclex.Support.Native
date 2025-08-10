@@ -56,7 +56,7 @@ namespace {
   /// <summary>Method that fails with an exception</summary>
   int failingMethod() {
     throw std::underflow_error(
-      Nuclex::Support::Text::StringConverter::CharFromUtf8(
+      reinterpret_cast<const char *>(
         u8"Hur dur, I'm an underflow error"
       )
     );

@@ -205,7 +205,9 @@ namespace Nuclex { namespace Support { namespace Collections {
 
       switch(candidates.size()) {
         case 0: {
-          throw std::runtime_error("No values mapped to this key");
+          throw std::runtime_error(
+            reinterpret_cast<const char *>(u8"No values mapped to specified key")
+          );
         }
         case 1: {
           return *candidates.begin();

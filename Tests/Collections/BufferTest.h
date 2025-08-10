@@ -65,9 +65,7 @@ namespace {
       ++this->stats->CopyCount;
       if(this->stats->ThrowOnCopy) {
         throw std::runtime_error(
-          Nuclex::Support::Text::StringConverter::CharFromUtf8(
-            u8"Simulated error for unit testing"
-          )
+          reinterpret_cast<const char *>(u8"Simulated error for unit testing")
         );
       }
     }
@@ -79,9 +77,7 @@ namespace {
       ++this->stats->MoveCount;
       if(this->stats->ThrowOnMove) {
         throw std::runtime_error(
-          Nuclex::Support::Text::StringConverter::CharFromUtf8(
-            u8"Simulated error for unit testing"
-          )
+          reinterpret_cast<const char *>(u8"Simulated error for unit testing")
         );
       }
     }
@@ -100,9 +96,7 @@ namespace {
       ++this->stats->CopyCount;
       if(this->stats->ThrowOnCopy) {
         throw std::runtime_error(
-          Nuclex::Support::Text::StringConverter::CharFromUtf8(
-            u8"Simulated error for unit testing"
-          )
+          reinterpret_cast<const char *>(u8"Simulated error for unit testing")
         );
       }
       return *this;
@@ -117,9 +111,7 @@ namespace {
       ++this->stats->MoveCount;
       if(this->stats->ThrowOnMove) {
         throw std::runtime_error(
-          Nuclex::Support::Text::StringConverter::CharFromUtf8(
-            u8"Simulated error for unit testing"
-          )
+          reinterpret_cast<const char *>(u8"Simulated error for unit testing")
         );
       }
       return *this;

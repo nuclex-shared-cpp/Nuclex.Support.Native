@@ -42,7 +42,7 @@ namespace {
   void requireValidCodePoint(char32_t codePoint) {
     if(!Nuclex::Support::Text::UnicodeHelper::IsValidCodePoint(codePoint)) {
       throw std::invalid_argument(
-        Nuclex::Support::Text::StringConverter::CharFromUtf8(
+        reinterpret_cast<const char *>(
           u8"Illegal UTF-8 character(s) encountered"
         )
       );

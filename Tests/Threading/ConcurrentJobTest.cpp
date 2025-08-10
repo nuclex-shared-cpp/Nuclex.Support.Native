@@ -78,7 +78,7 @@ namespace {
       // If we're supposed to simulate a failure, do so
       if(this->ThrowException.load(std::memory_order::acquire)) {
         throw std::length_error(
-          Nuclex::Support::Text::StringConverter::CharFromUtf8(u8"Dummy error")
+          reinterpret_cast<const char *>(u8"Dummy error")
         );
       }
 
