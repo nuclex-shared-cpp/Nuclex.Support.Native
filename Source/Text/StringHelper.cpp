@@ -49,9 +49,7 @@ namespace {
   /// <typeparam name="CharType">Type of characters being processed</typeparam>
   /// <param name="codePoint">Code point that will be checked</param>
   template<>
-  void requireValidCodePoint<char8_t>(
-    char32_t codePoint
-  ) {
+  void requireValidCodePoint<char8_t>(char32_t codePoint) { // for all sensible platforms
     if(codePoint == char32_t(-1)) {
       throw Nuclex::Support::Errors::CorruptStringError(
         reinterpret_cast<const char *>(u8"Corrupt UTF-8 string")
@@ -65,7 +63,7 @@ namespace {
   /// <typeparam name="CharType">Type of characters being processed</typeparam>
   /// <param name="codePoint">Code point that will be checked</param>
   template<>
-  void requireValidCodePoint<char16_t>(char32_t codePoint) {
+  void requireValidCodePoint<char16_t>(char32_t codePoint) { // for Microsoft platforms
     if(codePoint == char32_t(-1)) {
       throw Nuclex::Support::Errors::CorruptStringError(
         reinterpret_cast<const char *>(u8"Corrupt UTF-16 string")

@@ -22,7 +22,6 @@ limitations under the License.
 
 #include "Nuclex/Support/Text/LexicalCast.h"
 #include "./NumberFormatter.h"
-#include "./Ryu/ryu_parse.h"
 
 #include <limits> // for std::numeric_limits
 #include <charconv> // for std::from_chars()

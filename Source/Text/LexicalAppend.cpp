@@ -28,8 +28,6 @@ limitations under the License.
 #include <limits> // for std::numeric_limits
 #include <algorithm> // for std::copy_n()
 
-#include "Ryu/ryu_parse.h"
-
 // TODO lexical_append() with std::u8string could resize within NumberFormatter
 //
 // The NumberFormatter already figures out the number of digits that need to be appended
