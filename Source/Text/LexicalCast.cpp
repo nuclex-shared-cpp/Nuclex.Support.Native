@@ -25,6 +25,7 @@ limitations under the License.
 #include "./Ryu/ryu_parse.h"
 
 #include <limits> // for std::numeric_limits
+#include <charconv> // for std::from_chars()
 
 // Goal: print floating-point values accurately, locale-independent and without exponent
 //
@@ -109,64 +110,85 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  // TODO: This exists for performance reasons, remover and write custom integer parser
+  // TODO: This exists for performance reasons, remove and write custom integer parser
 
-  /// <summary>Causes undefined behavior or converts a string to a long</summary>
-  /// <param name="start">
-  ///   Address of the first character of the null-terminated string that will be parsed
-  /// </param>
-  /// <returns>The unsigned long integer value parsed out of the string</returns>
-  inline unsigned long u8strtoul(const char8_t *start) {
-    return std::strtoul(
+  /// <summary>Parses an integer from a span of UTF-8 characters</summary>>
+  /// <typename name="TInteger">Integer type that will be parsed</typename>
+  /// <param name="start">Pointer to the first number in the UTF-8 string</param>
+  /// <param name="end">Pointer one past the last character to parse</param>
+  template<typename TInteger>
+  TInteger integerFromUtf8(const char8_t *start, const char8_t *end) {
+    TInteger result = 0;
+    std::from_chars(
       reinterpret_cast<const char *>(start),
-      nullptr, // end pointer
-      10 // numeric base
+      reinterpret_cast<const char *>(end),
+      result
     );
+
+    // We intentionally discard the std::from_chars_result.
+    // In case of an invalid input string, we silently fail and return 0.
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Causes undefined behavior or converts a string to a 64-bit long</summary>
-  /// <param name="start">
-  ///   Address of the first character of the null-terminated string that will be parsed
-  /// </param>
-  /// <returns>The unsigned long integer value parsed out of the string</returns>
-  inline unsigned long long u8strtoull(const char8_t *start) {
-    return std::strtoull(
+  /// <summary>Parses an integer from a span of UTF-8 characters</summary>>
+  /// <typename name="TInteger">Integer type that will be parsed</typename>
+  /// <param name="start">Pointer to the first number in the UTF-8 string</param>
+  template<typename TInteger>
+  TInteger integerFromUtf8(const char8_t *start) {
+    TInteger result = 0;
+    std::from_chars(
       reinterpret_cast<const char *>(start),
-      nullptr, // end pointer
-      10 // numeric base
+      reinterpret_cast<const char *>(start + std::char_traits<char8_t>::length(start)),
+      result
     );
+
+    // We intentionally discard the std::from_chars_result.
+    // In case of an invalid input string, we silently fail and return 0.
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Causes undefined behavior or converts a string to a long</summary>
-  /// <param name="start">
-  ///   Address of the first character of the null-terminated string that will be parsed
-  /// </param>
-  /// <returns>The unsigned long integer value parsed out of the string</returns>
-  inline unsigned long u8strtol(const char8_t *start) {
-    return std::strtol(
+  /// <summary>Parses a floating point value from a span of UTF-8 characters</summary>>
+  /// <typename name="TFloat">Floating point type that will be parsed</typename>
+  /// <param name="start">Pointer to the first number in the UTF-8 string</param>
+  /// <param name="end">Pointer one past the last character to parse</param>
+  template<typename TFloat>
+  TFloat floatFromUtf8(const char8_t *start, const char8_t *end) {
+    TFloat result = 0;
+    std::from_chars(
       reinterpret_cast<const char *>(start),
-      nullptr, // end pointer
-      10 // numeric base
+      reinterpret_cast<const char *>(end),
+      result,
+      std::chars_format::general
     );
+
+    // We intentionally discard the std::from_chars_result.
+    // In case of an invalid input string, we silently fail and return 0.
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Causes undefined behavior or converts a string to a 64-bit long</summary>
-  /// <param name="start">
-  ///   Address of the first character of the null-terminated string that will be parsed
-  /// </param>
-  /// <returns>The unsigned long integer value parsed out of the string</returns>
-  inline unsigned long long u8strtoll(const char8_t *start) {
-    return std::strtoll(
+  /// <summary>Parses a floating point value from a span of UTF-8 characters</summary>>
+  /// <typename name="TFloat">Floating point type that will be parsed</typename>
+  /// <param name="start">Pointer to the first number in the UTF-8 string</param>
+  template<typename TFloat>
+  TFloat floatFromUtf8(const char8_t *start) {
+    TFloat result = 0;
+    //        return std::numeric_limits<float>::quiet_NaN();
+    std::from_chars(
       reinterpret_cast<const char *>(start),
-      nullptr, // end pointer
-      10 // numeric base
+      reinterpret_cast<const char *>(start + std::char_traits<char8_t>::length(start)),
+      result,
+      std::chars_format::general
     );
+
+    // We intentionally discard the std::from_chars_result.
+    // In case of an invalid input string, we silently fail and return 0.
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -174,6 +196,29 @@ namespace {
 }
 
 namespace Nuclex { namespace Support { namespace Text {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::u8string lexical_cast<>(const bool &from) {
+    static const std::u8string trueString(u8"true");
+    static const std::u8string falseString(u8"false");
+
+    if(from) {
+      return trueString;
+    } else {
+      return falseString;
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool lexical_cast<>(const char8_t *from) {
+    if(from == nullptr) {
+      return false;
+    } else {
+      return lexical_cast<bool>(std::u8string_view(from));
+    }
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -192,24 +237,16 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> bool lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
+  template<> bool lexical_cast<>(const std::u8string_view &from) {
+    if(from.length() >= 4) {
+      return (
+        ((from[0] == u8't') || (from[0] == u8'T')) &&
+        ((from[1] == u8'r') || (from[1] == u8'R')) &&
+        ((from[2] == u8'u') || (from[2] == u8'U')) &&
+        ((from[3] == u8'e') || (from[3] == u8'E'))
+      );
+    } else {
       return false;
-    } else {
-      return lexical_cast<bool>(std::u8string(from));
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  template<> std::u8string lexical_cast<>(const bool &from) {
-    static const std::u8string trueString(u8"true");
-    static const std::u8string falseString(u8"false");
-
-    if(from) {
-      return trueString;
-    } else {
-      return falseString;
     }
   }
 
@@ -227,14 +264,20 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::uint8_t>(u8strtoul(from));
+      return integerFromUtf8<std::uint8_t>(from);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint8_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::uint8_t>(u8strtoul(from.c_str()));
+    return integerFromUtf8<std::uint8_t>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::uint8_t lexical_cast<>(const std::u8string_view &from) {
+    return integerFromUtf8<std::uint8_t>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -251,14 +294,20 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::int8_t>(u8strtol(from));
+      return integerFromUtf8<std::int8_t>(from);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int8_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::int8_t>(u8strtol(from.c_str()));
+    return integerFromUtf8<std::int8_t>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::int8_t lexical_cast<>(const std::u8string_view &from) {
+    return integerFromUtf8<std::int8_t>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -275,14 +324,20 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::uint16_t>(u8strtoul(from));
+      return integerFromUtf8<std::uint16_t>(from);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint16_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::uint16_t>(u8strtoul(from.c_str()));
+    return integerFromUtf8<std::uint16_t>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::uint16_t lexical_cast<>(const std::u8string_view &from) {
+    return integerFromUtf8<std::uint16_t>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -299,14 +354,20 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::int16_t>(u8strtol(from));
+      return integerFromUtf8<std::int16_t>(from);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int16_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::int16_t>(u8strtol(from.c_str()));
+    return integerFromUtf8<std::int16_t>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::int16_t lexical_cast<>(const std::u8string_view &from) {
+    return integerFromUtf8<std::int16_t>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -323,14 +384,20 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0U;
     } else {
-      return static_cast<std::uint32_t>(u8strtoul(from));
+      return integerFromUtf8<std::uint32_t>(from);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint32_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::uint32_t>(u8strtoul(from.c_str()));
+    return integerFromUtf8<std::uint32_t>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::uint32_t lexical_cast<>(const std::u8string_view &from) {
+    return integerFromUtf8<std::uint32_t>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -347,14 +414,20 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0;
     } else {
-      return static_cast<std::int32_t>(u8strtol(from));
+      return integerFromUtf8<std::int32_t>(from);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int32_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::int32_t>(u8strtol(from.c_str()));
+    return integerFromUtf8<std::int32_t>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::int32_t lexical_cast<>(const std::u8string_view &from) {
+    return integerFromUtf8<std::int32_t>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -371,14 +444,20 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0ULL;
     } else {
-      return static_cast<std::uint64_t>(u8strtoull(from));
+      return integerFromUtf8<std::uint64_t>(from);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint64_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::uint64_t>(u8strtoull(from.c_str()));
+    return integerFromUtf8<std::uint64_t>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::uint64_t lexical_cast<>(const std::u8string_view &from) {
+    return integerFromUtf8<std::uint64_t>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -395,14 +474,20 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0LL;
     } else {
-      return static_cast<std::int64_t>(u8strtoll(from));
+      return integerFromUtf8<std::int64_t>(from);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int64_t lexical_cast<>(const std::u8string &from) {
-    return static_cast<std::int64_t>(u8strtoll(from.c_str()));
+    return integerFromUtf8<std::int64_t>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> std::int64_t lexical_cast<>(const std::u8string_view &from) {
+    return integerFromUtf8<std::int64_t>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -419,28 +504,20 @@ namespace Nuclex { namespace Support { namespace Text {
     if(from == nullptr) {
       return 0.0f;
     } else {
-      double result;
-      enum ::Status status = ::s2d(reinterpret_cast<const char *>(from), &result);
-      if(status == SUCCESS) {
-        return static_cast<float>(result);
-      } else {
-        return std::numeric_limits<float>::quiet_NaN();
-      }
+      return floatFromUtf8<float>(from);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> float lexical_cast<>(const std::u8string &from) {
-    double result;
-    enum ::Status status = ::s2d_n(
-      reinterpret_cast<const char *>(from.c_str()), static_cast<int>(from.length()), &result
-    );
-    if(status == SUCCESS) {
-      return static_cast<float>(result);
-    } else {
-      return std::numeric_limits<float>::quiet_NaN();
-    }
+    return floatFromUtf8<float>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> float lexical_cast<>(const std::u8string_view &from) {
+    return floatFromUtf8<float>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -454,31 +531,19 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> double lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0.0;
-    } else {
-      double result;
-      enum ::Status status = ::s2d(reinterpret_cast<const char *>(from), &result);
-      if(status == SUCCESS) {
-        return result;
-      } else {
-        return std::numeric_limits<double>::quiet_NaN();
-      }
-    }
+    return floatFromUtf8<double>(from);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> double lexical_cast<>(const std::u8string &from) {
-    double result;
-    enum ::Status status = ::s2d_n(
-      reinterpret_cast<const char *>(from.c_str()), static_cast<int>(from.length()), &result
-    );
-    if(status == SUCCESS) {
-      return result;
-    } else {
-      return std::numeric_limits<double>::quiet_NaN();
-    }
+    return floatFromUtf8<double>(from.data(), from.data() + from.length());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> double lexical_cast<>(const std::u8string_view &from) {
+    return floatFromUtf8<double>(from.data(), from.data() + from.length());
   }
 
   // ------------------------------------------------------------------------------------------- //

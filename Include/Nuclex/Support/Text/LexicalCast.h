@@ -188,6 +188,13 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Converts a string into a boolean value</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The boolean value parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API bool lexical_cast<>(const std::u8string_view &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Converts an 8 bit unsigned integer into a string</summary>
   /// <param name="from">8 bit unsigned integer that will be converted</param>
   /// <returns>A string containing the printed 8 bit unsigned integer value</returns>
@@ -209,6 +216,13 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Converts a string into an 8 bit unsigned integer</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The 8 bit unsigned integer parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API std::uint8_t lexical_cast<>(const std::u8string_view &from);
+  
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Converts an 8 bit unsigned integer into a string</summary>
   /// <param name="from">8 bit unsigned integer that will be converted</param>
   /// <returns>A string containing the printed 8 bit unsigned integer value</returns>
@@ -227,6 +241,13 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">String that will be converted</param>
   /// <returns>The 8 bit signed integer parsed from the specified string</returns>
   template<> NUCLEX_SUPPORT_API std::int8_t lexical_cast<>(const std::u8string &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Converts a string into an 8 bit signed integer</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The 8 bit signed integer parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API std::int8_t lexical_cast<>(const std::u8string_view &from);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -251,6 +272,13 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Converts a string into a 16 bit unsigned integer</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The 16 bit unsigned integer parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API std::uint16_t lexical_cast<>(const std::u8string_view &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Converts an 16 bit signed integer into a string</summary>
   /// <param name="from">16 bit signed integer that will be converted</param>
   /// <returns>A string containing the printed 16 bit signed integer value</returns>
@@ -269,6 +297,13 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">String that will be converted</param>
   /// <returns>The 16 bit signed integer parsed from the specified string</returns>
   template<> NUCLEX_SUPPORT_API std::int16_t lexical_cast<>(const std::u8string &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Converts a string into a 16 bit signed integer</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The 16 bit signed integer parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API std::int16_t lexical_cast<>(const std::u8string_view &from);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -293,6 +328,13 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Converts a string into a 32 bit unsigned integer</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The 32 bit unsigned integer parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API std::uint32_t lexical_cast<>(const std::u8string_view &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Converts a 32 bit signed integer into a string</summary>
   /// <param name="from">32 bit signed integer that will be converted</param>
   /// <returns>A string containing the printed 32 bit signed integer value</returns>
@@ -311,6 +353,13 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">String that will be converted</param>
   /// <returns>The 32 bit signed integer parsed from the specified string</returns>
   template<> NUCLEX_SUPPORT_API std::int32_t lexical_cast<>(const std::u8string &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Converts a string into a 32 bit signed integer</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The 32 bit signed integer parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API std::int32_t lexical_cast<>(const std::u8string_view &from);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -335,6 +384,13 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Converts a string into a 64 bit unsigned integer</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The 64 bit unsigned integer parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API std::uint64_t lexical_cast<>(const std::u8string_view &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Converts a 64 bit signed integer into a string</summary>
   /// <param name="from">64 bit signed integer that will be converted</param>
   /// <returns>A string containing the printed 64 bit signed integer value</returns>
@@ -353,6 +409,13 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">String that will be converted</param>
   /// <returns>The 64 bit signed integer parsed from the specified string</returns>
   template<> NUCLEX_SUPPORT_API std::int64_t lexical_cast<>(const std::u8string &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Converts a string into a 64 bit signed integer</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The 64 bit signed integer parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API std::int64_t lexical_cast<>(const std::u8string_view &from);
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -377,6 +440,13 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Converts a string into a floating point value</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The floating point value parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API float lexical_cast<>(const std::u8string_view &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Converts a double precision floating point value into a string</summary>
   /// <param name="from">Double precision Floating point value that will be converted</param>
   /// <returns>A string containing the printed double precision floating point value</returns>
@@ -395,6 +465,13 @@ namespace Nuclex { namespace Support { namespace Text {
   /// <param name="from">String that will be converted</param>
   /// <returns>The floating point value parsed from the specified string</returns>
   template<> NUCLEX_SUPPORT_API double lexical_cast<>(const std::u8string &from);
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Converts a string into a double precision floating point value</summary>
+  /// <param name="from">String that will be converted</param>
+  /// <returns>The floating point value parsed from the specified string</returns>
+  template<> NUCLEX_SUPPORT_API double lexical_cast<>(const std::u8string_view &from);
 
   // ------------------------------------------------------------------------------------------- //
 

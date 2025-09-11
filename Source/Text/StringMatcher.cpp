@@ -102,10 +102,10 @@ namespace {
     assert((needle != nullptr) && u8"Needle must not be a NULL pointer");
 
     for(;;) {
-      if(needle >= needleEnd) {
+      if(needle >= needleEnd) [[unlikely]] {
         return (haystack >= haystackEnd); // Both must end at the same time
       }
-      if(haystack >= haystackEnd) {
+      if(haystack >= haystackEnd) [[unlikely]] {
         return false; // If the haystack was shorter, the needle wasn't found
       }
 
@@ -119,7 +119,7 @@ namespace {
         needleCodePoint = UnicodeHelper::ToFoldedLowercase(needleCodePoint);
         haystackCodePoint = UnicodeHelper::ToFoldedLowercase(haystackCodePoint);
       }
-      if(needleCodePoint != haystackCodePoint) {
+      if(needleCodePoint != haystackCodePoint) [[likely]] {
         return false;
       }
     }
@@ -399,6 +399,64 @@ namespace Nuclex { namespace Support { namespace Text {
     return (left == right); // d'oh!
   }
 
+  // ------------------------------------------------------------------------------------------- //
+#if 0
+  template<> bool StringMatcher::AreEqual<false>(
+    const std::u8string_view &left, const std::u8string_view &right
+  ) {
+    const char8_t *leftStart, *leftEnd;
+    const char8_t *rightStart, *rightEnd;
+    {
+      std::u8string_view::size_type leftLength = left.length();
+      std::u8string_view::size_type rightLength = right.length();
+
+      // If the strings have different lengths, they can't be equal
+      if(leftLength != rightLength) {
+        return false;
+      }
+
+      leftStart = left.data();
+      leftEnd = leftStart + leftLength;
+
+      rightStart = right.data();
+      rightEnd = rightStart + rightLength;
+    }
+
+    return areUtf8StringsEqual<false>(
+      leftStart, leftEnd,
+      rightStart, rightEnd
+    );
+  }
+#endif
+  // ------------------------------------------------------------------------------------------- //
+#if 0
+  template<> bool StringMatcher::AreEqual<true>(
+    const std::u8string_view &left, const std::u8string_view &right
+  ) {
+    const char8_t *leftStart, *leftEnd;
+    const char8_t *rightStart, *rightEnd;
+    {
+      std::u8string_view::size_type leftLength = left.length();
+      std::u8string_view::size_type rightLength = right.length();
+
+      // If the strings have different lengths, they can't be equal
+      if(leftLength != rightLength) {
+        return false;
+      }
+
+      leftStart = left.data();
+      leftEnd = leftStart + leftLength;
+
+      rightStart = right.data();
+      rightEnd = rightStart + rightLength;
+    }
+
+    return areUtf8StringsEqual<true>(
+      leftStart, leftEnd,
+      rightStart, rightEnd
+    );
+  }
+#endif
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::Contains<false>(

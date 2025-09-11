@@ -101,6 +101,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       const char *posixErrorMessage = getStringFromStrErrorR(
         ::strerror_r(errorNumber, buffer.data(), buffer.length()), buffer
       );
+      (void)posixErrorMessage; // we already consume this via the buffer
 
       int errorNumberFromStrError = errno;
       if(errorNumberFromStrError == 0) {
