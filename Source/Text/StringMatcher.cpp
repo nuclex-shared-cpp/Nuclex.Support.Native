@@ -364,30 +364,48 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> bool StringMatcher::AreEqual<false>(
-    const std::u8string &left, const std::u8string &right
-  ) {
-    const char8_t *leftStart, *leftEnd;
-    const char8_t *rightStart, *rightEnd;
-    {
-      std::u8string::size_type leftLength = left.length();
-      std::u8string::size_type rightLength = right.length();
-
-      // If the strings have different lengths, they can't be equal
-      if(leftLength != rightLength) {
-        return false;
-      }
-
-      leftStart = left.data();
-      leftEnd = leftStart + leftLength;
-
-      rightStart = right.data();
-      rightEnd = rightStart + rightLength;
+  template<> bool StringMatcher::AreEqual<false>(const char8_t *left, const char8_t *right) {
+    std::u8string::size_type leftLength = std::char_traits<char8_t>::length(left);
+    if(std::char_traits<char8_t>::length(right) != leftLength) {
+      return false;
     }
 
     return areUtf8StringsEqual<false>(
-      leftStart, leftEnd,
-      rightStart, rightEnd
+      left, left + leftLength,
+      right, right + leftLength
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool StringMatcher::AreEqual<true>(const char8_t *left, const char8_t *right) {
+    std::u8string::size_type leftLength = std::char_traits<char8_t>::length(left);
+    if(std::char_traits<char8_t>::length(right) != leftLength) {
+      return false;
+    }
+
+    return areUtf8StringsEqual<true>(
+      left, left + leftLength,
+      right, right + leftLength
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool StringMatcher::AreEqual<false>(
+    const std::u8string &left, const std::u8string &right
+  ) {
+    const char8_t *leftStart = left.data();
+    const char8_t *rightStart = right.data();
+
+    std::u8string::size_type leftLength = left.length();
+    if(right.length() != leftLength) {
+      return false;
+    }
+
+    return areUtf8StringsEqual<false>(
+      leftStart, leftStart + leftLength,
+      rightStart, rightStart + leftLength
     );
   }
 
@@ -400,63 +418,32 @@ namespace Nuclex { namespace Support { namespace Text {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if 0
+
   template<> bool StringMatcher::AreEqual<false>(
     const std::u8string_view &left, const std::u8string_view &right
   ) {
-    const char8_t *leftStart, *leftEnd;
-    const char8_t *rightStart, *rightEnd;
-    {
-      std::u8string_view::size_type leftLength = left.length();
-      std::u8string_view::size_type rightLength = right.length();
+    const char8_t *leftStart = left.data();
+    const char8_t *rightStart = right.data();
 
-      // If the strings have different lengths, they can't be equal
-      if(leftLength != rightLength) {
-        return false;
-      }
-
-      leftStart = left.data();
-      leftEnd = leftStart + leftLength;
-
-      rightStart = right.data();
-      rightEnd = rightStart + rightLength;
+    std::u8string::size_type leftLength = left.length();
+    if(right.length() != leftLength) {
+      return false;
     }
 
     return areUtf8StringsEqual<false>(
-      leftStart, leftEnd,
-      rightStart, rightEnd
+      leftStart, leftStart + leftLength,
+      rightStart, rightStart + leftLength
     );
   }
-#endif
+
   // ------------------------------------------------------------------------------------------- //
-#if 0
+
   template<> bool StringMatcher::AreEqual<true>(
     const std::u8string_view &left, const std::u8string_view &right
   ) {
-    const char8_t *leftStart, *leftEnd;
-    const char8_t *rightStart, *rightEnd;
-    {
-      std::u8string_view::size_type leftLength = left.length();
-      std::u8string_view::size_type rightLength = right.length();
-
-      // If the strings have different lengths, they can't be equal
-      if(leftLength != rightLength) {
-        return false;
-      }
-
-      leftStart = left.data();
-      leftEnd = leftStart + leftLength;
-
-      rightStart = right.data();
-      rightEnd = rightStart + rightLength;
-    }
-
-    return areUtf8StringsEqual<true>(
-      leftStart, leftEnd,
-      rightStart, rightEnd
-    );
+    return (left == right); // d'oh!
   }
-#endif
+
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool StringMatcher::Contains<false>(

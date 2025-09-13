@@ -46,10 +46,25 @@ namespace Nuclex { namespace Support { namespace Text {
     ///   consider using the <see cref="StringConverter.ToFoldedLowercase" /> method.
     /// </remarks>
     public: template<bool CaseSensitive = false>
+    NUCLEX_SUPPORT_API static bool AreEqual(const char8_t *left, const char8_t *right);
+
+    /// <summary>Compares two UTF-8 strings for equality, optionally ignoring case</summary>
+    /// <typeparam name="CaseSensitive">
+    ///   Whether the comparison will be case sensitive
+    /// </typeparam>
+    /// <param name="left">String that will be compared on the left side</param>
+    /// <param name="right">String that will be compared on the right side</param>
+    /// <returns>True if the two strings are equal, false otherwise</returns>
+    /// <remarks>
+    ///   This method is ideal for one-off comparisons. If you have to compare one string
+    ///   against multiple strings or want to create a case-insensitive string map,
+    ///   consider using the <see cref="StringConverter.ToFoldedLowercase" /> method.
+    /// </remarks>
+    public: template<bool CaseSensitive = false>
     NUCLEX_SUPPORT_API static bool AreEqual(
       const std::u8string &left, const std::u8string &right
     );
-#if 0
+
     /// <summary>Compares two UTF-8 strings for equality, optionally ignoring case</summary>
     /// <typeparam name="CaseSensitive">
     ///   Whether the comparison will be case sensitive
@@ -66,7 +81,7 @@ namespace Nuclex { namespace Support { namespace Text {
     NUCLEX_SUPPORT_API static bool AreEqual(
       const std::u8string_view &left, const std::u8string_view &right
     );
-#endif
+
     /// <summary>Checks whether one UTF-8 string contains another UTF-8 string</summary>
     /// <typeparam name="CaseSensitive">
     ///   Whether the comparison will be case sensitive
@@ -161,6 +176,18 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<false>(
+    const char8_t *left, const char8_t *right
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<true>(
+    const char8_t *left, const char8_t *right
+  );
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<false>(
     const std::u8string &left, const std::u8string &right
   );
 
@@ -171,7 +198,7 @@ namespace Nuclex { namespace Support { namespace Text {
   );
 
   // ------------------------------------------------------------------------------------------- //
-#if 0
+
   template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<false>(
     const std::u8string_view &left, const std::u8string_view &right
   );
@@ -181,7 +208,7 @@ namespace Nuclex { namespace Support { namespace Text {
   template<> bool NUCLEX_SUPPORT_API StringMatcher::AreEqual<true>(
     const std::u8string_view &left, const std::u8string_view &right
   );
-#endif
+
   // ------------------------------------------------------------------------------------------- //
 
   template<> bool NUCLEX_SUPPORT_API StringMatcher::Contains<false>(
