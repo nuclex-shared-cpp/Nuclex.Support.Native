@@ -142,7 +142,7 @@ namespace {
       }
       default: {
         throw std::runtime_error(
-          reinterpret_cast<const char *>u8"Read registry value had a type we don't support")
+          reinterpret_cast<const char *>(u8"Read registry value had a type we don't support")
         );
       }
     }
