@@ -57,9 +57,6 @@
     <Filter Include="Source\Text">
       <UniqueIdentifier>{f20ce72c-f037-4bfc-8e47-a38db78850de}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Text\Ryu">
-      <UniqueIdentifier>{6d6734f5-932c-4dcd-bb67-6a9b69db0f2e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Threading">
       <UniqueIdentifier>{c3c71559-2291-4f45-8938-c3cf232c87c5}</UniqueIdentifier>
     </Filter>
@@ -420,54 +417,6 @@
     </ClCompile>
     <ClInclude Include="Source\Text\DragonBox-1.1.2\dragonbox.h">
       <Filter>Source\Text\DragonBox-1.1.2</Filter>
-    </ClInclude>
-    <ClCompile Include="Source\Text\Ryu\d2fixed.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Ryu\d2s.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Ryu\f2s.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Ryu\generic_128.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Text\Ryu\s2d.c">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClCompile>
-    <ClInclude Include="Source\Text\Ryu\common.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\d2fixed_full_table.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\d2s_full_table.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\d2s_intrinsics.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\d2s_small_table.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\digit_table.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\f2s_full_table.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\generic_128.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\ryu.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\ryu_generic_128.h">
-      <Filter>Source\Text\Ryu</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Text\Ryu\ryu_parse.h">
-      <Filter>Source\Text\Ryu</Filter>
     </ClInclude>
     <ClCompile Include="Source\Text\LexicalAppend.cpp">
       <Filter>Source\Text</Filter>
