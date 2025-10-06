@@ -44,7 +44,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="itemCount">Maximum number of items that will be left behind</param>
     public: virtual void EvictDownTo(std::size_t itemCount) = 0;
 
-    /// <summary>Evicts items from the cache until reaching a user-defined criterion</summary>
+    /// <summary>Evicts items from the cache that fit a user-defined criterion</summary>
     /// <param name="policyCallback">Callback that decides whether to evict an entry</param>
     public: virtual void EvictWhere(
       const Events::Delegate<bool(const TValue &)> &policyCallback

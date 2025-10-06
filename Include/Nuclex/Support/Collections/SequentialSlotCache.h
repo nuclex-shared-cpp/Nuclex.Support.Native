@@ -24,9 +24,8 @@ limitations under the License.
 
 #include "Nuclex/Support/Collections/Cache.h" // for Cache
 #include "Nuclex/Support/Errors/KeyNotFoundError.h" // for KeyNotFoundError
-#include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
 
-#include <cstdint> // for std::uint8_t
+#include <cstddef> // for std::byte
 
 namespace Nuclex { namespace Support { namespace Collections {
 
@@ -42,7 +41,11 @@ namespace Nuclex { namespace Support { namespace Collections {
   ///     integer index.
   ///   </para>
   ///   <para>
-  ///     
+  ///     It keeps these items in a linear array (wherein &quot;slots&quot; can be either
+  ///     occupied or empty, just like <see cref="std.vector" />, but also maintains
+  ///     a doubly-linked MRU list between those items, preventing memory fragmentation from
+  ///     micro allocations, enabling cache-friendly searches through linear memory whilst
+  ///     offering cheap MRU functionality like evict, bring to top, get oldest).
   ///   </para>
   /// </remarks>
   template<typename TKey, typename TValue>
@@ -110,7 +113,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="itemCount">Maximum number of items that will be left behind</param>
     public: void EvictDownTo(std::size_t itemCount) override;
 
-    /// <summary>Evicts items from the cache until reaching a user-defined criterion</summary>
+    /// <summary>Evicts items from the cache matching a user-defined criterion</summary>
     /// <param name="policyCallback">Callback that decides whether to evict an entry</param>
     public: void EvictWhere(
       const Events::Delegate<bool(const TValue &)> &policyCallback
@@ -184,7 +187,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Number of slots currently filled in the cache</summary>
     private: std::size_t count;
     /// <summary>Memory allocated to store the slot states and values</summary>
-    private: std::uint8_t *memory;
+    private: std::byte *memory;
     /// <summary>Values stored in each of the slots</summary>
     private: TValue *values;
     /// <summary>Keeps track of the state of each individual slot</summary>
@@ -201,7 +204,7 @@ namespace Nuclex { namespace Support { namespace Collections {
   template<typename TKey, typename TValue>
   SequentialSlotCache<TKey, TValue>::SequentialSlotCache(std::size_t slotCount) :
     count(0),
-    memory(new std::uint8_t[getRequiredMemory(slotCount)]),
+    memory(new std::byte[getRequiredMemory(slotCount)]),
     values(),
     states(),
     mostRecentlyUsed(nullptr),
@@ -222,15 +225,22 @@ namespace Nuclex { namespace Support { namespace Collections {
     }
 
     // Place the values directly behind the slot state array, with alignment padding
-    // if the type of values used has greater alignment requirements
-    this->values = reinterpret_cast<TValue *>(
-      reinterpret_cast<std::uint8_t *>(this->states) +
-      (sizeof(SlotState[2]) * slotCount / 2) +
-      (
-        alignof(TValue) > alignof(SlotState) ?
-          (alignof(TValue) - alignof(SlotState)) : 0
-      )
-    );
+    // if the end of the slot state array doesn't meet the value's alignment needs.
+    {
+      std::uintptr_t valueMemory = (
+        reinterpret_cast<std::uintptr_t>(this->states) +
+        (sizeof(SlotState[2]) * slotCount / 2)
+      );
+      std::size_t misalignment = valueMemory % alignof(TValue);
+
+      if(misalignment > 0) {
+        this->values = reinterpret_cast<TValue *>(
+          valueMemory + alignof(TValue) - misalignment
+        );
+      } else {
+        this->values = reinterpret_cast<TValue *>(valueMemory);
+      }
+    }
 
     // Initialize all IsOccupied values to false so we don't accidentally try to destroy
     // values that weren't present (but where the uninitialized memory in which we built
@@ -320,7 +330,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     SlotState &state = this->states[key];
     if(state.IsOccupied) {
       TValue *address = this->values + key;
-      value = *address;
+      value = std::move(*address);
       address->~TValue();
       state.IsOccupied = false;
       unlinkMostRecentlyUsed(state);
