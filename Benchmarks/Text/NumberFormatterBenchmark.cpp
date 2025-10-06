@@ -166,7 +166,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   BENCHMARK(Integer32Itoa, NumberFormatter, 1000, 0) {
-    char number[40];
+    char8_t number[40];
     celero::DoNotOptimizeAway(
       FormatInteger(
         number,
@@ -178,7 +178,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   BENCHMARK(Integer64Itoa, NumberFormatter, 1000, 0) {
-    char number[40];
+    char8_t number[40];
     celero::DoNotOptimizeAway(
       FormatInteger(
         number,
@@ -190,7 +190,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   BENCHMARK(Float32Ftoa_x2, NumberFormatter, 1000, 0) {
-    char number[48];
+    char8_t number[48];
 
     celero::DoNotOptimizeAway(
       FormatFloat(
@@ -209,7 +209,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   BENCHMARK(Float64Ftoa_x2, NumberFormatter, 1000, 0) {
-    char number[325];
+    char8_t number[325];
 
     celero::DoNotOptimizeAway(
       FormatFloat(

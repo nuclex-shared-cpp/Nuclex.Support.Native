@@ -110,7 +110,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   BENCHMARK(Integer32ToString, NuclexLexicalCast, 1000, 0) {
     celero::DoNotOptimizeAway(
-      Nuclex::Support::Text::lexical_cast<std::string>(
+      Nuclex::Support::Text::lexical_cast<std::u8string>(
         static_cast<std::uint32_t>(randomNumberDistribution(randomNumberGenerator))
       )
     );

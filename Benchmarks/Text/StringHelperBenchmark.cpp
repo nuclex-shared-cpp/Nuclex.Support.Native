@@ -32,10 +32,10 @@ namespace {
   /// <summary>Simple substring removal method using standard C++ primitives</summary>
   /// <param name="master">String from which substrings will be removed</param>
   /// <param name="substringToRemove">Substring of which all occurrences will be removed</param>
-  void removeAllOccurrenceNaive(std::string &master, const std::string &substringToRemove) {
+  void removeAllOccurrenceNaive(std::u8string &master, const std::u8string &substringToRemove) {
     for(;;) {
-      std::string::size_type index = master.find(substringToRemove);
-      if(index == std::string::npos) {
+      std::u8string::size_type index = master.find(substringToRemove);
+      if(index == std::u8string::npos) {
         return; // All occurrences removed
       }
 
@@ -52,8 +52,8 @@ namespace {
   ///   A value dependent on the operation that can be used to prevent the optimizer
   ///   from optimizing the entire method call away
   /// </returns>
-  bool testNaiveRemoval(const std::string &master, const std::string &substringToRemove) {
-    std::string masterCopy = master;
+  bool testNaiveRemoval(const std::u8string &master, const std::u8string &substringToRemove) {
+    std::u8string masterCopy = master;
     removeAllOccurrenceNaive(masterCopy, substringToRemove);
     return masterCopy.empty();
   }
@@ -67,8 +67,10 @@ namespace {
   ///   A value dependent on the operation that can be used to prevent the optimizer
   ///   from optimizing the entire method call away
   /// </returns>
-  bool testStringHelperRemoval(const std::string &master, const std::string &substringToRemove) {
-    std::string masterCopy = master;
+  bool testStringHelperRemoval(
+    const std::u8string &master, const std::u8string &substringToRemove
+  ) {
+    std::u8string masterCopy = master;
     Nuclex::Support::Text::StringHelper::EraseSubstrings(masterCopy, substringToRemove);
     return masterCopy.empty();
   }
@@ -82,7 +84,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   BASELINE(SubstringRemoval, ViaCxxMethods, 1000, 0) {
-    std::string master(
+    std::u8string master(
       u8"This <mooh> is a longer string <mooh> which may or may not <mooh> have "
       u8"been spoken <mooh> by a trained bovine.",
       110
@@ -96,7 +98,7 @@ namespace Nuclex { namespace Support { namespace Text {
   // ------------------------------------------------------------------------------------------- //
 
   BENCHMARK(SubstringRemoval, ViaStringHelper, 1000, 0) {
-    std::string master(
+    std::u8string master(
       u8"This <mooh> is a longer string <mooh> which may or may not <mooh> have "
       u8"been spoken <mooh> by a trained bovine.",
       110
