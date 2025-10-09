@@ -98,6 +98,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Nuclex\Support\Collections\Cache.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
@@ -116,6 +119,18 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\IndexedCollection.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\KeyedArrayCache.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\Map.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\MultiCache.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\MultiMap.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableCollection.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
@@ -128,13 +143,28 @@
     <ClInclude Include="Include\Nuclex\Support\Collections\RingQueue.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\SequentialSlotCache.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Collections\ShiftQueue.h">
+      <Filter>Include\Collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h">
       <Filter>Include\Collections</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Errors\CanceledError.h">
       <Filter>Include\Errors</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Errors\CorruptStringError.h">
+      <Filter>Include\Errors</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h">
+      <Filter>Include\Errors</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Errors\FileAccessError.h">
+      <Filter>Include\Errors</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Errors\KeyNotFoundError.h">
       <Filter>Include\Errors</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Errors\TimeoutError.h">
@@ -274,6 +304,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Collections\Cache.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Collections\Collection.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
@@ -292,6 +325,18 @@
     <ClCompile Include="Source\Collections\IndexedCollection.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Collections\KeyedArrayCache.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\Map.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\MultiCache.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\MultiMap.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Collections\ObservableCollection.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
@@ -304,13 +349,28 @@
     <ClCompile Include="Source\Collections\RingQueue.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Collections\SequentialSlotCache.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Collections\ShiftQueue.cpp">
+      <Filter>Source\Collections</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Collections\Variegator.cpp">
       <Filter>Source\Collections</Filter>
     </ClCompile>
     <ClCompile Include="Source\Errors\CanceledError.cpp">
       <Filter>Source\Errors</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Errors\CorruptStringError.cpp">
+      <Filter>Source\Errors</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp">
+      <Filter>Source\Errors</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Errors\FileAccessError.cpp">
+      <Filter>Source\Errors</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Errors\KeyNotFoundError.cpp">
       <Filter>Source\Errors</Filter>
     </ClCompile>
     <ClCompile Include="Source\Errors\TimeoutError.cpp">

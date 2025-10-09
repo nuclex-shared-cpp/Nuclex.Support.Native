@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-#include "Nuclex/Support/Collections/Cache.h" // for Cache
+#include "Nuclex/Support/Collections/MultiCache.h" // for MultiCache
 #include "Nuclex/Support/Errors/KeyNotFoundError.h" // for KeyNotFoundError
 
 #include <cstddef> // for std::byte
@@ -55,7 +55,7 @@ namespace Nuclex { namespace Support { namespace Collections {
   ///   </para>
   /// </remarks>
   template<typename TKey, typename TValue>
-  class KeyedArrayCache : public Cache<TKey, TValue> {
+  class KeyedArrayCache : public MultiCache<TKey, TValue> {
 
     /// <summary>Initializes a new array cache with the specified size</summary>
     /// <param name="capacity">Maximum number of entries the cache may hold</param>
@@ -69,12 +69,6 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <param name="value">Value that will be stored under its key</param>
     /// <returns>True in all cases</returns>
     public: bool Insert(const TKey &key, const TValue &value) override;
-
-    /// <summary>Stores a value in the map if it doesn't exist yet</summary>
-    /// <param name="key">Key under which the value can be looked up later</param>
-    /// <param name="value">Value that will be stored under its key in the map</param>
-    /// <returns>True in all cases</returns>
-    public: bool TryInsert(const TKey &key, const TValue &value) override;
 
     /// <summary>Returns the value of the specified element in the map</summary>
     /// <param name="key">Key of the element that will be looked up</param>
@@ -102,7 +96,7 @@ namespace Nuclex { namespace Support { namespace Collections {
     /// <summary>Removes the specified element from the map if it exists</summary>
     /// <param name="key">Key of the element that will be removed if present</param>
     /// <returns>True if the element was found and removed, false otherwise</returns>
-    public: bool TryRemove(const TKey &key) override;
+    public: std::size_t TryRemove(const TKey &key) override;
 
     /// <summary>Removes all items from the map</summary>
     public: void Clear() override;
@@ -321,13 +315,6 @@ namespace Nuclex { namespace Support { namespace Collections {
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
-  bool KeyedArrayCache<TKey, TValue>::TryInsert(const TKey &key, const TValue &value) {
-    return Insert(key, value);
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  template<typename TKey, typename TValue>
   const TValue &KeyedArrayCache<TKey, TValue>::Get(const TKey &key) const {
     for(std::size_t index = 0; index < this->capacity; ++index) {
       if(this->states[index].Key == key) { // empty Keys will not compare as equal
@@ -378,7 +365,9 @@ namespace Nuclex { namespace Support { namespace Collections {
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TKey, typename TValue>
-  bool KeyedArrayCache<TKey, TValue>::TryRemove(const TKey &key) {
+  std::size_t KeyedArrayCache<TKey, TValue>::TryRemove(const TKey &key) {
+    std::size_t removedElementCount = 0;
+
     for(std::size_t index = 0; index < this->capacity; ++index) {
       if(this->states[index].Key == key) { // empty Keys will not compare as equal
         TValue *address = this->values + index;
@@ -387,11 +376,11 @@ namespace Nuclex { namespace Support { namespace Collections {
         this->states[index].Key.reset(); // = std::optional<TKey>();
         --this->count;
         unlinkMostRecentlyUsed(this->states[index]);
-        return true;
+        ++removedElementCount;
       }
     }
 
-    return false;
+    return removedElementCount;
   }
 
   // ------------------------------------------------------------------------------------------- //

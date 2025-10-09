@@ -104,12 +104,11 @@ namespace Nuclex { namespace Support { namespace Collections {
     EXPECT_FALSE(wasObtained);
     EXPECT_EQ(obtainedValue, 0);
 
-    bool wasInserted = test.TryInsert(12, 20384);
-    EXPECT_TRUE(wasInserted);
+    test.Insert(12, 20384);
     EXPECT_EQ(test.Count(), 1U);
 
     wasObtained = test.TryGet(12, obtainedValue);
-    EXPECT_TRUE(wasObtained);
+    ASSERT_TRUE(wasObtained);
     EXPECT_EQ(obtainedValue, 20384);
   }
 
@@ -118,13 +117,12 @@ namespace Nuclex { namespace Support { namespace Collections {
   TEST(KeyedArrayCacheTest, ItemsCanBeTaken) {
     KeyedArrayCache<std::size_t, int> test(32);
 
-    bool wasInserted = test.TryInsert(30, 53345);
-    EXPECT_TRUE(wasInserted);
+    test.Insert(30, 53345);
     EXPECT_EQ(test.Count(), 1U);
 
     int takenValue = 0;
     bool wasTaken = test.TryTake(30, takenValue);
-    EXPECT_TRUE(wasTaken);
+    ASSERT_TRUE(wasTaken);
     EXPECT_EQ(takenValue, 53345);
     EXPECT_EQ(test.Count(), 0U);
   }

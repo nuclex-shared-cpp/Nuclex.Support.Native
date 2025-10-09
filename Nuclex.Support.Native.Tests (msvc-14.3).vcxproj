@@ -197,19 +197,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Nuclex\Support\Collections\Cache.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\Collection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentMap.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ConcurrentSet.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\DynamicArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\IndexedCollection.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\KeyedArrayCache.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\Map.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\MultiCache.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\MultiMap.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableDynamicArray.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ObservableIndexedCollection.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\RingQueue.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\SequentialSlotCache.h" />
     <ClInclude Include="Include\Nuclex\Support\Collections\ShiftQueue.h" />
+    <ClInclude Include="Include\Nuclex\Support\Collections\Variegator.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\CanceledError.h" />
+    <ClInclude Include="Include\Nuclex\Support\Errors\CorruptStringError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\EmptyDelegateCallError.h" />
+    <ClInclude Include="Include\Nuclex\Support\Errors\FileAccessError.h" />
+    <ClInclude Include="Include\Nuclex\Support\Errors\KeyNotFoundError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\TimeoutError.h" />
     <ClInclude Include="Include\Nuclex\Support\Errors\UnresolvedDependencyError.h" />
     <ClInclude Include="Include\Nuclex\Support\Events\ConcurrentEvent.h" />
@@ -257,19 +267,29 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Collections\Cache.cpp" />
     <ClCompile Include="Source\Collections\Collection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentCollection.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentMap.cpp" />
     <ClCompile Include="Source\Collections\ConcurrentSet.cpp" />
     <ClCompile Include="Source\Collections\DynamicArray.cpp" />
     <ClCompile Include="Source\Collections\IndexedCollection.cpp" />
+    <ClCompile Include="Source\Collections\KeyedArrayCache.cpp" />
+    <ClCompile Include="Source\Collections\Map.cpp" />
+    <ClCompile Include="Source\Collections\MultiCache.cpp" />
+    <ClCompile Include="Source\Collections\MultiMap.cpp" />
     <ClCompile Include="Source\Collections\ObservableCollection.cpp" />
     <ClCompile Include="Source\Collections\ObservableDynamicArray.cpp" />
     <ClCompile Include="Source\Collections\ObservableIndexedCollection.cpp" />
     <ClCompile Include="Source\Collections\RingQueue.cpp" />
+    <ClCompile Include="Source\Collections\SequentialSlotCache.cpp" />
     <ClCompile Include="Source\Collections\ShiftQueue.cpp" />
+    <ClCompile Include="Source\Collections\Variegator.cpp" />
     <ClCompile Include="Source\Errors\CanceledError.cpp" />
+    <ClCompile Include="Source\Errors\CorruptStringError.cpp" />
     <ClCompile Include="Source\Errors\EmptyDelegateCallError.cpp" />
+    <ClCompile Include="Source\Errors\FileAccessError.cpp" />
+    <ClCompile Include="Source\Errors\KeyNotFoundError.cpp" />
     <ClCompile Include="Source\Errors\TimeoutError.cpp" />
     <ClCompile Include="Source\Errors\UnresolvedDependencyError.cpp" />
     <ClCompile Include="Source\Events\ConcurrentEvent.cpp" />
