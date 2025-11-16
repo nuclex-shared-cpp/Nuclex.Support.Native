@@ -28,11 +28,6 @@ limitations under the License.
 #include <cstddef> // for std::byte
 #include <optional> // for std::optional<>
 
-// TODO: KeyedArrayCache implements Map<K, T> but should implement MultiMap<K, T>
-//   Because MultiMap<K, T> does not exist yet as an interface, this has now caused
-//   Insert() to have a worthless boolean result, TryInsert() to have to reason to
-//   exist at all and Remove() to return a boolean instead of a size_t.
-
 namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //

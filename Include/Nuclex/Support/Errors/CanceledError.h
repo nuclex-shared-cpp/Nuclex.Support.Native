@@ -36,21 +36,15 @@ namespace Nuclex { namespace Support { namespace Errors {
   /// </remarks>
   class NUCLEX_SUPPORT_TYPE CanceledError : public std::future_error {
 
-#if 0
     /// <summary>Initializes a cancellation-indicating error</summary>
     /// <param name="message">Message that describes the error</param>
-    public: NUCLEX_SUPPORT_API explicit CanceledError(const std::u8string &message);
-#endif
-
-    /// <summary>Initializes a cancellation-indicating error</summary>
-    /// <param name="message">Message that describes the error</param>
-    public: NUCLEX_SUPPORT_API explicit CanceledError(const std::string &message) :
+    public: NUCLEX_SUPPORT_API explicit CanceledError(const std::u8string &message) :
       std::future_error(std::future_errc::broken_promise),
       message(message) {}
 
     /// <summary>Initializes a cancellation-indicating error</summary>
     /// <param name="message">Message that describes the error</param>
-    public: NUCLEX_SUPPORT_API explicit CanceledError(const char *message) :
+    public: NUCLEX_SUPPORT_API explicit CanceledError(const char8_t *message) :
       std::future_error(std::future_errc::broken_promise),
       message(message) {}
 
@@ -60,12 +54,12 @@ namespace Nuclex { namespace Support { namespace Errors {
       if(this->message.empty()) {
         return std::future_error::what();
       } else {
-        return this->message.c_str();
+        return reinterpret_cast<const char *>(this->message.c_str());
       }
     }
 
     /// <summary>Error message describing the reason for the cancellation</summary>
-    private: std::string message;
+    private: std::u8string message;
 
   };
 

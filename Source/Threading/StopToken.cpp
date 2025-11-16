@@ -31,11 +31,7 @@ namespace Nuclex { namespace Support { namespace Threading {
   void StopToken::ThrowIfCanceled() const {
     if(IsCanceled()) {
       std::atomic_thread_fence(std::memory_order::acquire);
-      throw Nuclex::Support::Errors::CanceledError(
-        reinterpret_cast<const char *>(
-          this->CancellationReason.c_str()
-        )
-      );
+      throw Nuclex::Support::Errors::CanceledError(this->CancellationReason);
     }
   }
 
