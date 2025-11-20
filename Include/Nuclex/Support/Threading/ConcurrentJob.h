@@ -52,10 +52,10 @@ namespace Nuclex::Support::Threading {
   ///   <para>
   ///     The ConcurrentJob class is designed for higher-level tasks, for example to run
   ///     a printing or exporting job in the background while the UI thread keeps servicing
-  ///     the UI. Calling <see cref="StartOrRestart" /> blocks until the thread to actually
-  ///     starts executing to ensure the next thing the calling thread will see is a truthful
-  ///     <see cref="IsRunning" /> flag set to true and it catches exceptions and re-throws
-  ///     them when you join with the background thread.
+  ///     the UI. It eliminates the typical problems around starting and stopping: is the job
+  ///     considered started/stopped when the request comes or when the worker thread is spun
+  ///     up / shut down? The answer lies in the introduction of intermediate states and full
+  ///     state management when requesting another start while stopping and vice versa.
   ///   </para>
   ///   <para>
   ///     The <see cref="StartOrRestart" />, <see cref="Cancel" /> and <see cref="Join" />
