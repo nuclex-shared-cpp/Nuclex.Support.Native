@@ -59,7 +59,7 @@ namespace {
   /// <param name="doWorkMethod">Pointer to the DoWork() method</param>
   /// <param name="status">Atomic integer maintaining the concurrent job's status</param>
   /// <param name="stateMutex">Mutex that must be held when changing the job's state</param>
-  /// <param name="stopTrigger">Souce of stop tokens, changes after each cancel</param>
+  /// <param name="stopSource">Source of stop tokens, changes after each cancel</param>
   /// <param name="statusChangedCondition">
   ///   Condition variable by which users of the concurrent job can wait for completion
   /// </param>
@@ -80,18 +80,18 @@ namespace {
   void callDoWorkOnConcurrentJob(
     Nuclex::Support::Threading::ConcurrentJob *self,
     void (Nuclex::Support::Threading::ConcurrentJob::*doWorkMethod)(
-      const std::shared_ptr<const Nuclex::Support::Threading::StopToken> &stopToken
+      const std::stop_token &stopToken
     ),
     std::atomic<int> *status,
     std::mutex *stateMutex,
-    std::shared_ptr<Nuclex::Support::Threading::StopSource> *stopTrigger,
+    std::stop_source *stopSource,
     std::condition_variable *statusChangedCondition,
     std::exception_ptr *error
   ) {
 
     // Update the job's state to 'Running' and pick up the currently valid
     // stop token (it will be replaced by a new one if cancellation was used).
-    std::shared_ptr<const Nuclex::Support::Threading::StopToken> stopToken;
+    std::stop_token stopToken;
     {
       bool notifyAllAndReturn = false;
       {
@@ -108,7 +108,7 @@ namespace {
             static_cast<int>(Status::Running), std::memory_order::release
           );
 
-          stopToken = stopTrigger->get()->GetToken();
+          stopToken = stopSource->get_token();
         }
       } // mutex lock
 
@@ -146,7 +146,7 @@ namespace {
 
           // If the status was 'Canceling' or 'CancelingWithRestart', a new stop source
           // will have been created to provide a fresh, uncanceled stop token
-          stopToken = stopTrigger->get()->GetToken();
+          stopToken = stopSource->get_token();
           continue;
         }
 
@@ -184,7 +184,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     threadPool(nullptr),
     status(static_cast<int>(Status::Stopped)),
     stateMutex(),
-    stopTrigger(), // leave empty until needed
+    stopSource(), // leave empty until needed
     statusChangedCondition(),
     error() {}
 
@@ -195,7 +195,7 @@ namespace Nuclex { namespace Support { namespace Threading {
     threadPool(&threadPool),
     status(static_cast<int>(Status::Stopped)),
     stateMutex(),
-    stopTrigger(), // leave empty until needed
+    stopSource(), // leave empty until needed
     statusChangedCondition(),
     error() {}
 
@@ -254,8 +254,10 @@ namespace Nuclex { namespace Support { namespace Threading {
         this->status.store(
           static_cast<int>(Status::Scheduled), std::memory_order::release
         );
-        if(!static_cast<bool>(this->stopTrigger)) {
-          this->stopTrigger = StopSource::Create();
+
+        if(this->stopSource.stop_requested()) [[unlikely]] {
+          std::stop_source newStopSource;
+          this->stopSource.swap(newStopSource);
         }
         startNewWorker = true;
       }
@@ -271,7 +273,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           &ConcurrentJob::DoWork,
           &this->status,
           &this->stateMutex,
-          &this->stopTrigger,
+          &this->stopSource,
           &this->statusChangedCondition,
           &this->error
         );
@@ -288,7 +290,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           &ConcurrentJob::DoWork,
           &this->status,
           &this->stateMutex,
-          &this->stopTrigger,
+          &this->stopSource,
           &this->statusChangedCondition,
           &this->error
         );
@@ -311,8 +313,11 @@ namespace Nuclex { namespace Support { namespace Threading {
         this->status.store( // Currently running, cancel and repeat DoWork() call
           static_cast<int>(Status::CancelingWithRestart), std::memory_order::release
         );
-        this->stopTrigger->Cancel();
-        this->stopTrigger = StopSource::Create();
+        this->stopSource.request_stop();
+        {
+          std::stop_source newStopSource;
+          this->stopSource.swap(newStopSource);
+        }
       } else if(currentStatus == static_cast<int>(Status::Canceling)) {
         this->status.store( // Already canceled, ask to repeat DoWork() call
           static_cast<int>(Status::CancelingWithRestart), std::memory_order::release
@@ -321,8 +326,9 @@ namespace Nuclex { namespace Support { namespace Threading {
         this->status.store(
           static_cast<int>(Status::Scheduled), std::memory_order::release
         );
-        if(!static_cast<bool>(this->stopTrigger)) {
-          this->stopTrigger = StopSource::Create();
+        if(this->stopSource.stop_requested()) [[unlikely]] {
+          std::stop_source newStopSource;
+          this->stopSource.swap(newStopSource);
         }
         startNewWorker = true;
       }
@@ -338,7 +344,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           &ConcurrentJob::DoWork,
           &this->status,
           &this->stateMutex,
-          &this->stopTrigger,
+          &this->stopSource,
           &this->statusChangedCondition,
           &this->error
         );
@@ -355,7 +361,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           &ConcurrentJob::DoWork,
           &this->status,
           &this->stateMutex,
-          &this->stopTrigger,
+          &this->stopSource,
           &this->statusChangedCondition,
           &this->error
         );
@@ -376,8 +382,11 @@ namespace Nuclex { namespace Support { namespace Threading {
       this->status.store(
         static_cast<int>(Status::Canceling), std::memory_order::release
       );
-      this->stopTrigger->Cancel();
-      this->stopTrigger = StopSource::Create();
+      this->stopSource.request_stop();
+      {
+        std::stop_source newStopSource;
+        this->stopSource.swap(newStopSource);
+      }
     } else if(currentStatus == static_cast<int>(Status::CancelingWithRestart)) {
       this->status.store(
         static_cast<int>(Status::Canceling), std::memory_order::release

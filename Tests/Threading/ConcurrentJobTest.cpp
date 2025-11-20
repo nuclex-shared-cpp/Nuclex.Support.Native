@@ -64,9 +64,9 @@ namespace {
     public: using ConcurrentJob::Join;
 
     /// <summary>Called in the background thread to perform the actual work</summary>
-    /// <param name="canceler">Token by which the operation can be signalled to cancel</param>
+    /// <param name="canceller">Token by which the operation can be signalled to cancel</param>
     protected: void DoWork(
-      const std::shared_ptr<const Nuclex::Support::Threading::StopToken> &canceler
+      const std::stop_token &canceller
     ) override {
 
       // Increment the counters so the unit test can se that the job ran
@@ -85,7 +85,7 @@ namespace {
       // Wait 3 times 250 microseconds to avoid a race condition for when the unit test
       // wishes to test canceling a job while it is already running
       for(std::size_t index = 0; index < 10; ++index) {
-        if(canceler->IsCanceled()) {
+        if(canceller.stop_requested()) {
           this->WasCanceled.store(true, std::memory_order::release);
           break;
         }

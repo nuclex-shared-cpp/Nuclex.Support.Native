@@ -31,20 +31,12 @@ limitations under the License.
 #include <atomic> // for std::atomic
 #include <chrono> // for std::chrono::microseconds
 #include <memory> // for std::shared_ptr
+#include <stop_token> // for std::stop_source, std::stop_token
 
-namespace Nuclex { namespace Support { namespace Threading {
-
-  // ------------------------------------------------------------------------------------------- //
-
+namespace Nuclex::Support::Threading {
   class ThreadPool;
-  class StopSource;
-  class StopToken;
-
-  // ------------------------------------------------------------------------------------------- //
-
-}}} // namespace Nuclex::Support::Threading
-
-namespace Nuclex { namespace Support { namespace Threading {
+}
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -157,16 +149,14 @@ namespace Nuclex { namespace Support { namespace Threading {
     // ----------------------------------------------------------------------------------------- //
 
     /// <summary>Called in the background thread to perform the actual work</summary>
-    /// <param name="canceler">Token by which the operation can be signalled to cancel</param>
+    /// <param name="canceller">Token by which the operation can be signalled to cancel</param>
     /// <remarks>
     ///   If the work being performed takes more than a few milliseconds, you should regularly
     ///   check if the job has been cancelled. If the job is cancelled, this method should just
     ///   return. When a restart or another execution is scheduled, the <see cref="DoWork" />
     ///   method will run on the same thread again right away.
     /// </remarks>
-    protected: NUCLEX_SUPPORT_API virtual void DoWork(
-      const std::shared_ptr<const StopToken> &canceler
-    ) = 0;
+    protected: NUCLEX_SUPPORT_API virtual void DoWork(const std::stop_token &canceller) = 0;
 
 #if 0 // Could be useful if the inherited class wants to signal something with an event
     /// <summary>Called in the background thread when <see cref="DoWork" /> exits</summary>
@@ -183,17 +173,17 @@ namespace Nuclex { namespace Support { namespace Threading {
 
     /// <summary>Thread that is running in the background</summary>
     /// <remarks>
-    ///   This is used if concurrent job is constructed without a thread pool
+    ///   This is used if the concurrent job is constructed without a thread pool
     /// </remarks>
     private: std::thread backgroundThread;
     /// <summary>If set, the concurrent job uses the thread pool to run workers</summary>
     private: ThreadPool *threadPool;
     /// <summary>Whether the current thread is still running</summary>
     private: std::atomic<int> status;
-    /// <summary>Needs to be be held when changing the state of the thread</summary>
+    /// <summary>Needs to be held when changing the state of the thread</summary>
     private: std::mutex stateMutex;
     /// <summary>Used to ask background worker to cancel when needed</summary>
-    private: std::shared_ptr<StopSource> stopTrigger;
+    private: std::stop_source stopSource;
     /// <summary>Used to wait for the thread to start running</summary>
     /// <remarks>
     ///   The <see cref="StartOrRestart" /> method waits until the thread is actually running
@@ -208,7 +198,7 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS) || defined(NUCLEX_SUPPORT_LINUX)
 
