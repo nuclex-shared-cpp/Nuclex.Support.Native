@@ -209,7 +209,8 @@ namespace Nuclex { namespace Support { namespace Threading {
     {
       ::STARTUPINFOW childProcessStartupSettings = {0};
       childProcessStartupSettings.cb = sizeof(childProcessStartupSettings);
-      childProcessStartupSettings.dwFlags = STARTF_USESTDHANDLES;
+      childProcessStartupSettings.dwFlags = (STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW);
+      childProcessStartupSettings.wShowWindow = SW_HIDE;
       childProcessStartupSettings.hStdInput = stdinPipe.GetOneEnd(0);
       if(this->interceptStdOut) {
         childProcessStartupSettings.hStdOutput = stdoutPipe.value().GetOneEnd(1);
@@ -277,7 +278,7 @@ namespace Nuclex { namespace Support { namespace Threading {
           nullptr, // use default security attributes
           nullptr, // use default thread security attributes
           TRUE, // yes, we want to inherit (some) handles
-          0, // no extra creation flags
+          CREATE_NO_WINDOW, // don't flash a console window
           nullptr, // use the current environment
           this->workingDirectory.empty() ? nullptr : utf16WorkingDirectory.c_str(),
           &childProcessStartupSettings,
