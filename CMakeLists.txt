@@ -47,11 +47,27 @@ include("../build-system/cmake/cplusplus.cmake")
 #   https://en.wikipedia.org/wiki/Pthreads
 find_package(Threads REQUIRED)
 
-# Add LibArchive as a sub-project, we use it to create and extract tar archives
+# Add MoodyCamelQueues as a sub-project, it provides fast, lock-free concurrent queues
 if(NOT (TARGET MoodyCamelQueue))
   add_subdirectory(
     ${PROJECT_SOURCE_DIR}/../third-party/nuclex-moodycamelqueues
     ${CMAKE_BINARY_DIR}/nuclex-moodycamelqueues
+  )
+endif()
+
+# Add DragonBox as a sub-project, it's the fastest float printer out there
+if(NOT (TARGET DragonBox))
+  add_subdirectory(
+    ${PROJECT_SOURCE_DIR}/../third-party/nuclex-dragonbox
+    ${CMAKE_BINARY_DIR}/nuclex-dragonbox
+  )
+endif()
+
+# Add FastFloat as a sub-project, it's the fastest float parser out there
+if(NOT (TARGET FastFloat))
+  add_subdirectory(
+    ${PROJECT_SOURCE_DIR}/../third-party/nuclex-fastfloat
+    ${CMAKE_BINARY_DIR}/nuclex-fastfloat
   )
 endif()
 
@@ -165,6 +181,8 @@ target_link_libraries(
   NuclexSupportNative
   PRIVATE Threads::Threads
   PRIVATE MoodyCamelQueues::Static
+  PRIVATE DragonBox::Static
+  PRIVATE FastFloat::Static
 )
 
 # On Windows, we want the shared library to be named Nuclex.Support.Native.dll
@@ -226,6 +244,8 @@ if(BUILD_UNIT_TESTS)
     PRIVATE GoogleTest::Main
     PRIVATE Threads::Threads
     PRIVATE MoodyCamelQueues::Static
+    PRIVATE DragonBox::Static
+    PRIVATE FastFloat::Static
   )
 
   # On Windows, we want the executable to be named Nuclex.Support.Native.Tests.exe
@@ -304,6 +324,8 @@ if(BUILD_BENCHMARK)
     PRIVATE Celero::Static
     PRIVATE Threads::Threads
     PRIVATE MoodyCamelQueues::Static
+    PRIVATE DragonBox::Static
+    PRIVATE FastFloat::Static
   )
 
   # On Windows, we want the executable to be named Nuclex.Support.Native.Benchmark.exe
@@ -389,90 +411,3 @@ if(BUILD_DOCS)
   )
 
 endif()
-
-# -------------------------------------------------------------------------------------------------
-
-file(
-  WRITE "${PROJECT_SOURCE_DIR}/NuclexSupportNativeConfig.cmake"
-  "#!/usr/bin/cmake
-
-# Configuration to include Nuclex.Support.Native in a CMake-based project. If you want to
-# reference Nuclex.Support.Native as an externally compiled static library, do this:
-#
-#    set(NuclexSupportNative_DIR \"../Nuclex.Support.Native\")
-#    find_package(NuclexSupportNative REQUIRED CONFIG)
-#
-#    target_link_libraries(
-#      MyAwesomeProject
-#      PRIVATE NuclexSupportNative::Dynamic
-#    )
-#
-# Alternatively, if you want to build Nuclex.Support.Native together with your project,
-# use the normal CMakeLists.txt with CMake's add_subdirectory() command:
-#
-#    add_subdirectory(
-#      \"\${PROJECT_SOURCE_DIR}/../Nuclex.Support.Native\"
-#      \"\${CMAKE_BINARY_DIR}/nuclex.support.native\"
-#    )
-#
-#    target_link_libraries(
-#      MyAwesomeProject
-#      PRIVATE NuclexSupportNative
-#    )
-#
-
-# -------------------------------------------------------------------------------------------------
-
-if(NOT DEFINED NUCLEX_COMPILER_TAG)
-  message(
-    FATAL_ERROR
-    \"NUCLEX_COMPILER_TAG not defined! Include cplusplus.cmake before importing this package \\
-    in order to generate a tag identifying the platform/compiler/architecture/variant!\"
-  )
-endif()
-
-# -------------------------------------------------------------------------------------------------
-
-if(NOT EXISTS \"\${CMAKE_CURRENT_LIST_DIR}/bin/\${NUCLEX_COMPILER_TAG}\")
-  # TODO: Warn and link release build when compiling in debug mode
-  # TODO: Warn and link build for older compiler version if found
-  message(
-    FATAL_ERROR
-    \"Directory '\${CMAKE_CURRENT_LIST_DIR}/bin/\${NUCLEX_COMPILER_TAG}' not found. \\
-    Please either build and install this project before importing it via \\
-    find_package() or use this project's main CMakeFiles.txt via add_subdirectory()!\"
-  )
-endif()
-
-# -------------------------------------------------------------------------------------------------
-
-add_library(NuclexSupportNative::Dynamic SHARED IMPORTED)
-
-# This may cause warnings on recent GCC versions (10.0.0+?) with LTO because GCC detects
-# that the headers used during build (residing in build/) are not the same used when
-# linking the library (copies resising in Include/).
-#
-# CMake doesn't run the install step during build, so the only way to get the headers
-# in place before building would be by copying them rather than installing them.
-set_target_properties(
-  NuclexSupportNative::Dynamic PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES \"\${CMAKE_CURRENT_LIST_DIR}/Include\"
-  IMPORTED_LINK_INTERFACE_LANGUAGES \"C\"
-)
-
-if(WIN32)
-  set_target_properties(
-    NuclexSupportNative::Dynamic PROPERTIES
-    IMPORTED_LOCATION \"\${CMAKE_CURRENT_LIST_DIR}/bin/\${NUCLEX_COMPILER_TAG}/Nuclex.Support.Native.lib\"
-  )
-else()
-  set_target_properties(
-    NuclexSupportNative::Dynamic PROPERTIES
-    IMPORTED_LOCATION \"\${CMAKE_CURRENT_LIST_DIR}/bin/\${NUCLEX_COMPILER_TAG}/libNuclexSupportNative.so\"
-  )
-endif()
-
-message(STATUS \"Imported Nuclex.Support.Native targets with binaries in '\${CMAKE_CURRENT_LIST_DIR}'\")"
-) # end of a long file() statement
-
-# -------------------------------------------------------------------------------------------------
