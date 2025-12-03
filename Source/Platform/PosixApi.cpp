@@ -101,18 +101,14 @@ namespace Nuclex { namespace Support { namespace Platform {
       const char *posixErrorMessage = getStringFromStrErrorR(
         ::strerror_r(errorNumber, buffer.data(), buffer.length()), buffer
       );
-      (void)posixErrorMessage; // we already consume this via the buffer
 
+      // It is valid for the the strerror() method to ignore the buffer and just return
+      // its own error string address, so we need to work with the returned value from here.
       int errorNumberFromStrError = errno;
-      if(errorNumberFromStrError == 0) {
-        for(std::string::size_type index = 0; index < buffer.size(); ++index) {
-          if(buffer[index] == '\0') {
-            buffer.resize(index);
-            break;
-          }
-        }
-        if(!buffer.empty()) [[unlikely]] {
-          return std::u8string(buffer.begin(), buffer.end());
+      if(errorNumberFromStrError == 0) [[likely]] {
+        std::string::size_type length = std::char_traits<char>::length(posixErrorMessage);
+        if(0 < length) [[likely]] {
+          return std::u8string(posixErrorMessage, posixErrorMessage + length);
         }
       }
 
@@ -129,7 +125,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       // We failed to look up the error message. At least output the original
       // error number and remark that we weren't able to look up the error message.
       std::u8string errorMessage(u8"Error ");
-      Text::lexical_append(errorMessage, errorNumber);
+      Nuclex::Support::Text::lexical_append(errorMessage, errorNumber);
       errorMessage.append(u8" (and error message lookup failed)");
       return errorMessage;
 
