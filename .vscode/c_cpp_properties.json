@@ -5,6 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/Include/**",
                 "${workspaceFolder}/../third-party/nuclex-moodycamelqueues/build-concurrentqueue/**",
+                "${workspaceFolder}/../third-party/nuclex-dragonbox/build/include/**",
+                "${workspaceFolder}/../third-party/nuclex-fastfloat/build/include/**",
                 "${workspaceFolder}/../third-party/nuclex-googletest/build/googletest/include/**",
                 "${workspaceFolder}/../third-party/nuclex-celero/build/include/**"
             ],

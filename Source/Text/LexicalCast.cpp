@@ -22,9 +22,10 @@ limitations under the License.
 
 #include "Nuclex/Support/Text/LexicalCast.h"
 #include "./NumberFormatter.h"
+#include "fast_float/fast_float.h"
 
 #include <limits> // for std::numeric_limits
-#include <charconv> // for std::from_chars()
+//#include <charconv> // for std::from_chars()
 
 // Goal: print floating-point values accurately, locale-independent and without exponent
 //
@@ -118,11 +119,7 @@ namespace {
   template<typename TInteger>
   TInteger integerFromUtf8(const char8_t *start, const char8_t *end) {
     TInteger result = 0;
-    std::from_chars(
-      reinterpret_cast<const char *>(start),
-      reinterpret_cast<const char *>(end),
-      result
-    );
+    fast_float::from_chars(start, end, result);
 
     // We intentionally discard the std::from_chars_result.
     // In case of an invalid input string, we silently fail and return 0.
@@ -137,10 +134,8 @@ namespace {
   template<typename TInteger>
   TInteger integerFromUtf8(const char8_t *start) {
     TInteger result = 0;
-    std::from_chars(
-      reinterpret_cast<const char *>(start),
-      reinterpret_cast<const char *>(start + std::char_traits<char8_t>::length(start)),
-      result
+    fast_float::from_chars(
+      start, (start + std::char_traits<char8_t>::length(start)), result
     );
 
     // We intentionally discard the std::from_chars_result.
@@ -157,12 +152,7 @@ namespace {
   template<typename TFloat>
   TFloat floatFromUtf8(const char8_t *start, const char8_t *end) {
     TFloat result = 0;
-    std::from_chars(
-      reinterpret_cast<const char *>(start),
-      reinterpret_cast<const char *>(end),
-      result,
-      std::chars_format::general
-    );
+    fast_float::from_chars(start, end, result);
 
     // We intentionally discard the std::from_chars_result.
     // In case of an invalid input string, we silently fail and return 0.
@@ -178,11 +168,8 @@ namespace {
   TFloat floatFromUtf8(const char8_t *start) {
     TFloat result = 0;
     //        return std::numeric_limits<float>::quiet_NaN();
-    std::from_chars(
-      reinterpret_cast<const char *>(start),
-      reinterpret_cast<const char *>(start + std::char_traits<char8_t>::length(start)),
-      result,
-      std::chars_format::general
+    fast_float::from_chars(
+      start, (start + std::char_traits<char8_t>::length(start)), result
     );
 
     // We intentionally discard the std::from_chars_result.
