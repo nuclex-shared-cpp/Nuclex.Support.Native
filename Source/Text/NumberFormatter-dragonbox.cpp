@@ -27,7 +27,7 @@ limitations under the License.
 #pragma warning(disable: 4307) // Integral constant overflow
 #pragma warning(disable: 4702) // Unreachable code
 #endif
-#include "./DragonBox-1.1.2/dragonbox.h" // for the float-to-decimal algorithm
+#include "dragonbox/dragonbox.h" // for the float-to-decimal algorithm
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
