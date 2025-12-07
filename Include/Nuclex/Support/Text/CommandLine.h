@@ -24,7 +24,7 @@ limitations under the License.
 
 #include <string>
 
-namespace Nuclex { namespace Support { namespace Text {
+namespace Nuclex::Support::Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -57,7 +57,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Text
+} // namespace Nuclex::Support::Text
 
 #include "Nuclex/Support/Text/CommandLineArgument.h"
 

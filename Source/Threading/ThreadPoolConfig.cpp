@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "ThreadPoolConfig.h"
 
-namespace Nuclex { namespace Support { namespace Threading {
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -30,4 +30,4 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading

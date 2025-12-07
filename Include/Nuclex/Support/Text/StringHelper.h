@@ -25,7 +25,7 @@ limitations under the License.
 #include <string> // for std::u8string
 #include <string_view> // for std::u8string_view
 
-namespace Nuclex { namespace Support { namespace Text {
+namespace Nuclex::Support::Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -122,6 +122,6 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Text
+} // namespace Nuclex::Support::Text
 
 #endif // NUCLEX_SUPPORT_TEXT_STRINGHELPER_H

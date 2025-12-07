@@ -27,7 +27,7 @@ limitations under the License.
 #include <string> // for std::u8string
 #include <any> // for std::any
 
-namespace Nuclex { namespace Support {
+namespace Nuclex::Support {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -477,6 +477,6 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+} // namespace Nuclex::Support
 
 #endif // NUCLEX_SUPPORT_VARIANT_H

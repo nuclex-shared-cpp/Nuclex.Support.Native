@@ -29,7 +29,7 @@ limitations under the License.
 // involving many other headers and preprocessor constants, so we include it last.
 #include <concurrentqueue.h>
 
-namespace Nuclex { namespace Support { namespace Threading {
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -153,6 +153,6 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading
 
 #endif // NUCLEX_SUPPORT_THREADING_THREADPOOLTASKPOOL_H

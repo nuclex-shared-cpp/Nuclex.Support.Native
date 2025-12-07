@@ -362,7 +362,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Text {
+namespace Nuclex::Support::Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -531,7 +531,7 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Text
+} // namespace Nuclex::Support::Text
 
 #undef WRITE_TWO_DIGITS
 #undef WRITE_ONE_DIGIT

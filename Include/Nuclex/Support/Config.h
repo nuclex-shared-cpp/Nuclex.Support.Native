@@ -47,7 +47,7 @@ limitations under the License.
     #define NUCLEX_SUPPORT_CXX20 1
   #endif
 #elif defined(__GNUC__)
-  #if (__GNUC__ < 11) // GCC 11.0 has the C++20 features we use
+  #if (__GNUC__ < 9) // GCC 11.0 has the C++20 features we use
     #error At least GCC 11.0 is required to compile Nuclex.Support.Native
   #elif defined(__cplusplus) && (__cplusplus >= 202002L)
     #define NUCLEX_SUPPORT_CXX20 1
@@ -55,6 +55,7 @@ limitations under the License.
 #else
   #error Unknown compiler. Nuclex.Support.Native is tested with GCC, clang and MSVC only
 #endif
+    #define NUCLEX_SUPPORT_CXX20 1
 
 // This library uses char8_t, std::u8string and other new C++20 features,
 // so anything earlier than C++ 20 would only result in compilation errors.

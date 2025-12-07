@@ -26,7 +26,7 @@ limitations under the License.
 #include <functional> //for std::hash, std::equal_to, std::less
 #include <cstdint> // for std::uint32_t, std::uint64_t
 
-namespace Nuclex { namespace Support { namespace Text {
+namespace Nuclex::Support::Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -324,6 +324,6 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Text
+} // namespace Nuclex::Support::Text
 
 #endif // NUCLEX_SUPPORT_TEXT_STRINGMATCHER_H

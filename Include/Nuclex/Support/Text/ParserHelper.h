@@ -26,7 +26,7 @@ limitations under the License.
 #include <optional> // for std::optional
 #include <cstdint> // for std::uint32_t, std::int32_t, std::uint64_t, std::int64_t
 
-namespace Nuclex { namespace Support { namespace Text {
+namespace Nuclex::Support::Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -325,6 +325,6 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Text
+} // namespace Nuclex::Support::Text
 
 #endif // NUCLEX_SUPPORT_TEXT_PARSERHELPER_H

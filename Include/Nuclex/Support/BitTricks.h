@@ -48,7 +48,7 @@ limitations under the License.
   #endif
 #endif
 
-namespace Nuclex { namespace Support {
+namespace Nuclex::Support {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -413,6 +413,6 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+} // namespace Nuclex::Support
 
 #endif // NUCLEX_SUPPORT_BITTRICKS_H

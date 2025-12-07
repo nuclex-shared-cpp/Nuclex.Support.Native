@@ -25,7 +25,7 @@ limitations under the License.
 #include <cstddef> // for std::nullptr_t
 #include <utility> // for std::forward
 
-namespace Nuclex { namespace Support {
+namespace Nuclex::Support {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -176,7 +176,7 @@ namespace Nuclex { namespace Support {
 #endif
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+} // namespace Nuclex::Support
 
 // --------------------------------------------------------------------------------------------- //
 

@@ -27,7 +27,7 @@ limitations under the License.
 #include <chrono> // for std::chrono::microseconds etc.
 #include <thread> // for std::thread
 
-namespace Nuclex { namespace Support { namespace Threading {
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -164,6 +164,6 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading
 
 #endif // NUCLEX_SUPPORT_THREADING_THREAD_H

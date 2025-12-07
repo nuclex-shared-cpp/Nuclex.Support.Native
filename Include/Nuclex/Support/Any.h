@@ -33,7 +33,7 @@ namespace {
 #include <typeinfo>
 #include <type_traits>
 
-namespace Nuclex { namespace Support {
+namespace Nuclex::Support {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -211,6 +211,6 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+} // namespace Nuclex::Support
 
 #endif // NUCLEX_SUPPORT_ANY_H

@@ -35,7 +35,7 @@ namespace {
 #include <stdexcept> // for std::logic_error
 #include <cstdint> // for std::uint8_t
 
-namespace Nuclex { namespace Support {
+namespace Nuclex::Support {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -183,6 +183,6 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+} // namespace Nuclex::Support
 
 #endif // NUCLEX_SUPPORT_OPTIONAL_H

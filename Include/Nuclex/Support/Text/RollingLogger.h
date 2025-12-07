@@ -26,7 +26,7 @@ limitations under the License.
 
 #include <vector> // for std::vector
 
-namespace Nuclex { namespace Support { namespace Text {
+namespace Nuclex::Support::Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -228,6 +228,6 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Text
+} // namespace Nuclex::Support::Text
 
 #endif // NUCLEX_SUPPORT_TEXT_ROLLINGLOGGER_H

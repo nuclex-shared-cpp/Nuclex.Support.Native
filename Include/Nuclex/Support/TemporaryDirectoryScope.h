@@ -27,7 +27,7 @@ limitations under the License.
 #include <cstdint> // for std::uint8_t
 #include <filesystem> // for std::filesystem::path
 
-namespace Nuclex { namespace Support {
+namespace Nuclex::Support {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -155,6 +155,6 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+} // namespace Nuclex::Support
 
 #endif // NUCLEX_SUPPORT_TEMPORARYDIRECTORYSCOPE_H

@@ -25,7 +25,7 @@ limitations under the License.
 #include <cstddef> // for std::size_t
 #include <cmath> // for std::sqrt()
 
-namespace Nuclex { namespace Support { namespace Threading {
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -152,6 +152,6 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading
 
 #endif // NUCLEX_SUPPORT_THREADING_THREADPOOLCONFIG_H

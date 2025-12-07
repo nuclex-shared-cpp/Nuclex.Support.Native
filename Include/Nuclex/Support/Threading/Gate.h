@@ -25,7 +25,7 @@ limitations under the License.
 #include <cstdint> // for std::uint32_t
 #include <chrono> // for std::chrono::microseconds
 
-namespace Nuclex { namespace Support { namespace Threading {
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -118,6 +118,6 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading
 
 #endif // NUCLEX_SUPPORT_THREADING_GATE_H

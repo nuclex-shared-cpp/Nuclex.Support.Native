@@ -25,7 +25,7 @@ limitations under the License.
 #include <cstddef> // for std::size_t
 #include <cassert> // for assert()
 
-namespace Nuclex { namespace Support { namespace Text {
+namespace Nuclex::Support::Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -477,6 +477,6 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Text
+} // namespace Nuclex::Support::Text
 
 #endif // NUCLEX_SUPPORT_TEXT_UNICODEHELPER_H

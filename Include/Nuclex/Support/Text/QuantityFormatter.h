@@ -27,7 +27,7 @@ limitations under the License.
 #include <cstdint> // for std::uint32_t, std::int32_t, std::uint64_t, std::int64_t
 #include <chrono> // for std::chrono::seconds
 
-namespace Nuclex { namespace Support { namespace Text {
+namespace Nuclex::Support::Text {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -69,6 +69,6 @@ namespace Nuclex { namespace Support { namespace Text {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Text
+} // namespace Nuclex::Support::Text
 
 #endif // NUCLEX_SUPPORT_TEXT_QUANTITYFORMATTER_H

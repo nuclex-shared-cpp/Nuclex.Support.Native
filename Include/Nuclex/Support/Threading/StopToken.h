@@ -36,7 +36,7 @@ namespace {
 #include <memory> // for std::enable_shared_from_this, std::shared_ptr
 #include <atomic> // for std::atomic
 
-namespace Nuclex { namespace Support { namespace Threading {
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -114,6 +114,6 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading
 
 #endif // NUCLEX_SUPPORT_THREADING_STOPTOKEN_H
