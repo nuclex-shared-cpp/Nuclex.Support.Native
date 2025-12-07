@@ -23,7 +23,7 @@ limitations under the License.
 #include "Nuclex/Support/Collections/DynamicArray.h"
 #include <gtest/gtest.h>
 
-namespace Nuclex { namespace Support { namespace Collections {
+namespace Nuclex::Support::Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -271,4 +271,4 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Collections
+} // namespace Nuclex::Support::Collections

@@ -31,7 +31,7 @@ limitations under the License.
 #include <chrono> // for std::chrono::high_resolution_clock
 #include <cassert> // for assert()
 
-namespace Nuclex { namespace Support { namespace Collections {
+namespace Nuclex::Support::Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -430,6 +430,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Collections
+} // namespace Nuclex::Support::Collections
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_CONCURRENTBUFFERTEST_H

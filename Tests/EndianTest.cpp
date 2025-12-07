@@ -26,7 +26,7 @@ limitations under the License.
 
 #include <random> // lots, for testing with random numbers
 
-namespace Nuclex { namespace Support {
+namespace Nuclex::Support {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -99,4 +99,4 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+} // namespace Nuclex::Support

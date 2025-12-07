@@ -24,7 +24,7 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
-namespace Nuclex { namespace Support { namespace Threading {
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -82,4 +82,4 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading

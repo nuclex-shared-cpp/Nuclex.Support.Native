@@ -84,12 +84,6 @@
     <Filter Include="Tests\Threading">
       <UniqueIdentifier>{2781deb4-4664-4b67-a3ae-7d695e2ed2fa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Tests\Threading\Posix">
-      <UniqueIdentifier>{3fb52f4d-b40a-42d2-987e-587fef746165}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Tests\Threading\Windows">
-      <UniqueIdentifier>{6892e1f6-d6ad-4ee8-b79f-22b0fe04f30d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tests\Interop">
       <UniqueIdentifier>{58263473-d1ad-4d79-8851-ed0abea806d6}</UniqueIdentifier>
     </Filter>

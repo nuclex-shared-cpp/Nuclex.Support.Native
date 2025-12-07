@@ -27,7 +27,7 @@ limitations under the License.
 #include <gtest/gtest.h>
 #include <stdexcept> // for std::runtime_error
 
-namespace Nuclex { namespace Support { namespace Settings {
+namespace Nuclex::Support::Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -432,6 +432,6 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Settings
+} // namespace Nuclex::Support::Settings
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)

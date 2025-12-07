@@ -207,7 +207,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Threading {
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
@@ -244,6 +244,6 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading
 
 #endif // defined(NUCLEX_SUPPORT_ENABLE_BENCHMARKS)

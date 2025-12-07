@@ -31,7 +31,7 @@ limitations under the License.
 #include <sys/stat.h> // for ::stat()
 #endif
 
-namespace Nuclex { namespace Support {
+namespace Nuclex::Support {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -154,4 +154,4 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+} // namespace Nuclex::Support

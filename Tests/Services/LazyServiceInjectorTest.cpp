@@ -100,7 +100,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Services {
+namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -372,4 +372,4 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Services
+} // namespace Nuclex::Support::Services

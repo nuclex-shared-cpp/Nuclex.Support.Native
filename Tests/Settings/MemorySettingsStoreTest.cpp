@@ -24,7 +24,7 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
-namespace Nuclex { namespace Support { namespace Settings {
+namespace Nuclex::Support::Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -222,4 +222,4 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Settings
+} // namespace Nuclex::Support::Settings

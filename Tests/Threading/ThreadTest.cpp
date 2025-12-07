@@ -27,7 +27,7 @@ limitations under the License.
 #include <thread>
 #include <atomic>
 
-namespace Nuclex { namespace Support { namespace Threading {
+namespace Nuclex::Support::Threading {
 
   // ------------------------------------------------------------------------------------------- //
 #if defined(NUCLEX_SUPPORT_WANT_USELESS_THREAD_ID_QUERY)
@@ -204,4 +204,4 @@ namespace Nuclex { namespace Support { namespace Threading {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Threading
+} // namespace Nuclex::Support::Threading

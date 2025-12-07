@@ -23,7 +23,7 @@ limitations under the License.
 #include "Nuclex/Support/Collections/RingQueue.h"
 #include "BufferTest.h"
 
-namespace Nuclex { namespace Support { namespace Collections {
+namespace Nuclex::Support::Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -367,4 +367,4 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Collections
+} // namespace Nuclex::Support::Collections

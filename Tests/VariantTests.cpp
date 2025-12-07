@@ -26,7 +26,7 @@ limitations under the License.
 // https://cplusplus.github.io/LWG/issue3121
 // #define NUCLEX_SUPPORT_VARIANT_WITH_STDANY_CONSTRUCTOR
 
-namespace Nuclex { namespace Support {
+namespace Nuclex::Support {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -481,4 +481,4 @@ namespace Nuclex { namespace Support {
 
   // ------------------------------------------------------------------------------------------- //
 
-}} // namespace Nuclex::Support
+} // namespace Nuclex::Support

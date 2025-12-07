@@ -95,7 +95,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Events {
+namespace Nuclex::Support::Events {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -415,4 +415,4 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Events
+} // namespace Nuclex::Support::Events
