@@ -32,6 +32,7 @@ limitations under the License.
 #include <fcntl.h> // ::open() and flags
 #include <unistd.h> // ::read(), ::write(), ::close(), etc.
 
+#include <cassert> // assert()
 #include <cerrno> // To access ::errno directly
 #include <vector> // std::vector
 
@@ -74,7 +75,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -181,19 +182,24 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void LinuxFileApi::Close(int fileDescriptor, bool throwOnError /* = true */) {
+  template<> void LinuxFileApi::Close<ErrorPolicy::Throw>(int fileDescriptor) {
     int result = ::close(fileDescriptor);
     if(result == -1) [[unlikely]] {
-      if(throwOnError) [[likely]] {
-        int errorNumber = errno;
-        std::u8string errorMessage(u8"Could not close file");
-        Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
-      }
+      int errorNumber = errno;
+      std::u8string errorMessage(u8"Could not close file");
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+  template<> void LinuxFileApi::Close<ErrorPolicy::Assert>(int fileDescriptor) {
+    int result = ::close(fileDescriptor);
+    assert((result != -1) && u8"File must be closed successfully");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // namespace Nuclex::Support::Platform
 
 #endif // defined(NUCLEX_SUPPORT_LINUX)

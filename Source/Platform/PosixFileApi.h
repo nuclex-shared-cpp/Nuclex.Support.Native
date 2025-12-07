@@ -24,12 +24,14 @@ limitations under the License.
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include "./ErrorPolicy.h" // for ErrorPolicy
+
 #include <string> // for std::string
 #include <cstdint> // for std::uint8_t
 #include <cstdio> // for FILE, ::fopen(), etc.
 #include <filesystem> // for std::filesystem
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -77,17 +79,24 @@ namespace Nuclex { namespace Support { namespace Platform {
     public: static void Flush(FILE *file);
 
     /// <summary>Closes the specified file</summary>
-    /// <param name="file">File pointer returned by the open method</param>
-    /// <param name="throwOnError">
-    ///   Whether to throw an exception if the file cannot be closed
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
     /// </param>
-    public: static void Close(FILE *file, bool throwOnError = true);
+    /// <param name="file">File pointer returned by the open method</param>
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static void Close(FILE *file);
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+  template<> void PosixFileApi::Close<ErrorPolicy::Throw>(FILE *file);
+  template<> void PosixFileApi::Close<ErrorPolicy::Assert>(FILE *file);
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // namespace Nuclex::Support::Platform
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
 

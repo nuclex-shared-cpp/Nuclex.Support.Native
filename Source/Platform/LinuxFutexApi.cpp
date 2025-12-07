@@ -33,7 +33,7 @@ limitations under the License.
 #include <limits.h> // for INT_MAX
 #include <sys/syscall.h> // for ::SYS_futex
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -172,6 +172,6 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Platform
 
 #endif // defined(NUCLEX_SUPPORT_LINUX)

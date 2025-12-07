@@ -32,7 +32,7 @@ limitations under the License.
 
 #include <sys/types.h> // for ::pid_t
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -58,8 +58,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     /// <param name="whichEnd">For which end non-blocking IO will be enabled</param>
     public: void SetEndNonBlocking(int whichEnd);
 
-    /// <summary>Fetches the file number of one end of the pipe</summary>
-    /// <param name="whichEnd">
+    /// <summary>Fetches the file number of one end of t { namespace 
     ///   Index of the pipe end (0 or 1) whose file number will be returned
     /// </param>
     /// <returns>The file number for the requested end of the pipe</returns>
@@ -142,7 +141,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Platform
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
 

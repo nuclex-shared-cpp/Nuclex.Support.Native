@@ -26,31 +26,7 @@ limitations under the License.
 
 #include <string> // for std::u8string
 
-namespace Nuclex { namespace Support { namespace Platform {
-
-  // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Controls the error handling of wrapper functions around C APIs</summary>
-  enum class ErrorPolicy {
-
-    /// <summary>Any non-successful outcome will result in an exception</summary>
-    /// <remarks>
-    ///   Some very specific errors (i.e. starting a file enumeration on Windows will return
-    ///   <code>ERROR_FILE_NOT_FOUND</code> if a directory is empty, which is obviously
-    ///   a regular outcome, or Linux threading functions that return EAGAIN or EBUSY) will
-    ///   be returned as normalized boolean or <code>std::optional&lt;&gt;</code> results.
-    /// </remarks>
-    Throw = -1,
-
-    /// <summary>Non-successful outcomes will trigger an assertion in debug mode</summary>
-    /// <remarks>
-    ///   This is intended for RAII cleanup calls to avoid throwing in the destructor (at
-    ///   the price of silently leaking a resource in release mode, though typical close and
-    ///   release functions are designed to never fail under normal circumstances).
-    /// </remarks>
-    Assert = 0
-
-  };
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -93,7 +69,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Platform
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
 

@@ -24,6 +24,8 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
+#include "./ErrorPolicy.h" // for ErrorPolicy
+
 #include <string> // std::u8string
 #include <cstdint> // std::uint8_t and std::size_t
 #include <filesystem> // for std::filesystem
@@ -31,7 +33,7 @@ limitations under the License.
 #include <sys/stat.h> // ::fstat() and permission flags
 #include <dirent.h> // struct ::dirent
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -97,17 +99,24 @@ namespace Nuclex { namespace Support { namespace Platform {
     public: static void Flush(int fileDescriptor);
 
     /// <summary>Closes the specified file</summary>
-    /// <param name="fileDescriptor">Handle of the file that will be closed</param>
-    /// <param name="throwOnError">
-    ///   Whether to throw an exception if the file cannot be closed
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
     /// </param>
-    public: static void Close(int fileDescriptor, bool throwOnError = true);
+    /// <param name="fileDescriptor">Handle of the file that will be closed</param>
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static void Close(int fileDescriptor);
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+  template<> void LinuxFileApi::Close<ErrorPolicy::Throw>(int fileDescriptor);
+  template<> void LinuxFileApi::Close<ErrorPolicy::Assert>(int fileDescriptor);
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // namespace Nuclex::Support::Platform
 
 #endif // defined(NUCLEX_SUPPORT_LINUX)
 

@@ -78,7 +78,9 @@ namespace Nuclex { namespace Support { namespace Settings {
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
       int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
+      ON_SCOPE_EXIT {
+        Platform::LinuxFileApi::Close<Platform::ErrorPolicy::Assert>(fileDescriptor);
+      };
 
       contents.resize(4096);
       for(std::size_t offset = 0;;) {
@@ -116,7 +118,9 @@ namespace Nuclex { namespace Support { namespace Settings {
 #else
     {
       ::FILE *file = Platform::PosixFileApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Platform::PosixFileApi::Close(file); };
+      ON_SCOPE_EXIT {
+        Platform::PosixFileApi::Close<Platform::ErrorPolicy::Assert>(file);
+      };
 
       contents.resize(4096);
       for(std::size_t offset = 0;;) {
@@ -158,7 +162,9 @@ namespace Nuclex { namespace Support { namespace Settings {
 #if defined(NUCLEX_SUPPORT_LINUX)
     {
       int fileDescriptor = Platform::LinuxFileApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
+      ON_SCOPE_EXIT {
+        Platform::LinuxFileApi::Close<Platform::ErrorPolicy::Assert>(fileDescriptor);
+      };
 
       std::size_t bytesWritten;
       if(this->privateImplementationData == nullptr) {
@@ -201,7 +207,9 @@ namespace Nuclex { namespace Support { namespace Settings {
 #else
     {
       ::FILE *file = Platform::PosixFileApi::OpenFileForWriting(iniFilePath, true);
-      ON_SCOPE_EXIT { Platform::PosixFileApi::Close(file); };
+      ON_SCOPE_EXIT {
+        Platform::PosixFileApi::Close<Platform::ErrorPolicy::Assert>(file);
+      };
 
       std::size_t bytesWritten;
       if(this->privateImplementationData == nullptr) {

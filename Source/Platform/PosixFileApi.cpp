@@ -39,7 +39,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -130,19 +130,23 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void PosixFileApi::Close(FILE *file, bool throwOnError /* = true */) {
+  template<> void PosixFileApi::Close<ErrorPolicy::Throw>(FILE *file) {
     int result = ::fclose(file);
     if(result != 0) [[unlikely]] {
-      if(throwOnError) [[likely]] {
-        int errorNumber = errno;
-        std::u8string errorMessage(u8"Could not close file");
-        Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
-      }
+      int errorNumber = errno;
+      std::u8string errorMessage(u8"Could not close file");
+      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+  template<> void PosixFileApi::Close<ErrorPolicy::Assert>(FILE *file) {
+    int result = ::fclose(file);
+    assert((result == 0) && u8"File must be closed successfully");
+  }
+  // ------------------------------------------------------------------------------------------- //
+
+} // namespace Nuclex::Support::Platform
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
