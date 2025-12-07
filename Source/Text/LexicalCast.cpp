@@ -110,20 +110,23 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  // TODO: This exists for performance reasons, remove and write custom integer parser
-
   /// <summary>Parses an integer from a span of UTF-8 characters</summary>>
   /// <typename name="TInteger">Integer type that will be parsed</typename>
   /// <param name="start">Pointer to the first number in the UTF-8 string</param>
   /// <param name="end">Pointer one past the last character to parse</param>
   template<typename TInteger>
-  TInteger integerFromUtf8(const char8_t *start, const char8_t *end) {
+  NUCLEX_SUPPORT_ALWAYS_INLINE TInteger integerFromUtf8(
+    const char8_t *start, const char8_t *end
+  ) {
     TInteger result = 0;
-    fast_float::from_chars(start, end, result);
+    fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(start, end, result);
+    if(static_cast<bool>(outcome)) {
+      return result;
+    }
 
     // We intentionally discard the std::from_chars_result.
     // In case of an invalid input string, we silently fail and return 0.
-    return result;
+    return TInteger(0);
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -133,13 +136,16 @@ namespace {
   /// <param name="start">Pointer to the first number in the UTF-8 string</param>
   /// <param name="end">Pointer one past the last character to parse</param>
   template<typename TFloat>
-  TFloat floatFromUtf8(const char8_t *start, const char8_t *end) {
+  NUCLEX_SUPPORT_ALWAYS_INLINE TFloat floatFromUtf8(const char8_t *start, const char8_t *end) {
     TFloat result = 0;
-    fast_float::from_chars(start, end, result);
+    fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(start, end, result);
+    if(static_cast<bool>(outcome)) {
+      return result;
+    }
 
     // We intentionally discard the std::from_chars_result.
     // In case of an invalid input string, we silently fail and return 0.
-    return result;
+    return TFloat(0);
   }
 
   // ------------------------------------------------------------------------------------------- //
