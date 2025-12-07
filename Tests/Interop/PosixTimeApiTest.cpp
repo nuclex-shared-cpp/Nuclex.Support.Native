@@ -20,7 +20,7 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "../../Source/Platform/PosixTimeApi.h"
+#include "../../Source/Interop/PosixTimeApi.h"
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
@@ -28,7 +28,7 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -175,6 +175,6 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Platform
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)

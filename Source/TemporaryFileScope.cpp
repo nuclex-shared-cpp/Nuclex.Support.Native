@@ -25,16 +25,16 @@ limitations under the License.
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 #include "Nuclex/Support/ScopeGuard.h" // Closing opened files even if exceptions happen
 #include "Nuclex/Support/Text/StringConverter.h" // Conversion between UTF-8 and wide char
-#include "./Platform/WindowsApi.h" // Minimalist Windows.h and error handling helpers
-#include "./Platform/WindowsPathApi.h" // Basic path manipulation required to join directories
-#include "./Platform/WindowsFileApi.h" // Opening files and reading/writing them
+#include "./Interop/WindowsApi.h" // Minimalist Windows.h and error handling helpers
+#include "./Interop/WindowsPathApi.h" // Basic path manipulation required to join directories
+#include "./Interop/WindowsFileApi.h" // Opening files and reading/writing them
 #elif defined(NUCLEX_SUPPORT_LINUX)
-#include "./Platform/LinuxFileApi.h" // Opening files and reading/writing them
+#include "./Interop/LinuxFileApi.h" // Opening files and reading/writing them
 #endif
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
-#include "./Platform/PosixApi.h" // Posix error handling
-#include "./Platform/PosixPathApi.h" // Basic posix path manipulation for temp directory access
+#include "./Interop/PosixApi.h" // Posix error handling
+#include "./Interop/PosixPathApi.h" // Basic posix path manipulation for temp directory access
 #include <unistd.h> // for ::write(), ::close(), ::unlink()
 #include <cstdlib> // for ::getenv(), ::mkdtemp()
 #endif

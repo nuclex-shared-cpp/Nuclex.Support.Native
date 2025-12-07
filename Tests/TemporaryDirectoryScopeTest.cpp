@@ -24,8 +24,8 @@ limitations under the License.
 #include <gtest/gtest.h>
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-#include "../Source/Platform/WindowsApi.h" // for WindowsApi
-#include "../Source/Platform/WindowsFileApi.h" // for WindowsApi
+#include "../Source/Interop/WindowsApi.h" // for WindowsApi
+#include "../Source/Interop/WindowsFileApi.h" // for WindowsApi
 #include "Nuclex/Support/Text/StringConverter.h" // for UTF-8 to wide char conversion
 #else
 #include <unistd.h> // for ::access()

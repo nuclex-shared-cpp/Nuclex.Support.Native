@@ -20,13 +20,13 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "../../Source/Platform/WindowsPathApi.h"
+#include "../../Source/Interop/WindowsPathApi.h"
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <gtest/gtest.h>
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -100,6 +100,6 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Platform
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)

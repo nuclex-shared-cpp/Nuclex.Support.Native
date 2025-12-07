@@ -27,11 +27,11 @@ limitations under the License.
 #include "IniDocumentModel.h"
 
 #if defined(NUCLEX_SUPPORT_LINUX)
-#include "../Platform/LinuxFileApi.h"
+#include "../Interop/LinuxFileApi.h"
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
-#include "../Platform/WindowsFileApi.h"
+#include "../Interop/WindowsFileApi.h"
 #else
-#include "../Platform/PosixFileApi.h"
+#include "../Interop/PosixFileApi.h"
 #endif
 
 #include <memory> // for std::unique_ptr

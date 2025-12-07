@@ -24,9 +24,9 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_LINUX)
 
-#include "../Platform/PosixTimeApi.h" // for PosixTimeApi
-#include "../Platform/PosixProcessApi.h" // for Pipe, PosixProcessApi
-#include "../Platform/PosixPathApi.h" // for PosixFileApi
+#include "../Interop/PosixTimeApi.h" // for PosixTimeApi
+#include "../Interop/PosixProcessApi.h" // for Pipe, PosixProcessApi
+#include "../Interop/PosixPathApi.h" // for PosixFileApi
 
 #include "Nuclex/Support/Errors/TimeoutError.h"
 #include "Nuclex/Support/ScopeGuard.h"

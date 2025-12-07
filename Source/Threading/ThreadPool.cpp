@@ -37,10 +37,10 @@ limitations under the License.
 #include <thread> // for std::thread
 
 #if defined(NUCLEX_SUPPORT_LINUX)
-#include "../Platform/PosixTimeApi.h" // error handling helpers, time helpers
+#include "../Interop/PosixTimeApi.h" // error handling helpers, time helpers
 #include <sys/sysinfo.h> // for ::get_nprocs()
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
-#include "../Platform/WindowsApi.h" // error handling helpers
+#include "../Interop/WindowsApi.h" // error handling helpers
 #endif
 
 // There is no OS-provided thread pool on Linux systems and the thread pool provided

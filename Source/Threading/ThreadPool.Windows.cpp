@@ -29,7 +29,7 @@ limitations under the License.
 #include "./cameron314-concurrentqueue-1.0.4//concurrentqueue.h"
 
 #include "ThreadPoolTaskPool.h" // thread pool settings + task pool
-#include "../Platform/WindowsApi.h" // error handling helpers
+#include "../Interop/WindowsApi.h" // error handling helpers
 
 #include <cassert> // for assert()
 #include <atomic> // for std;:atomic

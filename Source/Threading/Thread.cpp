@@ -23,14 +23,14 @@ limitations under the License.
 #include "Nuclex/Support/Threading/Thread.h"
 
 #if defined(NUCLEX_SUPPORT_LINUX)
-#include "../Platform/PosixProcessApi.h" // for PosixProcessApi
+#include "../Interop/PosixProcessApi.h" // for PosixProcessApi
 #include <ctime> // for ::clock_gettime() and ::clock_nanosleep()
 #include <cstdlib> // for ldiv_t
 #include <algorithm> // for std::min()
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
-#include "../Platform/WindowsApi.h" // for ::Sleep(), ::GetCurrentThreadId() and more
+#include "../Interop/WindowsApi.h" // for ::Sleep(), ::GetCurrentThreadId() and more
 #else
-#include "../Platform/PosixProcessApi.h" // for PosixProcessApi
+#include "../Interop/PosixProcessApi.h" // for PosixProcessApi
 #endif
 
 #include "ThreadPoolConfig.h" // for ThreadPoolConfig::IsThreadPoolThread

@@ -30,7 +30,7 @@ limitations under the License.
 #else
 #include <ctime> // for ::timespec, ::clock_gettime() and ::gmtime_r()
 #include <cerrno> // for ::errno
-#include "../Platform/PosixApi.h" // for strerror() wrapper
+#include "../Interop/PosixApi.h" // for strerror() wrapper
 #endif
 
 #include <cassert> // for assert()

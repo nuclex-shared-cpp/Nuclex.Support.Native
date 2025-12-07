@@ -23,13 +23,13 @@ limitations under the License.
 #include "Nuclex/Support/TemporaryDirectoryScope.h"
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-#include "Platform/WindowsApi.h" // for WindowsApi
-#include "Platform/WindowsPathApi.h" // for WindowsPathApi
-#include "Platform/WindowsFileApi.h" // for WindowsFileApi
+#include "Interop/WindowsApi.h" // for WindowsApi
+#include "Interop/WindowsPathApi.h" // for WindowsPathApi
+#include "Interop/WindowsFileApi.h" // for WindowsFileApi
 #else
-#include "Platform/PosixApi.h" // for PosixApi
-#include "Platform/PosixPathApi.h" // for PosixPathApi
-#include "Platform/LinuxFileApi.h" // for LinuxFileApi
+#include "Interop/PosixApi.h" // for PosixApi
+#include "Interop/PosixPathApi.h" // for PosixPathApi
+#include "Interop/LinuxFileApi.h" // for LinuxFileApi
 
 #include <ftw.h> // for struct ::ftw
 #include <sys/stat.h> // for struct ::stat

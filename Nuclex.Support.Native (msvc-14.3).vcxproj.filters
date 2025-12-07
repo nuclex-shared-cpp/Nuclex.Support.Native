@@ -60,7 +60,7 @@
     <Filter Include="Source\Threading">
       <UniqueIdentifier>{c3c71559-2291-4f45-8938-c3cf232c87c5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Platform">
+    <Filter Include="Source\Interop">
       <UniqueIdentifier>{41337d1c-187d-4d7b-8eea-9eb521d00b08}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Text\DragonBox-1.1.2">
@@ -358,89 +358,89 @@
     <ClCompile Include="Source\Events\Event.cpp">
       <Filter>Source\Events</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\PosixApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\PosixApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\PosixApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\PosixApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Platform\LinuxFileApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\LinuxFileApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\LinuxFileApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\LinuxFileApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\LinuxFutexApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\LinuxFutexApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\LinuxFutexApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\LinuxFutexApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\PosixApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\PosixApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\PosixApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\PosixApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\PosixFileApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\PosixFileApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\PosixFileApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\PosixFileApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\PosixPathApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\PosixPathApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\PosixPathApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\PosixPathApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\PosixProcessApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\PosixProcessApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\PosixProcessApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\PosixProcessApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\PosixTimeApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\PosixTimeApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\PosixTimeApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\PosixTimeApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\WindowsApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\WindowsApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\WindowsApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\WindowsApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\WindowsFileApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\WindowsFileApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\WindowsFileApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\WindowsFileApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\WindowsPathApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\WindowsPathApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\WindowsPathApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\WindowsPathApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\WindowsProcessApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\WindowsProcessApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\WindowsProcessApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\WindowsProcessApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\WindowsRegistryApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\WindowsRegistryApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\WindowsRegistryApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\WindowsRegistryApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Platform\WindowsSyncApi.cpp">
-      <Filter>Source\Platform</Filter>
+    <ClCompile Include="Source\Interop\WindowsSyncApi.cpp">
+      <Filter>Source\Interop</Filter>
     </ClCompile>
-    <ClInclude Include="Source\Platform\WindowsSyncApi.h">
-      <Filter>Source\Platform</Filter>
+    <ClInclude Include="Source\Interop\WindowsSyncApi.h">
+      <Filter>Source\Interop</Filter>
     </ClInclude>
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
       <Filter>Source\Services</Filter>

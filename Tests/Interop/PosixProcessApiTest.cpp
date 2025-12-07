@@ -20,15 +20,15 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "../../Source/Platform/PosixProcessApi.h"
+#include "../../Source/Interop/PosixProcessApi.h"
 
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "../Source/Platform/PosixPathApi.h"
+#include "../Source/Interop/PosixPathApi.h"
 
 #include <gtest/gtest.h>
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -82,6 +82,6 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Platform
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)

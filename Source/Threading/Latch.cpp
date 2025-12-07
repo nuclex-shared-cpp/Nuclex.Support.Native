@@ -23,14 +23,14 @@ limitations under the License.
 #include "Nuclex/Support/Threading/Latch.h"
 
 #if defined(NUCLEX_SUPPORT_LINUX) // Directly use futex via kernel syscalls
-#include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetRemainingTimeout()
-#include "../Platform/LinuxFutexApi.h" // for LinuxFutexApi::PrivateFutexWait() and more
+#include "../Interop/PosixTimeApi.h" // for PosixTimeApi::GetRemainingTimeout()
+#include "../Interop/LinuxFutexApi.h" // for LinuxFutexApi::PrivateFutexWait() and more
 #elif defined(NUCLEX_SUPPORT_WINDOWS) // Use standard win32 threading primitives
-#include "../Platform/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
-#include "../Platform/WindowsSyncApi.h" // for ::WaitOnAddress(), ::WakeByAddressAll()
+#include "../Interop/WindowsApi.h" // for ::CreateEventW(), ::CloseHandle() and more
+#include "../Interop/WindowsSyncApi.h" // for ::WaitOnAddress(), ::WakeByAddressAll()
 #include <mutex> // for std::mutex
 #else // Posix: use a pthreads conditional variable to emulate a semaphore
-#include "../Platform/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
+#include "../Interop/PosixTimeApi.h" // for PosixTimeApi::GetTimePlus()
 #include <ctime> // for ::clock_gettime()
 #include <pthread.h> // for ::pthread_cond_init() etc.
 #endif

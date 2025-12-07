@@ -29,7 +29,7 @@ limitations under the License.
 #include "Nuclex/Support/Text/StringConverter.h"
 #include "Nuclex/Support/Text/LexicalCast.h"
 
-#include "../Platform/WindowsRegistryApi.h"
+#include "../Interop/WindowsRegistryApi.h"
 
 #include <cassert> // for assert()
 #include <stdexcept> // for std::logic_error

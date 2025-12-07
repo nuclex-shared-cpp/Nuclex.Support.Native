@@ -20,24 +20,40 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "../../Source/Platform/PosixApi.h"
+#include "../../Source/Interop/WindowsApi.h"
 
 #include <gtest/gtest.h>
 
-#if !defined(NUCLEX_SUPPORT_WINDOWS)
+#if defined(NUCLEX_SUPPORT_WINDOWS)
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(PosixApiTest, CanGetErrorMessage) {
+  TEST(WindowsApiTest, CanGetPosixErrorMessage) {
     int errorNumber = EACCES;
-    std::u8string errorMessage = PosixApi::GetErrorMessage(errorNumber);
-    EXPECT_GT(errorMessage.length(), 10U); // We can expect 10 letters at least, eh?
+    std::u8string errorMessage = WindowsApi::GetErrorMessage(errorNumber);
+    EXPECT_GT(errorMessage.length(), 10); // We can expect 10 letters at least, eh?
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+  TEST(WindowsApiTest, CanGetWindowsErrorMessage) {
+    DWORD errorCode = ERROR_OUTOFMEMORY;
+    std::u8string errorMessage = WindowsApi::GetErrorMessage(errorCode);
+    EXPECT_GT(errorMessage.length(), 10);
+  }
 
-#endif // !defined(NUCLEX_SUPPORT_WINDOWS)
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(WindowsApiTest, CanGetComErrorMessage) {
+    HRESULT resultHandle = E_NOINTERFACE;
+    std::u8string errorMessage = WindowsApi::GetErrorMessage(resultHandle);
+    EXPECT_GT(errorMessage.length(), 10);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // namespace Nuclex::Support::Platform
+
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)

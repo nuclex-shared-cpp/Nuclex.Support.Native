@@ -26,7 +26,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Errors/TimeoutError.h"
 #include "Nuclex/Support/Text/StringConverter.h"
-#include "../Platform/WindowsProcessApi.h"
+#include "../Interop/WindowsProcessApi.h"
 
 #include <exception> // for std::terminate()
 #include <cassert> // for assert()
