@@ -17,8 +17,8 @@ limitations under the License.
 */
 #pragma endregion // Apache License 2.0
 
-#ifndef NUCLEX_SUPPORT_PLATFORM_POSIXFILEAPI_H
-#define NUCLEX_SUPPORT_PLATFORM_POSIXFILEAPI_H
+#ifndef NUCLEX_SUPPORT_INTEROP_POSIXFILEAPI_H
+#define NUCLEX_SUPPORT_INTEROP_POSIXFILEAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -31,7 +31,7 @@ limitations under the License.
 #include <cstdio> // for FILE, ::fopen(), etc.
 #include <filesystem> // for std::filesystem
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -96,8 +96,8 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_PLATFORM_POSIXFILEAPI_H
+#endif // NUCLEX_SUPPORT_INTEROP_POSIXFILEAPI_H

@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -50,6 +50,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // NUCLEX_SUPPORT_PLATFORM_ERRORPOLICY_H

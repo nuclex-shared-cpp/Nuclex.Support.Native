@@ -111,20 +111,20 @@ namespace Nuclex::Support::Threading {
 
     // Attribute necessary to use CLOCK_MONOTONIC for condition variable timeouts
     ::pthread_condattr_t *monotonicClockAttribute = (
-      Platform::PosixTimeApi::GetMonotonicClockAttribute()
+      Interop::PosixTimeApi::GetMonotonicClockAttribute()
     );
 
     // Create a new pthread conditional variable
     int result = ::pthread_cond_init(&this->Condition, monotonicClockAttribute);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not initialize pthread conditional variable", result
       );
     }
 
     result = ::pthread_mutex_init(&this->Mutex, nullptr);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not initialize pthread mutex", result
       );
     }
@@ -262,7 +262,7 @@ namespace Nuclex::Support::Threading {
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
     }
@@ -271,7 +271,7 @@ namespace Nuclex::Support::Threading {
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );
     }
@@ -310,7 +310,7 @@ namespace Nuclex::Support::Threading {
       // This will signal other threads sitting in the Latch::Wait() method to re-check
       // the latch counter and resume running
       //
-      Platform::LinuxFutexApi::PrivateFutexWakeAll(impl.FutexWord);
+      Interop::LinuxFutexApi::PrivateFutexWakeAll(impl.FutexWord);
 
     } // if latch counter decremented to zero
   }
@@ -349,7 +349,7 @@ namespace Nuclex::Support::Threading {
       // This will signal other threads sitting in the Latch::Wait() method to re-check
       // the latch counter and resume running
       //
-      Platform::WindowsSyncApi::WakeByAddressAll(impl.WaitWord);
+      Interop::WindowsSyncApi::WakeByAddressAll(impl.WaitWord);
 
     } // if latch counter decremented to zero
   }
@@ -361,7 +361,7 @@ namespace Nuclex::Support::Threading {
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
     }
@@ -378,7 +378,7 @@ namespace Nuclex::Support::Threading {
           int unlockResult = ::pthread_mutex_unlock(&impl.Mutex);
           NUCLEX_SUPPORT_NDEBUG_UNUSED(unlockResult);
           assert((unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler");
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
             u8"Could not signal pthread conditional variable", result
           );
         }
@@ -387,7 +387,7 @@ namespace Nuclex::Support::Threading {
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );
     }
@@ -411,7 +411,7 @@ namespace Nuclex::Support::Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      Platform::LinuxFutexApi::PrivateFutexWait(
+      Interop::LinuxFutexApi::PrivateFutexWait(
         impl.FutexWord,
         0 // wait while futex word is 0 (== latch counter is greater than zero)
       );
@@ -452,7 +452,7 @@ namespace Nuclex::Support::Threading {
       //
       // This sends the thread to sleep for as long as the wait value has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      Platform::WindowsSyncApi::WaitOnAddress(
+      Interop::WindowsSyncApi::WaitOnAddress(
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0) // wait while wait variable is 0 (== gate closed)
       );
@@ -484,7 +484,7 @@ namespace Nuclex::Support::Threading {
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
     }
@@ -497,7 +497,7 @@ namespace Nuclex::Support::Threading {
         assert(
           (unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler"
         );
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not wait on pthread conditional variable", result
         );
       }
@@ -505,7 +505,7 @@ namespace Nuclex::Support::Threading {
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );
     }
@@ -522,7 +522,7 @@ namespace Nuclex::Support::Threading {
     int result = ::clock_gettime(CLOCK_MONOTONIC, &startTime);
     if(result == -1) {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not get monotonic time for gate", errorNumber
       );
     }
@@ -536,7 +536,7 @@ namespace Nuclex::Support::Threading {
 
       // Calculate the remaining timeout until the wait should fail. Note that this is
       // a relative timeout (in contrast to ::sem_t and most things Posix).
-      struct ::timespec timeout = Platform::PosixTimeApi::GetRemainingTimeout(
+      struct ::timespec timeout = Interop::PosixTimeApi::GetRemainingTimeout(
         CLOCK_MONOTONIC, startTime, patience
       );
 
@@ -545,12 +545,12 @@ namespace Nuclex::Support::Threading {
       //
       // This sends the thread to sleep for as long as the futex word has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      Platform::LinuxFutexApi::WaitResult result = Platform::LinuxFutexApi::PrivateFutexWait(
+      Interop::LinuxFutexApi::WaitResult result = Interop::LinuxFutexApi::PrivateFutexWait(
         impl.FutexWord,
         0,
         timeout
       );
-      if(result == Platform::LinuxFutexApi::TimedOut) [[unlikely]] {
+      if(result == Interop::LinuxFutexApi::TimedOut) [[unlikely]] {
         return false; // Timeout elapsed, so it's time to give the bad news to the caller
       }
 
@@ -597,12 +597,12 @@ namespace Nuclex::Support::Threading {
       //
       // This sends the thread to sleep for as long as the wait value has the expected value.
       // Checking and entering sleep is one atomic operation, avoiding a race condition.
-      Platform::WindowsSyncApi::WaitResult result = Platform::WindowsSyncApi::WaitOnAddress(
+      Interop::WindowsSyncApi::WaitResult result = Interop::WindowsSyncApi::WaitOnAddress(
         static_cast<const volatile std::uint32_t &>(impl.WaitWord),
         static_cast<std::uint32_t>(0), // wait while wait variable is 0 (== gate closed)
         remainingTickCount
       );
-      if(result == Platform::WindowsSyncApi::WaitResult::TimedOut) [[unlikely]] {
+      if(result == Interop::WindowsSyncApi::WaitResult::TimedOut) [[unlikely]] {
         return false;
       }
 
@@ -652,11 +652,11 @@ namespace Nuclex::Support::Threading {
     const PlatformDependentImplementationData &impl = getImplementationData();
 
     // Forced to use CLOCK_REALTIME, which means the semaphore is broken :-(
-    struct ::timespec endTime = Platform::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
+    struct ::timespec endTime = Interop::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
 
     int result = ::pthread_mutex_lock(&impl.Mutex);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not lock pthread mutex", result
       );
     }
@@ -667,7 +667,7 @@ namespace Nuclex::Support::Threading {
         if(result == ETIMEDOUT) {
           result = ::pthread_mutex_unlock(&impl.Mutex);
           if(result != 0) [[unlikely]] {
-            Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+            Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
               u8"Could not unlock pthread mutex", result
             );
           }
@@ -680,7 +680,7 @@ namespace Nuclex::Support::Threading {
         assert(
           (unlockResult == 0) && u8"pthread mutex is successfully unlocked in error handler"
         );
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not wait on pthread conditional variable", result
         );
       }
@@ -688,7 +688,7 @@ namespace Nuclex::Support::Threading {
 
     result = ::pthread_mutex_unlock(&impl.Mutex);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not unlock pthread mutex", result
       );
     }

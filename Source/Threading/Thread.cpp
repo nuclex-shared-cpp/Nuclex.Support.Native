@@ -90,7 +90,7 @@ namespace {
     );
     if(previousAffinityMask == 0) {
       DWORD errorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not change thread affinity via ::SetThreadAffinityMask()", errorCode
       );
     }
@@ -102,7 +102,7 @@ namespace {
     );
     if(temporaryAffinityMask == 0) {
       DWORD errorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not revert thread affinity via ::SetThreadAffinityMask()", errorCode
       );
     }
@@ -130,7 +130,7 @@ namespace {
     //CPU_ZERO(&cpuSet);
     int errorNumber = ::pthread_getaffinity_np(thread, sizeof(cpuSet), &cpuSet);
     if(errorNumber != 0) {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Error querying CPU affinity via pthread_getaffinity_np()", errorNumber
       );
     }
@@ -179,7 +179,7 @@ namespace {
     // Apply the affinity setting
     int errorNumber = ::pthread_setaffinity_np(thread, sizeof(cpuSet), &cpuSet);
     if(errorNumber != 0) {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Error changing CPU affinity via pthread_setaffinity_np()", errorNumber
       );
     }
@@ -208,7 +208,7 @@ namespace Nuclex::Support::Threading {
       int result = ::clock_gettime(CLOCK_MONOTONIC, &endTime);
       if(result == -1) {
         int errorNumber = errno;
-        Platform::PosixApi::ThrowExceptionForSystemError(
+        Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Error retrieving current time via clock_gettime()", errorNumber
         );
       }
@@ -245,7 +245,7 @@ namespace Nuclex::Support::Threading {
         return;
       } else if(result != EINTR) {
         int errorNumber = errno;
-        Platform::PosixApi::ThrowExceptionForSystemError(
+        Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Error pausing thread via ::clock_nanosleep()", errorNumber
         );
       }
@@ -382,7 +382,7 @@ namespace Nuclex::Support::Threading {
     );
     if(previousAffinityMask == 0) {
       DWORD errorCode = ::GetLastError();
-      Platform::WindowsApi::ThrowExceptionForSystemError(
+      Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not change thread affinity via ::SetThreadAffinityMask()", errorCode
       );
     }
@@ -412,7 +412,7 @@ namespace Nuclex::Support::Threading {
     );
     if(previousAffinityMask == 0) {
       DWORD errorCode = ::GetLastError();
-      Platform::WindowsApi::ThrowExceptionForSystemError(
+      Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not change thread affinity via ::SetThreadAffinityMask()", errorCode
       );
     }

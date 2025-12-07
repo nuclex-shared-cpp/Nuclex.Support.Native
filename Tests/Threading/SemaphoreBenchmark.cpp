@@ -56,7 +56,7 @@ namespace {
       int result = ::sem_init(&this->semaphore, 0, fullLockCount);
       if(result == -1) {
         int errorNumber = errno;
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"sem_init() failed", errorNumber
         );
       }
@@ -77,7 +77,7 @@ namespace {
         int result = ::sem_post(&this->semaphore);
         if(result == -1) {
           int errorNumber = errno;
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
             u8"sem_post() failed", errorNumber
           );
         }
@@ -106,7 +106,7 @@ namespace {
         int result = ::sem_wait(&this->semaphore);
         if(result == -1) {
           int errorNumber = errno;
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
             u8"sem_wait() failed", errorNumber
           );
         }

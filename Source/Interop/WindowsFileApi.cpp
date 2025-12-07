@@ -133,7 +133,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -218,7 +218,7 @@ namespace Nuclex::Support::Platform {
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::u8string errorMessage(u8"Could not read data from file");
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      Interop::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
     return static_cast<std::size_t>(actualCount);
@@ -284,6 +284,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)

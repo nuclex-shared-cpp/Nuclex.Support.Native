@@ -173,7 +173,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -267,7 +267,7 @@ namespace Nuclex::Support::Platform {
         nullptr, nullptr, nullptr
       );
       if(result != ERROR_SUCCESS) [[unlikely]] {
-        Platform::WindowsApi::ThrowExceptionForSystemError(
+        Interop::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not query number of subkeys from registry key", result
         );
       }
@@ -310,7 +310,7 @@ namespace Nuclex::Support::Platform {
         if(result == ERROR_NO_MORE_ITEMS) [[unlikely]] {
           break; // end reached
         } else if(result != ERROR_SUCCESS) [[unlikely]] {
-          Platform::WindowsApi::ThrowExceptionForSystemError(
+          Interop::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not query name of subkey from registry key", result
           );
         }
@@ -342,7 +342,7 @@ namespace Nuclex::Support::Platform {
         nullptr, nullptr, nullptr
       );
       if(result != ERROR_SUCCESS) [[unlikely]] {
-        Platform::WindowsApi::ThrowExceptionForSystemError(
+        Interop::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not query number of values in registry key", result
         );
       }
@@ -385,7 +385,7 @@ namespace Nuclex::Support::Platform {
         if(result == ERROR_NO_MORE_ITEMS) [[unlikely]] {
           break; // end reached
         } else if(result != ERROR_SUCCESS) [[unlikely]] {
-          Platform::WindowsApi::ThrowExceptionForSystemError(
+          Interop::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not query name of registry value", result
           );
         }
@@ -440,7 +440,7 @@ namespace Nuclex::Support::Platform {
         if(result == ERROR_FILE_NOT_FOUND) {
           return ::HKEY(nullptr);
         } else {
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not open registry subkey", result
           );
         }
@@ -470,7 +470,7 @@ namespace Nuclex::Support::Platform {
         nullptr // disposition - tells whether new key was created - we don't care
       );
       if(result != ERROR_SUCCESS) [[unlikely]] {
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not open or create registry subkey for read/write access", result
         );
       }
@@ -491,7 +491,7 @@ namespace Nuclex::Support::Platform {
       std::u8string message(u8"Could not delete registry tree at '", 35);
       message.append(subKeyName);
       message.append(u8"'", 1);
-      Platform::WindowsApi::ThrowExceptionForSystemError(message, result);
+      Interop::WindowsApi::ThrowExceptionForSystemError(message, result);
     }
 
     return true;
@@ -499,6 +499,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)

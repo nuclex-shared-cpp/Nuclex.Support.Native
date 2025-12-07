@@ -36,7 +36,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -97,7 +97,7 @@ namespace Nuclex::Support::Platform {
       errorMessage.append(pathChars.begin(), pathChars.end());
       errorMessage.append(u8"'");
 
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
     return true;
@@ -132,6 +132,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)

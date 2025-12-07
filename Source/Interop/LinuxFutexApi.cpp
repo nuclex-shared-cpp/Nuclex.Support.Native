@@ -33,7 +33,7 @@ limitations under the License.
 #include <limits.h> // for INT_MAX
 #include <sys/syscall.h> // for ::SYS_futex
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -61,7 +61,7 @@ namespace Nuclex::Support::Platform {
       if(errorNumber == EAGAIN) [[likely]] { // Value was not 0, so gate is now open
         return WaitResult::ValueChanged;
       } else if(errorNumber != EINTR) {
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not sleep via futex wait. Ancient Linux kernel version?", errorNumber
         );
       }
@@ -103,7 +103,7 @@ namespace Nuclex::Support::Platform {
       } else if(errorNumber == ETIMEDOUT) [[likely]] { // Timeout, wait failed
         return WaitResult::TimedOut;
       } else if(errorNumber != EINTR) {
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not sleep via futex wait. Ancient Linux kernel version?", errorNumber
         );
       }
@@ -136,7 +136,7 @@ namespace Nuclex::Support::Platform {
     );
     if(result == -1) [[unlikely]] {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not wake up thread waiting on futex", errorNumber
       );
     }
@@ -163,7 +163,7 @@ namespace Nuclex::Support::Platform {
     );
     if(result == -1) [[unlikely]] {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not wake up threads waiting on futex", errorNumber
       );
     }
@@ -172,6 +172,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_LINUX)

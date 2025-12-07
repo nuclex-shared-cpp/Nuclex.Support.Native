@@ -218,7 +218,7 @@ namespace {
       } else if(result == ERROR_SUCCESS) {
         return interpretValue<TValue>(stackValue, valueSize, valueType);
       } else if(result != ERROR_MORE_DATA) {
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not query value stored in registry key", result
         );
       }
@@ -253,7 +253,7 @@ namespace {
 
       // This point is reached if the ::RegQueryValueExW() method call called two times
       // already, the second time with a bfufer using its self-provided value size.
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not query value stored in registry key", result
       );
     }
@@ -275,7 +275,7 @@ namespace {
     if(categoryName.empty()) {
       return queryValue<TValue>(settingsKeyHandle, propertyName);
     } else {
-      ::HKEY subKeyHandle = Nuclex::Support::Platform::WindowsRegistryApi::OpenExistingSubKey(
+      ::HKEY subKeyHandle = Nuclex::Support::Interop::WindowsRegistryApi::OpenExistingSubKey(
         settingsKeyHandle, categoryName
       );
       if(subKeyHandle == ::HKEY(nullptr)) {
@@ -399,7 +399,7 @@ namespace {
       if(categoryName.empty()) {
         result = setValue<TValue>(settingsKeyHandle, propertyNameUtf16, propertyValue);
       } else {
-        ::HKEY subKeyHandle = Nuclex::Support::Platform::WindowsRegistryApi::OpenOrCreateSubKey(
+        ::HKEY subKeyHandle = Nuclex::Support::Interop::WindowsRegistryApi::OpenOrCreateSubKey(
           settingsKeyHandle, categoryName
         );
         ON_SCOPE_EXIT{
@@ -415,7 +415,7 @@ namespace {
       std::u8string message(u8"Could not store setting '", 25);
       message.append(propertyName);
       message.append(u8"' in registry", 13);
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(message, result);
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(message, result);
     }
   }
 
@@ -435,7 +435,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       message.append(u8"' because it does not contain a path to a subkey", 48);
       throw std::invalid_argument(reinterpret_cast<const char *>(message.c_str()));
     } else { // Slashes present, separate the registry hive from the rest
-      ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
+      ::HKEY hiveKeyHandle = Interop::WindowsRegistryApi::GetHiveFromString(
         registryPath, firstSlashIndex
       );
 
@@ -455,7 +455,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         std::u8string message(u8"Could not delete registry tree at '", 35);
         message.append(registryPath);
         message.append(u8"'", 1);
-        Platform::WindowsApi::ThrowExceptionForSystemError(message, result);
+        Interop::WindowsApi::ThrowExceptionForSystemError(message, result);
       }
     }
 
@@ -471,16 +471,16 @@ namespace Nuclex { namespace Support { namespace Settings {
     // If no slashes are in the path, it may still be a valid registry hive...
     std::u8string::size_type firstSlashIndex = findNextSlash(registryPath);
     if(firstSlashIndex == std::u8string::npos) {
-      ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
+      ::HKEY hiveKeyHandle = Interop::WindowsRegistryApi::GetHiveFromString(
         registryPath, registryPath.length()
       );
       *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
-        Platform::WindowsRegistryApi::OpenExistingSubKey(
+        Interop::WindowsRegistryApi::OpenExistingSubKey(
           hiveKeyHandle, std::u8string(), writable
         )
       );
     } else { // Slashes present, separate the registry hive from the rest
-      ::HKEY hiveKeyHandle = Platform::WindowsRegistryApi::GetHiveFromString(
+      ::HKEY hiveKeyHandle = Interop::WindowsRegistryApi::GetHiveFromString(
         registryPath, firstSlashIndex
       );
 
@@ -501,11 +501,11 @@ namespace Nuclex { namespace Support { namespace Settings {
       //
       if(writable) {
         *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
-          Platform::WindowsRegistryApi::OpenOrCreateSubKey(hiveKeyHandle, subkeyName)
+          Interop::WindowsRegistryApi::OpenOrCreateSubKey(hiveKeyHandle, subkeyName)
         );
       } else {
         *reinterpret_cast<::HKEY *>(&this->settingsKeyHandle) = (
-          Platform::WindowsRegistryApi::OpenExistingSubKey(hiveKeyHandle, subkeyName, false)
+          Interop::WindowsRegistryApi::OpenExistingSubKey(hiveKeyHandle, subkeyName, false)
         );
       } // if open writable
     } // if slashes present / not present
@@ -529,7 +529,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       return std::vector<std::u8string>(); // Non-existent key accessed in read-only mode
     }
 
-    return Platform::WindowsRegistryApi::GetAllSubKeyNames(
+    return Interop::WindowsRegistryApi::GetAllSubKeyNames(
       *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle)
     );
   }
@@ -544,11 +544,11 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 
     if(categoryName.empty()) {
-      return Platform::WindowsRegistryApi::GetAllValueNames(
+      return Interop::WindowsRegistryApi::GetAllValueNames(
         *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle)
       );
     } else {
-      ::HKEY subKeyHandle = Nuclex::Support::Platform::WindowsRegistryApi::OpenExistingSubKey(
+      ::HKEY subKeyHandle = Nuclex::Support::Interop::WindowsRegistryApi::OpenExistingSubKey(
         *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle), categoryName
       );
       if(subKeyHandle == ::HKEY(nullptr)) {
@@ -559,7 +559,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
           assert((result == ERROR_SUCCESS) && u8"Registry subkey is closed successfully");
         };
-        return Platform::WindowsRegistryApi::GetAllValueNames(subKeyHandle);
+        return Interop::WindowsRegistryApi::GetAllValueNames(subKeyHandle);
       }
     }
   }
@@ -576,7 +576,7 @@ namespace Nuclex { namespace Support { namespace Settings {
     }
 
     if(categoryName.empty()) {
-      std::vector<std::u8string> valueNames = Platform::WindowsRegistryApi::GetAllValueNames(
+      std::vector<std::u8string> valueNames = Interop::WindowsRegistryApi::GetAllValueNames(
         *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle)
       );
       if(valueNames.empty()) {
@@ -592,7 +592,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           std::u8string message(u8"Could not delete value '", 24);
           message.append(categoryName);
           message.append(u8"' from settings key in registry", 31);
-          Platform::WindowsApi::ThrowExceptionForSystemError(message, result);
+          Interop::WindowsApi::ThrowExceptionForSystemError(message, result);
         }
       }
     } else {
@@ -608,7 +608,7 @@ namespace Nuclex { namespace Support { namespace Settings {
         std::u8string message(u8"Could not delete subtree '", 26);
         message.append(categoryName);
         message.append(u8"' from settings key in registry", 31);
-        Platform::WindowsApi::ThrowExceptionForSystemError(message, result);
+        Interop::WindowsApi::ThrowExceptionForSystemError(message, result);
       }
     }
 
@@ -637,7 +637,7 @@ namespace Nuclex { namespace Support { namespace Settings {
           propertyNameUtf16.c_str()
         );
       } else {
-        ::HKEY subKeyHandle = Nuclex::Support::Platform::WindowsRegistryApi::OpenExistingSubKey(
+        ::HKEY subKeyHandle = Nuclex::Support::Interop::WindowsRegistryApi::OpenExistingSubKey(
           *reinterpret_cast<const ::HKEY *>(&this->settingsKeyHandle), categoryName
         );
         if(subKeyHandle == ::HKEY(nullptr)) {
@@ -659,7 +659,7 @@ namespace Nuclex { namespace Support { namespace Settings {
       std::u8string message(u8"Could not delete settings value '", 33);
       message.append(propertyName);
       message.append(u8"' from registry", 15);
-      Platform::WindowsApi::ThrowExceptionForSystemError(message, result);
+      Interop::WindowsApi::ThrowExceptionForSystemError(message, result);
     } else {
       return true;
     }

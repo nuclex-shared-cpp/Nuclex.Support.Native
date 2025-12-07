@@ -49,7 +49,7 @@ namespace {
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
     //   path: "/tmp/"
     {
-      Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
+      Nuclex::Support::Interop::PosixPathApi::GetTemporaryDirectory(path);
 
       std::u8string::size_type length = path.size();
       if(path[length - 1] != u8'/') {
@@ -75,7 +75,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -88,7 +88,7 @@ namespace Nuclex::Support::Platform {
       Text::StringConverter::AppendPathAsUtf8(errorMessage, path);
       errorMessage.append(u8"' for reading");
 
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return fileDescriptor;
@@ -109,7 +109,7 @@ namespace Nuclex::Support::Platform {
       Text::StringConverter::AppendPathAsUtf8(errorMessage, path);
       errorMessage.append(u8"' for writing");
 
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return fileDescriptor;
@@ -122,7 +122,7 @@ namespace Nuclex::Support::Platform {
     if(absolutePosition == -1) {
       int errorNumber = errno;
       std::u8string errorMessage(u8"Could not seek within file");
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return static_cast<std::size_t>(absolutePosition);
@@ -137,7 +137,7 @@ namespace Nuclex::Support::Platform {
     if(result == static_cast<ssize_t>(-1)) [[unlikely]] {
       int errorNumber = errno;
       std::u8string errorMessage(u8"Could not read data from file");
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return static_cast<std::size_t>(result);
@@ -152,7 +152,7 @@ namespace Nuclex::Support::Platform {
     if(result == static_cast<ssize_t>(-1)) [[unlikely]] {
       int errorNumber = errno;
       std::u8string errorMessage(u8"Could not write data to file");
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     return result;
@@ -165,7 +165,7 @@ namespace Nuclex::Support::Platform {
     if(result == -1) {
       int errorNumber = errno;
       std::u8string errorMessage(u8"Could not truncate/pad file to specified length");
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
 
@@ -176,7 +176,7 @@ namespace Nuclex::Support::Platform {
     if(result == -1) [[unlikely]] {
       int errorNumber = errno;
       std::u8string errorMessage(u8"Could not flush file buffers");
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
 
@@ -187,7 +187,7 @@ namespace Nuclex::Support::Platform {
     if(result == -1) [[unlikely]] {
       int errorNumber = errno;
       std::u8string errorMessage(u8"Could not close file");
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
 
@@ -200,6 +200,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_LINUX)

@@ -17,8 +17,8 @@ limitations under the License.
 */
 #pragma endregion // Apache License 2.0
 
-#ifndef NUCLEX_SUPPORT_PLATFORM_LINUXFILEAPI_H
-#define NUCLEX_SUPPORT_PLATFORM_LINUXFILEAPI_H
+#ifndef NUCLEX_SUPPORT_INTEROP_LINUXFILEAPI_H
+#define NUCLEX_SUPPORT_INTEROP_LINUXFILEAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -33,7 +33,7 @@ limitations under the License.
 #include <sys/stat.h> // ::fstat() and permission flags
 #include <dirent.h> // struct ::dirent
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -116,8 +116,8 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_LINUX)
 
-#endif // NUCLEX_SUPPORT_PLATFORM_LINUXFILEAPI_H
+#endif // NUCLEX_SUPPORT_INTEROP_LINUXFILEAPI_H

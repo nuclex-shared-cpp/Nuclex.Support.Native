@@ -156,7 +156,7 @@ namespace Nuclex::Support::Threading {
       this->NewThreadPool = ::CreateThreadpool(nullptr);
       if(this->NewThreadPool == nullptr) [[unlikely]] {
         DWORD lastErrorCode = ::GetLastError();
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not create thread pool (using Vista and later API)", lastErrorCode
         );
       }
@@ -177,7 +177,7 @@ namespace Nuclex::Support::Threading {
         );
         if(result == FALSE) [[unlikely]] {
           DWORD lastErrorCode = ::GetLastError();
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not set minimum number of thread pool threads", lastErrorCode
           );
         }
@@ -318,7 +318,7 @@ namespace Nuclex::Support::Threading {
         if(submittedTask->Work == nullptr) [[unlikely]] {
           DWORD lastErrorCode = ::GetLastError();
           this->implementation->SubmittedTaskPool.DeleteTask(submittedTask);
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not create thread pool work item", lastErrorCode
           );
         }

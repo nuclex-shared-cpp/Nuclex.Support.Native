@@ -72,7 +72,7 @@ namespace {
     // Initialize the conditional attribute structure
     int result = ::pthread_condattr_init(&this->attribute);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not initialize pthread conditional variable attribute", result
       );
     }
@@ -80,7 +80,7 @@ namespace {
     // Change the attribute's clock settings so the monotonic clock is used
     result = ::pthread_condattr_setclock(&this->attribute, CLOCK_MONOTONIC);
     if(result != 0) [[unlikely]] {
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not set pthread conditional variable attribute's clock id", result
       );
     }
@@ -91,7 +91,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -104,7 +104,7 @@ namespace Nuclex::Support::Platform {
     int result = ::clock_gettime(clock, &futureTime);
     if(result == -1) [[unlikely]] {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not get time from clock", errorNumber
       );
     }
@@ -146,7 +146,7 @@ namespace Nuclex::Support::Platform {
     int result = ::clock_gettime(clock, &futureTime);
     if(result == -1) [[unlikely]] {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not get time from clock", errorNumber
       );
     }
@@ -191,7 +191,7 @@ namespace Nuclex::Support::Platform {
       int result = ::clock_gettime(clock, &currentTime);
       if(result == -1) [[unlikely]] {
         int errorNumber = errno;
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not get time from clock", errorNumber
         );
       }
@@ -266,7 +266,7 @@ namespace Nuclex::Support::Platform {
       int result = ::clock_gettime(clock, &currentTime);
       if(result == -1) [[unlikely]] {
         int errorNumber = errno;
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not get time from clock", errorNumber
         );
       }
@@ -290,6 +290,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)

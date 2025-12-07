@@ -54,7 +54,7 @@ namespace {
     if(characterCount == -1) {
       int errorNumber = errno;
       if((errorNumber != EACCES) && (errorNumber != ENOTDIR) && (errorNumber != ENOENT)) {
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not follow '/proc/self/exe' to own path", errorNumber
         );
       }
@@ -69,7 +69,7 @@ namespace {
         // Let's stay with the original error message, /proc/self/exe gives
         // the user a much better idea at what the application wanted to do than
         // a random PID that doesn't exist anymore after the error is printed.
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not follow '/proc/self/exe' to own path", errorNumber
         );
       }
@@ -83,7 +83,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -93,7 +93,7 @@ namespace Nuclex::Support::Platform {
     int result = ::pipe(this->ends);
     if(result != 0) [[unlikely]] {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not set up a pipe", errorNumber
       );
     }
@@ -122,7 +122,7 @@ namespace Nuclex::Support::Platform {
     int result = ::close(this->ends[whichEnd]);
     if(result != 0) [[unlikely]] {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not close one end of a pipe", errorNumber
       );
     }
@@ -148,7 +148,7 @@ namespace Nuclex::Support::Platform {
     int result = ::fcntl(this->ends[whichEnd], F_GETFD);
     if(result == -1) {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not query file descriptor flags of a pipe end", errorNumber
       );
     }
@@ -157,7 +157,7 @@ namespace Nuclex::Support::Platform {
     result = ::fcntl(this->ends[whichEnd], F_SETFD, newFlags);
     if(result == -1) {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not add O_NONBLOCK to the file descriptor flags of a pipe end", errorNumber
       );
     }
@@ -169,7 +169,7 @@ namespace Nuclex::Support::Platform {
     int result = ::kill(processId, SIGTERM);
     if(result == -1) {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not send SIGTERM to a process", errorNumber
       );
     }
@@ -181,7 +181,7 @@ namespace Nuclex::Support::Platform {
     int result = ::kill(processId, SIGKILL);
     if(result == -1) {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not send SIGTERM to a process", errorNumber
       );
     }
@@ -268,6 +268,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)

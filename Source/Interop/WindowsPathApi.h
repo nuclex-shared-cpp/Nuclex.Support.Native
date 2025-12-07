@@ -17,8 +17,8 @@ limitations under the License.
 */
 #pragma endregion // Apache License 2.0
 
-#ifndef NUCLEX_SUPPORT_PLATFORM_WINDOWSPATHAPI_H
-#define NUCLEX_SUPPORT_PLATFORM_WINDOWSPATHAPI_H
+#ifndef NUCLEX_SUPPORT_INTEROP_WINDOWSPATHAPI_H
+#define NUCLEX_SUPPORT_INTEROP_WINDOWSPATHAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -27,7 +27,7 @@ limitations under the License.
 #include <filesystem> // for std::filesystem
 #include "WindowsApi.h"
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -122,8 +122,8 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_PLATFORM_WINDOWSPATHAPI_H
+#endif // NUCLEX_SUPPORT_INTEROP_WINDOWSPATHAPI_H

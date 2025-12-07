@@ -39,7 +39,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -54,7 +54,7 @@ namespace Nuclex::Support::Platform {
       Text::StringConverter::AppendPathAsUtf8(errorMessage, path);
       errorMessage.append(u8"' for reading");
 
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
     return file;
@@ -73,7 +73,7 @@ namespace Nuclex::Support::Platform {
       Text::StringConverter::AppendPathAsUtf8(errorMessage, path);
       errorMessage.append(u8"' for writing");
 
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
     return file;
@@ -92,7 +92,7 @@ namespace Nuclex::Support::Platform {
       }
 
       std::u8string errorMessage(u8"Could not read data from file");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
     return static_cast<std::size_t>(readByteCount);
@@ -111,7 +111,7 @@ namespace Nuclex::Support::Platform {
       }
 
       std::u8string errorMessage(u8"Could not write data to file");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
 
     return writtenByteCount;
@@ -124,7 +124,7 @@ namespace Nuclex::Support::Platform {
     if(result == EOF) [[unlikely]] {
       int errorNumber = errno;
       std::u8string errorMessage(u8"Could not flush file buffers");
-      Platform::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
     }
   }
 
@@ -135,7 +135,7 @@ namespace Nuclex::Support::Platform {
     if(result != 0) [[unlikely]] {
       int errorNumber = errno;
       std::u8string errorMessage(u8"Could not close file");
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
   }
 
@@ -148,6 +148,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // !defined(NUCLEX_SUPPORT_WINDOWS)

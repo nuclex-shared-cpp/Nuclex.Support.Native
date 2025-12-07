@@ -56,7 +56,7 @@ namespace {
       int result = ::sigemptyset(&this->signalSet);
       if(result == -1) [[unlikely]] {
         int errorNumber = errno;
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not create an empty signal set", errorNumber
         );
       }
@@ -64,7 +64,7 @@ namespace {
       result = ::sigaddset(&this->signalSet, SIGCHLD);
       if(result == -1) [[unlikely]] {
         int errorNumber = errno;
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not add a signal to a signal set", errorNumber
         );
       }
@@ -95,7 +95,7 @@ namespace {
       int result = ::sigprocmask(SIG_BLOCK, &this->signalSet, &this->previousSignalSet);
       if(result == -1) [[unlikely]] {
         int errorNumber = errno;
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not update signal mask for thread", errorNumber
         );
       }
@@ -136,7 +136,7 @@ namespace {
       message.reserve(18 + standardFileName.length() + 1);
       message.append(errorMessage);
       message.append(standardFileName);
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(message, errorNumber);
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(message, errorNumber);
     }
   }
 
@@ -194,7 +194,7 @@ namespace {
       int result = ::chdir(workingDirectory.c_str());
       if(result == -1) {
         int errorNumber = errno;
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not change working directory", errorNumber
         );
       }
@@ -212,7 +212,7 @@ namespace {
       message.reserve(18 + executablePathString.length() + 1);
       message.append(errorMessage);
       message.append(executablePathString.begin(), executablePathString.end());
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(message, errorNumber);
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(message, errorNumber);
     } else { // execvp() should only return if an error occurs
       assert((result == -1) && u8"execvp() returned and reported a result that was not -1");
       std::terminate();
@@ -258,7 +258,7 @@ namespace Nuclex::Support::Threading {
 
   std::filesystem::path Process::GetExecutableDirectory() {
     std::filesystem::path result;
-    Platform::PosixProcessApi::GetOwnExecutablePath(result);
+    Interop::PosixProcessApi::GetOwnExecutablePath(result);
     return result;
   }
 
@@ -330,7 +330,7 @@ namespace Nuclex::Support::Threading {
     const std::vector<std::u8string> &arguments /* = std::vector<std::u8string>() */,
     bool prependExecutableName /* = true */
   ) {
-    using Nuclex::Support::Platform::Pipe;
+    using Nuclex::Support::Interop::Pipe;
 
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId != 0) {
@@ -347,11 +347,11 @@ namespace Nuclex::Support::Threading {
     // variables happens to be the child process.
     std::filesystem::path absoluteWorkingDirectory, absoluteExecutablePath;
 
-    Nuclex::Support::Platform::PosixProcessApi::GetAbsoluteExecutablePath(
+    Nuclex::Support::Interop::PosixProcessApi::GetAbsoluteExecutablePath(
       absoluteExecutablePath, this->executablePath
     );
     if(!this->workingDirectory.empty()) {
-      Nuclex::Support::Platform::PosixProcessApi::GetAbsoluteWorkingDirectory(
+      Nuclex::Support::Interop::PosixProcessApi::GetAbsoluteWorkingDirectory(
         absoluteWorkingDirectory, this->workingDirectory
       );
     }
@@ -371,7 +371,7 @@ namespace Nuclex::Support::Threading {
     ::pid_t childOrZeroPid = ::fork();
     if(childOrZeroPid == -1) [[unlikely]] {
       int errorNumber = errno;
-      Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
         u8"Could not fork process", errorNumber
       );
     }
@@ -466,7 +466,7 @@ namespace Nuclex::Support::Threading {
         if(errorNumber == EINTR) {
           continue;
         } else {
-          Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
             u8"Could not check if process is running", errorNumber
           );
         }
@@ -487,7 +487,7 @@ namespace Nuclex::Support::Threading {
   bool Process::Wait(
     std::chrono::milliseconds patience /* = std::chrono::milliseconds(30000) */
   ) const {
-    using Nuclex::Support::Platform::PosixProcessApi;
+    using Nuclex::Support::Interop::PosixProcessApi;
 
     const PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) [[unlikely]] {
@@ -505,7 +505,7 @@ namespace Nuclex::Support::Threading {
 
     // Calculate the absolute time at which the timeout occurs (the clock is
     // monotonic, so even if the system clock is adjusted, this won't be affected)
-    struct ::timespec timeoutTime = Platform::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
+    struct ::timespec timeoutTime = Interop::PosixTimeApi::GetTimePlus(CLOCK_MONOTONIC, patience);
     struct ::timespec waitTime;
     {
       waitTime.tv_sec = 0;
@@ -528,7 +528,7 @@ namespace Nuclex::Support::Threading {
           int result = ::waitpid(impl.ChildProcessId, &impl.ExitCode, WNOHANG);
           if(result == -1) [[unlikely]] {
             int errorNumber = errno;
-            Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+            Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
               u8"Could not check status of child process", errorNumber
             );
           } else if(result != 0) {
@@ -540,7 +540,7 @@ namespace Nuclex::Support::Threading {
 
         // Check if the caller-specified patience time has been exceeded.
         // If the provided timeout was 0, this will bail out after the first ::waitpid().
-        if(Platform::PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, timeoutTime)) {
+        if(Interop::PosixTimeApi::HasTimedOut(CLOCK_MONOTONIC, timeoutTime)) {
           return false;
         }
 
@@ -562,7 +562,7 @@ namespace Nuclex::Support::Threading {
             if(errorNumber == EINTR) [[unlikely]] {
               continue; // Another signal interrupted the wait, just keep trying...
             } else if(errorNumber != EAGAIN) [[unlikely]] { // EAGAIN means timeout
-              Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+              Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
                 u8"Could not wait for signal from child process", errorNumber
               );
             }
@@ -640,7 +640,7 @@ namespace Nuclex::Support::Threading {
   // ------------------------------------------------------------------------------------------- //
 
   void Process::Kill(std::chrono::milliseconds patience /* = std::chrono::milliseconds(5000) */) {
-    using Nuclex::Support::Platform::PosixProcessApi;
+    using Nuclex::Support::Interop::PosixProcessApi;
 
     PlatformDependentImplementationData &impl = getImplementationData();
     if(impl.ChildProcessId == 0) {
@@ -678,7 +678,7 @@ namespace Nuclex::Support::Threading {
       if(errorNumber == EAGAIN) {
         return 0; // write() would block because the stdin pipe buffer is full
       } else {
-        Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Failed writing character to child process stdin pipe", errorNumber
         );
       }
@@ -721,11 +721,11 @@ namespace Nuclex::Support::Threading {
             if(errorNumber == EINTR) {
               continue; // A signal interrupted us, just try again
             } else if(pipeIndex == 0) {
-              Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+              Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
                 u8"Failed to query number of bytes waiting in process' stdout", errorNumber
               );
             } else {
-              Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+              Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
                 u8"Failed to query number of bytes waiting in process' stderr", errorNumber
               );
             }
@@ -743,11 +743,11 @@ namespace Nuclex::Support::Threading {
             } else if(errorNumber == EAGAIN) {
               break; // There was no data waiting in the pipe
             } else if(pipeIndex == 0) {
-              Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+              Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
                 u8"Failed to read pipe buffer for stdout", errorNumber
               );
             } else {
-              Nuclex::Support::Platform::PosixApi::ThrowExceptionForSystemError(
+              Nuclex::Support::Interop::PosixApi::ThrowExceptionForSystemError(
                 u8"Failed to read pipe buffer for stderr", errorNumber
               );
             }

@@ -17,8 +17,8 @@ limitations under the License.
 */
 #pragma endregion // Apache License 2.0
 
-#ifndef NUCLEX_SUPPORT_PLATFORM_WINDOWSREGISTRYAPI_H
-#define NUCLEX_SUPPORT_PLATFORM_WINDOWSREGISTRYAPI_H
+#ifndef NUCLEX_SUPPORT_INTEROP_WINDOWSREGISTRYAPI_H
+#define NUCLEX_SUPPORT_INTEROP_WINDOWSREGISTRYAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -29,7 +29,7 @@ limitations under the License.
 #include <string> // for std::u8string
 #include <vector> // for std::vector
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -101,8 +101,8 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_PLATFORM_WINDOWSREGISTRYAPI_H
+#endif // NUCLEX_SUPPORT_INTEROP_WINDOWSREGISTRYAPI_H

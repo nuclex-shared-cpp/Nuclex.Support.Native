@@ -61,7 +61,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -77,7 +77,7 @@ namespace Nuclex::Support::Platform {
     );
     if(result == FALSE) {
       DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not create temporary pipe", lastErrorCode
       );
     }
@@ -106,7 +106,7 @@ namespace Nuclex::Support::Platform {
     BOOL result = ::SetHandleInformation(this->ends[whichEnd], HANDLE_FLAG_INHERIT, 0);
     if(result == FALSE) {
       DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not disable inheritability for pipe side", lastErrorCode
       );
     }
@@ -121,7 +121,7 @@ namespace Nuclex::Support::Platform {
     BOOL result = ::SetNamedPipeHandleState(this->ends[whichEnd], &newMode, nullptr, nullptr);
     if(result == FALSE) {
       DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not configure pipe for non-blocking IO", lastErrorCode
       );
     }
@@ -135,7 +135,7 @@ namespace Nuclex::Support::Platform {
     BOOL result = ::CloseHandle(this->ends[whichEnd]);
     if(result == FALSE) {
       DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not close one end of a pipe", lastErrorCode
       );
     }
@@ -160,7 +160,7 @@ namespace Nuclex::Support::Platform {
     DWORD processId = ::GetProcessId(processHandle);
     if(processId == 0) {
       DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not obtain process id from process handle", lastErrorCode
       );
     }
@@ -171,7 +171,7 @@ namespace Nuclex::Support::Platform {
     HANDLE snapshotHandle = ::CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, processId);
     if(snapshotHandle == INVALID_HANDLE_VALUE) {
       DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not create toolhelp snapshot of running threads", lastErrorCode
       );
     }
@@ -191,7 +191,7 @@ namespace Nuclex::Support::Platform {
       if(result == FALSE) {
         DWORD lastErrorCode = ::GetLastError();
         if(lastErrorCode != ERROR_NO_MORE_FILES) {
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not query first thread from toolhelp snapshot", lastErrorCode
           );
         }
@@ -206,7 +206,7 @@ namespace Nuclex::Support::Platform {
             // ERROR_INVALID_THREAD_ID happens if the thread never called PeekMessage()
             // That's not an error, it simply means it's not the message pump thread.
             if(lastErrorCode != ERROR_INVALID_THREAD_ID) {
-              Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+              Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
                 u8"Could not post quit message to child process thread", lastErrorCode
               );
             }
@@ -218,7 +218,7 @@ namespace Nuclex::Support::Platform {
         if(result == FALSE) {
           DWORD lastErrorCode = ::GetLastError();
           if(lastErrorCode != ERROR_NO_MORE_FILES) {
-            Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+            Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
               u8"Could not advance enumerated thread in toolhelp snapshot", lastErrorCode
             );
           }
@@ -239,7 +239,7 @@ namespace Nuclex::Support::Platform {
       );
       if(result == FALSE) {
         DWORD lastErrorCode = ::GetLastError();
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+        Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
           u8"Could not enumerate top-level windows", lastErrorCode
         );
       }
@@ -258,7 +258,7 @@ namespace Nuclex::Support::Platform {
         BOOL result = ::PostMessageW(topLevelWindowHandles[index], WM_CLOSE, 0, 0);
         if(result == FALSE) {
           DWORD lastErrorCode = ::GetLastError();
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not post WM_CLOSE to a window", lastErrorCode
           );
         }
@@ -273,7 +273,7 @@ namespace Nuclex::Support::Platform {
     BOOL result = ::TerminateProcess(processHandle, 255);
     if(result == FALSE) {
       DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not terminate child process", lastErrorCode
       );
     }
@@ -287,7 +287,7 @@ namespace Nuclex::Support::Platform {
     BOOL result = ::GetExitCodeProcess(processHandle, &exitCode);
     if(result == FALSE) {
       DWORD lastErrorCode = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not check process exit code", lastErrorCode
       );
     }
@@ -417,7 +417,7 @@ namespace Nuclex::Support::Platform {
     if(result == 0) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::u8string errorMessage(u8"Could not determine executable module path");
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      Interop::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
     target.resize(result);
@@ -463,7 +463,7 @@ namespace Nuclex::Support::Platform {
             message.append(errorMessageEnd);
           }
 
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
             message, lastErrorCode
           );
         } else { // No exception wanted
@@ -481,6 +481,6 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)

@@ -17,8 +17,8 @@ limitations under the License.
 */
 #pragma endregion // Apache License 2.0
 
-#ifndef NUCLEX_SUPPORT_PLATFORM_WINDOWSSYNCAPI_H
-#define NUCLEX_SUPPORT_PLATFORM_WINDOWSSYNCAPI_H
+#ifndef NUCLEX_SUPPORT_INTEROP_WINDOWSSYNCAPI_H
+#define NUCLEX_SUPPORT_INTEROP_WINDOWSSYNCAPI_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -28,7 +28,7 @@ limitations under the License.
 
 #include <chrono> // for std::chrono::milliseconds
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -344,8 +344,8 @@ namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 
-#endif // NUCLEX_SUPPORT_PLATFORM_WINDOWSSYNCAPI_H
+#endif // NUCLEX_SUPPORT_INTEROP_WINDOWSSYNCAPI_H

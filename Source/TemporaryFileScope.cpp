@@ -55,7 +55,7 @@ namespace {
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
     //   path: "/tmp/"
     {
-      Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
+      Nuclex::Support::Interop::PosixPathApi::GetTemporaryDirectory(path);
 
       std::u8string::size_type length = path.size();
       if(path[length -1] != u8'/') {
@@ -84,7 +84,7 @@ namespace {
   /// <param name="container">Container into which the file's contents will be written</param>
   template<typename TVectorOrString>
   void readFileIntoContainer(int fileDescriptor, TVectorOrString &container) {
-    using Nuclex::Support::Platform::LinuxFileApi;
+    using Nuclex::Support::Interop::LinuxFileApi;
 
     LinuxFileApi::Seek(fileDescriptor, ::off_t(0), SEEK_SET);
 
@@ -112,8 +112,8 @@ namespace {
   /// <param name="container">Container into which the file's contents will be written</param>
   template<typename TVectorOrString>
   void readFileIntoContainer(const std::filesystem::path &path, TVectorOrString &container) {
-    using Nuclex::Support::Platform::WindowsFileApi;
-    using Nuclex::Support::Platform::ErrorPolicy;
+    using Nuclex::Support::Interop::WindowsFileApi;
+    using Nuclex::Support::Interop::ErrorPolicy;
 
     HANDLE fileHandle = WindowsFileApi::OpenFileForReading(path);
     ON_SCOPE_EXIT {
@@ -153,7 +153,7 @@ namespace Nuclex::Support {
     );
     *reinterpret_cast<HANDLE *>(this->privateImplementationData) = INVALID_HANDLE_VALUE;
 
-    std::wstring fullPath = Platform::WindowsPathApi::CreateTemporaryFile(namePrefix);
+    std::wstring fullPath = Interop::WindowsPathApi::CreateTemporaryFile(namePrefix);
     HANDLE fileHandle = ::CreateFileW(
       fullPath.c_str(),
       GENERIC_READ | GENERIC_WRITE, // desired access
@@ -175,7 +175,7 @@ namespace Nuclex::Support {
       errorMessage.append(Text::StringConverter::Utf8FromWide(fullPath));
       errorMessage.append(u8"' for writing");
 
-      Platform::WindowsApi::ThrowExceptionForFileSystemError(errorMessage, errorCode);
+      Interop::WindowsApi::ThrowExceptionForFileSystemError(errorMessage, errorCode);
     }
 
     // If we don't close the file, it cannot be accessed unless other code opens
@@ -203,7 +203,7 @@ namespace Nuclex::Support {
       errorMessage.append(pathTemplate);
       errorMessage.append(u8"'");
 
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     // Store the file handle in the private implementation data block and
@@ -293,25 +293,25 @@ namespace Nuclex::Support {
     const std::byte *contents, std::size_t byteCount
   ) {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
-    ::HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(this->path);
+    ::HANDLE fileHandle = Interop::WindowsFileApi::OpenFileForWriting(this->path);
     ON_SCOPE_EXIT {
       BOOL result = ::CloseHandle(fileHandle);
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
       assert((result != FALSE) && u8"File handle is closed successfully");
     };
 
-    Platform::WindowsFileApi::Seek(fileHandle, 0, FILE_BEGIN);
-    Platform::WindowsFileApi::Write(fileHandle, contents, byteCount);
-    Platform::WindowsFileApi::SetLengthToFileCursor(fileHandle);
-    Platform::WindowsFileApi::FlushFileBuffers(fileHandle);
+    Interop::WindowsFileApi::Seek(fileHandle, 0, FILE_BEGIN);
+    Interop::WindowsFileApi::Write(fileHandle, contents, byteCount);
+    Interop::WindowsFileApi::SetLengthToFileCursor(fileHandle);
+    Interop::WindowsFileApi::FlushFileBuffers(fileHandle);
 #elif defined(NUCLEX_SUPPORT_LINUX)
     int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
     assert((fileDescriptor != 0) && u8"File is opened and accessible");
 
-    Platform::LinuxFileApi::Seek(fileDescriptor, ::off_t(0), SEEK_SET);
-    Platform::LinuxFileApi::Write(fileDescriptor, contents, byteCount);
-    Platform::LinuxFileApi::SetLength(fileDescriptor, byteCount);
-    Platform::LinuxFileApi::Flush(fileDescriptor);
+    Interop::LinuxFileApi::Seek(fileDescriptor, ::off_t(0), SEEK_SET);
+    Interop::LinuxFileApi::Write(fileDescriptor, contents, byteCount);
+    Interop::LinuxFileApi::SetLength(fileDescriptor, byteCount);
+    Interop::LinuxFileApi::Flush(fileDescriptor);
 #endif
   }
 

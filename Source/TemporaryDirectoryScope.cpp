@@ -56,7 +56,7 @@ namespace {
     // Obtain the system's temporary directory (usually /tmp, can be overridden)
     //   path: "/tmp/"
     {
-      Nuclex::Support::Platform::PosixPathApi::GetTemporaryDirectory(path);
+      Nuclex::Support::Interop::PosixPathApi::GetTemporaryDirectory(path);
 
       std::u8string::size_type length = path.size();
       if(path[length -1] != '/') {
@@ -116,7 +116,7 @@ namespace {
     if(searchHandle == INVALID_HANDLE_VALUE) {
       DWORD lastError = ::GetLastError();
       if(lastError != ERROR_FILE_NOT_FOUND) { // or ERROR_NO_MORE_FILES, ERROR_NOT_FOUND?
-        Nuclex::Support::Platform::WindowsApi::ThrowExceptionForFileSystemError(
+        Nuclex::Support::Interop::WindowsApi::ThrowExceptionForFileSystemError(
           u8"Could not start directory enumeration", lastError
         );
       }
@@ -146,7 +146,7 @@ namespace {
             BOOL result = ::DeleteFileW(filePath.c_str());
             if(result == FALSE) {
               DWORD lastError = ::GetLastError();
-              Nuclex::Support::Platform::WindowsApi::ThrowExceptionForFileSystemError(
+              Nuclex::Support::Interop::WindowsApi::ThrowExceptionForFileSystemError(
                 u8"Could not delete temporary file", lastError
               );
             }
@@ -158,7 +158,7 @@ namespace {
         if(result == FALSE) {
           DWORD lastError = ::GetLastError();
           if(lastError != ERROR_NO_MORE_FILES) {
-            Nuclex::Support::Platform::WindowsApi::ThrowExceptionForFileSystemError(
+            Nuclex::Support::Interop::WindowsApi::ThrowExceptionForFileSystemError(
               u8"Error during directory enumeration", lastError
             );
           }
@@ -172,7 +172,7 @@ namespace {
     BOOL result = ::RemoveDirectoryW(path.c_str());
     if(result == FALSE) {
       DWORD lastError = ::GetLastError();
-      Nuclex::Support::Platform::WindowsApi::ThrowExceptionForFileSystemError(
+      Nuclex::Support::Interop::WindowsApi::ThrowExceptionForFileSystemError(
         u8"Could not remove nested temporary directory", lastError
       );
     }
@@ -192,7 +192,7 @@ namespace Nuclex::Support {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
     // Ask Windows to create a unique temporary file for us
-    std::wstring filePath = Platform::WindowsPathApi::CreateTemporaryFile(namePrefix);
+    std::wstring filePath = Interop::WindowsPathApi::CreateTemporaryFile(namePrefix);
     auto temporaryFileDeleter = ON_SCOPE_EXIT_TRANSACTION {
       BOOL result = ::DeleteFileW(filePath.c_str());
       NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
@@ -215,7 +215,7 @@ namespace Nuclex::Support {
       errorMessage.append(Text::StringConverter::Utf8FromWide(directoryPath));
       errorMessage.append(u8"'");
 
-      Platform::WindowsApi::ThrowExceptionForFileSystemError(errorMessage, errorCode);
+      Interop::WindowsApi::ThrowExceptionForFileSystemError(errorMessage, errorCode);
     }
 
     // Everything worked out, remember the path and disarm the scope guard
@@ -238,7 +238,7 @@ namespace Nuclex::Support {
       errorMessage.append(pathTemplate);
       errorMessage.append(u8"'");
 
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 
     // Store the full path to the temporary directory we just created
@@ -273,7 +273,7 @@ namespace Nuclex::Support {
       Text::StringConverter::AppendPathAsUtf8(errorMessage, this->path);
       errorMessage.append(u8"'");
 
-      Platform::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
     }
 #endif
   }
@@ -293,23 +293,23 @@ namespace Nuclex::Support {
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(filePath);
+      HANDLE fileHandle = Interop::WindowsFileApi::OpenFileForWriting(filePath);
       ON_SCOPE_EXIT {
-        Platform::WindowsFileApi::CloseFile<Platform::ErrorPolicy::Assert>(fileHandle);
+        Interop::WindowsFileApi::CloseFile<Interop::ErrorPolicy::Assert>(fileHandle);
       };
 
-      Platform::WindowsFileApi::Write(fileHandle, contents, byteCount);
-      Platform::WindowsFileApi::FlushFileBuffers(fileHandle);
+      Interop::WindowsFileApi::Write(fileHandle, contents, byteCount);
+      Interop::WindowsFileApi::FlushFileBuffers(fileHandle);
     }
 #elif defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Platform::LinuxFileApi::OpenFileForWriting(filePath);
+      int fileDescriptor = Interop::LinuxFileApi::OpenFileForWriting(filePath);
       ON_SCOPE_EXIT {
-        Platform::LinuxFileApi::Close(fileDescriptor);
+        Interop::LinuxFileApi::Close(fileDescriptor);
       };
 
-      Platform::LinuxFileApi::Write(fileDescriptor, contents, byteCount);
-      Platform::LinuxFileApi::Flush(fileDescriptor);
+      Interop::LinuxFileApi::Write(fileDescriptor, contents, byteCount);
+      Interop::LinuxFileApi::Flush(fileDescriptor);
     }
 #endif
 
@@ -325,12 +325,12 @@ namespace Nuclex::Support {
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(filePath);
-      ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
+      HANDLE fileHandle = Interop::WindowsFileApi::OpenFileForReading(filePath);
+      ON_SCOPE_EXIT { Interop::WindowsFileApi::CloseFile(fileHandle); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;;) {
-        std::size_t readByteCount = Platform::WindowsFileApi::Read(
+        std::size_t readByteCount = Interop::WindowsFileApi::Read(
           fileHandle, contents.data() + offset, 4096
         );
         offset += readByteCount;
@@ -344,12 +344,12 @@ namespace Nuclex::Support {
     }
 #elif defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(filePath);
-      ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
+      int fileDescriptor = Interop::LinuxFileApi::OpenFileForReading(filePath);
+      ON_SCOPE_EXIT { Interop::LinuxFileApi::Close(fileDescriptor); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;;) {
-        std::size_t readByteCount = Platform::LinuxFileApi::Read(
+        std::size_t readByteCount = Interop::LinuxFileApi::Read(
           fileDescriptor, contents.data() + offset, 4096
         );
         offset += readByteCount;
@@ -373,15 +373,15 @@ namespace Nuclex::Support {
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     {
-      HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(filePath);
+      HANDLE fileHandle = Interop::WindowsFileApi::OpenFileForReading(filePath);
       ON_SCOPE_EXIT {
-        Platform::WindowsFileApi::CloseFile<Platform::ErrorPolicy::Assert>(fileHandle);
+        Interop::WindowsFileApi::CloseFile<Interop::ErrorPolicy::Assert>(fileHandle);
       };
 
       contents.resize(4096);
       for(std::size_t offset = 0;;) {
         std::uint8_t *data = reinterpret_cast<std::uint8_t *>(contents.data());
-        std::size_t readByteCount = Platform::WindowsFileApi::Read(
+        std::size_t readByteCount = Interop::WindowsFileApi::Read(
           fileHandle, data + offset, 4096
         );
         if(readByteCount == 0) { // 0 bytes are only returned at the end of the file
@@ -395,13 +395,13 @@ namespace Nuclex::Support {
     }
 #elif defined(NUCLEX_SUPPORT_LINUX)
     {
-      int fileDescriptor = Platform::LinuxFileApi::OpenFileForReading(filePath);
-      ON_SCOPE_EXIT { Platform::LinuxFileApi::Close(fileDescriptor); };
+      int fileDescriptor = Interop::LinuxFileApi::OpenFileForReading(filePath);
+      ON_SCOPE_EXIT { Interop::LinuxFileApi::Close(fileDescriptor); };
 
       contents.resize(4096);
       for(std::size_t offset = 0;;) {
         std::byte *data = reinterpret_cast<std::byte *>(contents.data());
-        std::size_t readByteCount = Platform::LinuxFileApi::Read(
+        std::size_t readByteCount = Interop::LinuxFileApi::Read(
           fileDescriptor, data + offset, 4096
         );
         offset += readByteCount;

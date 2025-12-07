@@ -28,7 +28,7 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 

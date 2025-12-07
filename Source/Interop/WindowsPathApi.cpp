@@ -27,7 +27,7 @@ limitations under the License.
 #include "Nuclex/Support/Text/StringConverter.h"
 //#include <Shlwapi.h> // for ::PahtRemoveFileSpecW(), ::PathIsRelativeW(), PathAppendW()
 
-namespace Nuclex::Support::Platform {
+namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -114,7 +114,7 @@ namespace Nuclex::Support::Platform {
         return false;
       }
 
-      Platform::WindowsApi::ThrowExceptionForSystemError(
+      Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not check if file exists via GetFileAttributesW()", lastErrorCode
       );
     }
@@ -133,7 +133,7 @@ namespace Nuclex::Support::Platform {
     UINT result = ::GetSystemDirectoryW(target.data(), MAX_PATH);
     if(result == 0) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      Platform::WindowsApi::ThrowExceptionForSystemError(
+      Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not get Windows system directory", errorCode
       );
     }
@@ -149,7 +149,7 @@ namespace Nuclex::Support::Platform {
     UINT result = ::GetWindowsDirectoryW(target.data(), MAX_PATH);
     if(result == 0) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      Platform::WindowsApi::ThrowExceptionForSystemError(
+      Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not get Windows directory", errorCode
       );
     }
@@ -166,7 +166,7 @@ namespace Nuclex::Support::Platform {
     DWORD result = ::GetTempPathW(MAX_PATH + 1, target.data());
     if(result == 0) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
-      Platform::WindowsApi::ThrowExceptionForSystemError(
+      Interop::WindowsApi::ThrowExceptionForSystemError(
         u8"Could not obtain path to temp directory", errorCode
       );
     }
@@ -184,7 +184,7 @@ namespace Nuclex::Support::Platform {
       // Call GetTempFileName() to let Windows sort out a unique file name
       {
         std::wstring temporaryDirectory;
-        Nuclex::Support::Platform::WindowsPathApi::GetTemporaryDirectory(temporaryDirectory);
+        Nuclex::Support::Interop::WindowsPathApi::GetTemporaryDirectory(temporaryDirectory);
 
         std::wstring utf16NamePrefix = (
           Nuclex::Support::Text::StringConverter::WideFromUtf8(prefix)
@@ -203,7 +203,7 @@ namespace Nuclex::Support::Platform {
         // (we're providing the maximum buffer size, though, so no overflow should ever happen)
         if(result == 0) {
           DWORD errorCode = ::GetLastError();
-          Nuclex::Support::Platform::WindowsApi::ThrowExceptionForSystemError(
+          Nuclex::Support::Interop::WindowsApi::ThrowExceptionForSystemError(
             u8"Could not acquire a unique temporary file name", errorCode
           );
         }
@@ -230,7 +230,7 @@ namespace Nuclex::Support::Platform {
       errorMessage.append(Text::StringConverter::Utf8FromWide(path));
       errorMessage.append(u8"'");
 
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      Interop::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
   }
 
@@ -401,7 +401,7 @@ std::wstring WindowsPathApi::combinePaths(std::wstring &path, const std::wstring
   LPWSTR combined = ::PathCombineW(result.data(), path.c_str(), extra.c_str());
   if(combined == nullptr) {
     DWORD errorCode = ::GetLastError();
-    Platform::WindowsApi::ThrowExceptionForSystemError(u8"Could not combine paths", errorCode);
+    Interop::WindowsApi::ThrowExceptionForSystemError(u8"Could not combine paths", errorCode);
   }
 
   int pathLength = ::lstrlenW(result.c_str());
@@ -412,7 +412,7 @@ std::wstring WindowsPathApi::combinePaths(std::wstring &path, const std::wstring
 #endif
   // ------------------------------------------------------------------------------------------- //
 
-} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Interop
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 

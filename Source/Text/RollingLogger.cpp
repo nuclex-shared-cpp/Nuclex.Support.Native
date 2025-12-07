@@ -319,7 +319,7 @@ namespace Nuclex::Support::Text {
       int result = ::clock_gettime(CLOCK_REALTIME, &time);
       if(result != 0) {
         int errorNumber = errno;
-        Platform::PosixApi::ThrowExceptionForSystemError(
+        Interop::PosixApi::ThrowExceptionForSystemError(
           u8"Could not obtain the current wall clock via ::clock_gettime(CLOCK_REALTIME...)",
           errorNumber
         );
