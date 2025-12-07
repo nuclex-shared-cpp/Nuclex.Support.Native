@@ -26,7 +26,7 @@ limitations under the License.
 #include <cstddef> // for std::size_t
 #include <map> // for std::map (storing services by std::type_info)
 
-namespace Nuclex { namespace Support { namespace Services {
+namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -138,6 +138,6 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Services
+} // namespace Nuclex::Support::Services
 
 #endif // NUCLEX_SUPPORT_SERVICES_SERVICECONTAINER_H

@@ -26,7 +26,7 @@ limitations under the License.
 
 #include <cassert> // for assert()
 
-namespace Nuclex { namespace Support { namespace Events {
+namespace Nuclex::Support::Events {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -357,6 +357,6 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Events
+} // namespace Nuclex::Support::Events
 
 #endif // NUCLEX_SUPPORT_EVENTS_DELEGATE_H

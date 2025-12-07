@@ -28,7 +28,7 @@ limitations under the License.
 #include <cstddef> // for std::byte
 #include <optional> // for std::optional<>
 
-namespace Nuclex { namespace Support { namespace Collections {
+namespace Nuclex::Support::Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -514,6 +514,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Collections
+} // namespace Nuclex::Support::Collections
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_KEYEDARRAYCACHE_H

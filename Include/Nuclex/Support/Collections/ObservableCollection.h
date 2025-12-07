@@ -25,7 +25,7 @@ limitations under the License.
 
 //#include <cstdlib>
 
-namespace Nuclex { namespace Support { namespace Collections {
+namespace Nuclex::Support::Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -61,6 +61,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Collections
+} // namespace Nuclex::Support::Collections
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_OBSERVABLECOLLECTION_H

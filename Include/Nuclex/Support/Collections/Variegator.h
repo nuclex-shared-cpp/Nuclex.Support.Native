@@ -27,7 +27,7 @@ limitations under the License.
 #include <unordered_set> // for std::unordered_set
 #include <unordered_map> // for std::unordered_map
 
-namespace Nuclex { namespace Support { namespace Collections {
+namespace Nuclex::Support::Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -338,6 +338,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Collections
+} // namespace Nuclex::Support::Collections
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_VARIEGATOR_H

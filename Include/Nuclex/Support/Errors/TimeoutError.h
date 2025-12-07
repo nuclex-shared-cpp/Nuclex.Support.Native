@@ -24,7 +24,7 @@ limitations under the License.
 
 #include <stdexcept> // for std::runtime_error
 
-namespace Nuclex { namespace Support { namespace Errors {
+namespace Nuclex::Support::Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -47,6 +47,6 @@ namespace Nuclex { namespace Support { namespace Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Errors
+} // namespace Nuclex::Support::Errors
 
 #endif // NUCLEX_SUPPORT_ERRORS_TIMEOUTERROR_H

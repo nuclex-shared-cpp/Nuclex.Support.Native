@@ -25,7 +25,7 @@ limitations under the License.
 
 #include <cstddef> // for std::size_t
 
-namespace Nuclex { namespace Support { namespace Collections {
+namespace Nuclex::Support::Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -78,6 +78,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Collections
+} // namespace Nuclex::Support::Collections
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_OBSERVABLEINDEXEDCOLLECTION_H

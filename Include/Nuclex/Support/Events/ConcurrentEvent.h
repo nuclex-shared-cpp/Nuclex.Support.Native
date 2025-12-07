@@ -31,7 +31,7 @@ limitations under the License.
 #include <memory> // for std::shared_ptr
 #include <vector> // for std::vector
 
-namespace Nuclex { namespace Support { namespace Events {
+namespace Nuclex::Support::Events {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -796,6 +796,6 @@ namespace Nuclex { namespace Support { namespace Events {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Events
+} // namespace Nuclex::Support::Events
 
 #endif // NUCLEX_SUPPORT_EVENTS_CONCURRENTEVENT_H

@@ -23,7 +23,7 @@ limitations under the License.
 
 #include <memory> // for std::shared_ptr, std::make_shared()
 
-namespace Nuclex { namespace Support { namespace Services {
+namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -82,4 +82,4 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Services
+} // namespace Nuclex::Support::Services

@@ -24,7 +24,7 @@ limitations under the License.
 #include <type_traits> // for std::is_class, std::is_abstract
 #include <memory> // for std::shared_ptr
 
-namespace Nuclex { namespace Support { namespace Services {
+namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -72,4 +72,4 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Services
+} // namespace Nuclex::Support::Services

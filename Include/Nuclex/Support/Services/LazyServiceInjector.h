@@ -25,7 +25,7 @@ limitations under the License.
 
 #include <map> // for std::map (storing services by std::type_info)
 
-namespace Nuclex { namespace Support { namespace Services {
+namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -38,7 +38,7 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Services
+} // namespace Nuclex::Support::Services
 
 #include "Nuclex/Support/Services/IntegerSequence.inl"
 #include "Nuclex/Support/Services/Checks.inl"
@@ -46,7 +46,7 @@ namespace Nuclex { namespace Support { namespace Services {
 #include "Nuclex/Support/Services/ConstructorSignatureDetector.inl"
 #include "Nuclex/Support/Services/ServiceFactory.inl"
 
-namespace Nuclex { namespace Support { namespace Services {
+namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -306,6 +306,6 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Services
+} // namespace Nuclex::Support::Services
 
 #endif // NUCLEX_SUPPORT_SERVICES_LAZYSERVICEINJECTOR_H

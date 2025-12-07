@@ -24,7 +24,7 @@ limitations under the License.
 
 #include <system_error> // for std::system_error
 
-namespace Nuclex { namespace Support { namespace Errors {
+namespace Nuclex::Support::Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -62,6 +62,6 @@ namespace Nuclex { namespace Support { namespace Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Errors
+} // namespace Nuclex::Support::Errors
 
 #endif // NUCLEX_SUPPORT_ERRORS_FILEACCESSERROR_H

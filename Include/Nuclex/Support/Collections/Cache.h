@@ -25,7 +25,7 @@ limitations under the License.
 #include "Nuclex/Support/Collections/Map.h" // for Map
 #include "Nuclex/Support/Events/Delegate.h" // for Delegate
 
-namespace Nuclex { namespace Support { namespace Collections {
+namespace Nuclex::Support::Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -57,6 +57,6 @@ namespace Nuclex { namespace Support { namespace Collections {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Collections
+} // namespace Nuclex::Support::Collections
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_CACHE_H

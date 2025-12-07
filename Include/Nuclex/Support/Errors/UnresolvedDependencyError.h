@@ -24,7 +24,7 @@ limitations under the License.
 
 #include <stdexcept> // for std::logic_error
 
-namespace Nuclex { namespace Support { namespace Errors {
+namespace Nuclex::Support::Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -45,6 +45,6 @@ namespace Nuclex { namespace Support { namespace Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Errors
+} // namespace Nuclex::Support::Errors
 
 #endif // NUCLEX_SUPPORT_ERRORS_UNRESOLVEDDEPENDENCYERROR_H

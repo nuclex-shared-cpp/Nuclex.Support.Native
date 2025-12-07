@@ -24,7 +24,7 @@ limitations under the License.
 #include <cstddef> // for std::size_t
 #include <type_traits> // for std::enable_if, std::is_constructible
 
-namespace Nuclex { namespace Support { namespace Services {
+namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -170,4 +170,4 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Services
+} // namespace Nuclex::Support::Services

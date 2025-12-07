@@ -26,7 +26,7 @@ limitations under the License.
 #include <type_traits> // for std::decay, std::type_info
 #include <any> // for std::any
 
-namespace Nuclex { namespace Support { namespace Services {
+namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -105,6 +105,6 @@ namespace Nuclex { namespace Support { namespace Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Services
+} // namespace Nuclex::Support::Services
 
 #endif // NUCLEX_SUPPORT_SERVICES_SERVICEPROVIDER_H

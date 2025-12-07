@@ -28,7 +28,7 @@ limitations under the License.
 #include <cstdint> // for std::uint8_t
 #include <iterator> // for std::back_inserter
 
-namespace Nuclex { namespace Support { namespace Events {
+namespace Nuclex::Support::Events {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -542,6 +542,6 @@ ProcessHeapSubscribers:
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Events
+} // namespace Nuclex::Support::Events
 
 #endif // NUCLEX_SUPPORT_EVENTS_EVENT_H

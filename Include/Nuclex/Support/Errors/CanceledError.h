@@ -24,7 +24,7 @@ limitations under the License.
 
 #include <future> // for std::future_error
 
-namespace Nuclex { namespace Support { namespace Errors {
+namespace Nuclex::Support::Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -65,6 +65,6 @@ namespace Nuclex { namespace Support { namespace Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Errors
+} // namespace Nuclex::Support::Errors
 
 #endif // NUCLEX_SUPPORT_ERRORS_CANCELEDERROR_H
