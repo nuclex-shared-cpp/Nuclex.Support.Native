@@ -113,9 +113,12 @@ namespace {
   template<typename TVectorOrString>
   void readFileIntoContainer(const std::filesystem::path &path, TVectorOrString &container) {
     using Nuclex::Support::Platform::WindowsFileApi;
+    using Nuclex::Support::Platform::ErrorPolicy;
 
     HANDLE fileHandle = WindowsFileApi::OpenFileForReading(path);
-    ON_SCOPE_EXIT { WindowsFileApi::CloseFile(fileHandle); };
+    ON_SCOPE_EXIT {
+      WindowsFileApi::CloseFile<ErrorPolicy::Assert>(fileHandle);
+    };
 
     container.resize(4096);
 

@@ -295,7 +295,7 @@ namespace Nuclex::Support {
     {
       HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(filePath);
       ON_SCOPE_EXIT {
-        Platform::WindowsFileApi::CloseFile(fileHandle);
+        Platform::WindowsFileApi::CloseFile<Platform::ErrorPolicy::Assert>(fileHandle);
       };
 
       Platform::WindowsFileApi::Write(fileHandle, contents, byteCount);
@@ -374,7 +374,9 @@ namespace Nuclex::Support {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     {
       HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(filePath);
-      ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
+      ON_SCOPE_EXIT {
+        Platform::WindowsFileApi::CloseFile<Platform::ErrorPolicy::Assert>(fileHandle);
+      };
 
       contents.resize(4096);
       for(std::size_t offset = 0;;) {

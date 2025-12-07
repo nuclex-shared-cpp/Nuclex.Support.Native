@@ -145,6 +145,7 @@ namespace Nuclex::Support::Platform {
     int result = ::fclose(file);
     assert((result == 0) && u8"File must be closed successfully");
   }
+
   // ------------------------------------------------------------------------------------------- //
 
 } // namespace Nuclex::Support::Platform

@@ -133,7 +133,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -156,7 +156,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       errorMessage.append(path.u8string());
       errorMessage.append(u8"' for reading");
 
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
     return fileHandle;
@@ -183,7 +183,7 @@ namespace Nuclex { namespace Support { namespace Platform {
       errorMessage.append(path.u8string());
       errorMessage.append(u8"' for writing");
 
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
     return fileHandle;
@@ -202,7 +202,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::u8string errorMessage(u8"Could not move file cursor");
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
     return static_cast<std::size_t>(newFilePointer.QuadPart);
@@ -236,7 +236,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::u8string errorMessage(u8"Could not write data from file");
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
 
     return static_cast<std::size_t>(actualCount);
@@ -249,7 +249,7 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::u8string errorMessage(u8"Could not truncate/pad file to file cursor position");
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
   }
 
@@ -260,23 +260,30 @@ namespace Nuclex { namespace Support { namespace Platform {
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::u8string errorMessage(u8"Could not flush file buffers");
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  void WindowsFileApi::CloseFile(HANDLE fileHandle, bool throwOnError /* = true */) {
+  template<> void WindowsFileApi::CloseFile<ErrorPolicy::Throw>(HANDLE fileHandle) {
     BOOL result = ::CloseHandle(fileHandle);
-    if(throwOnError && (result == FALSE)) {
+    if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
       std::u8string errorMessage(u8"Could not close file handle");
-      Platform::WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+      WindowsApi::ThrowExceptionForFileSystemError(errorMessage, errorCode);
     }
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+  template<> void WindowsFileApi::CloseFile<ErrorPolicy::Assert>(HANDLE fileHandle) {
+    BOOL result = ::CloseHandle(fileHandle);
+    assert((result != FALSE) && u8"File must be closed successfully");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // namespace Nuclex::Support::Platform
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)

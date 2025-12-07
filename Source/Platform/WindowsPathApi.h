@@ -27,7 +27,7 @@ limitations under the License.
 #include <filesystem> // for std::filesystem
 #include "WindowsApi.h"
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -122,7 +122,7 @@ namespace Nuclex { namespace Support { namespace Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+} // namespace Nuclex::Support::Platform
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 

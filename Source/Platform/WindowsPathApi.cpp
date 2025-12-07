@@ -27,7 +27,7 @@ limitations under the License.
 #include "Nuclex/Support/Text/StringConverter.h"
 //#include <Shlwapi.h> // for ::PahtRemoveFileSpecW(), ::PathIsRelativeW(), PathAppendW()
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -393,11 +393,6 @@ namespace Nuclex { namespace Support { namespace Platform {
   }
 #endif // defined(NUCLEX_SUPPORT_EMULATE_SHLWAPI)
   // ------------------------------------------------------------------------------------------- //
-
-}}} // namespace Nuclex::Support::Platform
-
-#endif // defined(NUCLEX_SUPPORT_WINDOWS)
-
 #if 0
 std::wstring WindowsPathApi::combinePaths(std::wstring &path, const std::wstring &extra) {
   std::wstring result;
@@ -415,3 +410,9 @@ std::wstring WindowsPathApi::combinePaths(std::wstring &path, const std::wstring
   return result;
 }
 #endif
+  // ------------------------------------------------------------------------------------------- //
+
+} // namespace Nuclex::Support::Platform
+
+#endif // defined(NUCLEX_SUPPORT_WINDOWS)
+

@@ -107,7 +107,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;_DEBUG;_WINDOWS;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\third-party\nuclex-moodycamelqueues\build-concurrentqueue;$(ProjectDir)..\third-party\nuclex-googletest\build\googletest\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\third-party\nuclex-moodycamelqueues\build-concurrentqueue\;$(ProjectDir)..\third-party\nuclex-fastfloat\build\include\;$(ProjectDir)..\third-party\nuclex-dragonbox\build\include\;$(ProjectDir)..\third-party\nuclex-googletest\build\googletest\include\</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -117,8 +117,8 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>gtest.lib;gtest_main.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>gtest.lib;gtest_main.lib;dragonbox.lib;fastfloat.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-fastfloat\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\;$(ProjectDir)..\third-party\nuclex-dragonbox\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\;$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -127,7 +127,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;_DEBUG;_WINDOWS;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\third-party\nuclex-moodycamelqueues\build-concurrentqueue;$(ProjectDir)..\third-party\nuclex-googletest\build\googletest\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\third-party\nuclex-moodycamelqueues\build-concurrentqueue\;$(ProjectDir)..\third-party\nuclex-fastfloat\build\include\;$(ProjectDir)..\third-party\nuclex-dragonbox\build\include\;$(ProjectDir)..\third-party\nuclex-googletest\build\googletest\include\</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -136,8 +136,8 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>gtest.lib;gtest_main.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>gtest.lib;gtest_main.lib;dragonbox.lib;fastfloat.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-fastfloat\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\;$(ProjectDir)..\third-party\nuclex-dragonbox\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\;$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -148,7 +148,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;NDEBUG;_WINDOWS;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\third-party\nuclex-moodycamelqueues\build-concurrentqueue;$(ProjectDir)..\third-party\nuclex-googletest\build\googletest\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\third-party\nuclex-moodycamelqueues\build-concurrentqueue\;$(ProjectDir)..\third-party\nuclex-fastfloat\build\include\;$(ProjectDir)..\third-party\nuclex-dragonbox\build\include\;$(ProjectDir)..\third-party\nuclex-googletest\build\googletest\include\</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
@@ -163,8 +163,8 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>gtest.lib;gtest_main.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>gtest.lib;gtest_main.lib;dragonbox.lib;fastfloat.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-fastfloat\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\;$(ProjectDir)..\third-party\nuclex-dragonbox\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\;$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
@@ -176,7 +176,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NUCLEX_SUPPORT_EXECUTABLE;NDEBUG;_WINDOWS;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\third-party\nuclex-moodycamelqueues\build-concurrentqueue;$(ProjectDir)..\third-party\nuclex-googletest\build\googletest\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Include\;$(ProjectDir)..\third-party\nuclex-moodycamelqueues\build-concurrentqueue\;$(ProjectDir)..\third-party\nuclex-fastfloat\build\include\;$(ProjectDir)..\third-party\nuclex-dragonbox\build\include\;$(ProjectDir)..\third-party\nuclex-googletest\build\googletest\include\</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
@@ -190,8 +190,8 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>gtest.lib;gtest_main.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>gtest.lib;gtest_main.lib;dragonbox.lib;fastfloat.lib;synchronization.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\third-party\nuclex-fastfloat\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\;$(ProjectDir)..\third-party\nuclex-dragonbox\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\;$(ProjectDir)..\third-party\nuclex-googletest\bin\windows-msvc14.3-$(SanePlatform)-$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>Nuclex.Support.Native.def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>

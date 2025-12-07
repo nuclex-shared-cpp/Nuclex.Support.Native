@@ -24,10 +24,12 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
+#include "./ErrorPolicy.h" // for ErrorPolicy
+
 #include <filesystem> // for std::filesystem
 #include "WindowsApi.h"
 
-namespace Nuclex { namespace Support { namespace Platform {
+namespace Nuclex::Support::Platform {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -87,17 +89,24 @@ namespace Nuclex { namespace Support { namespace Platform {
     public: static void FlushFileBuffers(HANDLE fileHandle);
 
     /// <summary>Closes the specified file</summary>
-    /// <param name="fileHandle">Handle of the file that will be closed</param>
-    /// <param name="throwOnError">
-    ///   Whether to throw an exception if the file cannot be closed
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
     /// </param>
-    public: static void CloseFile(HANDLE fileHandle, bool throwOnError = true);
+    /// <param name="fileHandle">Handle of the file that will be closed</param>
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static void CloseFile(HANDLE fileHandle);
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Platform
+  template<> void WindowsFileApi::CloseFile<ErrorPolicy::Throw>(HANDLE fileHandle);
+  template<> void WindowsFileApi::CloseFile<ErrorPolicy::Assert>(HANDLE fileHandle);
+
+  // ------------------------------------------------------------------------------------------- //
+
+} // namespace Nuclex::Support::Platform
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 

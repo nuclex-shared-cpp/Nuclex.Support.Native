@@ -99,7 +99,9 @@ namespace Nuclex { namespace Support { namespace Settings {
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
     {
       ::HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForReading(iniFilePath);
-      ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
+      ON_SCOPE_EXIT {
+        Platform::WindowsFileApi::CloseFile<Platform::ErrorPolicy::Assert>(fileHandle);
+      };
 
       contents.resize(4096);
       for(std::size_t offset = 0;;) {
@@ -188,7 +190,9 @@ namespace Nuclex { namespace Support { namespace Settings {
 #elif defined(NUCLEX_SUPPORT_WINDOWS)
     {
       ::HANDLE fileHandle = Platform::WindowsFileApi::OpenFileForWriting(iniFilePath);
-      ON_SCOPE_EXIT { Platform::WindowsFileApi::CloseFile(fileHandle); };
+      ON_SCOPE_EXIT {
+        Platform::WindowsFileApi::CloseFile<Platform::ErrorPolicy::Assert>(fileHandle);
+      };
 
       if(this->privateImplementationData != nullptr) {
         reinterpret_cast<const IniDocumentModel *>(this->privateImplementationData)->Serialize(
