@@ -26,8 +26,11 @@ limitations under the License.
 
 #include "Nuclex/Support/Text/StringConverter.h"
 
-#include <cassert> // for assert()
+#include "WindowsApi.h"
+
 #include <synchapi.h> // for ::WaitOnAddress()
+
+#include <cassert> // for assert()
 
 namespace {
 

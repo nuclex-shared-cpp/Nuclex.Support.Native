@@ -24,8 +24,7 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "WindowsApi.h"
-
+#include <cstddef> // for std::size_t
 #include <chrono> // for std::chrono::milliseconds
 
 namespace Nuclex::Support::Interop {

@@ -24,8 +24,7 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include <filesystem> // for std::filesystem
-#include "WindowsApi.h"
+#include <string> // for std::wstring
 
 namespace Nuclex::Support::Interop {
 

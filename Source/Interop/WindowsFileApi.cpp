@@ -24,10 +24,10 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include <stdexcept> // for std::invalid_argument
-
 #include "Nuclex/Support/Text/UnicodeHelper.h" // for UTF-16 <-> UTF-8 conversion
 #include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
+
+#include <stdexcept> // for std::invalid_argument
 
 namespace {
 

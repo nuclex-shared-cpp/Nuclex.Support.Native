@@ -26,8 +26,9 @@ limitations under the License.
 
 #include "./ErrorPolicy.h" // for ErrorPolicy
 
+#include "WindowsApi.h" // for HANDLE, etc.
+
 #include <filesystem> // for std::filesystem
-#include "WindowsApi.h"
 
 namespace Nuclex::Support::Interop {
 

@@ -25,7 +25,9 @@ limitations under the License.
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/Text/StringConverter.h"
-//#include <Shlwapi.h> // for ::PahtRemoveFileSpecW(), ::PathIsRelativeW(), PathAppendW()
+
+#include "WindowsApi.h" // for ::GetFileAttributesW(), etc.
+//#include <Shlwapi.h> // for ::PathRemoveFileSpecW(), ::PathIsRelativeW(), PathAppendW()
 
 namespace Nuclex::Support::Interop {
 

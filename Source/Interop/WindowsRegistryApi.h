@@ -24,7 +24,7 @@ limitations under the License.
 
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
-#include "WindowsApi.h"
+#include "WindowsApi.h" // for HKEY, etc.
 
 #include <string> // for std::u8string
 #include <vector> // for std::vector
