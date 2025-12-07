@@ -128,23 +128,6 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Parses an integer from a span of UTF-8 characters</summary>>
-  /// <typename name="TInteger">Integer type that will be parsed</typename>
-  /// <param name="start">Pointer to the first number in the UTF-8 string</param>
-  template<typename TInteger>
-  TInteger integerFromUtf8(const char8_t *start) {
-    TInteger result = 0;
-    fast_float::from_chars(
-      start, (start + std::char_traits<char8_t>::length(start)), result
-    );
-
-    // We intentionally discard the std::from_chars_result.
-    // In case of an invalid input string, we silently fail and return 0.
-    return result;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Parses a floating point value from a span of UTF-8 characters</summary>>
   /// <typename name="TFloat">Floating point type that will be parsed</typename>
   /// <param name="start">Pointer to the first number in the UTF-8 string</param>
@@ -161,25 +144,7 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Parses a floating point value from a span of UTF-8 characters</summary>>
-  /// <typename name="TFloat">Floating point type that will be parsed</typename>
-  /// <param name="start">Pointer to the first number in the UTF-8 string</param>
-  template<typename TFloat>
-  TFloat floatFromUtf8(const char8_t *start) {
-    TFloat result = 0;
-    //        return std::numeric_limits<float>::quiet_NaN();
-    fast_float::from_chars(
-      start, (start + std::char_traits<char8_t>::length(start)), result
-    );
-
-    // We intentionally discard the std::from_chars_result.
-    // In case of an invalid input string, we silently fail and return 0.
-    return result;
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-}
+} // anonymous namespace
 
 namespace Nuclex::Support::Text {
 
@@ -247,11 +212,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint8_t lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0;
-    } else {
-      return integerFromUtf8<std::uint8_t>(from);
+    if(from != nullptr) [[likely]] {
+      std::uint8_t result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
     }
+
+    return 0;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -277,11 +248,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int8_t lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0;
-    } else {
-      return integerFromUtf8<std::int8_t>(from);
+    if(from != nullptr) [[likely]] {
+      std::int8_t result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
     }
+
+    return 0;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -307,11 +284,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint16_t lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0;
-    } else {
-      return integerFromUtf8<std::uint16_t>(from);
+    if(from != nullptr) [[likely]] {
+      std::uint16_t result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
     }
+
+    return 0;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -337,11 +320,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int16_t lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0;
-    } else {
-      return integerFromUtf8<std::int16_t>(from);
+    if(from != nullptr) [[likely]] {
+      std::int16_t result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
     }
+
+    return 0;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -367,11 +356,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint32_t lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0U;
-    } else {
-      return integerFromUtf8<std::uint32_t>(from);
+    if(from != nullptr) [[likely]] {
+      std::uint32_t result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
     }
+
+    return 0;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -397,11 +392,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int32_t lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0;
-    } else {
-      return integerFromUtf8<std::int32_t>(from);
+    if(from != nullptr) [[likely]] {
+      std::int32_t result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
     }
+
+    return 0;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -427,11 +428,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::uint64_t lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0ULL;
-    } else {
-      return integerFromUtf8<std::uint64_t>(from);
+    if(from != nullptr) [[likely]] {
+      std::uint64_t result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
     }
+
+    return 0;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -457,11 +464,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> std::int64_t lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0LL;
-    } else {
-      return integerFromUtf8<std::int64_t>(from);
+    if(from != nullptr) [[likely]] {
+      std::int64_t result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
     }
+
+    return 0;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -487,11 +500,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> float lexical_cast<>(const char8_t *from) {
-    if(from == nullptr) {
-      return 0.0f;
-    } else {
-      return floatFromUtf8<float>(from);
+    if(from != nullptr) [[likely]] {
+      float result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
     }
+
+    return 0.0f;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -517,7 +536,17 @@ namespace Nuclex::Support::Text {
   // ------------------------------------------------------------------------------------------- //
 
   template<> double lexical_cast<>(const char8_t *from) {
-    return floatFromUtf8<double>(from);
+    if(from != nullptr) [[likely]] {
+      double result;
+      fast_float::from_chars_result_t<char8_t> outcome = fast_float::from_chars(
+        from, (from + std::char_traits<char8_t>::length(from)), result
+      );
+      if(static_cast<bool>(outcome)) {
+        return result;
+      }
+    }
+
+    return 0.0;
   }
 
   // ------------------------------------------------------------------------------------------- //
