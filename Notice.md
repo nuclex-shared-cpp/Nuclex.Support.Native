@@ -52,6 +52,7 @@ respective owners and used according to their respective licenses:
 
   * The James Edward Anhalt III integer formatter under the MIT license
   * Junekey Jeon's DragonBox float formatter under the Apache 2.0 license
+  * Daniel Lemire's fast_float parsing library under the Apache 2.0 license
   * Ulf Adams' float parser from the Ryu library under the Apache 2.0 license
   * Cameron Desrochers' Multi-threaded queues under the Boost Software license
 
@@ -79,6 +80,17 @@ DragonBox: Apache License 2.0
 
 Uses code from Junekey Jeon's DragonBox reference implementation to convert
 floating point values into string independent of the system locale. Licensed
+under the Apache 2.0 license (http://www.apache.org/licenses/LICENSE-2.0)
+
+If you distribute binaries compiled from this library, you do not have to
+do anything, but an acknowledgement of the original author would be nice.
+
+
+FastFloat: Apache License 2.0
+-----------------------------
+
+Uses code from Daniel Lemire's fast_float number parsing library to convert
+strings values into numbers independent of the system locale. Licensed
 under the Apache 2.0 license (http://www.apache.org/licenses/LICENSE-2.0)
 
 If you distribute binaries compiled from this library, you do not have to
