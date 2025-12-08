@@ -26,6 +26,9 @@ limitations under the License.
 
 #include "./ErrorPolicy.h" // for ErrorPolicy
 
+#include <dirent.h> // struct ::dirent
+#include <sys/stat.h> // ::fstat() and permission flags
+
 #include <string> // for std::string
 #include <cstdint> // for std::uint8_t
 #include <cstdio> // for FILE, ::fopen(), etc.
@@ -44,6 +47,38 @@ namespace Nuclex::Support::Interop {
   ///   </para>
   /// </remarks>
   class PosixFileApi {
+
+    /// <summary>Opens a directory for enumeration</summary>
+    /// <param name="path">Path of the directory that will be opened</param>
+    /// <returns>The opened directory</returns>
+    public: static DIR *OpenDirectory(const std::filesystem::path &path);
+
+    /// <summary>Reads the next directory entry from a directory</summary>
+    /// <param name="directory">Directory from which the next entry will be read</param>
+    /// <returns>
+    ///   The next directory entry or NULL if the last directory entry has been reached
+    /// </returns>
+    public: static struct ::dirent *ReadDirectory(::DIR *directory);
+
+    /// <summary>Closes a directory that was opened for enumeration</summary>
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
+    /// </param>
+    /// <param name="directory">Directory that will be closed</param>
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static void CloseDirectory(::DIR *directory);
+
+    /// <summary>Retrieves the status of the file in the specified path</summary>
+    /// <param name="path">Path of the file whose status will be retrieved</param>
+    /// <param name="fileStatus">Receives the file status on successfull execution</param>
+    /// <returns>True if the file exists and was queried, false if it doesn't exsit</returns>
+    /// <remarks>
+    ///   If any error other than the file not existing occurs, an exception is thrown.
+    /// </remarks>
+    public: static bool LStat(
+      const std::filesystem::path &path, struct ::stat &fileStatus
+    );
 
     /// <summary>Opens the specified file for shared reading</summary>
     /// <param name="path">Path of the file that will be opened</param>
@@ -86,6 +121,16 @@ namespace Nuclex::Support::Interop {
     /// <param name="file">File pointer returned by the open method</param>
     public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
     static void Close(FILE *file);
+
+    /// <summary>Deletes a directory and everything in it</summary>
+    /// <param name="path">Path of the directory that will be deleted</param>
+    /// <returns>True if the file was removed or did not exist in the first place</returns>
+    public: static bool RemoveDirectory(const std::filesystem::path &path);
+
+    /// <summary>Deletes a file</summary>
+    /// <param name="path">Path of the file that will be deleted</param>
+    /// <returns>True if the file was removed or did not exist in the first place</returns>
+    public: static bool RemoveFile(const std::filesystem::path &path);
 
   };
 

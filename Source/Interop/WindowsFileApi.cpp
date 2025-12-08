@@ -137,6 +137,77 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
+  HANDLE WindowsFileApi::FindFirstFile(
+    const std::filesystem::path &searchMask, WIN32_FIND_DATAW &findData
+  ) {
+    HANDLE searchHandle = ::FindFirstFileExW(
+      searchMask.c_str(), FindExInfoStandard, &findData, FindExSearchNameMatch, nullptr, 0
+    );
+    if(searchHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
+      DWORD errorCode = ::GetLastError();
+
+      bool isEndOfEnumerationError = (
+        (errorCode == ERROR_NOT_FOUND) ||
+        (errorCode == ERROR_FILE_NOT_FOUND) ||
+        (errorCode == ERROR_NO_MORE_FILES)
+      );
+      if(isEndOfEnumerationError) [[likely]] {
+        return searchHandle;
+      }
+
+      std::u8string errorMessage(u8"Could not start directory enumeration using '");
+      errorMessage.append(searchMask.u8string());
+      errorMessage.append(u8"' as the search mask");
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
+
+    return searchHandle;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool WindowsFileApi::FindNextFile(HANDLE searchHandle, WIN32_FIND_DATAW &findData) {
+    BOOL result = ::FindNextFileW(searchHandle, &findData);
+    if(result == FALSE) [[unlikely]] {
+      DWORD errorCode = ::GetLastError();
+      bool isEndOfEnumerationError = (
+        //(errorCode == ERROR_NOT_FOUND) ||
+        // (errorCode == ERROR_FILE_NOT_FOUND) ||
+        (errorCode == ERROR_NO_MORE_FILES)
+      );
+      if(isEndOfEnumerationError) [[likely]] {
+        return false;
+      }
+
+      std::u8string errorMessage(u8"Could not advance directory enumeration");
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
+
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void WindowsFileApi::CloseSearch<ErrorPolicy::Assert>(HANDLE searchHandle) {
+    BOOL result = ::FindClose(searchHandle);
+    if(result == FALSE) [[unlikely]] {
+      assert((result != FALSE) && u8"File search handle should be closed successfully");
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void WindowsFileApi::CloseSearch<ErrorPolicy::Throw>(HANDLE searchHandle) {
+    BOOL result = ::FindClose(searchHandle);
+    if(result == FALSE) [[unlikely]] {
+      DWORD errorCode = ::GetLastError();
+      std::u8string errorMessage(u8"Could not close search handle");
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   HANDLE WindowsFileApi::OpenFileForReading(const std::filesystem::path &path) {
     HANDLE fileHandle = ::CreateFileW(
       path.c_str(),

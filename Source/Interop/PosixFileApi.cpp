@@ -25,7 +25,9 @@ limitations under the License.
 #if !defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include "Nuclex/Support/Text/StringConverter.h" // for StringConverter
+
 #include "PosixApi.h"
+#include <unistd.h> // ::read(), ::write(), ::rmdir(), etc.
 
 #include <cstdio> // for fopen() and fclose()
 #include <cerrno> // To access ::errno directly
@@ -40,6 +42,83 @@ namespace {
 } // anonymous namespace
 
 namespace Nuclex::Support::Interop {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  DIR *PosixFileApi::OpenDirectory(const std::filesystem::path &path) {
+    ::DIR *result = ::opendir(path.c_str());
+    if(result == nullptr) [[unlikely]] {
+      int errorNumber = errno;
+
+      std::u8string errorMessage(u8"Could not open directory '");
+      errorMessage.append(path.u8string());
+      errorMessage.append(u8"' for enumeration");
+
+      PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return result;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  struct ::dirent *PosixFileApi::ReadDirectory(::DIR *directory) {
+    errno = 0;
+    struct ::dirent *directoryEntry = ::readdir(directory);
+    if(directoryEntry == nullptr) [[unlikely]] {
+      int errorNumber = errno;
+
+      // If readdir() returned zero because the last entry is reached, errno stays unchanged
+      if(errorNumber == 0) [[likely]] {
+        return nullptr;
+      } else {
+        std::u8string errorMessage(u8"Could not enumerate directory contents");
+        PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+      }
+    }
+
+    return directoryEntry;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void PosixFileApi::CloseDirectory<ErrorPolicy::Throw>(::DIR *directory) {
+    int result = ::closedir(directory);
+    if(result != 0) [[unlikely]] {
+      int errorNumber = errno;
+      std::u8string errorMessage(u8"Could not close directory");
+      Interop::PosixApi::ThrowExceptionForFileAccessError(errorMessage, errorNumber);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void PosixFileApi::CloseDirectory<ErrorPolicy::Assert>(::DIR *directory) {
+    int result = ::closedir(directory);
+    assert((result == 0) && u8"Directory must be closed successfully");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool PosixFileApi::LStat(const std::filesystem::path &path, struct ::stat &fileStatus) {
+    int result = ::lstat(path.c_str(), &fileStatus);
+    if(result != 0) [[unlikely]] {
+      int errorNumber = errno;
+
+      // This is an okay outcome for us: the file or directory does not exist.
+      if((errorNumber == ENOENT) || (errorNumber == ENOTDIR)) {
+        return false;
+      }
+
+      std::u8string errorMessage(u8"Could not obtain file status for '");
+      errorMessage.append(path.u8string());
+      errorMessage.push_back(u8'\'');
+
+      PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return true;
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -144,6 +223,48 @@ namespace Nuclex::Support::Interop {
   template<> void PosixFileApi::Close<ErrorPolicy::Assert>(FILE *file) {
     int result = ::fclose(file);
     assert((result == 0) && u8"File must be closed successfully");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool PosixFileApi::RemoveDirectory(const std::filesystem::path &path) {
+    int result = ::rmdir(path.c_str());
+    if(result != 0) [[unlikely]] {
+      int errorNumber = errno;
+
+      if(errorNumber == ENOENT) [[unlikely]] {
+        return true;
+      }
+
+      std::u8string errorMessage(u8"Could not remove directory '");
+      errorMessage.append(path.u8string());
+      errorMessage.push_back(u8'\'');
+
+      PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  bool PosixFileApi::RemoveFile(const std::filesystem::path &path) {
+    int result = ::unlink(path.c_str());
+    if(result != 0) [[unlikely]] {
+      int errorNumber = errno;
+
+      if(errorNumber == ENOENT) [[unlikely]] {
+        return true; // The desired outcome is achieved: the file doesn't exist :)
+      }
+
+      std::u8string errorMessage(u8"Could not delete file '");
+      errorMessage.append(path.u8string());
+      errorMessage.push_back(u8'\'');
+
+      PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return true;
   }
 
   // ------------------------------------------------------------------------------------------- //
