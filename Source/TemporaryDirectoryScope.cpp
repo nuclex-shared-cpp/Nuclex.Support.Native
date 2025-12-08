@@ -88,9 +88,11 @@ namespace {
     ::WIN32_FIND_DATAW findData;
 
     // Enumerate the contents of the immediate directory in the path given to us
-    HANDLE searchHandle = WindowsFileApi::FindFirstFile(path / L"*", findData);
+    HANDLE searchHandle = WindowsFileApi::FindFirstFile<ErrorPolicy::Assert>(
+      path / L"*", findData
+    );
     if(searchHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
-      return; // errors already checked, INVALID_HANDLE_VALUE means end of enumeration
+      return;
     }
 
     // The directory has contents so we have to delete them now
@@ -121,14 +123,16 @@ namespace {
           std::filesystem::path itemPath = path / findData.cFileName;
           if(isDirectory) {
             deleteDirectoryContents(itemPath);
-            WindowsFileApi::DeleteDirectory(itemPath);
+            WindowsFileApi::DeleteDirectory<ErrorPolicy::Assert>(itemPath);
           } else {
-            WindowsFileApi::DeleteFile(itemPath);
+            WindowsFileApi::DeleteFile<ErrorPolicy::Assert>(itemPath);
           }
         } // if current entry isn't the self or parent directory link
 
         // Advance to the next file in the directory
-        bool reachedNextFile = WindowsFileApi::FindNextFile(searchHandle, findData);
+        bool reachedNextFile = WindowsFileApi::FindNextFile<ErrorPolicy::Assert>(
+          searchHandle, findData
+        );
         if(!reachedNextFile) [[unlikely]] {
           break; // All directory contents enumerated and deleted
         }

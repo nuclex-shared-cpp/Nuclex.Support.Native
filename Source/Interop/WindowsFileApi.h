@@ -51,18 +51,28 @@ namespace Nuclex::Support::Interop {
   class WindowsFileApi {
 
     /// <summary>Finds the first file matching the specified search mask</summary>
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
+    /// </param>
     /// <param name="searchMask">Search mask controlling which files will be found</param>
     /// <param name="findData">Receives the first found file or directory</param>
     /// <returns>The handle of the file search or INVALID_HANDLE_VALUE if none found</returns>
-    public: static HANDLE FindFirstFile(
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static HANDLE FindFirstFile(
       const std::filesystem::path &searchMask, WIN32_FIND_DATAW &findData
     );
 
     /// <summary>Advances to the next file in a file search</summary>
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
+    /// </param>
     /// <param name="searchHandle">Search handle returned by FindFirstFile()</param>
     /// <param name="findData">Receives the next found file or directory</param>
     /// <returns>True if there was a next file, otherwise false</returns>
-    public: static bool FindNextFile(HANDLE searchHandle, WIN32_FIND_DATAW &findData);
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static bool FindNextFile(HANDLE searchHandle, WIN32_FIND_DATAW &findData);
 
     /// <summary>Closes the specified search handle</summary>
     /// <typeparam name="errorPolicy">
@@ -152,6 +162,20 @@ namespace Nuclex::Support::Interop {
   };
 
   // ------------------------------------------------------------------------------------------- //
+
+  template<> HANDLE WindowsFileApi::FindFirstFile<ErrorPolicy::Throw>(
+    const std::filesystem::path &searchMask, WIN32_FIND_DATAW &findData
+  );
+  template<> HANDLE WindowsFileApi::FindFirstFile<ErrorPolicy::Assert>(
+    const std::filesystem::path &searchMask, WIN32_FIND_DATAW &findData
+  );
+
+  template<> bool WindowsFileApi::FindNextFile<ErrorPolicy::Throw>(
+    HANDLE searchHandle, WIN32_FIND_DATAW &findData
+  );
+  template<> bool WindowsFileApi::FindNextFile<ErrorPolicy::Assert>(
+    HANDLE searchHandle, WIN32_FIND_DATAW &findData
+  );
 
   template<> void WindowsFileApi::CloseSearch<ErrorPolicy::Throw>(HANDLE searchHandle);
   template<> void WindowsFileApi::CloseSearch<ErrorPolicy::Assert>(HANDLE searchHandle);

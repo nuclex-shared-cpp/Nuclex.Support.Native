@@ -137,7 +137,7 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
-  HANDLE WindowsFileApi::FindFirstFile(
+  template<> HANDLE WindowsFileApi::FindFirstFile<ErrorPolicy::Throw>(
     const std::filesystem::path &searchMask, WIN32_FIND_DATAW &findData
   ) {
     HANDLE searchHandle = ::FindFirstFileExW(
@@ -166,7 +166,38 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool WindowsFileApi::FindNextFile(HANDLE searchHandle, WIN32_FIND_DATAW &findData) {
+  template<> HANDLE WindowsFileApi::FindFirstFile<ErrorPolicy::Assert>(
+    const std::filesystem::path &searchMask, WIN32_FIND_DATAW &findData
+  ) {
+    HANDLE searchHandle = ::FindFirstFileExW(
+      searchMask.c_str(), FindExInfoStandard, &findData, FindExSearchNameMatch, nullptr, 0
+    );
+    if(searchHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
+      DWORD errorCode = ::GetLastError();
+
+      bool isEndOfEnumerationError = (
+        (errorCode == ERROR_NOT_FOUND) ||
+        (errorCode == ERROR_FILE_NOT_FOUND) ||
+        (errorCode == ERROR_NO_MORE_FILES)
+      );
+      if(isEndOfEnumerationError) [[likely]] {
+        return searchHandle;
+      }
+
+      assert(
+        ((searchHandle != INVALID_HANDLE_VALUE) || isEndOfEnumerationError) &&
+        u8"Directory contents enumeration should be started successfully"
+      );
+    }
+
+    return searchHandle;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool WindowsFileApi::FindNextFile<ErrorPolicy::Throw>(
+    HANDLE searchHandle, WIN32_FIND_DATAW &findData
+  ) {
     BOOL result = ::FindNextFileW(searchHandle, &findData);
     if(result == FALSE) [[unlikely]] {
       DWORD errorCode = ::GetLastError();
@@ -188,11 +219,29 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
-  template<> void WindowsFileApi::CloseSearch<ErrorPolicy::Assert>(HANDLE searchHandle) {
-    BOOL result = ::FindClose(searchHandle);
+  template<> bool WindowsFileApi::FindNextFile<ErrorPolicy::Assert>(
+    HANDLE searchHandle, WIN32_FIND_DATAW &findData
+  ) {
+    BOOL result = ::FindNextFileW(searchHandle, &findData);
     if(result == FALSE) [[unlikely]] {
-      assert((result != FALSE) && u8"File search handle should be closed successfully");
+      DWORD errorCode = ::GetLastError();
+      bool isEndOfEnumerationError = (
+        //(errorCode == ERROR_NOT_FOUND) ||
+        // (errorCode == ERROR_FILE_NOT_FOUND) ||
+        (errorCode == ERROR_NO_MORE_FILES)
+      );
+      if(isEndOfEnumerationError) [[likely]] {
+        return false;
+      }
+
+      assert(
+        ((result != FALSE) || isEndOfEnumerationError) &&
+        u8"Directory contents enumeration should advance successfully"
+      );
+      return false;
     }
+
+    return true;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -203,6 +252,15 @@ namespace Nuclex::Support::Interop {
       DWORD errorCode = ::GetLastError();
       std::u8string errorMessage(u8"Could not close search handle");
       WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> void WindowsFileApi::CloseSearch<ErrorPolicy::Assert>(HANDLE searchHandle) {
+    BOOL result = ::FindClose(searchHandle);
+    if(result == FALSE) [[unlikely]] {
+      assert((result != FALSE) && u8"File search handle should be closed successfully");
     }
   }
 
