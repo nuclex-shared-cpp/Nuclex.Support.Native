@@ -178,7 +178,7 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
-  std::wstring WindowsPathApi::CreateTemporaryFile(const std::u8string &prefix) {
+  std::filesystem::path WindowsPathApi::CreateTemporaryFile(const std::u8string &prefix) {
     std::wstring fullPath;
     {
       fullPath.resize(MAX_PATH);

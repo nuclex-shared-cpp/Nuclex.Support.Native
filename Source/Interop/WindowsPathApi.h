@@ -25,6 +25,7 @@ limitations under the License.
 #if defined(NUCLEX_SUPPORT_WINDOWS)
 
 #include <string> // for std::wstring
+#include <filesystem> // for std::fileysstem::path
 
 namespace Nuclex::Support::Interop {
 
@@ -78,7 +79,7 @@ namespace Nuclex::Support::Interop {
     /// <summary>Creates a temporary file with a unique name on Windows systems</summary>
     /// <param name="prefix">Prefix for the temporary filename, can be empty</param>
     /// <returns>The full path to the newly created temporary file</returns>
-    public: static std::wstring CreateTemporaryFile(const std::u8string &prefix);
+    public: static std::filesystem::path CreateTemporaryFile(const std::u8string &prefix);
 
     /// <summary>Creates a new directory in the specified location</summary>
     /// <param name="path">Path in which the new directory will be created</param>

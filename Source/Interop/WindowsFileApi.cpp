@@ -138,10 +138,8 @@ namespace Nuclex::Support::Interop {
   // ------------------------------------------------------------------------------------------- //
 
   HANDLE WindowsFileApi::OpenFileForReading(const std::filesystem::path &path) {
-    std::wstring widePath = wideFromPath(path);
-
     HANDLE fileHandle = ::CreateFileW(
-      widePath.c_str(),
+      path.c_str(),
       GENERIC_READ, // desired access
       FILE_SHARE_READ, // share mode,
       nullptr,
@@ -168,9 +166,34 @@ namespace Nuclex::Support::Interop {
     std::wstring widePath = wideFromPath(path);
 
     HANDLE fileHandle = ::CreateFileW(
-      widePath.c_str(),
+      path.c_str(),
       GENERIC_READ | GENERIC_WRITE, // desired access
       0, // share mode
+      nullptr,
+      OPEN_ALWAYS, // creation disposition
+      FILE_ATTRIBUTE_NORMAL,
+      nullptr
+    );
+    if(fileHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
+      DWORD errorCode = ::GetLastError();
+
+      std::u8string errorMessage(u8"Could not open file '");
+      errorMessage.append(path.u8string());
+      errorMessage.append(u8"' for writing");
+
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
+
+    return fileHandle;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  HANDLE WindowsFileApi::OpenFileForSharedWriting(const std::filesystem::path &path) {
+    HANDLE fileHandle = ::CreateFileW(
+      path.c_str(),
+      GENERIC_READ | GENERIC_WRITE, // desired access
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, // share mode
       nullptr,
       OPEN_ALWAYS, // creation disposition
       FILE_ATTRIBUTE_NORMAL,
@@ -280,6 +303,114 @@ namespace Nuclex::Support::Interop {
   template<> void WindowsFileApi::CloseFile<ErrorPolicy::Assert>(HANDLE fileHandle) {
     BOOL result = ::CloseHandle(fileHandle);
     assert((result != FALSE) && u8"File must be closed successfully");
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool WindowsFileApi::DeleteDirectory<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  ) {
+    BOOL result = ::RemoveDirectoryW(path.c_str());
+    if(result == FALSE) [[unlikely]] {
+      DWORD errorCode = ::GetLastError();
+
+      // If the diectory is missing, we treat it as a successful outcome since the effect
+      // desired by the caller, the directory being gone / not there, is achieved automatically.
+      bool isMissingFileError = (
+        (errorCode == ERROR_PATH_NOT_FOUND) ||
+        (errorCode == ERROR_FILE_NOT_FOUND)
+      );
+      if(isMissingFileError) {
+        return true;
+      }
+
+      // This is not one of the acceptable errors, so throw an exception
+      std::u8string errorMessage(u8"Could not delete directory '");
+      errorMessage.append(path.u8string());
+      errorMessage.push_back(u8'\'');
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
+
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool WindowsFileApi::DeleteDirectory<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  ) {
+    BOOL result = ::RemoveDirectoryW(path.c_str());
+    if(result == FALSE) [[unlikely]] {
+      DWORD errorCode = ::GetLastError();
+
+      // If the diectory is missing, we treat it as a successful outcome since the effect
+      // desired by the caller, the directory being gone / not there, is achieved automatically.
+      bool isMissingFileError = (
+        (errorCode == ERROR_PATH_NOT_FOUND) ||
+        (errorCode == ERROR_FILE_NOT_FOUND)
+      );
+      if(isMissingFileError) {
+        return true;
+      }
+
+      assert((result != FALSE) && u8"Directory should be deleted successfully");
+    }
+
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool WindowsFileApi::DeleteFile<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  ) {
+    BOOL result = ::DeleteFileW(path.c_str());
+    if(result == FALSE) [[unlikely]] {
+      DWORD errorCode = ::GetLastError();
+
+      // If the file is missing, we treat it as a successful outcome since the effect
+      // desired by the caller, the file being gone / not there, is achieved automatically.
+      bool isMissingFileError = (
+        (errorCode == ERROR_PATH_NOT_FOUND) ||
+        (errorCode == ERROR_FILE_NOT_FOUND)
+      );
+      if(isMissingFileError) {
+        return true;
+      }
+
+      // This is not one of the acceptable errors, so throw an exception
+      std::u8string errorMessage(u8"Could not delete file  '");
+      errorMessage.append(path.u8string());
+      errorMessage.push_back(u8'\'');
+      WindowsApi::ThrowExceptionForSystemError(errorMessage, errorCode);
+    }
+
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool WindowsFileApi::DeleteFile<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  ) {
+    BOOL result = ::DeleteFileW(path.c_str());
+    if(result == FALSE) [[unlikely]] {
+      DWORD errorCode = ::GetLastError();
+
+      // If the file is missing, we treat it as a successful outcome since the effect
+      // desired by the caller, the file being gone / not there, is achieved automatically.
+      bool isMissingFileError = (
+        (errorCode == ERROR_PATH_NOT_FOUND) ||
+        (errorCode == ERROR_FILE_NOT_FOUND)
+      );
+      if(isMissingFileError) {
+        return true;
+      }
+
+      assert((result != FALSE) && u8"File should be deleted successfully");
+    }
+
+    return true;
   }
 
   // ------------------------------------------------------------------------------------------- //

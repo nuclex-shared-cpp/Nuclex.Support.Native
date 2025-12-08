@@ -153,36 +153,22 @@ namespace Nuclex::Support {
     );
     *reinterpret_cast<HANDLE *>(this->privateImplementationData) = INVALID_HANDLE_VALUE;
 
-    std::wstring fullPath = Interop::WindowsPathApi::CreateTemporaryFile(namePrefix);
-    HANDLE fileHandle = ::CreateFileW(
-      fullPath.c_str(),
-      GENERIC_READ | GENERIC_WRITE, // desired access
-      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, // share mode
-      nullptr,
-      CREATE_ALWAYS, // creation disposition
-      FILE_ATTRIBUTE_NORMAL,
-      nullptr
-    );
-    if(fileHandle == INVALID_HANDLE_VALUE) [[unlikely]] {
-      DWORD errorCode = ::GetLastError();
+    std::filesystem::path fullPath = Interop::WindowsPathApi::CreateTemporaryFile(namePrefix);
 
-      // Something went wrong, kill the temporary file again before throwing the exception
-      BOOL result = ::DeleteFileW(fullPath.c_str());
-      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-      assert((result != FALSE) && u8"Temporary file is successfully deleted in error handler");
-
-      std::u8string errorMessage(u8"Could not open temporary file '");
-      errorMessage.append(Text::StringConverter::Utf8FromWide(fullPath));
-      errorMessage.append(u8"' for writing");
-
-      Interop::WindowsApi::ThrowExceptionForFileSystemError(errorMessage, errorCode);
+    HANDLE fileHandle;
+    {
+      auto deleteFileScope = ON_SCOPE_EXIT_TRANSACTION {
+        Interop::WindowsFileApi::DeleteFile<Interop::ErrorPolicy::Assert>(fullPath);
+      };
+      fileHandle = Interop::WindowsFileApi::OpenFileForSharedWriting(fullPath);
+      deleteFileScope.Commit();
     }
 
     // If we don't close the file, it cannot be accessed unless other code opens
     // it with FILE_SHARE_READ | FILE_SHARE_WRITE (the latter is the problem)
-    ::CloseHandle(fileHandle);
+    Interop::WindowsFileApi::CloseFile(fileHandle);
 
-    this->path = Text::StringConverter::Utf8FromWide(fullPath);
+    this->path = std::move(fullPath);
 #else
     static_assert(
       (sizeof(this->privateImplementationData) >= sizeof(int)),
@@ -294,22 +280,43 @@ namespace Nuclex::Support {
   ) {
 #if defined(NUCLEX_SUPPORT_WINDOWS)
     ::HANDLE fileHandle = Interop::WindowsFileApi::OpenFileForWriting(this->path);
-    ON_SCOPE_EXIT {
-      BOOL result = ::CloseHandle(fileHandle);
-      NUCLEX_SUPPORT_NDEBUG_UNUSED(result);
-      assert((result != FALSE) && u8"File handle is closed successfully");
-    };
+    {
+      ON_SCOPE_EXIT {
+        Interop::WindowsFileApi::CloseFile<Interop::ErrorPolicy::Assert>(fileHandle);
+      };
 
-    Interop::WindowsFileApi::Seek(fileHandle, 0, FILE_BEGIN);
-    Interop::WindowsFileApi::Write(fileHandle, contents, byteCount);
-    Interop::WindowsFileApi::SetLengthToFileCursor(fileHandle);
-    Interop::WindowsFileApi::FlushFileBuffers(fileHandle);
+      Interop::WindowsFileApi::Seek(fileHandle, 0, FILE_BEGIN);
+      while(0 < byteCount) {
+        std::size_t bytesWritten = Interop::WindowsFileApi::Write(
+          fileHandle, contents, byteCount
+        );
+        assert((bytesWritten > 0) && u8"Write() must make forward progress");
+        if(bytesWritten >= byteCount) [[likely]] {
+          break;
+        }
+        contents += bytesWritten;
+        byteCount -= bytesWritten;
+      }
+      Interop::WindowsFileApi::SetLengthToFileCursor(fileHandle);
+      Interop::WindowsFileApi::FlushFileBuffers(fileHandle);
+    }
 #elif defined(NUCLEX_SUPPORT_LINUX)
     int fileDescriptor = *reinterpret_cast<int *>(this->privateImplementationData);
     assert((fileDescriptor != 0) && u8"File is opened and accessible");
 
     Interop::LinuxFileApi::Seek(fileDescriptor, ::off_t(0), SEEK_SET);
-    Interop::LinuxFileApi::Write(fileDescriptor, contents, byteCount);
+    std::size_t remainingByteCount = byteCount;
+    while(0 < remainingByteCount) {
+      std::size_t bytesWritten = Interop::LinuxFileApi::Write(
+        fileDescriptor, contents, remainingByteCount
+      );
+      assert((bytesWritten > 0) && u8"Write() must make forward progress");
+      if(bytesWritten >= remainingByteCount) [[likely]] {
+        break;
+      }
+      contents += bytesWritten;
+      remainingByteCount -= bytesWritten;
+    }
     Interop::LinuxFileApi::SetLength(fileDescriptor, byteCount);
     Interop::LinuxFileApi::Flush(fileDescriptor);
 #endif

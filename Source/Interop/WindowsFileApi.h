@@ -60,6 +60,11 @@ namespace Nuclex::Support::Interop {
     /// <returns>The handle of the opened file</returns>
     public: static HANDLE OpenFileForWriting(const std::filesystem::path &path);
 
+    /// <summary>Creates or opens the specified file for shared writing</summary>
+    /// <param name="path">Path of the file that will be opened</param>
+    /// <returns>The handle of the opened file</returns>
+    public: static HANDLE OpenFileForSharedWriting(const std::filesystem::path &path);
+
     /// <summary>Moves the file cursor to a different position</summary>
     /// <param name="fileHandle">Handle of the file whose file cursor to move</param>
     /// <param name="offset">Offset to move the file cursor relative to the anchor</param>
@@ -98,12 +103,49 @@ namespace Nuclex::Support::Interop {
     public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
     static void CloseFile(HANDLE fileHandle);
 
+    /// <summary>Deletes a directory (which must be empty)</summary>
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
+    /// </param>
+    /// <param name="path">Path of the directory that will be deleted</param>
+    /// <returns>
+    ///   True if the directory was deleted. This is only relevant when called the method
+    ///   with <see paramref="throwIfDirectoryInUseOrAccessDenied"> set to false.
+    /// </returns>
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static bool DeleteDirectory(const std::filesystem::path &path);
+
+    /// <summary>Deletes a file</summary>
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
+    /// </param>
+    /// <param name="path">Path of the file that will be deleted</param>
+    /// <returns>True if the file was deleted or didn't exist</returns>
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static bool DeleteFile(const std::filesystem::path &path);
+
   };
 
   // ------------------------------------------------------------------------------------------- //
 
   template<> void WindowsFileApi::CloseFile<ErrorPolicy::Throw>(HANDLE fileHandle);
   template<> void WindowsFileApi::CloseFile<ErrorPolicy::Assert>(HANDLE fileHandle);
+
+  template<> bool WindowsFileApi::DeleteDirectory<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  );
+  template<> bool WindowsFileApi::DeleteDirectory<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  );
+
+  template<> bool WindowsFileApi::DeleteFile<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  );
+  template<> bool WindowsFileApi::DeleteFile<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  );
 
   // ------------------------------------------------------------------------------------------- //
 
