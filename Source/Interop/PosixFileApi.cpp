@@ -45,7 +45,9 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
-  DIR *PosixFileApi::OpenDirectory(const std::filesystem::path &path) {
+  template<> DIR *PosixFileApi::OpenDirectory<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  ) {
     ::DIR *result = ::opendir(path.c_str());
     if(result == nullptr) [[unlikely]] {
       int errorNumber = errno;
@@ -62,7 +64,22 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
-  struct ::dirent *PosixFileApi::ReadDirectory(::DIR *directory) {
+  template<> DIR *PosixFileApi::OpenDirectory<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  ) {
+    ::DIR *result = ::opendir(path.c_str());
+    if(result == nullptr) [[unlikely]] {
+      assert((result != nullptr) && u8"Directory is opened for enumeration successfully");
+    }
+
+    return result;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> struct ::dirent *PosixFileApi::ReadDirectory<ErrorPolicy::Throw>(
+    ::DIR *directory
+  ) {
     errno = 0;
     struct ::dirent *directoryEntry = ::readdir(directory);
     if(directoryEntry == nullptr) [[unlikely]] {
@@ -75,6 +92,30 @@ namespace Nuclex::Support::Interop {
         std::u8string errorMessage(u8"Could not enumerate directory contents");
         PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
       }
+    }
+
+    return directoryEntry;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> struct ::dirent *PosixFileApi::ReadDirectory<ErrorPolicy::Assert>(
+    ::DIR *directory
+  ) {
+    errno = 0;
+    struct ::dirent *directoryEntry = ::readdir(directory);
+    if(directoryEntry == nullptr) [[unlikely]] {
+      int errorNumber = errno;
+
+      // If readdir() returned zero because the last entry is reached, errno stays unchanged
+      if(errorNumber == 0) [[likely]] {
+        return nullptr;
+      }
+
+      assert(
+        ((directoryEntry != nullptr) || (errorNumber == 0)) &&
+        u8"Directory entry is enumerated successfully"
+      );
     }
 
     return directoryEntry;
@@ -100,7 +141,9 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool PosixFileApi::LStat(const std::filesystem::path &path, struct ::stat &fileStatus) {
+  template<> bool PosixFileApi::LStat<ErrorPolicy::Throw>(
+    const std::filesystem::path &path, struct ::stat &fileStatus
+  ) {
     int result = ::lstat(path.c_str(), &fileStatus);
     if(result != 0) [[unlikely]] {
       int errorNumber = errno;
@@ -115,6 +158,30 @@ namespace Nuclex::Support::Interop {
       errorMessage.push_back(u8'\'');
 
       PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool PosixFileApi::LStat<ErrorPolicy::Assert>(
+    const std::filesystem::path &path, struct ::stat &fileStatus
+  ) {
+    int result = ::lstat(path.c_str(), &fileStatus);
+    if(result != 0) [[unlikely]] {
+      int errorNumber = errno;
+
+      // This is an okay outcome for us: the file or directory does not exist.
+      if((errorNumber == ENOENT) || (errorNumber == ENOTDIR)) {
+        return false;
+      }
+
+      assert(
+        ((result == 0) || (errorNumber == ENOENT) || (errorNumber == ENOTDIR)) &&
+        u8"File status is queried successfully"
+      );
+      return false;
     }
 
     return true;
@@ -227,7 +294,9 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool PosixFileApi::RemoveDirectory(const std::filesystem::path &path) {
+  template<> bool PosixFileApi::RemoveDirectory<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  ) {
     int result = ::rmdir(path.c_str());
     if(result != 0) [[unlikely]] {
       int errorNumber = errno;
@@ -248,7 +317,32 @@ namespace Nuclex::Support::Interop {
 
   // ------------------------------------------------------------------------------------------- //
 
-  bool PosixFileApi::RemoveFile(const std::filesystem::path &path) {
+  template<> bool PosixFileApi::RemoveDirectory<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  ) {
+    int result = ::rmdir(path.c_str());
+    if(result != 0) [[unlikely]] {
+      int errorNumber = errno;
+
+      if(errorNumber == ENOENT) [[unlikely]] {
+        return true;
+      }
+
+      assert(
+        ((result == 0) || (errorNumber != ENOENT)) &&
+        u8"Directory must be deleted successfully"
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool PosixFileApi::RemoveFile<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  ) {
     int result = ::unlink(path.c_str());
     if(result != 0) [[unlikely]] {
       int errorNumber = errno;
@@ -262,6 +356,29 @@ namespace Nuclex::Support::Interop {
       errorMessage.push_back(u8'\'');
 
       PosixApi::ThrowExceptionForSystemError(errorMessage, errorNumber);
+    }
+
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<> bool PosixFileApi::RemoveFile<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  ) {
+    int result = ::unlink(path.c_str());
+    if(result != 0) [[unlikely]] {
+      int errorNumber = errno;
+
+      if(errorNumber == ENOENT) [[unlikely]] {
+        return true; // The desired outcome is achieved: the file doesn't exist :)
+      }
+
+      assert(
+        ((result == 0) || (errorNumber != ENOENT)) &&
+        u8"File must be deleted successfully"
+      );
+      return false;
     }
 
     return true;

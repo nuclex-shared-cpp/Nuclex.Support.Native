@@ -49,16 +49,26 @@ namespace Nuclex::Support::Interop {
   class PosixFileApi {
 
     /// <summary>Opens a directory for enumeration</summary>
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
+    /// </param>
     /// <param name="path">Path of the directory that will be opened</param>
     /// <returns>The opened directory</returns>
-    public: static DIR *OpenDirectory(const std::filesystem::path &path);
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static DIR *OpenDirectory(const std::filesystem::path &path);
 
     /// <summary>Reads the next directory entry from a directory</summary>
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
+    /// </param>
     /// <param name="directory">Directory from which the next entry will be read</param>
     /// <returns>
     ///   The next directory entry or NULL if the last directory entry has been reached
     /// </returns>
-    public: static struct ::dirent *ReadDirectory(::DIR *directory);
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static struct ::dirent *ReadDirectory(::DIR *directory);
 
     /// <summary>Closes a directory that was opened for enumeration</summary>
     /// <typeparam name="errorPolicy">
@@ -70,15 +80,19 @@ namespace Nuclex::Support::Interop {
     static void CloseDirectory(::DIR *directory);
 
     /// <summary>Retrieves the status of the file in the specified path</summary>
+    /// <typeparam name="errorPolicy">
+    ///   How to deal with errors that occur when closing the file. Mainly useful for
+    ///   RAII situations where the destructor shouldn't throw.
+    /// </param>
     /// <param name="path">Path of the file whose status will be retrieved</param>
     /// <param name="fileStatus">Receives the file status on successfull execution</param>
     /// <returns>True if the file exists and was queried, false if it doesn't exsit</returns>
     /// <remarks>
-    ///   If any error other than the file not existing occurs, an exception is thrown.
+    ///   If any error other than the file not existing occurs,
+    ///   the exception or assertion triggers
     /// </remarks>
-    public: static bool LStat(
-      const std::filesystem::path &path, struct ::stat &fileStatus
-    );
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static bool LStat(const std::filesystem::path &path, struct ::stat &fileStatus);
 
     /// <summary>Opens the specified file for shared reading</summary>
     /// <param name="path">Path of the file that will be opened</param>
@@ -125,12 +139,14 @@ namespace Nuclex::Support::Interop {
     /// <summary>Deletes a directory and everything in it</summary>
     /// <param name="path">Path of the directory that will be deleted</param>
     /// <returns>True if the file was removed or did not exist in the first place</returns>
-    public: static bool RemoveDirectory(const std::filesystem::path &path);
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static bool RemoveDirectory(const std::filesystem::path &path);
 
     /// <summary>Deletes a file</summary>
     /// <param name="path">Path of the file that will be deleted</param>
     /// <returns>True if the file was removed or did not exist in the first place</returns>
-    public: static bool RemoveFile(const std::filesystem::path &path);
+    public: template<ErrorPolicy errorPolicy = ErrorPolicy::Throw>
+    static bool RemoveFile(const std::filesystem::path &path);
 
   };
 
@@ -138,6 +154,44 @@ namespace Nuclex::Support::Interop {
 
   template<> void PosixFileApi::Close<ErrorPolicy::Throw>(FILE *file);
   template<> void PosixFileApi::Close<ErrorPolicy::Assert>(FILE *file);
+
+  template<> DIR *PosixFileApi::OpenDirectory<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  );
+  template<> DIR *PosixFileApi::OpenDirectory<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  );
+
+  template<> struct ::dirent *PosixFileApi::ReadDirectory<ErrorPolicy::Throw>(
+    ::DIR *directory
+  );
+  template<> struct ::dirent *PosixFileApi::ReadDirectory<ErrorPolicy::Assert>(
+    ::DIR *directory
+  );
+
+  template<> void PosixFileApi::CloseDirectory<ErrorPolicy::Throw>(::DIR *directory);
+  template<> void PosixFileApi::CloseDirectory<ErrorPolicy::Assert>(::DIR *directory);
+
+  template<> bool PosixFileApi::LStat<ErrorPolicy::Throw>(
+    const std::filesystem::path &path, struct ::stat &fileStatus
+  );
+  template<> bool PosixFileApi::LStat<ErrorPolicy::Assert>(
+    const std::filesystem::path &path, struct ::stat &fileStatus
+  );
+
+  template<> bool PosixFileApi::RemoveDirectory<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  );
+  template<> bool PosixFileApi::RemoveDirectory<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  );
+
+  template<> bool PosixFileApi::RemoveFile<ErrorPolicy::Throw>(
+    const std::filesystem::path &path
+  );
+  template<> bool PosixFileApi::RemoveFile<ErrorPolicy::Assert>(
+    const std::filesystem::path &path
+  );
 
   // ------------------------------------------------------------------------------------------- //
 

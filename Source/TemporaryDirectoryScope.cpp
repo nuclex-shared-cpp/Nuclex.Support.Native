@@ -144,7 +144,10 @@ namespace {
     using Nuclex::Support::Interop::ErrorPolicy;
 
     // Enumerate the contents of the immediate directory in the path given to us
-    ::DIR *directory = PosixFileApi::OpenDirectory(path);
+    ::DIR *directory = PosixFileApi::OpenDirectory<ErrorPolicy::Assert>(path);
+    if(directory == nullptr) {
+      return;
+    }
 
     // The directory has contents so we have to delete them now
     {
@@ -152,9 +155,9 @@ namespace {
         PosixFileApi::CloseDirectory<ErrorPolicy::Assert>(directory);
       };
       for(;;) {
-        const struct ::dirent *entry = PosixFileApi::ReadDirectory(directory);
+        const struct ::dirent *entry = PosixFileApi::ReadDirectory<ErrorPolicy::Assert>(directory);
         if(entry == nullptr) {
-          break;
+          break; // an empty entry signals the end of the enumeration
         }
 
         // Do not process the obligatory '.' and '..' directories
@@ -175,13 +178,13 @@ namespace {
           // DT_UNKNOWN on some file systems that don't support it), we still need
           // the file size, which forces us to call ::stat() either way.
           struct ::stat fileStatus;
-          bool isAccessible = PosixFileApi::LStat(itemPath, fileStatus);
+          bool isAccessible = PosixFileApi::LStat<ErrorPolicy::Assert>(itemPath, fileStatus);
           if(isAccessible) [[likely]] {
             if(S_ISDIR(fileStatus.st_mode)) {
               deleteDirectoryContents(itemPath);
-              PosixFileApi::RemoveDirectory(itemPath);
+              PosixFileApi::RemoveDirectory<ErrorPolicy::Assert>(itemPath);
             } else {
-              PosixFileApi::RemoveFile(itemPath);
+              PosixFileApi::RemoveFile<ErrorPolicy::Assert>(itemPath);
             }
           }
         } // if current entry is not the current or directory link
