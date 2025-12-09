@@ -35,10 +35,10 @@ namespace Nuclex::Support::Services2 {
 
   class NUCLEX_SUPPORT_TYPE ServiceCollection {
 
-    public: ServiceCollection();
-    public: ~ServiceCollection();
+    public: NUCLEX_SUPPORT_API ServiceCollection();
+    public: NUCLEX_SUPPORT_API ~ServiceCollection();
 
-    public: std::shared_ptr<ServiceProvider> BuildServiceProvider();
+    public: NUCLEX_SUPPORT_API std::shared_ptr<ServiceProvider> BuildServiceProvider();
 
   };
 
