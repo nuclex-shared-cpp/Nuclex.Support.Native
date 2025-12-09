@@ -35,7 +35,7 @@ namespace Nuclex::Support::Services2 {
 
     public: virtual ~ServiceScopeFactory();
 
-    public: virtual std::shared_ptr<ServiceScope> CreateScope();
+    public: virtual std::shared_ptr<ServiceScope> CreateScope() = 0;
 
   };
 

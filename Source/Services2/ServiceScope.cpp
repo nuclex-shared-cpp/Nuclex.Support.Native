@@ -50,7 +50,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  ServiceProvider::~ServiceProvider() = default;
+  ServiceScope::~ServiceScope() = default;
 
   // ------------------------------------------------------------------------------------------- //
 
