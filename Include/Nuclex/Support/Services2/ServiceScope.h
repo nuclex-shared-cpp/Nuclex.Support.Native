@@ -27,9 +27,11 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Hosts scoped services that only exist for the duration of the scope</summary>
   class NUCLEX_SUPPORT_TYPE ServiceScope : public ServiceProvider {
 
-    public: virtual ~ServiceScope();
+    /// <summary>Frees all resources owned by the service scope</summary>
+    public: NUCLEX_SUPPORT_API virtual ~ServiceScope();
 
   };
 

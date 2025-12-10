@@ -66,6 +66,12 @@
     <Filter Include="Source\Text\DragonBox-1.1.2">
       <UniqueIdentifier>{823678f3-8cdc-419f-a34a-7b7cddff31a6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\Services2">
+      <UniqueIdentifier>{29c0715f-aa6b-4208-b0fe-b6c1f3bd7872}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Services2">
+      <UniqueIdentifier>{549485cb-3dd0-4a9f-abcd-050854c6ac7e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\Cache.h">
@@ -272,6 +278,24 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceCollection.h">
+      <Filter>Include\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceLifetime.h">
+      <Filter>Include\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceProvider.h">
+      <Filter>Include\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceScope.h">
+      <Filter>Include\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceScopeFactory.h">
+      <Filter>Include\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Nuclex\Support\Services2\StandardServiceCollection.h">
+      <Filter>Include\Services2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Collections\Cache.cpp">
@@ -448,7 +472,7 @@
     <ClCompile Include="Source\Services\ServiceContainer.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services\ServiceProvider.cpp">
+    <ClCompile Include="Source\Services\OldServiceProvider.cpp">
       <Filter>Source\Services</Filter>
     </ClCompile>
     <ClCompile Include="Source\Settings\IniDocumentModel.FileParser.cpp">
@@ -594,6 +618,24 @@
     </ClCompile>
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\ServiceCollection.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\ServiceLIfetime.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\ServiceProvider.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\ServiceScope.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\ServiceScopeFactory.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\StandardServiceCollection.cpp">
+      <Filter>Source\Services2</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

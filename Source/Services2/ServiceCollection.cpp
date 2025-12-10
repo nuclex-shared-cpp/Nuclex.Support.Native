@@ -26,17 +26,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  ServiceCollection::ServiceCollection() {}
-
-  // ------------------------------------------------------------------------------------------- //
-
   ServiceCollection::~ServiceCollection() = default;
-
-  // ------------------------------------------------------------------------------------------- //
-
-  std::shared_ptr<ServiceProvider> ServiceCollection::BuildServiceProvider() {
-    throw u8"Not implemented yet";
-  }
 
   // ------------------------------------------------------------------------------------------- //
 

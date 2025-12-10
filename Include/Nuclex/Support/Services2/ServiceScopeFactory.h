@@ -31,10 +31,34 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Allows the construction of new service scopes</summary>
+  /// <remarks>
+  ///   Using this interface, the scope factory can be exposed on its own, without demanding
+  ///   the entire service provider interface. It can be used to slim the requirements of
+  ///   a background worker or other tool that needs to create service scopes.
+  /// </remarks>
   class NUCLEX_SUPPORT_TYPE ServiceScopeFactory {
 
+    /// <summary>Frees all resources owned by the service scope factory</summary>
     public: virtual ~ServiceScopeFactory();
 
+    /// <summary>Creates a new service scope</summary>
+    /// <returns>The new service scope</returns>
+    /// <remarks>
+    ///   <para>
+    ///     This dependency injector distinguishes between global services and
+    ///     &quot;scoped&quot; services. Global services share the lifetime of the service
+    ///     container while scoped services exist only for as long as the scope exists,
+    ///     whilst still being able to depend on global services.
+    ///   </para>
+    ///   <para>
+    ///     Scopes are typically used to ensure that separate, independent database
+    ///     connections exist per web request or open window/dialog (assuming a database
+    ///     connection is provided through a &quot;scpped&quot; service). You can adapt
+    ///     scopes to represent a game session or level, a script being executed and other
+    ///     things depending on the kind of application you develop.
+    ///   </para>
+    /// </remarks>
     public: virtual std::shared_ptr<ServiceScope> CreateScope() = 0;
 
   };

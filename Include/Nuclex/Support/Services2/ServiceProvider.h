@@ -25,6 +25,7 @@ limitations under the License.
 
 #include <any> // for std::any, std::any_cast<>
 #include <vector> // for std::vector<>
+#include <functional> // for std::function<>
 
 namespace Nuclex::Support::Services2 {
   class ServiceProvider;
@@ -45,7 +46,7 @@ namespace Nuclex::Support::Services2 {
     public: NUCLEX_SUPPORT_API virtual ~ServiceProvider();
 
     /// <summary>Tries to provide the specified service</summary>
-    /// <typeparam name="TService">Type of service that will be looked up</typeparam>
+    /// <typeparam name="TService">Type of service that will be provided</typeparam>
     /// <returns>An <code>std::shared_ptr</code> for the service if it can be provided</returns>
     /// <remarks>
     ///   <para>
@@ -61,7 +62,7 @@ namespace Nuclex::Support::Services2 {
     inline std::shared_ptr<TService> TryGetService();
 
     /// <summary>Provides the specified service</summary>
-    /// <typeparam name="TService">Type of service that will be looked up</typeparam>
+    /// <typeparam name="TService">Type of service that will be provided</typeparam>
     /// <returns>An <code>std::shared_ptr</code> containing the service</returns>
     /// <remarks>
     ///   This variant will throw an exception if the service has not been registered
@@ -71,8 +72,22 @@ namespace Nuclex::Support::Services2 {
     public: template<typename TService>
     inline std::shared_ptr<TService> GetService();
 
+    /// <summary>Provides a factory method that creates the specified service</summary>
+    /// <typeparam name="TService">Type of service that will be provided</typeparam>
+    /// <returns>
+    ///   A factory method that will provide an instance of the specified service
+    /// </returns>
+    /// <remarks>
+    ///   While it is called a factory method, it still matches the behavior of
+    ///   the service provider - singleton and scoped services will result in the same
+    ///   instance being provided for each call. For transient services, the returned
+    ///   factory method will act as a true factory and create a new instance every time.
+    /// </remarks>
+    public: template<typename TService>
+    inline std::function<std::shared_ptr<TService>> GetServiceFactory();
+
     /// <summary>Provides all instances registered for the specified service</summary>
-    /// <typeparam name="TService">Type of service that will be looked up</typeparam>
+    /// <typeparam name="TService">Type of services that will be provided</typeparam>
     /// <returns>A list of <code>std::shared_ptr</code>s containing each service</returns>
     /// <remarks>
     ///   This variant will create all services that implement the requested service
@@ -104,7 +119,7 @@ namespace Nuclex::Support::Services2 {
     public: NUCLEX_SUPPORT_API virtual std::shared_ptr<ServiceScope> CreateScope() = 0;
 
     /// <summary>Tries to provide the specified service</summary>
-    /// <param name="serviceType">Type of service that will be looked up</param>
+    /// <param name="serviceType">Type of service that will be provided</param>
     /// <returns>An <code>std::any</code> containing the service if it can be provided</returns>
     /// <remarks>
     ///   <para>
@@ -121,7 +136,7 @@ namespace Nuclex::Support::Services2 {
     ) = 0;
 
     /// <summary>Provides the specified service</summary>
-    /// <param name="serviceType">Type of service that will be looked up</param>
+    /// <param name="serviceType">Type of service that will be provided</param>
     /// <returns>An <code>std::any</code> containing the service</returns>
     /// <remarks>
     ///   This variant will throw an exception if the service has not been registered
@@ -132,8 +147,24 @@ namespace Nuclex::Support::Services2 {
       const std::type_info &typeInfo
     ) = 0;
 
+    /// <summary>Provides a factory method that creates the specified service</summary>
+    /// <param name="serviceType">Type of service that will be provided</param>
+    /// <returns>
+    ///   A factory method that will provide an instance of the specified service
+    ///   as a <code>std::shared_ptr</code> wrapped in an <code>std::any</code>.
+    /// </returns>
+    /// <remarks>
+    ///   While it is called a factory method, it still matches the behavior of
+    ///   the service provider - singleton and scoped services will result in the same
+    ///   instance being provided for each call. For transient services, the returned
+    ///   factory method will act as a true factory and create a new instance every time.
+    /// </remarks>
+    protected: NUCLEX_SUPPORT_API virtual std::function<std::any> GetServiceFactory(
+      const std::type_info &typeInfo
+    ) = 0;
+
     /// <summary>Provides all instances registered for the specified service</summary>
-    /// <param name="serviceType">Type of service that will be looked up</param>
+    /// <param name="serviceType">Type of service that will be provided</param>
     /// <returns>A list of <code>std::any</code>s containing each service</returns>
     /// <remarks>
     ///   This variant will create all services that implement the requested service
@@ -169,6 +200,19 @@ namespace Nuclex::Support::Services2 {
   inline std::shared_ptr<TService> ServiceProvider::GetService() {
     typedef std::shared_ptr<TService> SharedServicePointer;
     return std::any_cast<SharedServicePointer>(GetService(typeid(TService)));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  template<typename TService>
+  inline std::function<std::shared_ptr<TService>> ServiceProvider::GetServiceFactory() {
+    typedef std::shared_ptr<TService> SharedServicePointer;
+    typedef std::function<SharedServicePointer> ServiceFactoryFunction;
+    return ServiceFactoryFunction(
+      [factory = GetServiceFactory(typeid(TService))]() -> SharedServicePointer {
+        return std::any_cast<SharedServicePointer>(factory());
+      }
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
