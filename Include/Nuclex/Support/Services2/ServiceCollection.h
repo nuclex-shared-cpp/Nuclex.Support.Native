@@ -262,6 +262,16 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
+}
+
+#include "Private/IsSharedPtr.inl"
+#include "Private/IsInjectableType.inl"
+#include "Private/ConstructorSignature.inl"
+
+namespace Nuclex::Support::Services2 {
+
+  // ------------------------------------------------------------------------------------------- //
+
   template<typename TServiceAndImplementation>
   inline ServiceCollection &ServiceCollection::AddSingleton() {
     // TODO: Here comes the complex part, constructor signature detection and factory creation

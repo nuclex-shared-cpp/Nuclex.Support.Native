@@ -24,7 +24,7 @@ limitations under the License.
 
 #define NUCLEX_SUPPORT_SERVICES2_SERVICECOLLECTION_H
 #include "Nuclex/Support/Services2/Private/IsSharedPtr.inl"
-#include "Nuclex/Support/Services2/Private/IsInjectableArgument.inl"
+#include "Nuclex/Support/Services2/Private/IsInjectableType.inl"
 
 #include <gtest/gtest.h>
 
@@ -32,21 +32,30 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Mock interface to unit test the IsInjectableType template</summary>
   class AbstractInterface {
 
+    /// <summary>Empty destructor because the mock has no members and does nothing</summary>
     public: virtual ~AbstractInterface() = default;
 
+    /// <summary>Mock of a pure virtual method that is exactly what it says</summary>
     public: virtual void PureVirtualMethod() = 0;
 
   };
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Mock implementation of an abstract service interface for testing</summary>
   class Implementation : public AbstractInterface {
 
+    /// <summary>Initializes the mock implementation (does nothing)</summary>
     public: Implementation() {}
+    /// <summary>Empty destructor because the mock has no members and does nothing</summary>
     public: ~Implementation() override = default;
 
+    /// <summary>
+    ///   Empty implementation of the pure virtual method from the service interface
+    /// </summary>
     public: void PureVirtualMethod() {}
 
   };
@@ -59,28 +68,28 @@ namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IsInjectableArgumentTest, BasicTypesAreNotInjectable) {
-    EXPECT_FALSE(IsInjectableArgument<int>::value);
-    EXPECT_FALSE(IsInjectableArgument<float>::value);
+  TEST(IsInjectableTypeTest, BasicTypesAreNotInjectable) {
+    EXPECT_FALSE(IsInjectableType<int>::value);
+    EXPECT_FALSE(IsInjectableType<float>::value);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IsInjectableArgumentTest, NonSharedPtrsAreNotInjectable) {
-    EXPECT_FALSE(IsInjectableArgument<AbstractInterface>::value);
-    EXPECT_FALSE(IsInjectableArgument<Implementation>::value);
+  TEST(IsInjectableTypeTest, NonSharedPtrsAreNotInjectable) {
+    EXPECT_FALSE(IsInjectableType<AbstractInterface>::value);
+    EXPECT_FALSE(IsInjectableType<Implementation>::value);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IsInjectableArgumentTest, SharedPtrToConcreteClassIsInjectable) {
-    EXPECT_TRUE(IsInjectableArgument<std::shared_ptr<Implementation>>::value);
+  TEST(IsInjectableTypeTest, SharedPtrToConcreteClassIsInjectable) {
+    EXPECT_TRUE(IsInjectableType<std::shared_ptr<Implementation>>::value);
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IsInjectableArgumentTest, SharedPtrToAbstractClassIsInjectable) {
-    EXPECT_TRUE(IsInjectableArgument<std::shared_ptr<AbstractInterface>>::value);
+  TEST(IsInjectableTypeTest, SharedPtrToAbstractClassIsInjectable) {
+    EXPECT_TRUE(IsInjectableType<std::shared_ptr<AbstractInterface>>::value);
   }
 
   // ------------------------------------------------------------------------------------------- //

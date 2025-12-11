@@ -28,25 +28,25 @@ namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Checks whether a constructor argument can potentially be injected</summary>
-  /// <typeparam name="TArgument">Constructor argument that will be checked</typeparam>
+  /// <summary>Checks whether a type can potentially be constructor-injected</summary>
+  /// <typeparam name="TChecked">Constructor argument that will be checked</typeparam>
   /// <remarks>
   ///   This is the default overload that rejects any parameter that is not wrapped
   ///   in an <code>std::shared_ptr</code>.
   /// </remarks>
-  template<typename TArgument>
-  struct IsInjectableArgument : std::false_type {};
+  template<typename TChecked>
+  struct IsInjectableType : std::false_type {};
 
-  /// <summary>Checks whether a constructor argument can potentially be injected</summary>
-  /// <typeparam name="TArgument">Constructor argument that will be checked</typeparam>
+  /// <summary>Checks whether a type can potentially be constructor-injected</summary>
+  /// <typeparam name="TChecked">Constructor argument that will be checked</typeparam>
   /// <remarks>
   ///   Any services provided by the dependency injector are wrapped in
   ///   <code>std::shared_ptr</code> to l the lifetime of the service implementation.
   /// </remarks>
-  template<typename TArgument>
-  struct IsInjectableArgument<std::shared_ptr<TArgument>> :
+  template<typename TChecked>
+  struct IsInjectableType<std::shared_ptr<TChecked>> :
     std::bool_constant<
-      std::is_class<typename std::remove_cv<TArgument>::type>::value
+      std::is_class<typename std::remove_cv<TChecked>::type>::value
     > {};
 
   // ------------------------------------------------------------------------------------------- //
