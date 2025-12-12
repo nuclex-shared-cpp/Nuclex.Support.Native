@@ -325,8 +325,8 @@ namespace Nuclex::Support::Services2 {
       "(either providing a default constructor or using only std::shared_ptr arguments)"
     );
 
-    // Implementation looks injectable, add the service factory method to the map
-    const std::type_info &serviceTypeInfo = typeid(TServiceAndImplementation);
+    // Implementation looks injectable, register the service with a factory method that
+    // will requests the arguments demanded by the implementation class' constructor
     AddServiceBinding(
       typeid(TServiceAndImplementation),
       [](const std::shared_ptr<ServiceProvider> &serviceProvider) {

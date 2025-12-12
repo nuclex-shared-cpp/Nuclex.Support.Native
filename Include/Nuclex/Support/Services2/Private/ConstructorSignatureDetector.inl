@@ -21,9 +21,6 @@ limitations under the License.
 #error This header must be included via ServiceCollection.h
 #endif
 
-#include <cstddef>
-#include <utility>
-
 namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
@@ -101,7 +98,7 @@ namespace Nuclex::Support::Services2::Private {
       std::is_constructible<TImplementation, ConstructorArgument<ArgumentIndices>...>::value,
       // If constructible, build the constructor signature with the argument pack
       ConstructorSignature<ConstructorArgument<ArgumentIndices>...>,
-      // IF not constructible, check with one more argument
+      // If not constructible, recursively use the template to check with one more argument
       typename ConstructorSignatureDetector<
         TImplementation, sizeof...(ArgumentIndices) + 1
       >::Type
