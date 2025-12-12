@@ -205,7 +205,9 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TService>
-  inline std::function<std::shared_ptr<TService>> getServiceFactoryAdapter(
+  inline std::function<
+    std::shared_ptr<TService>(const std::shared_ptr<TService> &)
+  > getServiceFactoryAdapter(
     const std::shared_ptr<ServiceProvider> &serviceProvider
   ) {
     typedef std::shared_ptr<TService> SharedServicePointer;

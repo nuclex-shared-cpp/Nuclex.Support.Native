@@ -21,15 +21,12 @@ limitations under the License.
 #error This header must be included via ServiceCollection.h
 #endif
 
-#include <type_traits> // for std::is_class, std::is_abstract
-#include <memory> // for std::shared_ptr
-
 namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Checks whether a type can potentially be constructor-injected</summary>
-  /// <typeparam name="TChecked">Constructor argument that will be checked</typeparam>
+  /// <typeparam name="TChecked">Type that will be checked</typeparam>
   /// <remarks>
   ///   This is the default overload that rejects any parameter that is not wrapped
   ///   in an <code>std::shared_ptr</code>.
@@ -38,10 +35,10 @@ namespace Nuclex::Support::Services2::Private {
   struct IsInjectableType : std::false_type {};
 
   /// <summary>Checks whether a type can potentially be constructor-injected</summary>
-  /// <typeparam name="TChecked">Constructor argument that will be checked</typeparam>
+  /// <typeparam name="TChecked">Type that will be checked</typeparam>
   /// <remarks>
   ///   Any services provided by the dependency injector are wrapped in
-  ///   <code>std::shared_ptr</code> to l the lifetime of the service implementation.
+  ///   <code>std::shared_ptr</code> to control the lifetime of the service instance.
   /// </remarks>
   template<typename TChecked>
   struct IsInjectableType<std::shared_ptr<TChecked>> :

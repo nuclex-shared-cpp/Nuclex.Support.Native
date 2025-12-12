@@ -33,7 +33,7 @@ namespace Nuclex::Support::Services {
     /// <summary>Determines whether the specified argument uses std::shared_ptr</summary>
     /// <typeparam name="TChecked">Type that will be checked</typeparam>
     /// <remarks>
-    ///   The default case, always 'no'
+    ///   The default case, always 'false'
     /// </remarks>
     template<typename TChecked>
     class IsSharedPtr : public std::false_type {};
@@ -41,7 +41,7 @@ namespace Nuclex::Support::Services {
     /// <summary>Determines whether the specified argument uses std::shared_ptr</summary>
     /// <typeparam name="TChecked">Type that will be checked</typeparam>
     /// <remarks>
-    ///   Specialization for std::shared_ptr types, produces 'yes'
+    ///   Specialization for std::shared_ptr types, produces 'true'
     /// </remarks>
     template <class TChecked>
     class IsSharedPtr<std::shared_ptr<TChecked>> : public std::true_type {};

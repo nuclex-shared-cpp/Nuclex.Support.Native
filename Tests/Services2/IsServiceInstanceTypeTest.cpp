@@ -27,7 +27,7 @@ limitations under the License.
 
 #define NUCLEX_SUPPORT_SERVICES2_SERVICECOLLECTION_H
 #include "Nuclex/Support/Services2/Private/IsSharedPtr.inl"
-#include "Nuclex/Support/Services2/Private/IsInjectableType.inl"
+#include "Nuclex/Support/Services2/Private/IsServiceInstanceType.inl"
 
 #include <gtest/gtest.h>
 
@@ -71,28 +71,34 @@ namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IsInjectableTypeTest, BasicTypesAreNotInjectable) {
-    EXPECT_FALSE(IsInjectableType<int>::value);
-    EXPECT_FALSE(IsInjectableType<float>::value);
+  TEST(IsServiceInstanceTypeTest, BasicTypesAreNotServiceInstances) {
+    EXPECT_FALSE((IsServiceInstanceType<AbstractInterface, int>::value));
+    EXPECT_FALSE((IsServiceInstanceType<AbstractInterface, float>::value));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IsInjectableTypeTest, NonSharedPtrsAreNotInjectable) {
-    EXPECT_FALSE(IsInjectableType<AbstractInterface>::value);
-    EXPECT_FALSE(IsInjectableType<Implementation>::value);
+  TEST(IsServiceInstanceTypeTest, NonSharedPtrsAreNotServiceInstances) {
+    EXPECT_FALSE((IsServiceInstanceType<AbstractInterface, AbstractInterface>::value));
+    EXPECT_FALSE((IsServiceInstanceType<AbstractInterface, Implementation>::value));
+    EXPECT_FALSE((IsServiceInstanceType<AbstractInterface, Implementation *>::value));
+    EXPECT_FALSE((IsServiceInstanceType<AbstractInterface, Implementation *>::value));
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IsInjectableTypeTest, SharedPtrToConcreteClassIsInjectable) {
-    EXPECT_TRUE(IsInjectableType<std::shared_ptr<Implementation>>::value);
+  TEST(IsServiceInstanceTypeTest, SharedPtrToImplementationIsServiceInstance) {
+    EXPECT_TRUE(
+      (IsServiceInstanceType<AbstractInterface, std::shared_ptr<Implementation>>::value)
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
-  TEST(IsInjectableTypeTest, SharedPtrToAbstractClassIsInjectable) {
-    EXPECT_TRUE(IsInjectableType<std::shared_ptr<AbstractInterface>>::value);
+  TEST(IsServiceInstanceTypeTest, ServiceInterfaceAndImplementationCanBeSameType) {
+    EXPECT_TRUE(
+      (IsServiceInstanceType<Implementation, std::shared_ptr<Implementation>>::value)
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //

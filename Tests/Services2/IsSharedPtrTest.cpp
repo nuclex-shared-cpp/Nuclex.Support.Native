@@ -22,6 +22,9 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
+#include <type_traits> // for std::is_class, std::is_abstract
+#include <memory> // for std::shared_ptr
+
 #define NUCLEX_SUPPORT_SERVICES2_SERVICECOLLECTION_H
 #include "Nuclex/Support/Services2/Private/IsSharedPtr.inl"
 

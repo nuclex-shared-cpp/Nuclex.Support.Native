@@ -26,24 +26,34 @@ namespace Nuclex::Support::Services2::Private {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>
-  ///   Determines whether the specified type is a std::shared_ptr of any specialization
+  ///   Checks whether a type is an <code>std::shared_ptr</code> carrying an instance
+  ///   that implements a given service interface
   /// </summary>
+  /// <typeparam name="TService">Service interface the instance must implement</typeparam>
   /// <typeparam name="TChecked">Type that will be checked</typeparam>
   /// <remarks>
-  ///   The default case, always 'false'
+  ///   This is the default overload that rejects any parameter that is not wrapped
+  ///   in an <code>std::shared_ptr</code>.
   /// </remarks>
-  template<typename TChecked>
-  struct IsSharedPtr : public std::false_type {};
+  template<typename TService, typename TChecked>
+  struct IsServiceInstanceType : std::false_type {};
 
   /// <summary>
-  ///   Determines whether the specified type is a std::shared_ptr of any specialization
+  ///   Checks whether a type is an <code>std::shared_ptr</code> carrying an instance
+  ///   that implements a given service interface
   /// </summary>
+  /// <typeparam name="TService">Service interface the instance must implement</typeparam>
   /// <typeparam name="TChecked">Type that will be checked</typeparam>
   /// <remarks>
-  ///   Specialization for std::shared_ptr types, produces 'true'
+  ///   Any services provided by the dependency injector are wrapped in
+  ///   <code>std::shared_ptr</code> to control the lifetime of the service instance.
   /// </remarks>
-  template <class TChecked>
-  struct IsSharedPtr<std::shared_ptr<TChecked>> : public std::true_type {};
+  template<typename TService, typename TChecked>
+  struct IsServiceInstanceType<TService, std::shared_ptr<TChecked>> :
+    std::bool_constant<
+      std::is_class<typename std::remove_cv<TChecked>::type>::value &&
+      std::is_base_of<TService, typename std::remove_cv<TChecked>::type>::value
+    > {};
 
   // ------------------------------------------------------------------------------------------- //
 
