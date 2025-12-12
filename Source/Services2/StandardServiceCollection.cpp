@@ -85,7 +85,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void StandardServiceCollection::AddServiceInstance(
+  void StandardServiceCollection::AddPrototypedService(
     const std::type_info &serviceType,
     const std::any &instance,
     const std::function<std::any(const std::any &)> &cloneMethod,

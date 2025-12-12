@@ -267,24 +267,24 @@ namespace Nuclex::Support::Services2 {
       ServiceLifetime lifetime
     ) = 0;
 
-    /// <summary>Adds the specified service binding to the collection</summary>
+    /// <summary>Adds a binding for a transient service that clones a prototype</summary>
     /// <param name="serviceType">Type of service that will be bound</param>
     /// <param name="instance">
     ///   Existing instance that will be provided when the service is requested
     /// </param>
     /// <param name="cloneMethod">Method that will clone the existing instance</param>
     /// <param name="lifetime">
-    ///   Which lifetime category the service will use: singleton or scoped.
+    ///   Which lifetime category the service will use: singleton, scoped or transient
     /// </param>
     /// <remarks>
     ///   This method rejects <see cref="ServiceLifetime.Transient" /> because it
     ///   has no way to create new instances from the existing instance.
     /// </remarks>
-    protected: NUCLEX_SUPPORT_API virtual void AddServiceInstance(
+    protected: NUCLEX_SUPPORT_API virtual void AddPrototypedService(
       const std::type_info &serviceType,
       const std::any &instance,
       const std::function<std::any(const std::any &)> &cloneMethod,
-      ServiceLifetime lifetime
+      const ServiceLifetime lifetime
     ) = 0;
 
   };
@@ -404,23 +404,10 @@ namespace Nuclex::Support::Services2 {
       "Instance must be a std::shared_ptr to the service type"
     );
 
-    AddServiceInstance(
+    AddPrototypedService(
       typeid(TService),
       std::any(instance),
-      [](const std::any &prototypeAsAny) -> std::any { // only used if service is transient
-        if constexpr(std::is_copy_constructible<TService>::value) {
-          const std::shared_ptr<TService> &prototype = (
-            std::any_cast<std::shared_ptr<TService>>(prototypeAsAny)
-          );
-          if(static_cast<bool>(prototype)) [[likely]] {
-            return std::any(std::make_shared<TService>(*prototype));
-          } else {
-            return std::shared_ptr<TService>();
-          }
-        } else {
-          throw std::logic_error("Service type does not implement a copy constructor");
-        }
-      },
+      [](const std::any &instanceAsAny) -> std::any { return instanceAsAny; },
       ServiceLifetime::Singleton
     );
     return *this;
@@ -523,23 +510,10 @@ namespace Nuclex::Support::Services2 {
       "Instance must be a std::shared_ptr to the service type"
     );
 
-    AddServiceInstance(
+    AddPrototypedService(
       typeid(TService),
       std::any(instance),
-      [](const std::any &prototypeAsAny) -> std::any { // only used if service is transient
-        if constexpr(std::is_copy_constructible<TService>::value) {
-          const std::shared_ptr<TService> &prototype = (
-            std::any_cast<std::shared_ptr<TService>>(prototypeAsAny)
-          );
-          if(static_cast<bool>(prototype)) [[likely]] {
-            return std::any(std::make_shared<TService>(*prototype));
-          } else {
-            return std::shared_ptr<TService>();
-          }
-        } else {
-          throw std::logic_error("Service type does not implement a copy constructor");
-        }
-      },
+      [](const std::any &instanceAsAny) -> std::any { return instanceAsAny; },
       ServiceLifetime::Scoped
     );
     return *this;
@@ -642,7 +616,7 @@ namespace Nuclex::Support::Services2 {
       "Instance must be a std::shared_ptr to the service type"
     );
 
-    AddServiceInstance(
+    AddPrototypedService(
       typeid(TService),
       std::any(instance),
       [](const std::any &prototypeAsAny) -> std::any { // only used if service is transient

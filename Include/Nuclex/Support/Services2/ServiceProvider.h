@@ -159,9 +159,9 @@ namespace Nuclex::Support::Services2 {
     ///   instance being provided for each call. For transient services, the returned
     ///   factory method will act as a true factory and create a new instance every time.
     /// </remarks>
-    public: NUCLEX_SUPPORT_API virtual std::function<std::any> GetServiceFactory(
+    protected: NUCLEX_SUPPORT_API virtual std::function<std::any> GetServiceFactory(
       const std::type_info &typeInfo
-    ) = 0;
+    ) const = 0;
 
     /// <summary>Provides all instances registered for the specified service</summary>
     /// <param name="serviceType">Type of service that will be provided</param>

@@ -80,20 +80,16 @@ namespace Nuclex::Support::Services2 {
       ServiceLifetime lifetime
     ) override;
 
-    /// <summary>Adds the specified service binding to the collection</summary>
+    /// <summary>Adds a binding for a transient service that clones a prototype</summary>
     /// <param name="serviceType">Type of service that will be bound</param>
     /// <param name="instance">
     ///   Existing instance that will be provided when the service is requested
     /// </param>
     /// <param name="cloneMethod">Method that will clone the existing instance</param>
     /// <param name="lifetime">
-    ///   Which lifetime category the service will use: singleton or scoped.
+    ///   Which lifetime category the service will use: singleton, scoped or transient
     /// </param>
-    /// <remarks>
-    ///   This method rejects <see cref="ServiceLifetime.Transient" /> because it
-    ///   has no way to create new instances from the existing instance.
-    /// </remarks>
-    protected: NUCLEX_SUPPORT_API virtual void AddServiceInstance(
+    protected: NUCLEX_SUPPORT_API void AddPrototypedService(
       const std::type_info &serviceType,
       const std::any &instance,
       const std::function<std::any(const std::any &)> &cloneMethod,
