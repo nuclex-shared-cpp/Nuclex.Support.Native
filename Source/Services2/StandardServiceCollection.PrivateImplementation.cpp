@@ -60,14 +60,13 @@ namespace Nuclex::Support::Services2 {
     ExistingInstance(other.ExistingInstance),
     Lifetime(other.Lifetime) {
 
-    // Anything other than transient binding with an existing instance uses the normal factory
-    if((this->Lifetime != ServiceLifetime::Transient) || this->ExistingInstance.has_value()) {
-      new(&this->CloneFactory)std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
-        other.Factory
-      );
-    } else {
+    if(this->ExistingInstance.has_value()) {
       new(&this->CloneFactory)std::function<std::any(const std::any &)>(
         other.CloneFactory
+      );
+    } else {
+      new(&this->Factory)std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
+        other.Factory
       );
     }
   }
@@ -81,14 +80,13 @@ namespace Nuclex::Support::Services2 {
     ExistingInstance(std::move(other.ExistingInstance)),
     Lifetime(other.Lifetime) {
 
-    // Anything other than transient binding with an existing instance uses the normal factory
-    if((this->Lifetime != ServiceLifetime::Transient) || this->ExistingInstance.has_value()) {
-      new(&this->CloneFactory)std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
-        std::move(other.Factory)
+    if(this->ExistingInstance.has_value()) {
+      new(&this->CloneFactory) std::function<std::any(const std::any &)>(
+        std::move(other.CloneFactory)
       );
     } else {
-      new(&this->CloneFactory)std::function<std::any(const std::any &)>(
-        std::move(other.CloneFactory)
+      new(&this->Factory) std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
+        std::move(other.Factory)
       );
     }
   }
@@ -96,10 +94,10 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   StandardServiceCollection::PrivateImplementation::ServiceBinding::~ServiceBinding() {
-    if((this->Lifetime != ServiceLifetime::Transient) || this->ExistingInstance.has_value()) {
-      this->Factory.~function();
-    } else {
+    if(this->ExistingInstance.has_value()) {
       this->CloneFactory.~function();
+    } else {
+      this->Factory.~function();
     }
   }
 
@@ -109,25 +107,27 @@ namespace Nuclex::Support::Services2 {
   StandardServiceCollection::PrivateImplementation::ServiceBinding::operator =(
     const ServiceBinding &other
   ) {
-    if((this->Lifetime != ServiceLifetime::Transient) || this->ExistingInstance.has_value()) {
-      this->Factory.~function();
-    } else {
+    if(this->ExistingInstance.has_value()) {
       this->CloneFactory.~function();
+    } else {
+      this->Factory.~function();
     }
 
     this->ServiceType = other.ServiceType;
     this->ExistingInstance = other.ExistingInstance;
     this->Lifetime = other.Lifetime;
 
-    if((this->Lifetime != ServiceLifetime::Transient) || this->ExistingInstance.has_value()) {
-      new(&this->CloneFactory)std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
-        other.Factory
-      );
-    } else {
-      new(&this->CloneFactory)std::function<std::any(const std::any &)>(
+    if(this->ExistingInstance.has_value()) {
+      new(&this->CloneFactory) std::function<std::any(const std::any &)>(
         other.CloneFactory
       );
+    } else {
+      new(&this->Factory) std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
+        other.Factory
+      );
     }
+
+    return *this;
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -136,25 +136,27 @@ namespace Nuclex::Support::Services2 {
   StandardServiceCollection::PrivateImplementation::ServiceBinding::operator =(
     ServiceBinding &&other
   ) {
-    if((this->Lifetime != ServiceLifetime::Transient) || this->ExistingInstance.has_value()) {
-      this->Factory.~function();
-    } else {
+    if(this->ExistingInstance.has_value()) {
       this->CloneFactory.~function();
+    } else {
+      this->Factory.~function();
     }
 
     this->ServiceType = other.ServiceType;
     this->ExistingInstance = std::move(other.ExistingInstance);
     this->Lifetime = other.Lifetime;
 
-    if((this->Lifetime != ServiceLifetime::Transient) || this->ExistingInstance.has_value()) {
-      new(&this->CloneFactory)std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
-        std::move(other.Factory)
-      );
-    } else {
+    if(this->ExistingInstance.has_value()) {
       new(&this->CloneFactory)std::function<std::any(const std::any &)>(
         std::move(other.CloneFactory)
       );
+    } else {
+      new(&this->Factory)std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
+        std::move(other.Factory)
+      );
     }
+
+    return *this;
   }
 
   // ------------------------------------------------------------------------------------------- //
