@@ -43,7 +43,7 @@ namespace Nuclex::Support::Services2::Private {
   template<typename TChecked>
   struct IsInjectableType<std::shared_ptr<TChecked>> :
     std::bool_constant<
-      std::is_class<typename std::remove_cv<TChecked>::type>::value
+      std::is_class<typename std::remove_cvref<TChecked>::type>::value
     > {};
 
   // ------------------------------------------------------------------------------------------- //

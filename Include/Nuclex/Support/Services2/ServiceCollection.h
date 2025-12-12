@@ -24,10 +24,12 @@ limitations under the License.
 
 #include "Nuclex/Support/Services2/ServiceLifetime.h" // for ServiceLifetime
 
+#include <cstddef> // for std::size_t
 #include <memory> // for std::shared_ptr
 #include <type_traits> // for std::decay, std::type_info
 #include <any> // for std::any
 #include <functional> // for std::function<>
+#include <utility> // for std::index_sequence<>, std::make_index_sequence<>
 
 namespace Nuclex::Support::Services2 {
   class ServiceProvider;
@@ -258,6 +260,29 @@ namespace Nuclex::Support::Services2 {
       ServiceLifetime lifetime
     ) = 0;
 
+    // TODO: Investigate supporting transient instances via protoype pattern
+    //   If, at registration time, it could be verified that the existing instance
+    //   implements a copy constructor, a factory method could be generated that
+    //   clones the existing instance, thus allowing transient instances again.
+
+    /// <summary>Adds the specified service binding to the collection</summary>
+    /// <param name="serviceType">Type of service that will be bound</param>
+    /// <param name="existingInstance">
+    ///   Existing instance that will be provided when the service is requested
+    /// </param>
+    /// <param name="lifetime">
+    ///   Which lifetime category the service will use: singleton or scoped.
+    /// </param>
+    /// <remarks>
+    ///   This method rejects <see cref="ServiceLifetime.Transient" /> because it
+    ///   has no way to create new instances from the existing instance.
+    /// </remarks>
+    protected: NUCLEX_SUPPORT_API virtual void AddServiceBinding(
+      const std::type_info &serviceType,
+      const std::any &existingInstance,
+      ServiceLifetime lifetime
+    ) = 0;
+
   };
 
   // ------------------------------------------------------------------------------------------- //
@@ -266,7 +291,10 @@ namespace Nuclex::Support::Services2 {
 
 #include "Private/IsSharedPtr.inl"
 #include "Private/IsInjectableType.inl"
+#include "Private/IsServiceInstanceType.inl"
+
 #include "Private/ConstructorSignature.inl"
+#include "Private/ConstructorSignatureDetector.inl"
 
 namespace Nuclex::Support::Services2 {
 

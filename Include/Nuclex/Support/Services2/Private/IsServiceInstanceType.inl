@@ -51,8 +51,8 @@ namespace Nuclex::Support::Services2::Private {
   template<typename TService, typename TChecked>
   struct IsServiceInstanceType<TService, std::shared_ptr<TChecked>> :
     std::bool_constant<
-      std::is_class<typename std::remove_cv<TChecked>::type>::value &&
-      std::is_base_of<TService, typename std::remove_cv<TChecked>::type>::value
+      std::is_class<typename std::remove_cvref<TChecked>::type>::value &&
+      std::is_base_of<TService, typename std::remove_cvref<TChecked>::type>::value
     > {};
 
   // ------------------------------------------------------------------------------------------- //

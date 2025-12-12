@@ -21,9 +21,6 @@ limitations under the License.
 #error This header must be included via ServiceCollection.h
 #endif
 
-#include <type_traits> // for std::is_class, std::is_abstract
-#include <memory> // for std::shared_ptr
-
 namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
@@ -51,19 +48,21 @@ namespace Nuclex::Support::Services2::Private {
     /// <returns>The value that will be passed as the constructor argument</returns>
     public: template<
       typename TArgument,
-      typename = typename std::enable_if<
-        IsInjectableType<typename std::decay<TArgument>::type>::value
-      >::type
+      typename = typename std::enable_if<IsInjectableType<TArgument>::value>::type
     >
     operator TArgument() const {
+      // IsInjectableType guarantees that TArgument is a specialization of std::shared_ptr<>
       typedef typename TArgument::element_type ServiceType;
-      return this->serviceProvider->template GetService<ServiceType>();
+      //return this->serviceProvider->template GetService<ServiceType>();
+      throw -1;
     }
 
     /// <summary>Activator through which the argument will be resolved when needed</summary>
     private: std::shared_ptr<ServiceProvider> serviceProvider;
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Stores a constructor signature (the number and type of its arguments)</summary>
   template<typename... TArguments>
@@ -76,6 +75,8 @@ namespace Nuclex::Support::Services2::Private {
     public: static constexpr std::size_t ArgumentCount = sizeof...(TArguments);
 
   };
+
+  // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Used if the constructor signature cannot be determined</summary>
   class InvalidConstructorSignature {
