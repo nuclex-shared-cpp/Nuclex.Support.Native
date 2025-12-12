@@ -46,7 +46,10 @@ namespace Nuclex::Support::Services2::Private {
     /// <summary>Creates a new instance of the service factory's type</summary>
     /// <param name="serviceProvider">Not used in this specialization</param>
     /// <returns>The new instance of the service factory's type</returns>
-    public: static std::shared_ptr<TImplementation> CreateInstance(const ServiceProvider &) {
+    public: static std::shared_ptr<TImplementation> CreateInstance(
+      const std::shared_ptr<ServiceProvider> &serviceProvider
+    ) {
+      (void)serviceProvider; // Avoid unused variable warning
       return std::make_shared<TImplementation>();
     }
 
@@ -71,9 +74,11 @@ namespace Nuclex::Support::Services2::Private {
     /// </param>
     /// <returns>The new instance of the service factory's type</returns>
     public: static std::shared_ptr<TImplementation> CreateInstance(
-      const ServiceProvider &serviceProvider
+      const std::shared_ptr<ServiceProvider> &serviceProvider
     ) {
-      return std::make_shared<TImplementation>(typename TArguments::Type(serviceProvider)...);
+      return std::make_shared<TImplementation>(
+        typename TArguments::Type(serviceProvider)...
+      );
     }
 
   };

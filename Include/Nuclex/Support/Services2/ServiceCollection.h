@@ -23,6 +23,7 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 
 #include "Nuclex/Support/Services2/ServiceLifetime.h" // for ServiceLifetime
+#include "Nuclex/Support/Services2/ServiceProvider.h" // for ServiceProvider
 
 #include <cstddef> // for std::size_t
 #include <memory> // for std::shared_ptr
@@ -31,9 +32,6 @@ limitations under the License.
 #include <functional> // for std::function<>
 #include <utility> // for std::index_sequence<>, std::make_index_sequence<>
 
-namespace Nuclex::Support::Services2 {
-  class ServiceProvider;
-}
 namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
@@ -303,6 +301,7 @@ namespace Nuclex::Support::Services2 {
 #include "Nuclex/Support/Services2/Private/IsServiceInstanceType.inl"
 
 #include "Nuclex/Support/Services2/Private/ConstructorSignature.inl"
+#include "Nuclex/Support/Services2/Private/ConstructorArgument.inl"
 #include "Nuclex/Support/Services2/Private/ConstructorSignatureDetector.inl"
 #include "Nuclex/Support/Services2/Private/ServiceFactory.inl"
 
@@ -331,10 +330,13 @@ namespace Nuclex::Support::Services2 {
     AddServiceBinding(
       typeid(TServiceAndImplementation),
       [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
-        typedef Private::ServiceFactory<TServiceAndImplementation, ConstructorSignature> Factory;
+        typedef Private::ServiceFactory<
+          TServiceAndImplementation, ConstructorSignature
+        > Factory;
+
         return std::any(
           std::static_pointer_cast<TServiceAndImplementation>(
-            Factory::CreateInstance(*serviceProvider.get())
+            Factory::CreateInstance(serviceProvider)
           )
         );
       },
