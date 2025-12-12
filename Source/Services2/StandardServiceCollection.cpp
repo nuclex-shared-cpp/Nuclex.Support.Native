@@ -87,13 +87,13 @@ namespace Nuclex::Support::Services2 {
 
   void StandardServiceCollection::AddServiceInstance(
     const std::type_info &serviceType,
-    const std::any &existingInstance,
+    const std::any &instance,
     const std::function<std::any(const std::any &)> &cloneMethod,
     ServiceLifetime lifetime
   ) {
     this->privateImplementation->Services.emplace_back(
       serviceType,
-      existingInstance,
+      instance,
       cloneMethod,
       lifetime
     );

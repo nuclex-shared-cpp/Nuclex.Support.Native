@@ -75,4 +75,104 @@ namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StandardServiceCollectionTest, SingletonServiceCanHaveSeparateImplementation) {
+    StandardServiceCollection services;
+
+    services.AddSingleton<AbstractInterface, Implementation>();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, SingletonServiceCanUseFactoryFunction) {
+    StandardServiceCollection services;
+
+    services.AddSingleton<AbstractInterface>(
+      [](const std::shared_ptr<ServiceProvider> &) -> std::shared_ptr<AbstractInterface> {
+        return std::make_shared<Implementation>();
+      }
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, SingletonServiceCanServeExistingInstance) {
+    StandardServiceCollection services;
+
+    services.AddSingleton<AbstractInterface>(std::make_shared<Implementation>());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, ScopedImplementationClassCanBeService) {
+    StandardServiceCollection services;
+
+    services.AddScoped<Implementation>();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, ScopedServiceCanHaveSeparateImplementation) {
+    StandardServiceCollection services;
+
+    services.AddScoped<AbstractInterface, Implementation>();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, ScopedServiceCanUseFactoryFunction) {
+    StandardServiceCollection services;
+
+    services.AddScoped<AbstractInterface>(
+      [](const std::shared_ptr<ServiceProvider> &) -> std::shared_ptr<AbstractInterface> {
+        return std::make_shared<Implementation>();
+      }
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, ScopedServiceCanServeExistingInstance) {
+    StandardServiceCollection services;
+
+    services.AddScoped<AbstractInterface>(std::make_shared<Implementation>());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, TransientImplementationClassCanBeService) {
+    StandardServiceCollection services;
+
+    services.AddTransient<Implementation>();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, TransientServiceCanHaveSeparateImplementation) {
+    StandardServiceCollection services;
+
+    services.AddTransient<AbstractInterface, Implementation>();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, TransientServiceCanUseFactoryFunction) {
+    StandardServiceCollection services;
+
+    services.AddTransient<AbstractInterface>(
+      [](const std::shared_ptr<ServiceProvider> &) -> std::shared_ptr<AbstractInterface> {
+        return std::make_shared<Implementation>();
+      }
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceCollectionTest, TransientServiceCanServeExistingInstance) {
+    StandardServiceCollection services;
+
+    services.AddTransient<AbstractInterface>(std::make_shared<Implementation>());
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // namespace Nuclex::Support::Services2::Private

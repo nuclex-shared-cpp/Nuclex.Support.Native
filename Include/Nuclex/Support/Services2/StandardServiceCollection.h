@@ -82,7 +82,7 @@ namespace Nuclex::Support::Services2 {
 
     /// <summary>Adds the specified service binding to the collection</summary>
     /// <param name="serviceType">Type of service that will be bound</param>
-    /// <param name="existingInstance">
+    /// <param name="instance">
     ///   Existing instance that will be provided when the service is requested
     /// </param>
     /// <param name="cloneMethod">Method that will clone the existing instance</param>
@@ -95,7 +95,7 @@ namespace Nuclex::Support::Services2 {
     /// </remarks>
     protected: NUCLEX_SUPPORT_API virtual void AddServiceInstance(
       const std::type_info &serviceType,
-      const std::any &existingInstance,
+      const std::any &instance,
       const std::function<std::any(const std::any &)> &cloneMethod,
       ServiceLifetime lifetime
     ) override;
