@@ -46,19 +46,41 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t StandardServiceCollection::RemoveAll(const std::type_info &serviceType) {
-    // TODO: Implement StandardServiceCollection::RemoveAll()
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    PrivateImplementation::ServiceBindingVector &services = (
+      this->privateImplementation->Services
+    );
+
+    throw -1;
+    /*
+    std::size_t serviceCount = services.size();
+    std::size_t index = serviceCount;
+    while(0 < index) {
+      --index;
+      if(services[index].ServiceType == serviceType) {
+        --serviceCount;
+        services[index] = services[serviceCount]
+      }
+    }
+
+    services.erase(
+      services.begin() + serviceCount,
+      services.begin() + services.size()
+    );
+    */
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   void StandardServiceCollection::AddServiceBinding(
     const std::type_info &serviceType,
-    std::function<std::any(const std::shared_ptr<ServiceProvider> &)> factoryMethod,
+    const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factoryMethod,
     ServiceLifetime lifetime
   ) {
-    // TODO: Implement StandardServiceCollection::AddServiceBinding()
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    this->privateImplementation->Services.emplace_back(
+      serviceType,
+      factoryMethod,
+      lifetime
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -66,10 +88,15 @@ namespace Nuclex::Support::Services2 {
   void StandardServiceCollection::AddServiceInstance(
     const std::type_info &serviceType,
     const std::any &existingInstance,
+    const std::function<std::any(const std::any &)> &cloneMethod,
     ServiceLifetime lifetime
   ) {
-    // TODO: Implement StandardServiceCollection::AddServiceInstance()
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    this->privateImplementation->Services.emplace_back(
+      serviceType,
+      existingInstance,
+      cloneMethod,
+      lifetime
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //

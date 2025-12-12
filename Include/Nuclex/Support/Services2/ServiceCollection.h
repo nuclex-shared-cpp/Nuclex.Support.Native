@@ -263,7 +263,7 @@ namespace Nuclex::Support::Services2 {
     /// </param>
     protected: NUCLEX_SUPPORT_API virtual void AddServiceBinding(
       const std::type_info &serviceType,
-      std::function<std::any(const std::shared_ptr<ServiceProvider> &)> factoryMethod,
+      const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factoryMethod,
       ServiceLifetime lifetime
     ) = 0;
 
@@ -277,6 +277,7 @@ namespace Nuclex::Support::Services2 {
     /// <param name="existingInstance">
     ///   Existing instance that will be provided when the service is requested
     /// </param>
+    /// <param name="cloneMethod">Method that will clone the existing instance</param>
     /// <param name="lifetime">
     ///   Which lifetime category the service will use: singleton or scoped.
     /// </param>
@@ -287,6 +288,7 @@ namespace Nuclex::Support::Services2 {
     protected: NUCLEX_SUPPORT_API virtual void AddServiceInstance(
       const std::type_info &serviceType,
       const std::any &existingInstance,
+      const std::function<std::any(const std::any &)> &cloneMethod,
       ServiceLifetime lifetime
     ) = 0;
 
@@ -312,7 +314,7 @@ namespace Nuclex::Support::Services2 {
   template<typename TServiceAndImplementation>
   inline ServiceCollection &ServiceCollection::AddSingleton() {
     typedef typename Private::ConstructorSignatureDetector<
-      TServiceAndImplementation, 0
+      TServiceAndImplementation, 0 // minimum argument count to start checking with
     >::Type ConstructorSignature;
 
     // Verify that the implementation's constructor can be injected
@@ -330,14 +332,10 @@ namespace Nuclex::Support::Services2 {
     AddServiceBinding(
       typeid(TServiceAndImplementation),
       [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
-        typedef Private::ServiceFactory<
-          TServiceAndImplementation, ConstructorSignature
-        > Factory;
-
         return std::any(
-          std::static_pointer_cast<TServiceAndImplementation>(
-            Factory::CreateInstance(serviceProvider)
-          )
+          Private::ServiceFactory<
+            TServiceAndImplementation, ConstructorSignature
+          >::CreateInstance(serviceProvider)
         );
       },
       ServiceLifetime::Singleton
@@ -350,7 +348,37 @@ namespace Nuclex::Support::Services2 {
 
   template<typename TService, typename TImplementation>
   inline ServiceCollection &ServiceCollection::AddSingleton() {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    static_assert(
+      std::is_base_of<TService, TImplementation>::value,
+      "Implementation must derive from the service interface"
+    );
+
+    typedef typename Private::ConstructorSignatureDetector<
+      TImplementation, 0 // minimum argument count to start checking with
+    >::Type ConstructorSignature;
+
+    constexpr bool implementationHasInjectableConstructor = !std::is_base_of<
+      Private::InvalidConstructorSignature, ConstructorSignature
+    >::value;
+    static_assert(
+      implementationHasInjectableConstructor,
+      "Implementation must have a constructor that can be dependency-injected "
+      "(either providing a default constructor or using only std::shared_ptr arguments)"
+    );
+
+    AddServiceBinding(
+      typeid(TService),
+      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+        return std::any(
+          std::static_pointer_cast<TService>(
+            Private::ServiceFactory<
+              TImplementation, ConstructorSignature
+            >::CreateInstance(serviceProvider)
+          )
+        );
+      },
+      ServiceLifetime::Singleton
+    );
     return *this;
   }
 
@@ -362,7 +390,11 @@ namespace Nuclex::Support::Services2 {
       std::shared_ptr<TService>(const std::shared_ptr<ServiceProvider> &)
     > &factory
   ) {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    AddServiceBinding(
+      typeid(TService),
+      factory,
+      ServiceLifetime::Singleton
+    );
     return *this;
   }
 
@@ -372,7 +404,19 @@ namespace Nuclex::Support::Services2 {
   inline ServiceCollection &ServiceCollection::AddSingleton(
     const std::shared_ptr<TService> &instance
   ) {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    static_assert(
+      Private::IsServiceInstanceType<TService, std::shared_ptr<TService>>::value,
+      "Instance must be a std::shared_ptr to the service type"
+    );
+
+    AddServiceInstance(
+      typeid(TService),
+      std::any(instance),
+      [](const std::any &prototype) -> std::any {
+        return prototype; // TODO actually clone
+      },
+      ServiceLifetime::Singleton
+    );
     return *this;
   }
 
@@ -380,7 +424,31 @@ namespace Nuclex::Support::Services2 {
 
   template<typename TServiceAndImplementation>
   inline ServiceCollection &ServiceCollection::AddScoped() {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    typedef typename Private::ConstructorSignatureDetector<
+      TServiceAndImplementation, 0 // minimum argument count to start checking with
+    >::Type ConstructorSignature;
+
+    constexpr bool implementationHasInjectableConstructor = !std::is_base_of<
+      Private::InvalidConstructorSignature, ConstructorSignature
+    >::value;
+    static_assert(
+      implementationHasInjectableConstructor,
+      "Implementation must have a constructor that can be dependency-injected "
+      "(either providing a default constructor or using only std::shared_ptr arguments)"
+    );
+
+    AddServiceBinding(
+      typeid(TServiceAndImplementation),
+      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+        return std::any(
+          Private::ServiceFactory<
+            TServiceAndImplementation, ConstructorSignature
+          >::CreateInstance(serviceProvider)
+        );
+      },
+      ServiceLifetime::Scoped
+    );
+
     return *this;
   }
 
@@ -388,7 +456,37 @@ namespace Nuclex::Support::Services2 {
 
   template<typename TService, typename TImplementation>
   inline ServiceCollection &ServiceCollection::AddScoped() {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    static_assert(
+      std::is_base_of<TService, TImplementation>::value,
+      "Implementation must derive from the service interface"
+    );
+
+    typedef typename Private::ConstructorSignatureDetector<
+      TImplementation, 0 // minimum argument count to start checking with
+    >::Type ConstructorSignature;
+
+    constexpr bool implementationHasInjectableConstructor = !std::is_base_of<
+      Private::InvalidConstructorSignature, ConstructorSignature
+    >::value;
+    static_assert(
+      implementationHasInjectableConstructor,
+      "Implementation must have a constructor that can be dependency-injected "
+      "(either providing a default constructor or using only std::shared_ptr arguments)"
+    );
+
+    AddServiceBinding(
+      typeid(TService),
+      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+        return std::any(
+          std::static_pointer_cast<TService>(
+            Private::ServiceFactory<
+              TImplementation, ConstructorSignature
+            >::CreateInstance(serviceProvider)
+          )
+        );
+      },
+      ServiceLifetime::Scoped
+    );
     return *this;
   }
 
@@ -400,7 +498,11 @@ namespace Nuclex::Support::Services2 {
       std::shared_ptr<TService>(const std::shared_ptr<ServiceProvider> &)
     > &factory
   ) {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    AddServiceBinding(
+      typeid(TService),
+      factory,
+      ServiceLifetime::Scoped
+    );
     return *this;
   }
 
@@ -410,7 +512,19 @@ namespace Nuclex::Support::Services2 {
   inline ServiceCollection &ServiceCollection::AddScoped(
     const std::shared_ptr<TService> &instance
   ) {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    static_assert(
+      Private::IsServiceInstanceType<TService, std::shared_ptr<TService>>::value,
+      "Instance must be a std::shared_ptr to the service type"
+    );
+
+    AddServiceInstance(
+      typeid(TService),
+      std::any(instance),
+      [](const std::any &prototype) -> std::any {
+        return prototype; // TODO actually clone
+      },
+      ServiceLifetime::Scoped
+    );
     return *this;
   }
 
@@ -418,7 +532,31 @@ namespace Nuclex::Support::Services2 {
 
   template<typename TServiceAndImplementation>
   inline ServiceCollection &ServiceCollection::AddTransient() {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    typedef typename Private::ConstructorSignatureDetector<
+      TServiceAndImplementation, 0 // minimum argument count to start checking with
+    >::Type ConstructorSignature;
+
+    constexpr bool implementationHasInjectableConstructor = !std::is_base_of<
+      Private::InvalidConstructorSignature, ConstructorSignature
+    >::value;
+    static_assert(
+      implementationHasInjectableConstructor,
+      "Implementation must have a constructor that can be dependency-injected "
+      "(either providing a default constructor or using only std::shared_ptr arguments)"
+    );
+
+    AddServiceBinding(
+      typeid(TServiceAndImplementation),
+      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+        return std::any(
+          Private::ServiceFactory<
+            TServiceAndImplementation, ConstructorSignature
+          >::CreateInstance(serviceProvider)
+        );
+      },
+      ServiceLifetime::Transient
+    );
+
     return *this;
   }
 
@@ -426,7 +564,37 @@ namespace Nuclex::Support::Services2 {
 
   template<typename TService, typename TImplementation>
   inline ServiceCollection &ServiceCollection::AddTransient() {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    static_assert(
+      std::is_base_of<TService, TImplementation>::value,
+      "Implementation must derive from the service interface"
+    );
+
+    typedef typename Private::ConstructorSignatureDetector<
+      TImplementation, 0 // minimum argument count to start checking with
+    >::Type ConstructorSignature;
+
+    constexpr bool implementationHasInjectableConstructor = !std::is_base_of<
+      Private::InvalidConstructorSignature, ConstructorSignature
+    >::value;
+    static_assert(
+      implementationHasInjectableConstructor,
+      "Implementation must have a constructor that can be dependency-injected "
+      "(either providing a default constructor or using only std::shared_ptr arguments)"
+    );
+
+    AddServiceBinding(
+      typeid(TService),
+      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+        return std::any(
+          std::static_pointer_cast<TService>(
+            Private::ServiceFactory<
+              TImplementation, ConstructorSignature
+            >::CreateInstance(serviceProvider)
+          )
+        );
+      },
+      ServiceLifetime::Transient
+    );
     return *this;
   }
 
@@ -438,7 +606,11 @@ namespace Nuclex::Support::Services2 {
       std::shared_ptr<TService>(const std::shared_ptr<ServiceProvider> &)
     > &factory
   ) {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    AddServiceBinding(
+      typeid(TService),
+      factory,
+      ServiceLifetime::Transient
+    );
     return *this;
   }
 
@@ -448,7 +620,19 @@ namespace Nuclex::Support::Services2 {
   inline ServiceCollection &ServiceCollection::AddTransient(
     const std::shared_ptr<TService> &instance
   ) {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    static_assert(
+      Private::IsServiceInstanceType<TService, std::shared_ptr<TService>>::value,
+      "Instance must be a std::shared_ptr to the service type"
+    );
+
+    AddServiceInstance(
+      typeid(TService),
+      std::any(instance),
+      [](const std::any &prototype) -> std::any {
+        return prototype; // TODO actually clone
+      },
+      ServiceLifetime::Transient
+    );
     return *this;
   }
 

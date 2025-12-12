@@ -28,6 +28,33 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
+  StandardServiceCollection::PrivateImplementation::ServiceBinding::ServiceBinding(
+    const std::type_info &serviceType,
+    const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factory,
+    ServiceLifetime lifetime
+  ) :
+    ServiceType(serviceType),
+    ExistingInstance(), // leave empty
+    Factory(factory),
+    Lifetime(lifetime) {}
+
+  // ------------------------------------------------------------------------------------------- //
+
+  StandardServiceCollection::PrivateImplementation::ServiceBinding::ServiceBinding(
+    const std::type_info &serviceType,
+    const std::any &existingInstance,
+    const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factory,
+    ServiceLifetime lifetime
+  ) :
+    ServiceType(serviceType),
+    ExistingInstance(existingInstance),
+    Factory(factory),
+    Lifetime(lifetime) {}
+
+  // ------------------------------------------------------------------------------------------- //
+
+  StandardServiceCollection::PrivateImplementation::ServiceBinding::~ServiceBinding() = default;
+
   // ------------------------------------------------------------------------------------------- //
 
 } // namespace Nuclex::Support::Services2

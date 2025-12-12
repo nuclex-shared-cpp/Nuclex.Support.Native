@@ -76,7 +76,7 @@ namespace Nuclex::Support::Services2 {
     /// </param>
     protected: NUCLEX_SUPPORT_API void AddServiceBinding(
       const std::type_info &serviceType,
-      std::function<std::any(const std::shared_ptr<ServiceProvider> &)> factoryMethod,
+      const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factoryMethod,
       ServiceLifetime lifetime
     ) override;
 
@@ -85,6 +85,7 @@ namespace Nuclex::Support::Services2 {
     /// <param name="existingInstance">
     ///   Existing instance that will be provided when the service is requested
     /// </param>
+    /// <param name="cloneMethod">Method that will clone the existing instance</param>
     /// <param name="lifetime">
     ///   Which lifetime category the service will use: singleton or scoped.
     /// </param>
@@ -95,6 +96,7 @@ namespace Nuclex::Support::Services2 {
     protected: NUCLEX_SUPPORT_API virtual void AddServiceInstance(
       const std::type_info &serviceType,
       const std::any &existingInstance,
+      const std::function<std::any(const std::any &)> &cloneMethod,
       ServiceLifetime lifetime
     ) override;
 
