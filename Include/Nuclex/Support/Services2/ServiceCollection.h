@@ -38,6 +38,15 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>The maximum number of constructor arguments that can be injected</summary>
+  /// <remarks>
+  ///   Increasing this value will result in (slightly) slower compiles. Though you might
+  ///   want to reconsider your design if a single type consumes more than 8 services ;)
+  /// </remarks>
+  static constexpr std::size_t MaximumConstructorArgumentCount = 8;
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Stores configured services and can build service providers</summary>
   /// <remarks>
   ///   <para>
@@ -277,7 +286,7 @@ namespace Nuclex::Support::Services2 {
     ///   This method rejects <see cref="ServiceLifetime.Transient" /> because it
     ///   has no way to create new instances from the existing instance.
     /// </remarks>
-    protected: NUCLEX_SUPPORT_API virtual void AddServiceBinding(
+    protected: NUCLEX_SUPPORT_API virtual void AddServiceInstance(
       const std::type_info &serviceType,
       const std::any &existingInstance,
       ServiceLifetime lifetime
@@ -289,12 +298,13 @@ namespace Nuclex::Support::Services2 {
 
 }
 
-#include "Private/IsSharedPtr.inl"
-#include "Private/IsInjectableType.inl"
-#include "Private/IsServiceInstanceType.inl"
+#include "Nuclex/Support/Services2/Private/IsSharedPtr.inl"
+#include "Nuclex/Support/Services2/Private/IsInjectableType.inl"
+#include "Nuclex/Support/Services2/Private/IsServiceInstanceType.inl"
 
-#include "Private/ConstructorSignature.inl"
-#include "Private/ConstructorSignatureDetector.inl"
+#include "Nuclex/Support/Services2/Private/ConstructorSignature.inl"
+#include "Nuclex/Support/Services2/Private/ConstructorSignatureDetector.inl"
+#include "Nuclex/Support/Services2/Private/ServiceFactory.inl"
 
 namespace Nuclex::Support::Services2 {
 
@@ -302,7 +312,35 @@ namespace Nuclex::Support::Services2 {
 
   template<typename TServiceAndImplementation>
   inline ServiceCollection &ServiceCollection::AddSingleton() {
-    // TODO: Here comes the complex part, constructor signature detection and factory creation
+    typedef typename Private::ConstructorSignatureDetector<
+      TServiceAndImplementation, 0
+    >::Type ConstructorSignature;
+
+    // Verify that the implementation's constructor can be injected
+    constexpr bool implementationHasInjectableConstructor = !std::is_base_of<
+      Private::InvalidConstructorSignature, ConstructorSignature
+    >::value;
+    static_assert(
+      implementationHasInjectableConstructor,
+      "Implementation must have a constructor that can be dependency-injected "
+      "(either providing a default constructor or using only std::shared_ptr arguments)"
+    );
+
+    // Implementation looks injectable, add the service factory method to the map
+    const std::type_info &serviceTypeInfo = typeid(TServiceAndImplementation);
+    AddServiceBinding(
+      typeid(TServiceAndImplementation),
+      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+        typedef Private::ServiceFactory<TServiceAndImplementation, ConstructorSignature> Factory;
+        return std::any(
+          std::static_pointer_cast<TServiceAndImplementation>(
+            Factory::CreateInstance(*serviceProvider.get())
+          )
+        );
+      },
+      ServiceLifetime::Singleton
+    );
+
     return *this;
   }
 

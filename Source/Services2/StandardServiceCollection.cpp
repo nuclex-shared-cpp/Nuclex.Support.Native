@@ -21,14 +21,16 @@ limitations under the License.
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Services2/StandardServiceCollection.h"
+#include "./StandardServiceCollection.PrivateImplementation.h"
 
 #include <stdexcept> // for std::runtime_error()
 
 namespace Nuclex::Support::Services2 {
 
-  class StandardServiceCollection::PrivateImplementation {
-    // Nothing.
-  };
+  // ------------------------------------------------------------------------------------------- //
+
+  StandardServiceCollection::StandardServiceCollection() :
+    privateImplementation(std::make_unique<PrivateImplementation>()) {}
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -56,6 +58,17 @@ namespace Nuclex::Support::Services2 {
     ServiceLifetime lifetime
   ) {
     // TODO: Implement StandardServiceCollection::AddServiceBinding()
+    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void StandardServiceCollection::AddServiceInstance(
+    const std::type_info &serviceType,
+    const std::any &existingInstance,
+    ServiceLifetime lifetime
+  ) {
+    // TODO: Implement StandardServiceCollection::AddServiceInstance()
     throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
   }
 

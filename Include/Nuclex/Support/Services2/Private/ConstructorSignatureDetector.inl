@@ -25,10 +25,6 @@ namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
-  constexpr std::size_t MaximumConstructorArgumentCount = 8;
-
-  // ------------------------------------------------------------------------------------------- //
-
   /// <summary>Detects the constructor signature for the specified type</summary>
   /// <typeparam name="TImplementation">Type whose constructor will be detected</typeparam>
   template<typename TImplementation, std::size_t ArgumentCount, typename = void>
