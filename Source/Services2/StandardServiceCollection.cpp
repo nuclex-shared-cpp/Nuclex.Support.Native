@@ -50,15 +50,23 @@ namespace Nuclex::Support::Services2 {
       this->privateImplementation->Services
     );
 
-    throw -1;
-    /*
+    std::size_t index = services.size();
+    while(0 < index) {
+      --index;
+      if(*services[index].ServiceType == serviceType) {
+        services.erase(services.begin() + index);
+      }
+    }
+
+#if defined(SERVICE_ORDER_MAY_CHANGE)
+
     std::size_t serviceCount = services.size();
     std::size_t index = serviceCount;
     while(0 < index) {
       --index;
-      if(services[index].ServiceType == serviceType) {
+      if(*services[index].ServiceType == serviceType) {
         --serviceCount;
-        services[index] = services[serviceCount]
+        services[index] = std::move(services[serviceCount]);
       }
     }
 
@@ -66,7 +74,8 @@ namespace Nuclex::Support::Services2 {
       services.begin() + serviceCount,
       services.begin() + services.size()
     );
-    */
+
+#endif
   }
 
   // ------------------------------------------------------------------------------------------- //

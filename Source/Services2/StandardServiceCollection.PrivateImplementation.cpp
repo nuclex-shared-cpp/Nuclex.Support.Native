@@ -34,7 +34,7 @@ namespace Nuclex::Support::Services2 {
     ServiceLifetime lifetime
   ) :
     ServiceType(&serviceType),
-    ExistingInstance(), // leave empty
+    Prototype(), // leave empty
     Factory(factory),
     Lifetime(lifetime) {}
 
@@ -47,7 +47,7 @@ namespace Nuclex::Support::Services2 {
     ServiceLifetime lifetime
   ) :
     ServiceType(&serviceType),
-    ExistingInstance(prototype),
+    Prototype(prototype),
     CloneFactory(cloneFactory),
     Lifetime(ServiceLifetime::Transient) {}
 
@@ -57,10 +57,10 @@ namespace Nuclex::Support::Services2 {
     const ServiceBinding &other
   ) :
     ServiceType(other.ServiceType),
-    ExistingInstance(other.ExistingInstance),
+    Prototype(other.Prototype),
     Lifetime(other.Lifetime) {
 
-    if(this->ExistingInstance.has_value()) {
+    if(this->Prototype.has_value()) {
       new(&this->CloneFactory)std::function<std::any(const std::any &)>(
         other.CloneFactory
       );
@@ -77,10 +77,10 @@ namespace Nuclex::Support::Services2 {
     ServiceBinding &&other
   ) :
     ServiceType(other.ServiceType),
-    ExistingInstance(std::move(other.ExistingInstance)),
+    Prototype(std::move(other.Prototype)),
     Lifetime(other.Lifetime) {
 
-    if(this->ExistingInstance.has_value()) {
+    if(this->Prototype.has_value()) {
       new(&this->CloneFactory) std::function<std::any(const std::any &)>(
         std::move(other.CloneFactory)
       );
@@ -94,7 +94,7 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   StandardServiceCollection::PrivateImplementation::ServiceBinding::~ServiceBinding() {
-    if(this->ExistingInstance.has_value()) {
+    if(this->Prototype.has_value()) {
       this->CloneFactory.~function();
     } else {
       this->Factory.~function();
@@ -107,17 +107,17 @@ namespace Nuclex::Support::Services2 {
   StandardServiceCollection::PrivateImplementation::ServiceBinding::operator =(
     const ServiceBinding &other
   ) {
-    if(this->ExistingInstance.has_value()) {
+    if(this->Prototype.has_value()) {
       this->CloneFactory.~function();
     } else {
       this->Factory.~function();
     }
 
     this->ServiceType = other.ServiceType;
-    this->ExistingInstance = other.ExistingInstance;
+    this->Prototype = other.Prototype;
     this->Lifetime = other.Lifetime;
 
-    if(this->ExistingInstance.has_value()) {
+    if(this->Prototype.has_value()) {
       new(&this->CloneFactory) std::function<std::any(const std::any &)>(
         other.CloneFactory
       );
@@ -136,17 +136,17 @@ namespace Nuclex::Support::Services2 {
   StandardServiceCollection::PrivateImplementation::ServiceBinding::operator =(
     ServiceBinding &&other
   ) {
-    if(this->ExistingInstance.has_value()) {
+    if(this->Prototype.has_value()) {
       this->CloneFactory.~function();
     } else {
       this->Factory.~function();
     }
 
     this->ServiceType = other.ServiceType;
-    this->ExistingInstance = std::move(other.ExistingInstance);
+    this->Prototype = std::move(other.Prototype);
     this->Lifetime = other.Lifetime;
 
-    if(this->ExistingInstance.has_value()) {
+    if(this->Prototype.has_value()) {
       new(&this->CloneFactory)std::function<std::any(const std::any &)>(
         std::move(other.CloneFactory)
       );

@@ -83,8 +83,7 @@ namespace Nuclex::Support::Services2 {
       public: const std::type_info *ServiceType;
 
       /// <summary>
-      ///   Existing instance (a wrapped <code>std::shared_ptr</code> of the service
-      ///   type (or a class derived there in the special case of a transient binding)
+      ///   Existing instance (a wrapped <code>std::shared_ptr</code> of the service type
       /// </summary>
       /// <remarks>
       ///   When the service binding is a transient one with an instance, this dependency
@@ -93,7 +92,7 @@ namespace Nuclex::Support::Services2 {
       ///   this member is empty in the <see cref="StandardServiceCollection" /> class but
       ///   filled once an instance has been requested.
       /// </remarks>
-      public: std::any ExistingInstance;
+      public: std::any Prototype;
 
       /// <summary>
       ///   Factory method that will produce an instance of the service
