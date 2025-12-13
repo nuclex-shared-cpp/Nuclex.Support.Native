@@ -175,4 +175,14 @@ namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StandardServiceCollectionTest, CanCreateServiceProvider) {
+    StandardServiceCollection services;
+    services.AddSingleton<AbstractInterface, Implementation>();
+
+    std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
+    sp->GetService<AbstractInterface>()->PureVirtualMethod();
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // namespace Nuclex::Support::Services2::Private

@@ -84,7 +84,7 @@ namespace Nuclex::Support::Services2 {
     ///   factory method will act as a true factory and create a new instance every time.
     /// </remarks>
     public: template<typename TService>
-    inline std::function<std::shared_ptr<TService>> GetServiceFactory();
+    inline std::function<std::shared_ptr<TService>()> GetServiceFactory();
 
     /// <summary>Provides all instances registered for the specified service</summary>
     /// <typeparam name="TService">Type of services that will be provided</typeparam>
@@ -159,7 +159,7 @@ namespace Nuclex::Support::Services2 {
     ///   instance being provided for each call. For transient services, the returned
     ///   factory method will act as a true factory and create a new instance every time.
     /// </remarks>
-    protected: NUCLEX_SUPPORT_API virtual std::function<std::any> GetServiceFactory(
+    protected: NUCLEX_SUPPORT_API virtual std::function<std::any()> GetServiceFactory(
       const std::type_info &typeInfo
     ) const = 0;
 
@@ -205,23 +205,13 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   template<typename TService>
-  inline std::function<
-    std::shared_ptr<TService>(const std::shared_ptr<TService> &)
-  > getServiceFactoryAdapter(
-    const std::shared_ptr<ServiceProvider> &serviceProvider
-  ) {
+  inline std::function<std::shared_ptr<TService>()> ServiceProvider::GetServiceFactory() {
     typedef std::shared_ptr<TService> SharedServicePointer;
-    typedef std::function<SharedServicePointer> ServiceFactoryFunction;
-    return std::any_cast<ServiceFactoryFunction>(
-      serviceProvider->GetServiceFactory(typeid(TService))
-    );
-  }
 
-  template<typename TService>
-  inline std::function<std::shared_ptr<TService>> ServiceProvider::GetServiceFactory() {
-    //typedef std::shared_ptr<TService> SharedServicePointer;
-    //typedef std::function<SharedServicePointer> ServiceFactoryFunction;
-    return getServiceFactoryAdapter<TService>;
+    std::function<std::any()> anyFactory = GetServiceFactory(typeid(TService));
+    return [anyFactory]() mutable -> SharedServicePointer {
+      return std::any_cast<SharedServicePointer>(anyFactory());
+    };
   }
 
   // ------------------------------------------------------------------------------------------- //

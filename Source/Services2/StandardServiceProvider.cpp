@@ -20,13 +20,65 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-//nclude "./StandardServiceCollection.PrivateImplementation.h"
+#include "./StandardServiceProvider.h"
 
-#include <stdexcept> // for std::runtime_error()
+#include <stdexcept> // for std::runtime_error
 
 namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
+
+  StandardServiceProvider::StandardServiceProvider(
+    std::shared_ptr<StandardBindingSet> &&bindings
+  ) :
+    bindings(bindings) {}
+
   // ------------------------------------------------------------------------------------------- //
+
+  StandardServiceProvider::~StandardServiceProvider() = default;
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::shared_ptr<ServiceScope> StandardServiceProvider::CreateScope() {
+    // TODO: Implement StandardServiceProvider::CreateScope() method
+    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::any StandardServiceProvider::TryGetService(const std::type_info &typeInfo) {
+    (void)typeInfo;
+    // TODO: Implement StandardServiceProvider::TryGetService() method
+    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::any StandardServiceProvider::GetService(const std::type_info &typeInfo) {
+    (void)typeInfo;
+    // TODO: Implement StandardServiceProvider::GetService() method
+    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::function<std::any()> StandardServiceProvider::GetServiceFactory(
+    const std::type_info &typeInfo
+  ) const {
+    (void)typeInfo;
+    // TODO: Implement StandardServiceProvider::GetServiceFactory() method
+    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::vector<std::any> StandardServiceProvider::GetServices(const std::type_info &typeInfo) {
+    (void)typeInfo;
+    // TODO: Implement StandardServiceProvider::GetServices() method
+    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 
 } // namespace Nuclex::Support::Services2

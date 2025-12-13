@@ -43,7 +43,7 @@ namespace Nuclex::Support::Services2 {
     ///   Binding of all service that will be made available through the service provider
     /// </param>
     public: StandardServiceProvider(
-      const std::shared_ptr<StandardBindingSet> &bindings
+      std::shared_ptr<StandardBindingSet> &&bindings
     );
 
     /// <summary>Destroys the service provider and frees all resources</summary>
@@ -69,7 +69,7 @@ namespace Nuclex::Support::Services2 {
     ///   A factory method that will provide an instance of the specified service
     ///   as a <code>std::shared_ptr</code> wrapped in an <code>std::any</code>.
     /// </returns>
-    protected: std::function<std::any> GetServiceFactory(
+    protected: std::function<std::any()> GetServiceFactory(
       const std::type_info &typeInfo
     ) const override;
 

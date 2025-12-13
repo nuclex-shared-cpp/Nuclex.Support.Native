@@ -53,6 +53,12 @@ namespace Nuclex::Support::Services2 {
     /// <summary>Frees all resources owned by the service collection</summary>
     public: NUCLEX_SUPPORT_API ~StandardServiceCollection() override;
 
+    // TODO: Implement a VerifyBindings() method to check consistency/completeness
+    //   I believe that somehow, Boost's "callable traits" module is able to extract
+    //   the argument types of a method (or constructor) in a way that makes them available
+    //   on a way that they could be recorded and enable runtime checking (that's all
+    //   we really want) of the service bindings that have been set up.
+
     /// <summary>Uses the services registered so far to build a service provider</summary>
     /// <returns>The new service provider</returns>
     public: NUCLEX_SUPPORT_API std::shared_ptr<

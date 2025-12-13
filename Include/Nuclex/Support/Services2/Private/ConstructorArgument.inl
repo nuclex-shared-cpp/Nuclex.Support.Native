@@ -25,7 +25,7 @@ namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Informations about an argument passed to the constructor of a type</summary>
+  /// <summary>Stand-in for an argument passed to the constructor of a type</summary>
   /// <typeparam name="ArgumentIndex">Index of this argument</typeparam>
   template<std::size_t ArgumentIndex>
   class ConstructorArgument {
@@ -43,9 +43,16 @@ namespace Nuclex::Support::Services2::Private {
     public: ConstructorArgument(const std::shared_ptr<ServiceProvider> &serviceProvider) :
       serviceProvider(serviceProvider) {}
 
-    /// <summary>Implicitly converts the placeholder to the argument's type</summary>
+    /// <summary>Implicitly converts the stand-in to the argument type</summary>
     /// <typeparam name="TArgument">The full type of the argument</typeparam>
     /// <returns>The value that will be passed as the constructor argument</returns>
+    /// <remarks>
+    ///   This is where the actual dependency resolution will happen. The constructor
+    ///   of the service implementation class is invoked with one of these stand-in arguments
+    ///   for each of its parameters. Via this templated conversion operator, the dependency
+    ///   injector will figure out the types of all parameters and request them from
+    ///   the service provider.
+    /// </remarks>
     public: template<
       typename TArgument,
       typename = typename std::enable_if<IsInjectableType<TArgument>::value>::type

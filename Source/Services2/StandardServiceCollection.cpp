@@ -21,7 +21,9 @@ limitations under the License.
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "Nuclex/Support/Services2/StandardServiceCollection.h"
+
 #include "./StandardServiceCollection.PrivateImplementation.h"
+#include "./StandardServiceProvider.h"
 
 #include <stdexcept> // for std::runtime_error()
 #include <typeindex> // for std::type_index
@@ -40,8 +42,11 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   std::shared_ptr<ServiceProvider> StandardServiceCollection::BuildServiceProvider() const {
-    // TODO: Implement StandardServiceCollection::BuildServiceProvider()
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    std::shared_ptr<StandardBindingSet> clonedBindingSet = (
+      std::make_shared<StandardBindingSet>(this->privateImplementation->Bindings)
+    );
+    clonedBindingSet->GenerateUniqueIndexes();
+    return std::make_shared<StandardServiceProvider>(std::move(clonedBindingSet));
   }
 
   // ------------------------------------------------------------------------------------------- //
