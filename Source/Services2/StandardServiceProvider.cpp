@@ -17,28 +17,16 @@ limitations under the License.
 */
 #pragma endregion // Apache License 2.0
 
-#ifndef NUCLEX_SUPPORT_SERVICES2_STANDARDSERVICECOLLECTION_PRIVATEIMPLEMENTATION_H
-#define NUCLEX_SUPPORT_SERVICES2_STANDARDSERVICECOLLECTION_PRIVATEIMPLEMENTATION_H
+// If the library is compiled as a DLL, this ensures symbols are exported
+#define NUCLEX_SUPPORT_SOURCE 1
 
-#include "Nuclex/Support/Config.h"
-#include "Nuclex/Support/Services2/StandardServiceCollection.h"
+//nclude "./StandardServiceCollection.PrivateImplementation.h"
 
-#include "./StandardBindingSet.h"
+#include <stdexcept> // for std::runtime_error()
 
 namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
-
-  /// <summary>Private implementation of the standard service collection</summary>
-  class StandardServiceCollection::PrivateImplementation {
-
-    /// <summary>Service bindings that have been added to the service collection</summary>
-    public: StandardBindingSet Bindings;
-
-  };
-
   // ------------------------------------------------------------------------------------------- //
 
 } // namespace Nuclex::Support::Services2
-
-#endif // NUCLEX_SUPPORT_SERVICES2_STANDARDSERVICECOLLECTION_PRIVATEIMPLEMENTATION_H

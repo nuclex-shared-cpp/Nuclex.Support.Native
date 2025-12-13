@@ -17,8 +17,8 @@ limitations under the License.
 */
 #pragma endregion // Apache License 2.0
 
-#ifndef NUCLEX_SUPPORT_SERVICES2_STANDARDSERVICESET_H
-#define NUCLEX_SUPPORT_SERVICES2_STANDARDSERVICESET_H
+#ifndef NUCLEX_SUPPORT_SERVICES2_STANDARDBINDINGSET_H
+#define NUCLEX_SUPPORT_SERVICES2_STANDARDBINDINGSET_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -36,7 +36,7 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   /// <summary>Stores the service bindings set up for a service provider</summary>
-  class StandardServiceSet {
+  class StandardBindingSet {
 
     #pragma region class Binding
 
@@ -82,7 +82,7 @@ namespace Nuclex::Support::Services2 {
       /// <remarks>
       ///   When used with the service collection
       /// </remarks>
-      public: const std::size_t UniqueServiceIndex;
+      public: std::size_t UniqueServiceIndex;
 
       /// <summary>
       ///   Existing instance (a wrapped <code>std::shared_ptr</code> of the service type
@@ -143,4 +143,4 @@ namespace Nuclex::Support::Services2 {
 
 } // namespace Nuclex::Support::Services2
 
-#endif // NUCLEX_SUPPORT_SERVICES2_STANDARDSERVICESET_H
+#endif // NUCLEX_SUPPORT_SERVICES2_STANDARDBINDINGSET_H

@@ -20,7 +20,7 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "./StandardServiceSet.h"
+#include "./StandardBindingSet.h"
 
 #include <stdexcept> // for std::runtime_error()
 
@@ -28,7 +28,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  StandardServiceSet::Binding::Binding(
+  StandardBindingSet::Binding::Binding(
     const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factory
   ) :
     UniqueServiceIndex(0),
@@ -37,7 +37,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  StandardServiceSet::Binding::Binding(
+  StandardBindingSet::Binding::Binding(
     const std::any &providedInstance,
     const std::function<std::any(const std::any &)> &cloneFactory
   ) :
@@ -47,7 +47,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  StandardServiceSet::Binding::Binding(const Binding &other) :
+  StandardBindingSet::Binding::Binding(const Binding &other) :
     UniqueServiceIndex(0),
     ProvidedInstance(other.ProvidedInstance) {
 
@@ -64,7 +64,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  StandardServiceSet::Binding::Binding(Binding &&other) :
+  StandardBindingSet::Binding::Binding(Binding &&other) :
     UniqueServiceIndex(0),
     ProvidedInstance(std::move(other.ProvidedInstance)) {
 
@@ -81,7 +81,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  StandardServiceSet::Binding::~Binding() {
+  StandardBindingSet::Binding::~Binding() {
     if(this->ProvidedInstance.has_value()) {
       this->CloneFactory.~function();
     } else {
@@ -91,7 +91,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  StandardServiceSet::Binding &StandardServiceSet::Binding::operator =(
+  StandardBindingSet::Binding &StandardBindingSet::Binding::operator =(
     const Binding &other
   ) {
     if(this->ProvidedInstance.has_value()) {
@@ -117,7 +117,7 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  StandardServiceSet::Binding &StandardServiceSet::Binding::operator =(
+  StandardBindingSet::Binding &StandardBindingSet::Binding::operator =(
     Binding &&other
   ) {
     if(this->ProvidedInstance.has_value()) {
@@ -143,8 +143,26 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void StandardServiceSet::GenerateUniqueIndexes() {
-    // TODO: Fill the unique index member of each service in the singleton and scoped map
+  void StandardBindingSet::GenerateUniqueIndexes() {
+    std::size_t uniqueIndex = 0;
+    for(
+      TypeIndexBindingMultiMap::iterator current = this->SingletonServices.begin();
+      current != this->SingletonServices.end();
+      ++current
+    ) {
+      current->second.UniqueServiceIndex = uniqueIndex;
+      ++uniqueIndex;
+    }
+
+    uniqueIndex = 0;
+    for(
+      TypeIndexBindingMultiMap::iterator current = this->ScopedServices.begin();
+      current != this->ScopedServices.end();
+      ++current
+    ) {
+      current->second.UniqueServiceIndex = uniqueIndex;
+      ++uniqueIndex;
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
