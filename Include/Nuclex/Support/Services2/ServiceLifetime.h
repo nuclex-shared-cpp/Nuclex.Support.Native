@@ -22,13 +22,6 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-#include <memory> // for std::shared_ptr
-#include <type_traits> // for std::decay, std::type_info
-#include <any> // for std::any
-
-namespace Nuclex::Support::Services2 {
-  class ServiceProvider;
-}
 namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //

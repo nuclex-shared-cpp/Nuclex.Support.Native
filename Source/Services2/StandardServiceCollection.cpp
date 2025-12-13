@@ -24,6 +24,7 @@ limitations under the License.
 #include "./StandardServiceCollection.PrivateImplementation.h"
 
 #include <stdexcept> // for std::runtime_error()
+#include <typeindex> // for std::type_index
 
 namespace Nuclex::Support::Services2 {
 
@@ -46,36 +47,14 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   std::size_t StandardServiceCollection::RemoveAll(const std::type_info &serviceType) {
-    PrivateImplementation::ServiceBindingVector &services = (
-      this->privateImplementation->Services
+    PrivateImplementation &impl = *this->privateImplementation;
+    const std::type_index serviceIndex(serviceType);
+
+    return (
+      impl.Bindings.SingletonServices.erase(serviceIndex) +
+      impl.Bindings.ScopedServices.erase(serviceIndex) +
+      impl.Bindings.TransientServices.erase(serviceIndex)
     );
-
-    std::size_t index = services.size();
-    while(0 < index) {
-      --index;
-      if(*services[index].ServiceType == serviceType) {
-        services.erase(services.begin() + index);
-      }
-    }
-
-#if defined(SERVICE_ORDER_MAY_CHANGE)
-
-    std::size_t serviceCount = services.size();
-    std::size_t index = serviceCount;
-    while(0 < index) {
-      --index;
-      if(*services[index].ServiceType == serviceType) {
-        --serviceCount;
-        services[index] = std::move(services[serviceCount]);
-      }
-    }
-
-    services.erase(
-      services.begin() + serviceCount,
-      services.begin() + services.size()
-    );
-
-#endif
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -85,11 +64,33 @@ namespace Nuclex::Support::Services2 {
     const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factoryMethod,
     ServiceLifetime lifetime
   ) {
-    this->privateImplementation->Services.emplace_back(
-      serviceType,
-      factoryMethod,
-      lifetime
-    );
+    PrivateImplementation &impl = *this->privateImplementation;
+    const std::type_index serviceIndex(serviceType);
+
+    // Here we add the service binding to the correct bucket. We also remove all
+    // service bindings of the same service from the other buckets each time to ensure
+    // a service is only registered with one lifetime policy and later registrations
+    // replace the former registrations.
+    switch(lifetime) {
+      case ServiceLifetime::Singleton: {
+        impl.Bindings.SingletonServices.emplace(serviceIndex, factoryMethod);
+        impl.Bindings.ScopedServices.erase(serviceIndex);
+        impl.Bindings.TransientServices.erase(serviceIndex);
+        break;
+      }
+      case ServiceLifetime::Scoped: {
+        impl.Bindings.SingletonServices.erase(serviceIndex);
+        impl.Bindings.ScopedServices.emplace(serviceIndex, factoryMethod);
+        impl.Bindings.TransientServices.erase(serviceIndex);
+        break;
+      }
+      case ServiceLifetime::Transient: {
+        impl.Bindings.SingletonServices.erase(serviceIndex);
+        impl.Bindings.ScopedServices.erase(serviceIndex);
+        impl.Bindings.TransientServices.emplace(serviceIndex, factoryMethod);
+        break;
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -100,12 +101,45 @@ namespace Nuclex::Support::Services2 {
     const std::function<std::any(const std::any &)> &cloneMethod,
     ServiceLifetime lifetime
   ) {
-    this->privateImplementation->Services.emplace_back(
-      serviceType,
-      instance,
-      cloneMethod,
-      lifetime
-    );
+    PrivateImplementation &impl = *this->privateImplementation;
+    const std::type_index serviceIndex(serviceType);
+
+    // Here we add the service binding to the correct bucket. We also remove all
+    // service bindings of the same service from the other buckets each time to ensure
+    // a service is only registered with one lifetime policy and later registrations
+    // replace the former registrations.
+    switch(lifetime) {
+      case ServiceLifetime::Singleton: {
+        impl.Bindings.SingletonServices.emplace(
+          std::piecewise_construct,
+          std::forward_as_tuple(serviceIndex),
+          std::forward_as_tuple(instance, cloneMethod)
+        );
+        impl.Bindings.ScopedServices.erase(serviceIndex);
+        impl.Bindings.TransientServices.erase(serviceIndex);
+        break;
+      }
+      case ServiceLifetime::Scoped: {
+        impl.Bindings.SingletonServices.erase(serviceIndex);
+        impl.Bindings.ScopedServices.emplace(
+          std::piecewise_construct,
+          std::forward_as_tuple(serviceIndex),
+          std::forward_as_tuple(instance, cloneMethod)
+        );
+        impl.Bindings.TransientServices.erase(serviceIndex);
+        break;
+      }
+      case ServiceLifetime::Transient: {
+        impl.Bindings.SingletonServices.erase(serviceIndex);
+        impl.Bindings.ScopedServices.erase(serviceIndex);
+        impl.Bindings.TransientServices.emplace(
+          std::piecewise_construct,
+          std::forward_as_tuple(serviceIndex),
+          std::forward_as_tuple(instance, cloneMethod)
+        );
+        break;
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
