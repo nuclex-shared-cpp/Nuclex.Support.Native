@@ -29,7 +29,7 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   StandardServiceProvider::StandardServiceProvider(
-    std::shared_ptr<StandardBindingSet> &&bindings
+    std::shared_ptr<const StandardBindingSet> &&bindings
   ) :
     bindings(bindings) {}
 

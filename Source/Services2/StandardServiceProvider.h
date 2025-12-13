@@ -23,6 +23,8 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Services2/ServiceProvider.h"
 
+#include <mutex> // for std::mutex
+
 namespace Nuclex::Support::Services2 {
   class StandardBindingSet;
 }
@@ -43,7 +45,7 @@ namespace Nuclex::Support::Services2 {
     ///   Binding of all service that will be made available through the service provider
     /// </param>
     public: StandardServiceProvider(
-      std::shared_ptr<StandardBindingSet> &&bindings
+      std::shared_ptr<const StandardBindingSet> &&bindings
     );
 
     /// <summary>Destroys the service provider and frees all resources</summary>
@@ -79,9 +81,11 @@ namespace Nuclex::Support::Services2 {
     protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
     /// <summary>Service bindings the provider is offering</summary>
-    private: std::shared_ptr<StandardBindingSet> bindings;
+    private: std::shared_ptr<const StandardBindingSet> bindings;
+    /// <summary>Mutex that must be held when modifying the service instances</summary>
+    private: std::mutex instanceAccessMutex;
     /// <summary>Instances of all singleton services</summary>
-    private: std::shared_ptr<std::any[]> singletonInstances;
+    private: std::unique_ptr<std::any[]> singletonInstances;
 
   };
 
