@@ -42,7 +42,7 @@ namespace {
     public: virtual ~AbstractInterface() = default;
 
     /// <summary>Mock of a pure virtual method that is exactly what it says</summary>
-    public: virtual void PureVirtualMethod() = 0;
+    public: virtual void ExampleMethod() = 0;
 
   };
 
@@ -59,7 +59,7 @@ namespace {
     /// <summary>
     ///   Empty implementation of the pure virtual method from the service interface
     /// </summary>
-    public: void PureVirtualMethod() {}
+    public: void ExampleMethod() override {}
 
   };
 

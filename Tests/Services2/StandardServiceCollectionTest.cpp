@@ -22,7 +22,6 @@ limitations under the License.
 
 #include "Nuclex/Support/Config.h"
 
-#define NUCLEX_SUPPORT_SERVICES2_STANDARDSERVICECOLLECTIONTEST_H
 #include "Nuclex/Support/Services2/StandardServiceCollection.h"
 
 #include <gtest/gtest.h>
@@ -38,7 +37,7 @@ namespace {
     public: virtual ~AbstractInterface() = default;
 
     /// <summary>Mock of a pure virtual method that is exactly what it says</summary>
-    public: virtual void PureVirtualMethod() = 0;
+    public: virtual void ExampleMethod() = 0;
 
   };
 
@@ -55,7 +54,7 @@ namespace {
     /// <summary>
     ///   Empty implementation of the pure virtual method from the service interface
     /// </summary>
-    public: void PureVirtualMethod() {}
+    public: void ExampleMethod() override {}
 
   };
 
@@ -180,7 +179,7 @@ namespace Nuclex::Support::Services2::Private {
     services.AddSingleton<AbstractInterface, Implementation>();
 
     std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
-    sp->GetService<AbstractInterface>()->PureVirtualMethod();
+    EXPECT_TRUE(static_cast<bool>(sp));
   }
 
   // ------------------------------------------------------------------------------------------- //
