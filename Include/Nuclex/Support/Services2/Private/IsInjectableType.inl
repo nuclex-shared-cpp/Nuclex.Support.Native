@@ -46,6 +46,18 @@ namespace Nuclex::Support::Services2::Private {
       std::is_class<typename std::remove_cvref<TChecked>::type>::value
     > {};
 
+  /// <summary>Accepts references and cv-qualified shared pointers as injectable</summary>
+  /// <typeparam name="TChecked">Type that will be checked</typeparam>
+  template<typename TChecked>
+  struct IsInjectableType<TChecked &> :
+    IsInjectableType<typename std::remove_cvref<TChecked>::type> {};
+
+  /// <summary>Accepts references and cv-qualified shared pointers as injectable</summary>
+  /// <typeparam name="TChecked">Type that will be checked</typeparam>
+  template<typename TChecked>
+  struct IsInjectableType<TChecked &&> :
+    IsInjectableType<typename std::remove_cvref<TChecked>::type> {};
+
   // ------------------------------------------------------------------------------------------- //
 
 } // namespace Nuclex::Support::Services2::Private

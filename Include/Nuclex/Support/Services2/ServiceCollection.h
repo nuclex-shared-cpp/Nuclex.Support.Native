@@ -322,19 +322,26 @@ namespace Nuclex::Support::Services2 {
       "(either providing a default constructor or using only std::shared_ptr arguments)"
     );
 
-    // Implementation looks injectable, register the service with a factory method that
-    // will requests the arguments demanded by the implementation class' constructor
-    AddServiceBinding(
-      typeid(TServiceAndImplementation),
-      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
-        return std::any(
-          Private::ServiceFactory<
-            TServiceAndImplementation, ConstructorSignature
-          >::CreateInstance(serviceProvider)
-        );
-      },
-      ServiceLifetime::Singleton
-    );
+    // This if seems pointless, but it will prevent the compiler from evaluating the code
+    // below in case of an unsuitable constructor, preventing unrelated errors due to
+    // ConstructorSignature evaluating to the incomplete type `InvalidConstructorSignature`
+    if constexpr(implementationHasInjectableConstructor) {
+
+      // Implementation looks injectable, register the service with a factory method that
+      // will requests the arguments demanded by the implementation class' constructor
+      AddServiceBinding(
+        typeid(TServiceAndImplementation),
+        [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+          return std::any(
+            Private::ServiceFactory<
+              TServiceAndImplementation, ConstructorSignature
+            >::CreateInstance(serviceProvider)
+          );
+        },
+        ServiceLifetime::Singleton
+      );
+
+    }
 
     return *this;
   }

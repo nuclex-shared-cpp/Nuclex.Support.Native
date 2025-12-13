@@ -30,6 +30,11 @@ namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Silly message the greeter can print</summary>
+  const std::u8string SillyMessage(u8"All your base are belong to us");
+
+  // ------------------------------------------------------------------------------------------- //
+
   /// <summary>Mock interface to unit test the ServiceProvider class</summary>
   class PrintInterface {
 
@@ -40,6 +45,10 @@ namespace {
     /// <param name="message">Message that should be printed</param>
     public: virtual void Print(const std::u8string &message) = 0;
 
+    /// <summary>Fetches the last message the printer was asked to print</summary>
+    /// <returns>A string containing the last printed message</returns>
+    public: virtual const std::u8string &GetLastPrintedMessage() const = 0;
+
   };
 
   // ------------------------------------------------------------------------------------------- //
@@ -48,18 +57,24 @@ namespace {
   class PrintImplementation : public PrintInterface {
 
     /// <summary>Initializes the mock implementation (does nothing)</summary>
-    public: PrintImplementation() : LastPrintedMessage() {}
+    public: PrintImplementation() : lastPrintedMessage() {}
     /// <summary>Empty destructor because the mock has no members and does nothing</summary>
     public: ~PrintImplementation() override = default;
 
     /// <summary>Mock of a pure virtual method that 'prints' a message</summary>
     /// <param name="message">Message that should be printed</param>
-    public: virtual void Print(const std::u8string &message) override {
-      this->LastPrintedMessage = message;
+    public: void Print(const std::u8string &message) override {
+      this->lastPrintedMessage = message;
+    }
+
+    /// <summary>Fetches the last message the printer was asked to print</summary>
+    /// <returns>A string containing the last printed message</returns>
+    public: const std::u8string &GetLastPrintedMessage() const override {
+      return this->lastPrintedMessage;
     }
 
     /// <summary>Most recent message passed to the print method</summary>
-    public: std::u8string LastPrintedMessage;
+    private: std::u8string lastPrintedMessage;
 
   };
 
@@ -71,9 +86,8 @@ namespace {
     /// <summary>Empty destructor because the mock has no members and does nothing</summary>
     public: virtual ~GreeterInterface() = default;
 
-    /// <summary>Mock of a pure virtual method that fetches a name</summary>
-    /// <returns>The name that has been fetched</returns>
-    public: virtual const std::u8string &GetName() const = 0;
+    /// <summary>Prints a test message using the dependency-injected printer</summary>
+    public: virtual void DemandSurrender() = 0;
 
   };
 
@@ -89,9 +103,9 @@ namespace {
     /// <summary>Destructor that releases the service reference again</summary>
     public: ~GreeterImplementation() override = default;
 
-    /// <summary>Prints a test message using the dependency-injected printeR</summary>
+    /// <summary>Prints a test message using the dependency-injected printer</summary>
     public: void DemandSurrender() {
-      this->printer->Print(u8"All your base are belong to us");
+      this->printer->Print(SillyMessage);
     }
 
     /// <summary>Name that can be fetched</summary>
@@ -157,6 +171,16 @@ namespace Nuclex::Support::Services2::Private {
 
     std::shared_ptr<GreeterInterface> greeter = sp->GetService<GreeterInterface>();
     ASSERT_TRUE(static_cast<bool>(greeter));
+
+    // This prints a silly message familiar to video game nerds.
+    greeter->DemandSurrender();
+
+    std::shared_ptr<PrintInterface> printer = sp->GetService<PrintInterface>();
+    ASSERT_TRUE(static_cast<bool>(printer));
+
+    // Read the message from the printer. The printer instance we get should be the same
+    // as was provided to the greeter implementation, allowing us to inspect the message.
+    EXPECT_EQ(printer->GetLastPrintedMessage(), SillyMessage);
   }
 
   // ------------------------------------------------------------------------------------------- //

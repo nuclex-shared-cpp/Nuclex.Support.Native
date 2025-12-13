@@ -97,4 +97,10 @@ namespace Nuclex::Support::Services2::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(IsInjectableTypeTest, ConstRefSharedPtrToAbstractClassIsInjectable) {
+    EXPECT_TRUE(IsInjectableType<const std::shared_ptr<AbstractInterface> &>::value);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // namespace Nuclex::Support::Services2::Private
