@@ -146,7 +146,7 @@ namespace Nuclex::Support::Services2::Private {
   }
 
   // ------------------------------------------------------------------------------------------- //
-#if 0
+
   TEST(StandardServiceProviderTest, CanCreateServiceImplementationWithDependencies) {
     StandardServiceCollection services;
     services.AddSingleton<PrintInterface, PrintImplementation>();
@@ -158,6 +158,7 @@ namespace Nuclex::Support::Services2::Private {
     std::shared_ptr<GreeterImplementation> greeter = sp->GetService<GreeterImplementation>();
     ASSERT_TRUE(static_cast<bool>(greeter));
   }
+#if 0
 
   // ------------------------------------------------------------------------------------------- //
 
