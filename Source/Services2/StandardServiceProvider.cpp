@@ -68,10 +68,8 @@ namespace Nuclex::Support::Services2 {
       );
     }
 
-    return this->services->CreateOrFetchServiceInstance(
-      std::shared_ptr<ServiceProvider>(), // TODO: use std::shared_from_this
-      service
-    );
+    // TODO: Create wrapper service provider to catch circular dependencies?
+    return this->services->CreateOrFetchServiceInstance(*this, service);
   }
 
   // ------------------------------------------------------------------------------------------- //

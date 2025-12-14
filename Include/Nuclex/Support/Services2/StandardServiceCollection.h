@@ -82,7 +82,7 @@ namespace Nuclex::Support::Services2 {
     /// </param>
     protected: NUCLEX_SUPPORT_API void AddServiceBinding(
       const std::type_info &serviceType,
-      const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factoryMethod,
+      const std::function<std::any(ServiceProvider &)> &factoryMethod,
       ServiceLifetime lifetime
     ) override;
 

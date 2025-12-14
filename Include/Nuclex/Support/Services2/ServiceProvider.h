@@ -132,7 +132,7 @@ namespace Nuclex::Support::Services2 {
     ///   </para>
     /// </remarks>
     protected: NUCLEX_SUPPORT_API virtual std::any TryGetService(
-      const std::type_info &typeInfo
+      const std::type_info &serviceType
     ) = 0;
 
     /// <summary>Provides the specified service</summary>
@@ -144,7 +144,7 @@ namespace Nuclex::Support::Services2 {
     ///   nor construct a new one.
     /// </remarks>
     protected: NUCLEX_SUPPORT_API virtual std::any GetService(
-      const std::type_info &typeInfo
+      const std::type_info &serviceType
     ) = 0;
 
     /// <summary>Provides a factory method that creates the specified service</summary>
@@ -160,7 +160,7 @@ namespace Nuclex::Support::Services2 {
     ///   factory method will act as a true factory and create a new instance every time.
     /// </remarks>
     protected: NUCLEX_SUPPORT_API virtual std::function<std::any()> GetServiceFactory(
-      const std::type_info &typeInfo
+      const std::type_info &serviceType
     ) const = 0;
 
     /// <summary>Provides all instances registered for the specified service</summary>
@@ -174,7 +174,7 @@ namespace Nuclex::Support::Services2 {
     ///   custom plug-in hubs when all that's needed is a set of all implementations.
     /// </remarks>
     protected: NUCLEX_SUPPORT_API virtual std::vector<std::any> GetServices(
-      const std::type_info &typeInfo
+      const std::type_info &serviceType
     ) = 0;
 
   };

@@ -108,9 +108,7 @@ namespace Nuclex::Support::Services2 {
     /// <returns>A self-reference to allow calls to be chained if desired</returns>
     public: template<typename TService>
     inline ServiceCollection &AddSingleton(
-      const std::function<
-        std::shared_ptr<TService>(const std::shared_ptr<ServiceProvider> &)
-      > &factory
+      const std::function<std::shared_ptr<TService>(ServiceProvider &)> &factory
     );
 
     /// <summary>Adds a singleton service that exposes an already existing instance</summary>
@@ -163,9 +161,7 @@ namespace Nuclex::Support::Services2 {
     /// <returns>A self-reference to allow calls to be chained if desired</returns>
     public: template<typename TService>
     inline ServiceCollection &AddScoped(
-      const std::function<
-        std::shared_ptr<TService>(const std::shared_ptr<ServiceProvider> &)
-      > &factory
+      const std::function<std::shared_ptr<TService>(ServiceProvider &)> &factory
     );
 
     /// <summary>Adds a scoped service that exposes an already existing instance</summary>
@@ -218,9 +214,7 @@ namespace Nuclex::Support::Services2 {
     /// <returns>A self-reference to allow calls to be chained if desired</returns>
     public: template<typename TService>
     inline ServiceCollection &AddTransient(
-      const std::function<
-        std::shared_ptr<TService>(const std::shared_ptr<ServiceProvider> &)
-      > &factory
+      const std::function<std::shared_ptr<TService>(ServiceProvider &)> &factory
     );
 
     /// <summary>Adds a transient service that exposes an already existing instance</summary>
@@ -263,7 +257,7 @@ namespace Nuclex::Support::Services2 {
     /// </param>
     protected: NUCLEX_SUPPORT_API virtual void AddServiceBinding(
       const std::type_info &serviceType,
-      const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factoryMethod,
+      const std::function<std::any(ServiceProvider &)> &factoryMethod,
       ServiceLifetime lifetime
     ) = 0;
 
@@ -331,7 +325,7 @@ namespace Nuclex::Support::Services2 {
       // will requests the arguments demanded by the implementation class' constructor
       AddServiceBinding(
         typeid(TServiceAndImplementation),
-        [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+        [](ServiceProvider &serviceProvider) {
           return std::any(
             Private::ServiceFactory<
               TServiceAndImplementation, ConstructorSignature
@@ -370,7 +364,7 @@ namespace Nuclex::Support::Services2 {
 
     AddServiceBinding(
       typeid(TService),
-      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+      [](ServiceProvider &serviceProvider) {
         return std::any(
           std::static_pointer_cast<TService>(
             Private::ServiceFactory<
@@ -388,9 +382,7 @@ namespace Nuclex::Support::Services2 {
 
   template<typename TService>
   inline ServiceCollection &ServiceCollection::AddSingleton(
-    const std::function<
-      std::shared_ptr<TService>(const std::shared_ptr<ServiceProvider> &)
-    > &factory
+    const std::function<std::shared_ptr<TService>(ServiceProvider &)> &factory
   ) {
     AddServiceBinding(
       typeid(TService),
@@ -439,7 +431,7 @@ namespace Nuclex::Support::Services2 {
 
     AddServiceBinding(
       typeid(TServiceAndImplementation),
-      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+      [](ServiceProvider &serviceProvider) {
         return std::any(
           Private::ServiceFactory<
             TServiceAndImplementation, ConstructorSignature
@@ -476,7 +468,7 @@ namespace Nuclex::Support::Services2 {
 
     AddServiceBinding(
       typeid(TService),
-      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+      [](ServiceProvider &serviceProvider) {
         return std::any(
           std::static_pointer_cast<TService>(
             Private::ServiceFactory<
@@ -494,9 +486,7 @@ namespace Nuclex::Support::Services2 {
 
   template<typename TService>
   inline ServiceCollection &ServiceCollection::AddScoped(
-    const std::function<
-      std::shared_ptr<TService>(const std::shared_ptr<ServiceProvider> &)
-    > &factory
+    const std::function<std::shared_ptr<TService>(ServiceProvider &)> &factory
   ) {
     AddServiceBinding(
       typeid(TService),
@@ -545,7 +535,7 @@ namespace Nuclex::Support::Services2 {
 
     AddServiceBinding(
       typeid(TServiceAndImplementation),
-      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+      [](ServiceProvider &serviceProvider) {
         return std::any(
           Private::ServiceFactory<
             TServiceAndImplementation, ConstructorSignature
@@ -582,7 +572,7 @@ namespace Nuclex::Support::Services2 {
 
     AddServiceBinding(
       typeid(TService),
-      [](const std::shared_ptr<ServiceProvider> &serviceProvider) {
+      [](ServiceProvider &serviceProvider) {
         return std::any(
           std::static_pointer_cast<TService>(
             Private::ServiceFactory<
@@ -600,9 +590,7 @@ namespace Nuclex::Support::Services2 {
 
   template<typename TService>
   inline ServiceCollection &ServiceCollection::AddTransient(
-    const std::function<
-      std::shared_ptr<TService>(const std::shared_ptr<ServiceProvider> &)
-    > &factory
+    const std::function<std::shared_ptr<TService>(ServiceProvider &)> &factory
   ) {
     AddServiceBinding(
       typeid(TService),

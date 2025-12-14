@@ -70,7 +70,7 @@ namespace Nuclex::Support::Services2 {
     /// </param>
     /// <returns>The `std::any` that contains the service instance</returns>
     public: const std::any &CreateOrFetchServiceInstance(
-      const std::shared_ptr<ServiceProvider> &serviceProvider,
+      ServiceProvider &serviceProvider,
       const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &service
     );
 

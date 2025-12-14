@@ -40,7 +40,7 @@ namespace Nuclex::Support::Services2::Private {
     /// <param name="serviceProvider">
     ///   Activator through which the argument will be resolved when it is used
     /// </param>
-    public: ConstructorArgument(const std::shared_ptr<ServiceProvider> &serviceProvider) :
+    public: ConstructorArgument(ServiceProvider &serviceProvider) :
       serviceProvider(serviceProvider) {}
 
     /// <summary>Implicitly converts the stand-in to the argument type</summary>
@@ -60,11 +60,11 @@ namespace Nuclex::Support::Services2::Private {
     operator TArgument() const {
       // IsInjectableType guarantees that TArgument is a specialization of std::shared_ptr<>
       typedef typename TArgument::element_type ServiceType;
-      return this->serviceProvider->template GetService<ServiceType>();
+      return this->serviceProvider.template GetService<ServiceType>();
     }
 
-    /// <summary>Activator through which the argument will be resolved when needed</summary>
-    private: std::shared_ptr<ServiceProvider> serviceProvider;
+    /// <summary>Service provider through which the argument will be resolved</summary>
+    private: ServiceProvider &serviceProvider;
 
   };
 

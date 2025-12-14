@@ -70,7 +70,7 @@ namespace Nuclex::Support::Services2::Private {
     std::shared_ptr<StandardBindingSet> bindings = std::make_shared<StandardBindingSet>();
     bindings->SingletonServices.emplace(
       typeid(int),
-      std::function<std::any(const std::shared_ptr<ServiceProvider> &)>()
+      std::function<std::any(ServiceProvider &)>()
     );
 
     std::shared_ptr<StandardInstanceSet> instanceSet = (

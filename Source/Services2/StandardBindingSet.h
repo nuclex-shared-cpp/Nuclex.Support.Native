@@ -46,7 +46,7 @@ namespace Nuclex::Support::Services2 {
       /// <summary>Initializes a new service binding for a factory-constructed service</summary>
       /// <param name="factory">Factory function that creates an instance of the service</param>
       public: explicit Binding(
-        const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factory
+        const std::function<std::any(ServiceProvider &)> &factory
       );
 
       /// <summary>Initializes a new service binding for a protoype-cloned service</summary>
@@ -112,7 +112,7 @@ namespace Nuclex::Support::Services2 {
       ///   </para>
       /// </remarks>
       public: union {
-        std::function<std::any(const std::shared_ptr<ServiceProvider> &)> Factory;
+        std::function<std::any(ServiceProvider &)> Factory;
         std::function<std::any(const std::any &)> CloneFactory;
       };
 

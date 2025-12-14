@@ -194,7 +194,7 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   const std::any &StandardInstanceSet::CreateOrFetchServiceInstance(
-    const std::shared_ptr<ServiceProvider> &serviceProvider,
+    ServiceProvider &serviceProvider,
     const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &service
   ) {
     std::size_t uniqueServiceIndex = service->second.UniqueServiceIndex;

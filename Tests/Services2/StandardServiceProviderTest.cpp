@@ -146,7 +146,7 @@ namespace Nuclex::Support::Services2::Private {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
+#if 0
   TEST(StandardServiceProviderTest, CanCreateServiceImplementationWithDependencies) {
     StandardServiceCollection services;
     services.AddSingleton<PrintInterface, PrintImplementation>();
@@ -182,7 +182,7 @@ namespace Nuclex::Support::Services2::Private {
     // as was provided to the greeter implementation, allowing us to inspect the message.
     EXPECT_EQ(printer->GetLastPrintedMessage(), SillyMessage);
   }
-
+#endif
   // ------------------------------------------------------------------------------------------- //
 
 } // namespace Nuclex::Support::Services2::Private

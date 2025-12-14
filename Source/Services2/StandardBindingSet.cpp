@@ -29,7 +29,7 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   StandardBindingSet::Binding::Binding(
-    const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factory
+    const std::function<std::any(ServiceProvider &)> &factory
   ) :
     UniqueServiceIndex(0),
     ProvidedInstance(), // leave empty
@@ -56,7 +56,7 @@ namespace Nuclex::Support::Services2 {
         other.CloneFactory
       );
     } else {
-      new(&this->Factory)std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
+      new(&this->Factory)std::function<std::any(ServiceProvider &)>(
         other.Factory
       );
     }
@@ -73,7 +73,7 @@ namespace Nuclex::Support::Services2 {
         std::move(other.CloneFactory)
       );
     } else {
-      new(&this->Factory) std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
+      new(&this->Factory) std::function<std::any(ServiceProvider &)>(
         std::move(other.Factory)
       );
     }
@@ -107,7 +107,7 @@ namespace Nuclex::Support::Services2 {
         other.CloneFactory
       );
     } else {
-      new(&this->Factory) std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
+      new(&this->Factory) std::function<std::any(ServiceProvider &)>(
         other.Factory
       );
     }
@@ -129,11 +129,11 @@ namespace Nuclex::Support::Services2 {
     this->ProvidedInstance = std::move(other.ProvidedInstance);
 
     if(other.ProvidedInstance.has_value()) {
-      new(&this->CloneFactory)std::function<std::any(const std::any &)>(
+      new(&this->CloneFactory) std::function<std::any(const std::any &)>(
         std::move(other.CloneFactory)
       );
     } else {
-      new(&this->Factory)std::function<std::any(const std::shared_ptr<ServiceProvider> &)>(
+      new(&this->Factory) std::function<std::any(ServiceProvider &)>(
         std::move(other.Factory)
       );
     }

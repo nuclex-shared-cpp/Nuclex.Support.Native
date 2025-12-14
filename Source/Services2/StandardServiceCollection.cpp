@@ -70,7 +70,7 @@ namespace Nuclex::Support::Services2 {
 
   void StandardServiceCollection::AddServiceBinding(
     const std::type_info &serviceType,
-    const std::function<std::any(const std::shared_ptr<ServiceProvider> &)> &factoryMethod,
+    const std::function<std::any(ServiceProvider &)> &factoryMethod,
     ServiceLifetime lifetime
   ) {
     PrivateImplementation &impl = *this->privateImplementation;

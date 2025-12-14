@@ -86,7 +86,7 @@ namespace Nuclex::Support::Services2::Private {
     StandardServiceCollection services;
 
     services.AddSingleton<AbstractInterface>(
-      [](const std::shared_ptr<ServiceProvider> &) -> std::shared_ptr<AbstractInterface> {
+      [](ServiceProvider &) -> std::shared_ptr<AbstractInterface> {
         return std::make_shared<Implementation>();
       }
     );
@@ -122,7 +122,7 @@ namespace Nuclex::Support::Services2::Private {
     StandardServiceCollection services;
 
     services.AddScoped<AbstractInterface>(
-      [](const std::shared_ptr<ServiceProvider> &) -> std::shared_ptr<AbstractInterface> {
+      [](ServiceProvider &) -> std::shared_ptr<AbstractInterface> {
         return std::make_shared<Implementation>();
       }
     );
@@ -158,7 +158,7 @@ namespace Nuclex::Support::Services2::Private {
     StandardServiceCollection services;
 
     services.AddTransient<AbstractInterface>(
-      [](const std::shared_ptr<ServiceProvider> &) -> std::shared_ptr<AbstractInterface> {
+      [](ServiceProvider &) -> std::shared_ptr<AbstractInterface> {
         return std::make_shared<Implementation>();
       }
     );
