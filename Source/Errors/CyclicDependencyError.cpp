@@ -20,14 +20,11 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "./StandardServiceResolutionContext.h"
+#include "Nuclex/Support/Errors/CyclicDependencyError.h"
 
-namespace Nuclex::Support::Services2 {
+// --------------------------------------------------------------------------------------------- //
 
-  // ------------------------------------------------------------------------------------------- //
+// This file is only here to guarantee that its associated header has no hidden
+// dependencies and can be included on its own
 
-  StandardServiceResolutionContext::~StandardServiceResolutionContext() = default;
-
-  // ------------------------------------------------------------------------------------------- //
-
-} // namespace Nuclex::Support::Services2
+// --------------------------------------------------------------------------------------------- //

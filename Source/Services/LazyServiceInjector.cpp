@@ -82,7 +82,7 @@ namespace Nuclex { namespace Support { namespace Services {
       message.append(service.begin(), service.end());
       message.append(serviceType.name());
       message.append(isNotKnown.begin(), isNotKnown.end());
-      throw Errors::UnresolvedDependencyError(message);
+      throw Errors::UnresolvedDependencyError(u8"unresolved dependency");
     }
 
   }
@@ -135,7 +135,7 @@ namespace Nuclex { namespace Support { namespace Services {
       message.append(service.begin(), service.end());
       message.append(serviceType.name());
       message.append(isNotKnown.begin(), isNotKnown.end());
-      throw Errors::UnresolvedDependencyError(message);
+      throw Errors::UnresolvedDependencyError(u8"unresolved dependency");
     }
 
   }

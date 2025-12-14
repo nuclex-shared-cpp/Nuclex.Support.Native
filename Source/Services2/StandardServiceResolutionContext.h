@@ -27,45 +27,24 @@ namespace Nuclex::Support::Services2 {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Stores instances of created services for a service provider</summary>
+  /// <summary>
+  ///   Interface for the service provider proxy used to resolve each dependency chain
+  /// </summary>
   class StandardServiceResolutionContext : public ServiceProvider {
 
-    /// <summary>
-    ///   Initializes a new service provider providing the specified set of services
-    /// </summary>
-    public: StandardServiceResolutionContext();
+    /// <summary>Frees all resources owned by the service resolution context</summary>
+    public: virtual ~StandardServiceResolutionContext() override;
 
-    /// <summary>Destroys the service provider and frees all resources</summary>
-    public: ~StandardServiceResolutionContext() override;
-
-    /// <summary>Creates a new service scope</summary>
-    /// <returns>The new service scope</returns>
-    public: std::shared_ptr<ServiceScope> CreateScope() override;
-
-    /// <summary>Tries to provide the specified service</summary>
-    /// <param name="serviceType">Type of service that will be provided</param>
-    /// <returns>An <code>std::any</code> containing the service if it can be provided</returns>
-    protected: std::any TryGetService(const std::type_info &typeInfo) override;
-
-    /// <summary>Provides the specified service</summary>
-    /// <param name="serviceType">Type of service that will be provided</param>
-    /// <returns>An <code>std::any</code> containing the service</returns>
-    protected: std::any GetService(const std::type_info &typeInfo) override;
-
-    /// <summary>Provides a factory method that creates the specified service</summary>
-    /// <param name="serviceType">Type of service that will be provided</param>
-    /// <returns>
-    ///   A factory method that will provide an instance of the specified service
-    ///   as a <code>std::shared_ptr</code> wrapped in an <code>std::any</code>.
-    /// </returns>
-    protected: std::function<std::any()> GetServiceFactory(
-      const std::type_info &typeInfo
-    ) const override;
-
-    /// <summary>Provides all instances registered for the specified service</summary>
-    /// <param name="serviceType">Type of service that will be provided</param>
-    /// <returns>A list of <code>std::any</code>s containing each service</returns>
-    protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
+    /// <summary>Reports the level of dependency recursions the resolution is at</summary>
+    /// <returns>The number of recursive dependency requests</returns>
+    /// <remarks>
+    ///   For the outermost request, directly issues from user code, this value is zero.
+    ///   This is used by the <see cref="StandardInstanceSet" /> to detect whether
+    ///   service construction needs to acquire the mutex lock or not. It is provable that
+    ///   this lock is either required at the root level or that the entire dependency
+    ///   graph has already been constructed (otherwise the instance couldn't exist).
+    /// </remarks>
+    public: virtual std::size_t GetResolutionDepth() const = 0;
 
   };
 

@@ -17,8 +17,8 @@ limitations under the License.
 */
 #pragma endregion // Apache License 2.0
 
-#ifndef NUCLEX_SUPPORT_ERRORS_UNRESOLVEDDEPENDENCYERROR_H
-#define NUCLEX_SUPPORT_ERRORS_UNRESOLVEDDEPENDENCYERROR_H
+#ifndef NUCLEX_SUPPORT_ERRORS_CYCLICDEPENDENCYERROR_H
+#define NUCLEX_SUPPORT_ERRORS_CYCLICDEPENDENCYERROR_H
 
 #include "Nuclex/Support/Config.h"
 
@@ -28,17 +28,17 @@ namespace Nuclex::Support::Errors {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Indicates that a service injector was unable to resolve a dependency</summary>
-  class NUCLEX_SUPPORT_TYPE UnresolvedDependencyError : public std::logic_error {
+  /// <summary>Indicates that a service injector detected a circular dependency</summary>
+  class NUCLEX_SUPPORT_TYPE CyclicDependencyError : public std::logic_error {
 
-    /// <summary>Initializes a new unresolved dependency error</summary>
+    /// <summary>Initializes a new cyclic dependency error</summary>
     /// <param name="message">Message that describes the error</param>
-    public: NUCLEX_SUPPORT_API explicit UnresolvedDependencyError(const std::u8string &message) :
+    public: NUCLEX_SUPPORT_API explicit CyclicDependencyError(const std::u8string &message) :
       std::logic_error(reinterpret_cast<const char *>(message.c_str())) {}
 
-    /// <summary>Initializes a new unresolved dependency error</summary>
+    /// <summary>Initializes a new cyclic dependency error</summary>
     /// <param name="message">Message that describes the error</param>
-    public: NUCLEX_SUPPORT_API explicit UnresolvedDependencyError(const char8_t *message) :
+    public: NUCLEX_SUPPORT_API explicit CyclicDependencyError(const char8_t *message) :
       std::logic_error(reinterpret_cast<const char *>(message)) {}
 
   };
@@ -47,4 +47,4 @@ namespace Nuclex::Support::Errors {
 
 } // namespace Nuclex::Support::Errors
 
-#endif // NUCLEX_SUPPORT_ERRORS_UNRESOLVEDDEPENDENCYERROR_H
+#endif // NUCLEX_SUPPORT_ERRORS_CYCLICDEPENDENCYERROR_H

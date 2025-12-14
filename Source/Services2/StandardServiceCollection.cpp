@@ -44,7 +44,7 @@ namespace Nuclex::Support::Services2 {
 
   std::shared_ptr<ServiceProvider> StandardServiceCollection::BuildServiceProvider() const {
     std::shared_ptr<StandardBindingSet> clonedBindingSet = (
-      std::make_shared<StandardBindingSet>(this->privateImplementation->Bindings)
+      std::make_shared<StandardBindingSet>(this->privateImplementation->Bindings) // copy
     );
     clonedBindingSet->GenerateUniqueIndexes();
 
