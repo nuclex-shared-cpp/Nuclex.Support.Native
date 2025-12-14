@@ -17,17 +17,26 @@ limitations under the License.
 */
 #pragma endregion // Apache License 2.0
 
-// If the library is compiled as a DLL, this ensures symbols are exported
-#define NUCLEX_SUPPORT_SOURCE 1
+#ifndef NUCLEX_SUPPORT_SERVICES_SERVICESCOPE_H
+#define NUCLEX_SUPPORT_SERVICES_SERVICESCOPE_H
 
+#include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Services/ServiceProvider.h"
 
 namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  ServiceProvider::~ServiceProvider() = default;
+  /// <summary>Hosts scoped services that only exist for the duration of the scope</summary>
+  class NUCLEX_SUPPORT_TYPE ServiceScope : public ServiceProvider {
+
+    /// <summary>Frees all resources owned by the service scope</summary>
+    public: NUCLEX_SUPPORT_API virtual ~ServiceScope();
+
+  };
 
   // ------------------------------------------------------------------------------------------- //
 
 } // namespace Nuclex::Support::Services
+
+#endif // NUCLEX_SUPPORT_SERVICES_SERVICESCOPE_H

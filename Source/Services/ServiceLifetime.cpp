@@ -20,14 +20,11 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "Nuclex/Support/Services/ServiceProvider.h"
+#include "Nuclex/Support/Services/ServiceLifetime.h"
 
-namespace Nuclex::Support::Services {
+// --------------------------------------------------------------------------------------------- //
 
-  // ------------------------------------------------------------------------------------------- //
+// This file is only here to guarantee that its associated header has no hidden
+// dependencies and can be included on its own
 
-  ServiceProvider::~ServiceProvider() = default;
-
-  // ------------------------------------------------------------------------------------------- //
-
-} // namespace Nuclex::Support::Services
+// --------------------------------------------------------------------------------------------- //

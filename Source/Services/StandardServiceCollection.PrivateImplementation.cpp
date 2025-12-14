@@ -20,14 +20,13 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-#include "Nuclex/Support/Services/ServiceProvider.h"
+#include "./StandardServiceCollection.PrivateImplementation.h"
+
+#include <stdexcept> // for std::runtime_error()
 
 namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
-
-  ServiceProvider::~ServiceProvider() = default;
-
   // ------------------------------------------------------------------------------------------- //
 
 } // namespace Nuclex::Support::Services

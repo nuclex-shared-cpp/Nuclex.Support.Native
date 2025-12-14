@@ -23,9 +23,6 @@
     <Filter Include="Include\Events">
       <UniqueIdentifier>{6309d6df-9d85-4228-a827-5c27b5922499}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Include\Services">
-      <UniqueIdentifier>{a35a1321-4e93-4a53-bc8a-e98ab6a1e528}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Include\Settings">
       <UniqueIdentifier>{ec970cff-00fc-4d8a-8e4a-1b4587ec855d}</UniqueIdentifier>
     </Filter>
@@ -48,9 +45,6 @@
     <Filter Include="Source\Events">
       <UniqueIdentifier>{e3f61b78-199d-4daf-9335-3bfce32621d4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Services">
-      <UniqueIdentifier>{8776ca34-6ac1-43ca-9e2f-723d4bc5843b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Settings">
       <UniqueIdentifier>{1c7a2606-a660-4cff-abaa-ce94ce1d187b}</UniqueIdentifier>
     </Filter>
@@ -66,14 +60,14 @@
     <Filter Include="Source\Text\DragonBox-1.1.2">
       <UniqueIdentifier>{823678f3-8cdc-419f-a34a-7b7cddff31a6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Include\Services2">
-      <UniqueIdentifier>{29c0715f-aa6b-4208-b0fe-b6c1f3bd7872}</UniqueIdentifier>
+    <Filter Include="Source\Services">
+      <UniqueIdentifier>{96fd788f-a47e-43c7-9287-d2320f82c0d9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Services2">
-      <UniqueIdentifier>{549485cb-3dd0-4a9f-abcd-050854c6ac7e}</UniqueIdentifier>
+    <Filter Include="Include\Services">
+      <UniqueIdentifier>{55c5eaea-c21b-4498-9d1c-81adad489b09}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Include\Services2\Private">
-      <UniqueIdentifier>{eb06dbb1-927a-453c-ae90-9c6f4b7f81d1}</UniqueIdentifier>
+    <Filter Include="Include\Services\Private">
+      <UniqueIdentifier>{894fc8a7-cf69-40d6-85ee-b7209687ba33}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -160,30 +154,6 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Events\Delegate.h">
       <Filter>Include\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\LazyServiceInjector.h">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ServiceContainer.h">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\Checks.inl">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignature.inl">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ConstructorSignatureDetector.inl">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\ServiceFactory.inl">
-      <Filter>Include\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services\IntegerSequence.inl">
-      <Filter>Include\Services</Filter>
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Settings\IniSettingsStore.h">
       <Filter>Include\Settings</Filter>
@@ -281,38 +251,38 @@
     <ClInclude Include="Include\Nuclex\Support\VariantType.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceCollection.h">
-      <Filter>Include\Services2</Filter>
+    <ClInclude Include="Source\Services\StandardBindingSet.h">
+      <Filter>Source\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceLifetime.h">
-      <Filter>Include\Services2</Filter>
+    <ClInclude Include="Source\Services\StandardInstanceSet.h">
+      <Filter>Source\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceProvider.h">
-      <Filter>Include\Services2</Filter>
+    <ClInclude Include="Source\Services\StandardServiceCollection.PrivateImplementation.h">
+      <Filter>Source\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceScope.h">
-      <Filter>Include\Services2</Filter>
+    <ClInclude Include="Source\Services\StandardServiceProvider.h">
+      <Filter>Source\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services2\ServiceScopeFactory.h">
-      <Filter>Include\Services2</Filter>
+    <ClInclude Include="Source\Services\StandardServiceScope.h">
+      <Filter>Source\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Nuclex\Support\Services2\StandardServiceCollection.h">
-      <Filter>Include\Services2</Filter>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceCollection.h">
+      <Filter>Include\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Services2\StandardBindingSet.h">
-      <Filter>Source\Services2</Filter>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceLifetime.h">
+      <Filter>Include\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Services2\StandardInstanceSet.h">
-      <Filter>Source\Services2</Filter>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceProvider.h">
+      <Filter>Include\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Services2\StandardServiceCollection.PrivateImplementation.h">
-      <Filter>Source\Services2</Filter>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceScope.h">
+      <Filter>Include\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Services2\StandardServiceProvider.h">
-      <Filter>Source\Services2</Filter>
+    <ClInclude Include="Include\Nuclex\Support\Services\ServiceScopeFactory.h">
+      <Filter>Include\Services</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Services2\StandardServiceScope.h">
-      <Filter>Source\Services2</Filter>
+    <ClInclude Include="Include\Nuclex\Support\Services\StandardServiceCollection.h">
+      <Filter>Include\Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -484,15 +454,6 @@
     <ClInclude Include="Source\Interop\WindowsSyncApi.h">
       <Filter>Source\Interop</Filter>
     </ClInclude>
-    <ClCompile Include="Source\Services\LazyServiceInjector.cpp">
-      <Filter>Source\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Services\ServiceContainer.cpp">
-      <Filter>Source\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Services\OldServiceProvider.cpp">
-      <Filter>Source\Services</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Settings\IniDocumentModel.FileParser.cpp">
       <Filter>Source\Settings</Filter>
     </ClCompile>
@@ -637,38 +598,38 @@
     <ClCompile Include="Source\VariantType.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\ServiceCollection.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\ServiceCollection.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\ServiceLIfetime.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\ServiceLifetime.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\ServiceProvider.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\ServiceProvider.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\ServiceScope.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\ServiceScope.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\ServiceScopeFactory.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\ServiceScopeFactory.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\StandardServiceCollection.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\StandardBindingSet.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\StandardBindingSet.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\StandardInstanceSet.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\StandardInstanceSet.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\StandardServiceCollection.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\StandardServiceCollection.PrivateImplementation.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\StandardServiceCollection.PrivateImplementation.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\StandardServiceProvider.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\StandardServiceProvider.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Services2\StandardServiceScope.cpp">
-      <Filter>Source\Services2</Filter>
+    <ClCompile Include="Source\Services\StandardServiceScope.cpp">
+      <Filter>Source\Services</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -693,26 +654,26 @@
     <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf">
       <Filter>Documents</Filter>
     </None>
-    <None Include="Include\Nuclex\Support\Services2\Private\ConstructorArgument.inl">
-      <Filter>Include\Services2\Private</Filter>
+    <None Include="Include\Nuclex\Support\Services\Private\ConstructorArgument.inl">
+      <Filter>Include\Services\Private</Filter>
     </None>
-    <None Include="Include\Nuclex\Support\Services2\Private\ConstructorSignature.inl">
-      <Filter>Include\Services2\Private</Filter>
+    <None Include="Include\Nuclex\Support\Services\Private\ConstructorSignature.inl">
+      <Filter>Include\Services\Private</Filter>
     </None>
-    <None Include="Include\Nuclex\Support\Services2\Private\ConstructorSignatureDetector.inl">
-      <Filter>Include\Services2\Private</Filter>
+    <None Include="Include\Nuclex\Support\Services\Private\ConstructorSignatureDetector.inl">
+      <Filter>Include\Services\Private</Filter>
     </None>
-    <None Include="Include\Nuclex\Support\Services2\Private\IsInjectableType.inl">
-      <Filter>Include\Services2\Private</Filter>
+    <None Include="Include\Nuclex\Support\Services\Private\IsInjectableType.inl">
+      <Filter>Include\Services\Private</Filter>
     </None>
-    <None Include="Include\Nuclex\Support\Services2\Private\IsServiceInstanceType.inl">
-      <Filter>Include\Services2\Private</Filter>
+    <None Include="Include\Nuclex\Support\Services\Private\IsServiceInstanceType.inl">
+      <Filter>Include\Services\Private</Filter>
     </None>
-    <None Include="Include\Nuclex\Support\Services2\Private\IsSharedPtr.inl">
-      <Filter>Include\Services2\Private</Filter>
+    <None Include="Include\Nuclex\Support\Services\Private\IsSharedPtr.inl">
+      <Filter>Include\Services\Private</Filter>
     </None>
-    <None Include="Include\Nuclex\Support\Services2\Private\ServiceFactory.inl">
-      <Filter>Include\Services2\Private</Filter>
+    <None Include="Include\Nuclex\Support\Services\Private\ServiceFactory.inl">
+      <Filter>Include\Services\Private</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
