@@ -23,10 +23,11 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Services2/ServiceProvider.h"
 
-//#include "./StandardServiceResolutionContext.h"
 #include "./StandardInstanceSet.h"
 
 #include <mutex> // for std::mutex
+#include <typeindex> // for std::type_index
+#include <vector> // for std::vector<>
 
 namespace Nuclex::Support::Services2 {
 
@@ -55,9 +56,6 @@ namespace Nuclex::Support::Services2 {
 
       /// <summary>Destroys the service provider and frees all resources</summary>
       public: ~ResolutionContext() override;
-
-      /// <summary>Returns how many services are currently being resolved</summary>
-      //public: std::size_t GetResolutionDepth() const;
 
       /// <summary>Creates a new service scope</summary>
       /// <returns>The new service scope</returns>
@@ -88,11 +86,15 @@ namespace Nuclex::Support::Services2 {
       /// <returns>A list of <code>std::any</code>s containing each service</returns>
       protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
-      private: std::shared_ptr<StandardInstanceSet> instanceSet;
-      /// <summary>Service provider that actually resolves requested services</summary>
-      //private: ServiceProvider &innerProvider;
+      private: static std::any fetchOrActivateSingletonService(
+        const std::shared_ptr<StandardInstanceSet> &services,
+        const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
+      );
+
+      /// <summary>Container for the instances of all singleton services</summary>
+      private: std::shared_ptr<StandardInstanceSet> services;
       /// <summary>Stack of services currently being resolved</summary>
-      //private: std::vector<std::type_index> resolutionStack;
+      private: std::vector<std::type_index> resolutionStack;
 
     };
 
@@ -138,11 +140,8 @@ namespace Nuclex::Support::Services2 {
     /// <returns>A list of <code>std::any</code>s containing each service</returns>
     protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
-    private: std::any fetchOrActivateSingletonService(
-      const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
-    );
-
-    private: std::any cloneTransientService(
+    private: static std::any fetchOrActivateSingletonService(
+      const std::shared_ptr<StandardInstanceSet> &services,
       const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
     );
 

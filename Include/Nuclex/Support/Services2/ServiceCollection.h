@@ -31,6 +31,7 @@ limitations under the License.
 #include <any> // for std::any
 #include <functional> // for std::function<>
 #include <utility> // for std::index_sequence<>, std::make_index_sequence<>
+#include <stdexcept> // for std::logic_error
 
 namespace Nuclex::Support::Services2 {
 

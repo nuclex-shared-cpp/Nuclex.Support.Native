@@ -72,6 +72,9 @@
     <Filter Include="Source\Services2">
       <UniqueIdentifier>{549485cb-3dd0-4a9f-abcd-050854c6ac7e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\Services2\Private">
+      <UniqueIdentifier>{eb06dbb1-927a-453c-ae90-9c6f4b7f81d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Nuclex\Support\Collections\Cache.h">
@@ -295,6 +298,21 @@
     </ClInclude>
     <ClInclude Include="Include\Nuclex\Support\Services2\StandardServiceCollection.h">
       <Filter>Include\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Services2\StandardBindingSet.h">
+      <Filter>Source\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Services2\StandardInstanceSet.h">
+      <Filter>Source\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Services2\StandardServiceCollection.PrivateImplementation.h">
+      <Filter>Source\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Services2\StandardServiceProvider.h">
+      <Filter>Source\Services2</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Services2\StandardServiceScope.h">
+      <Filter>Source\Services2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -637,6 +655,21 @@
     <ClCompile Include="Source\Services2\StandardServiceCollection.cpp">
       <Filter>Source\Services2</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Services2\StandardBindingSet.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\StandardInstanceSet.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\StandardServiceCollection.PrivateImplementation.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\StandardServiceProvider.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services2\StandardServiceScope.cpp">
+      <Filter>Source\Services2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Documents\David Gay - Correctly Rounded Binary-Decimal and Decimal-Binary Conversions.pdf">
@@ -659,6 +692,27 @@
     </None>
     <None Include="Documents\Hakan Sundell - Fast and Lock-Free Concurrent Priority Queues.pdf">
       <Filter>Documents</Filter>
+    </None>
+    <None Include="Include\Nuclex\Support\Services2\Private\ConstructorArgument.inl">
+      <Filter>Include\Services2\Private</Filter>
+    </None>
+    <None Include="Include\Nuclex\Support\Services2\Private\ConstructorSignature.inl">
+      <Filter>Include\Services2\Private</Filter>
+    </None>
+    <None Include="Include\Nuclex\Support\Services2\Private\ConstructorSignatureDetector.inl">
+      <Filter>Include\Services2\Private</Filter>
+    </None>
+    <None Include="Include\Nuclex\Support\Services2\Private\IsInjectableType.inl">
+      <Filter>Include\Services2\Private</Filter>
+    </None>
+    <None Include="Include\Nuclex\Support\Services2\Private\IsServiceInstanceType.inl">
+      <Filter>Include\Services2\Private</Filter>
+    </None>
+    <None Include="Include\Nuclex\Support\Services2\Private\IsSharedPtr.inl">
+      <Filter>Include\Services2\Private</Filter>
+    </None>
+    <None Include="Include\Nuclex\Support\Services2\Private\ServiceFactory.inl">
+      <Filter>Include\Services2\Private</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

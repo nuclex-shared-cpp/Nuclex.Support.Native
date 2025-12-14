@@ -332,11 +332,21 @@
     <ClCompile Include="Source\Services2\ServiceProvider.cpp" />
     <ClCompile Include="Source\Services2\ServiceScope.cpp" />
     <ClCompile Include="Source\Services2\ServiceScopeFactory.cpp" />
+    <ClCompile Include="Source\Services2\StandardBindingSet.cpp" />
+    <ClCompile Include="Source\Services2\StandardInstanceSet.cpp" />
     <ClCompile Include="Source\Services2\StandardServiceCollection.cpp" />
+    <ClCompile Include="Source\Services2\StandardServiceCollection.PrivateImplementation.cpp" />
+    <ClCompile Include="Source\Services2\StandardServiceProvider.cpp" />
+    <ClCompile Include="Source\Services2\StandardServiceScope.cpp" />
     <ClCompile Include="Source\Services\LazyServiceInjector.cpp" />
     <ClCompile Include="Source\Services\ServiceContainer.cpp" />
     <ClCompile Include="Source\Services\OldServiceProvider.cpp" />
     <ClCompile Include="Source\Settings\IniDocumentModel.FileParser.cpp" />
+    <ClInclude Include="Source\Services2\StandardBindingSet.h" />
+    <ClInclude Include="Source\Services2\StandardInstanceSet.h" />
+    <ClInclude Include="Source\Services2\StandardServiceCollection.PrivateImplementation.h" />
+    <ClInclude Include="Source\Services2\StandardServiceProvider.h" />
+    <ClInclude Include="Source\Services2\StandardServiceScope.h" />
     <ClInclude Include="Source\Settings\IniDocumentModel.FileParser.h" />
     <ClCompile Include="Source\Settings\IniDocumentModel.cpp" />
     <ClInclude Include="Source\Settings\IniDocumentModel.h" />
@@ -449,6 +459,13 @@
     <None Include="Documents\Ulf Adams - Ryu Fast Float to String Conversion.pdf" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Include\Nuclex\Support\Services2\Private\ConstructorArgument.inl" />
+    <None Include="Include\Nuclex\Support\Services2\Private\ConstructorSignature.inl" />
+    <None Include="Include\Nuclex\Support\Services2\Private\ConstructorSignatureDetector.inl" />
+    <None Include="Include\Nuclex\Support\Services2\Private\IsInjectableType.inl" />
+    <None Include="Include\Nuclex\Support\Services2\Private\IsServiceInstanceType.inl" />
+    <None Include="Include\Nuclex\Support\Services2\Private\IsSharedPtr.inl" />
+    <None Include="Include\Nuclex\Support\Services2\Private\ServiceFactory.inl" />
     <None Include="Nuclex.Support.Native.def" />
     <Text Include="ReadMe.md" />
     <Text Include="Notice.md" />
