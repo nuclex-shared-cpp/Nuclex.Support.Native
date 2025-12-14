@@ -21,6 +21,9 @@ limitations under the License.
 #define NUCLEX_SUPPORT_SOURCE 1
 
 #include "./StandardServiceProvider.h"
+#include "./StandardInstanceSet.h"
+
+#include "Nuclex/Support/Errors/UnresolvedDependencyError.h"
 
 #include <stdexcept> // for std::runtime_error
 
@@ -29,9 +32,9 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   StandardServiceProvider::StandardServiceProvider(
-    std::shared_ptr<const StandardBindingSet> &&bindings
+    std::shared_ptr<StandardInstanceSet> &&services
   ) :
-    bindings(bindings) {}
+    services(services) {}
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -55,9 +58,20 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   std::any StandardServiceProvider::GetService(const std::type_info &typeInfo) {
-    (void)typeInfo;
-    // TODO: Implement StandardServiceProvider::GetService() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    const std::type_index serviceIndex(typeInfo);
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator service = (
+      this->services->OwnBindings.find(serviceIndex)
+    );
+    if(service == this->services->OwnBindings.end()) {
+      throw Errors::UnresolvedDependencyError(
+        "Unknown service" // todo improve error message, use UTF-8
+      );
+    }
+
+    return this->services->CreateOrFetchServiceInstance(
+      std::shared_ptr<ServiceProvider>(), // TODO: use std::shared_from_this
+      service
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //

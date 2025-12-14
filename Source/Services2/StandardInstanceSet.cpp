@@ -149,13 +149,17 @@ namespace Nuclex::Support::Services2 {
     //   But 'new std::atomic<bool>' is unlkely to throw, especially since we don't allocate
 
     // Initialize the presence flags
-    std::size_t instanceCount = ownBindings.size();
-    for(std::size_t index = 0; index < instanceCount; ++index) {
-      new(reinterpret_cast<std::byte *>(address)) std::atomic<bool>(false);
+    {
+      std::size_t instanceCount = ownBindings.size();
+
+      for(std::size_t index = 0; index < instanceCount; ++index) {
+        new(reinterpret_cast<std::byte *>(this->PresenceFlags + index))
+        std::atomic<bool>(false);
+      }
+      // CHECK: If would be cool if we could just memset / std::fill_n() to zero
+      //   If there was any guarantee that std::atomic<bool> is just an actual bool,
+      //   the constructor call could theoretically be ommitted...
     }
-    // CHECK: If would be cool if we could just memset / std::fill_n() to zero
-    //   If there was any guarantee that std::atomic<bool> is just an actual bool,
-    //   the constructor call could theoretically be ommitted...
 
     // Behind the presence flags, the array of instances stored as std::any values follow.
     {
@@ -165,6 +169,8 @@ namespace Nuclex::Support::Services2 {
       if(misalignment != 0) {
         address += alignof(std::any) - misalignment;
       }
+
+      this->Instances = reinterpret_cast<std::any *>(address);
     }
 
     // Note: we do not initialize the std::any instances. While we could have an array
@@ -183,6 +189,45 @@ namespace Nuclex::Support::Services2 {
       }
       this->PresenceFlags[instanceCount].~atomic();
     }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  const std::any &StandardInstanceSet::CreateOrFetchServiceInstance(
+    const std::shared_ptr<ServiceProvider> &serviceProvider,
+    const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &service
+  ) {
+    std::size_t uniqueServiceIndex = service->second.UniqueServiceIndex;
+
+    // Check, without locking, if the instance has already been created. If so,
+    // there's not need to enter the mutex since we're not modifying our state.
+    bool isAlreadyCreated = this->PresenceFlags[uniqueServiceIndex].load(
+      std::memory_order::consume
+    );
+    if(!isAlreadyCreated) [[unlikely]] {
+      std::unique_lock<std::mutex> changeMutexLocklScope(this->ChangeMutex);
+
+      // Before entering the mutex, no instance of the service has been created. However,
+      // another thread could have been faster, so check again from inside the mutex were
+      // only one thread can enter at a time. This ensures the service is only constructed
+      // once and not modified while other threads are in the process of fetching it.
+      isAlreadyCreated = this->PresenceFlags[uniqueServiceIndex].load(
+        std::memory_order::consume
+      );
+      if(!isAlreadyCreated) [[likely]] {
+        if(service->second.ProvidedInstance.has_value()) [[unlikely]] {
+          this->Instances[uniqueServiceIndex] = service->second.CloneFactory(
+            service->second.ProvidedInstance
+          );
+        } else {
+          this->Instances[uniqueServiceIndex] = service->second.Factory(serviceProvider);
+        }
+
+        this->PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
+      } // second check inside mutex lock
+    } // first opportunistic check without mutex lock
+
+    return this->Instances[uniqueServiceIndex];
   }
 
   // ------------------------------------------------------------------------------------------- //

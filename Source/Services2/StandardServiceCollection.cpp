@@ -24,6 +24,7 @@ limitations under the License.
 
 #include "./StandardServiceCollection.PrivateImplementation.h"
 #include "./StandardServiceProvider.h"
+#include "./StandardInstanceSet.h"
 
 #include <stdexcept> // for std::runtime_error()
 #include <typeindex> // for std::type_index
@@ -46,7 +47,10 @@ namespace Nuclex::Support::Services2 {
       std::make_shared<StandardBindingSet>(this->privateImplementation->Bindings)
     );
     clonedBindingSet->GenerateUniqueIndexes();
-    return std::make_shared<StandardServiceProvider>(std::move(clonedBindingSet));
+
+    return std::make_shared<StandardServiceProvider>(
+      StandardInstanceSet::Create(clonedBindingSet, clonedBindingSet->SingletonServices)
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -25,6 +25,7 @@ limitations under the License.
 
 #include <cstddef> // for std::size_t
 #include <atomic> // for std::atomic<>
+#include <mutex> // for std::mutex
 
 namespace Nuclex::Support::Services2 {
 
@@ -32,21 +33,6 @@ namespace Nuclex::Support::Services2 {
 
   /// <summary>Stores instances of created services for a service provider</summary>
   class StandardInstanceSet {
-
-    #pragma region struct Entry
-
-    /// <summary>Specifies the amount of a resource that a task needs to execute</summary>
-    public: struct Entry {
-
-      /// <summary>Amount of the resource (core count, bytes memory) the task needs</summary>
-      public: std::size_t Amount;
-
-      /// <summary>Kind of resource the task will occupy to do its work</summary>
-      public: int Type;
-
-    };
-
-    #pragma endregion // struct Entry
 
     /// <summary>Creates a service instance set for the specified binding subset</summary>
     /// <param name="bindings">Service bindings for which instances will be stored</param>
@@ -72,6 +58,21 @@ namespace Nuclex::Support::Services2 {
 
     /// <summary>Frees all memory owned by the instance</summary>
     public: ~StandardInstanceSet();
+
+    /// <summary>Creates or fetches an instance of the specified service</summary>
+    /// <param name="serviceProvider">
+    ///   Service provider that will be forwarded to the service factory if a new service
+    ///   needs to be constructed.
+    /// </param>
+    /// <param name="service">
+    ///   Service (an iterator in the OwnBindings multimap) whose instance will be created
+    ///   or returned if it already exists
+    /// </param>
+    /// <returns>The `std::any` that contains the service instance</returns>
+    public: const std::any &CreateOrFetchServiceInstance(
+      const std::shared_ptr<ServiceProvider> &serviceProvider,
+      const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &service
+    );
 
     /// <summary>Service bindings for which instances are being stored</summary>
     public: std::shared_ptr<const StandardBindingSet> Bindings;
