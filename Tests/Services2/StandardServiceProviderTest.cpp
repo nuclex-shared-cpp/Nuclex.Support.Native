@@ -158,7 +158,6 @@ namespace Nuclex::Support::Services2::Private {
     std::shared_ptr<GreeterImplementation> greeter = sp->GetService<GreeterImplementation>();
     ASSERT_TRUE(static_cast<bool>(greeter));
   }
-#if 0
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -183,7 +182,7 @@ namespace Nuclex::Support::Services2::Private {
     // as was provided to the greeter implementation, allowing us to inspect the message.
     EXPECT_EQ(printer->GetLastPrintedMessage(), SillyMessage);
   }
-#endif
+
   // ------------------------------------------------------------------------------------------- //
 
 } // namespace Nuclex::Support::Services2::Private
