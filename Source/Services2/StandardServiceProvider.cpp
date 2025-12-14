@@ -61,7 +61,6 @@ namespace {
     const std::type_info &serviceType,
     TProvider &provider,
     std::any (TProvider::*fetchOrActivateService)(
-      const std::shared_ptr<Nuclex::Support::Services2::StandardInstanceSet> &,
       const TypeIndexBindingMultiMap::const_iterator &
     )
   ) {
@@ -77,7 +76,7 @@ namespace {
       services->OwnBindings.find(serviceIndex)
     );
     if(serviceIterator != services->OwnBindings.end()) [[likely]] {
-      return (provider.*fetchOrActivateService)(services, serviceIterator);
+      return (provider.*fetchOrActivateService)(serviceIterator);
     }
 
     // It was not a registered singleton service. So next, we'll check if it is
@@ -204,18 +203,17 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   std::any StandardServiceProvider::ResolutionContext::fetchOrActivateSingletonService(
-    const std::shared_ptr<StandardInstanceSet> &services,
     const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
   ) {
     std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
 
     // Check, without locking, if the instance has already been created. If so,
     // there's not need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = services->PresenceFlags[uniqueServiceIndex].load(
+    bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
       std::memory_order::consume
     );
     if(isAlreadyCreated) [[likely]] {
-      return services->Instances[uniqueServiceIndex];
+      return this->services->Instances[uniqueServiceIndex];
     }
 
     // This is the service resolution context, meaning that the service provider already
@@ -224,16 +222,16 @@ namespace Nuclex::Support::Services2 {
 
     // If an existing instance was provided, just put it in place without worrying about it
     if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
-      services->Instances[uniqueServiceIndex] = serviceIterator->second.ProvidedInstance;
+      this->services->Instances[uniqueServiceIndex] = serviceIterator->second.ProvidedInstance;
     } else {
-      new(services->Instances + uniqueServiceIndex) std::any(
+      new(this->services->Instances + uniqueServiceIndex) std::any(
         std::move(serviceIterator->second.Factory(*this))
       );
     }
 
-    services->PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
+    this->services->PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
 
-    return services->Instances[uniqueServiceIndex];
+    return this->services->Instances[uniqueServiceIndex];
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -293,34 +291,33 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   std::any StandardServiceProvider::fetchOrActivateSingletonService(
-    const std::shared_ptr<StandardInstanceSet> &services,
     const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
   ) {
     std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
 
     // Check, without locking, if the instance has already been created. If so,
     // there's not need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = services->PresenceFlags[uniqueServiceIndex].load(
+    bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
       std::memory_order::consume
     );
     if(isAlreadyCreated) [[likely]] {
-      return services->Instances[uniqueServiceIndex];
+      return this->services->Instances[uniqueServiceIndex];
     }
 
     // As of a moment ago, a service instance had not been created yet, so acquire
     // the mutex, re-check and create the service instance if needed
     {
-      std::unique_lock<std::mutex> changeMutexLocklScope(services->ChangeMutex);
+      std::unique_lock<std::mutex> changeMutexLocklScope(this->services->ChangeMutex);
 
       // Before entering the mutex, no instance of the service has been created. However,
       // another thread could have been faster, so check again from inside the mutex were
       // only one thread can enter at a time. This ensures the service is only constructed
       // once and not modified while other threads are in the process of fetching it.
-      bool isAlreadyCreated = services->PresenceFlags[uniqueServiceIndex].load(
+      bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
         std::memory_order::consume
       );
       if(isAlreadyCreated) [[likely]] {
-        return services->Instances[uniqueServiceIndex];
+        return this->services->Instances[uniqueServiceIndex];
       }
 
       // Service now definitely needs to be created. So now set up a resolution context
@@ -329,20 +326,22 @@ namespace Nuclex::Support::Services2 {
 
       // If an existing instance was provided, just put it in place without worrying about it
       if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
-        new(services->Instances + uniqueServiceIndex) std::any(
+        new(this->services->Instances + uniqueServiceIndex) std::any(
           serviceIterator->second.ProvidedInstance
         );
       } else {
-        ResolutionContext context(services, serviceIterator->first);
-        new(services->Instances + uniqueServiceIndex) std::any(
+        ResolutionContext context(this->services, serviceIterator->first);
+        new(this->services->Instances + uniqueServiceIndex) std::any(
           std::move(serviceIterator->second.Factory(context))
         );
       }
 
-      services->PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
+      this->services->PresenceFlags[uniqueServiceIndex].store(
+        true, std::memory_order::release
+      );
     } // mutex lock
 
-    return services->Instances[uniqueServiceIndex];
+    return this->services->Instances[uniqueServiceIndex];
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -92,16 +92,11 @@ namespace Nuclex::Support::Services2 {
       protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
       /// <summary>Fetches an already activated singleton service or activates it</summary>
-      /// <param name="services">
-      ///   Service instance container to check for an existing instance and in which to
-      ///   store any new instances created
-      /// </param>
       /// <param name="serviceIterator">
       ///   Iterator to the requested service in the singleton service bindings
       /// </param>
       /// <returns>An <code>std::any</code> that contains the service instance</returns>
       private: std::any fetchOrActivateSingletonService(
-        const std::shared_ptr<StandardInstanceSet> &services,
         const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
       );
 
@@ -155,16 +150,11 @@ namespace Nuclex::Support::Services2 {
     protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
     /// <summary>Fetches an already activated singleton service or activates it</summary>
-    /// <param name="services">
-    ///   Service instance container to check for an existing instance and in which to
-    ///   store any new instances created
-    /// </param>
     /// <param name="serviceIterator">
     ///   Iterator to the requested service in the singleton service bindings
     /// </param>
     /// <returns>An <code>std::any</code> that contains the service instance</returns>
     private: std::any fetchOrActivateSingletonService(
-      const std::shared_ptr<StandardInstanceSet> &services,
       const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
     );
 
