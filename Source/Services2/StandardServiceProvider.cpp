@@ -24,25 +24,46 @@ limitations under the License.
 #include "./StandardInstanceSet.h"
 
 #include "Nuclex/Support/Errors/UnresolvedDependencyError.h"
+#include "Nuclex/Support/Errors/CyclicDependencyError.h"
+#include "Nuclex/Support/ScopeGuard.h" // for ON_SCOPE_EXIT {}
 
+#include <algorithm> // for std::find
 #include <stdexcept> // for std::runtime_error
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
+  /// <summary>Alias for the <code>std::type_index</code> binding multi map</summary>
   typedef Nuclex::Support::Services2::StandardBindingSet::TypeIndexBindingMultiMap (
     TypeIndexBindingMultiMap
   );
-  typedef std::any FetchOrActivateServiceFunction(
-    const std::shared_ptr<Nuclex::Support::Services2::StandardInstanceSet> &services,
-    const TypeIndexBindingMultiMap::const_iterator &serviceIterator
-  );
-  
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>
+  ///   Locates the services binding for the requested service and provides an instance of
+  ///   the service by either fetching it from the service container or activating it
+  /// </summary>
+  /// <param name="services">Container in which the service instance will be stored</param>
+  /// <param name="serviceType">
+  ///   Type of service of which an instance needs to be provided
+  /// </param>
+  /// <param name="provider">Provider on which the activation method will be called</param>
+  /// <param name="fetchOrActiveService">
+  ///   Method that performs the actual check looking for an existing service in the service
+  ///   container and which created an instance of the service if needed
+  /// </param>
+  /// <returns>The requested service instance wrapped in an <code>std::any</code></returns>
+  template<typename TProvider>
   std::any locateBindingAndProvideServiceInstance(
     const std::shared_ptr<Nuclex::Support::Services2::StandardInstanceSet> &services,
     const std::type_info &serviceType,
-    FetchOrActivateServiceFunction *fetchOrActivateService
+    TProvider &provider,
+    std::any (TProvider::*fetchOrActivateService)(
+      const std::shared_ptr<Nuclex::Support::Services2::StandardInstanceSet> &,
+      const TypeIndexBindingMultiMap::const_iterator &
+    )
   ) {
     using Nuclex::Support::Services2::StandardBindingSet;
     using Nuclex::Support::Errors::UnresolvedDependencyError;
@@ -56,7 +77,7 @@ namespace {
       services->OwnBindings.find(serviceIndex)
     );
     if(serviceIterator != services->OwnBindings.end()) [[likely]] {
-      return fetchOrActivateService(services, serviceIterator);
+      return (provider.*fetchOrActivateService)(services, serviceIterator);
     }
 
     // It was not a registered singleton service. So next, we'll check if it is
@@ -99,9 +120,15 @@ namespace Nuclex::Support::Services2 {
   // ------------------------------------------------------------------------------------------- //
 
   StandardServiceProvider::ResolutionContext::ResolutionContext(
-    const std::shared_ptr<StandardInstanceSet> &services
+    const std::shared_ptr<StandardInstanceSet> &services,
+    const std::type_index &outerServiceType
   ) :
-    services(services) {}
+    services(services),
+    resolutionStack() {
+    // This ensures a cyclic dependency is also detected if a service depends on itself
+    // even if indirectly through another dependency
+    this->resolutionStack.emplace_back(outerServiceType);
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -129,9 +156,30 @@ namespace Nuclex::Support::Services2 {
   std::any StandardServiceProvider::ResolutionContext::GetService(
     const std::type_info &serviceType
   ) {
-    return locateBindingAndProvideServiceInstance(
-      this->services, serviceType, &fetchOrActivateSingletonService
-    );
+    const std::type_index serviceIndex(serviceType);
+
+    // Detect circular dependencies
+    {
+      std::vector<std::type_index>::const_iterator duplicate = std::find(
+        this->resolutionStack.begin(), this->resolutionStack.end(), serviceIndex
+      );
+      if(duplicate != this->resolutionStack.end()) [[unlikely]] {
+        throw Errors::CyclicDependencyError(u8"Service dependency cycle detected");
+      }
+    }
+
+    // Put the next service on the stack and try to resolve it. This guarantees that,
+    // should a dependency cycle involving this service type happen, the cyclic
+    // dependency error is detected.
+    this->resolutionStack.emplace_back(serviceIndex);
+    {
+      ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
+      return locateBindingAndProvideServiceInstance(
+        this->services,
+        serviceType,
+        *this, &ResolutionContext::fetchOrActivateSingletonService
+      );
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -174,14 +222,12 @@ namespace Nuclex::Support::Services2 {
     // needed to look up the first service and this is a sub-dependency in the dependency
     // graph. The service provider is still holding the mutex lock
 
-
     // If an existing instance was provided, just put it in place without worrying about it
     if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
       services->Instances[uniqueServiceIndex] = serviceIterator->second.ProvidedInstance;
     } else {
-      ResolutionContext context(services);
       new(services->Instances + uniqueServiceIndex) std::any(
-        std::move(serviceIterator->second.Factory(context))
+        std::move(serviceIterator->second.Factory(*this))
       );
     }
 
@@ -220,7 +266,9 @@ namespace Nuclex::Support::Services2 {
 
   std::any StandardServiceProvider::GetService(const std::type_info &serviceType) {
     return locateBindingAndProvideServiceInstance(
-      this->services, serviceType, &fetchOrActivateSingletonService
+      this->services,
+      serviceType,
+      *this, &StandardServiceProvider::fetchOrActivateSingletonService
     );
   }
 
@@ -285,7 +333,7 @@ namespace Nuclex::Support::Services2 {
           serviceIterator->second.ProvidedInstance
         );
       } else {
-        ResolutionContext context(services);
+        ResolutionContext context(services, serviceIterator->first);
         new(services->Instances + uniqueServiceIndex) std::any(
           std::move(serviceIterator->second.Factory(context))
         );

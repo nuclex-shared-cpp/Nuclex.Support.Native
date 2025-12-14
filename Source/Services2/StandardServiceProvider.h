@@ -48,10 +48,15 @@ namespace Nuclex::Support::Services2 {
       ///   Initializes a new service provider providing the specified set of services
       /// </summary>
       /// <param name="instanceSet">
-      ///   Instance set that i
+      ///   Instance set to check for existing service instances and in which created
+      ///   services will be placed.
+      /// </param>
+      /// <param name="outerServiceType">
+      ///   Initial service type started the dependency resolution chain
       /// </param>
       public: explicit ResolutionContext(
-        const std::shared_ptr<StandardInstanceSet> &instanceSet
+        const std::shared_ptr<StandardInstanceSet> &instanceSet,
+        const std::type_index &outerServiceType
       );
 
       /// <summary>Destroys the service provider and frees all resources</summary>
@@ -86,7 +91,16 @@ namespace Nuclex::Support::Services2 {
       /// <returns>A list of <code>std::any</code>s containing each service</returns>
       protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
-      private: static std::any fetchOrActivateSingletonService(
+      /// <summary>Fetches an already activated singleton service or activates it</summary>
+      /// <param name="services">
+      ///   Service instance container to check for an existing instance and in which to
+      ///   store any new instances created
+      /// </param>
+      /// <param name="serviceIterator">
+      ///   Iterator to the requested service in the singleton service bindings
+      /// </param>
+      /// <returns>An <code>std::any</code> that contains the service instance</returns>
+      private: std::any fetchOrActivateSingletonService(
         const std::shared_ptr<StandardInstanceSet> &services,
         const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
       );
@@ -140,7 +154,16 @@ namespace Nuclex::Support::Services2 {
     /// <returns>A list of <code>std::any</code>s containing each service</returns>
     protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
-    private: static std::any fetchOrActivateSingletonService(
+    /// <summary>Fetches an already activated singleton service or activates it</summary>
+    /// <param name="services">
+    ///   Service instance container to check for an existing instance and in which to
+    ///   store any new instances created
+    /// </param>
+    /// <param name="serviceIterator">
+    ///   Iterator to the requested service in the singleton service bindings
+    /// </param>
+    /// <returns>An <code>std::any</code> that contains the service instance</returns>
+    private: std::any fetchOrActivateSingletonService(
       const std::shared_ptr<StandardInstanceSet> &services,
       const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
     );
