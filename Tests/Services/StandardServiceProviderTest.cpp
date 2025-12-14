@@ -23,6 +23,8 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 
 #include "Nuclex/Support/Services/StandardServiceCollection.h"
+#include "Nuclex/Support/Errors/UnresolvedDependencyError.h"
+#include "Nuclex/Support/Errors/CyclicDependencyError.h"
 
 #include <gtest/gtest.h>
 
@@ -104,12 +106,30 @@ namespace {
     public: ~GreeterImplementation() override = default;
 
     /// <summary>Prints a test message using the dependency-injected printer</summary>
-    public: void DemandSurrender() {
+    public: void DemandSurrender() override {
       this->printer->Print(SillyMessage);
     }
 
     /// <summary>Name that can be fetched</summary>
     private: std::shared_ptr<PrintInterface> printer;
+
+  };
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>Mock implementation of that depends on its own service type</summary>
+  class CyclicDependencyErrorGreeterImplementation : public GreeterInterface {
+
+    /// <summary>Initializes the mock implementation (does nothing)</summary>
+    public: CyclicDependencyErrorGreeterImplementation(
+      const std::shared_ptr<GreeterInterface> &
+    ) {}
+
+    /// <summary>Destructor that releases the service reference again</summary>
+    public: ~CyclicDependencyErrorGreeterImplementation() override = default;
+
+    /// <summary>Prints a test message using the dependency-injected printer</summary>
+    public: void DemandSurrender() override {}
 
   };
 
@@ -181,6 +201,65 @@ namespace Nuclex::Support::Services::Private {
     // Read the message from the printer. The printer instance we get should be the same
     // as was provided to the greeter implementation, allowing us to inspect the message.
     EXPECT_EQ(printer->GetLastPrintedMessage(), SillyMessage);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceProviderTest, CyclicDependenciesCauseExceptions) {
+    StandardServiceCollection services;
+    services.AddSingleton<GreeterInterface, CyclicDependencyErrorGreeterImplementation>();
+
+    std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
+    ASSERT_TRUE(static_cast<bool>(sp));
+
+    EXPECT_THROW(
+      sp->GetService<GreeterInterface>(),
+      Errors::CyclicDependencyError
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceProviderTest, GetServiceThrowsExceptionForUnknownService) {
+    StandardServiceCollection services;
+    services.AddSingleton<GreeterInterface, GreeterImplementation>();
+
+    std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
+    ASSERT_TRUE(static_cast<bool>(sp));
+
+    EXPECT_THROW(
+      sp->GetService<PrintInterface>(),
+      Errors::UnresolvedDependencyError
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceProviderTest, TryGetServiceReturnsNothingForUnknownService) {
+    StandardServiceCollection services;
+    services.AddSingleton<GreeterInterface, GreeterImplementation>();
+
+    std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
+    ASSERT_TRUE(static_cast<bool>(sp));
+
+    EXPECT_NO_THROW(
+      sp->TryGetService<PrintInterface>()
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceProviderTest, TryGetServiceStillThrowsOnCyclicDependencies) {
+    StandardServiceCollection services;
+    services.AddSingleton<GreeterInterface, CyclicDependencyErrorGreeterImplementation>();
+
+    std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
+    ASSERT_TRUE(static_cast<bool>(sp));
+
+    EXPECT_THROW(
+      sp->TryGetService<GreeterInterface>(),
+      Errors::CyclicDependencyError
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //

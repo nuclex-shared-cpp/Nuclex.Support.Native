@@ -45,6 +45,12 @@ namespace {
   ///   Locates the services binding for the requested service and provides an instance of
   ///   the service by either fetching it from the service container or activating it
   /// </summary>
+  /// <typeparam name="ThrowIfMissing">
+  ///   Whether to throw an exception if the service has not been bound
+  /// </typeparam>
+  /// <typeparam name="TProvider">
+  ///   Service provider on which the service fetch/activaion method is being called
+  /// </typeparam>
   /// <param name="services">Container in which the service instance will be stored</param>
   /// <param name="serviceType">
   ///   Type of service of which an instance needs to be provided
@@ -55,7 +61,7 @@ namespace {
   ///   container and which created an instance of the service if needed
   /// </param>
   /// <returns>The requested service instance wrapped in an <code>std::any</code></returns>
-  template<typename TProvider>
+  template<bool ThrowOnMissing, typename TProvider>
   std::any locateBindingAndProvideServiceInstance(
     const std::shared_ptr<Nuclex::Support::Services::StandardInstanceSet> &services,
     const std::type_info &serviceType,
@@ -90,23 +96,27 @@ namespace {
     // provider. However, as a small courtesy to the user, we'll look in the scoped services
     // to provide a helpful error message if it appears that the user tried to request
     // a scoped services from the root level service provider.
-    serviceIterator = services->Bindings->ScopedServices.find(serviceIndex);
-    if(serviceIterator == services->Bindings->TransientServices.end()) [[likely]] {
-      std::u8string message(u8"Requested service '", 19);
-      std::string::size_type length = std::char_traits<char>::length(serviceType.name());
-      message.append(serviceType.name(), serviceType.name() + length);
-      message.append(u8"' (name may be mangled) has not been registered", 47);
-      throw UnresolvedDependencyError(message);
+    if constexpr(ThrowOnMissing) {
+      serviceIterator = services->Bindings->ScopedServices.find(serviceIndex);
+      if(serviceIterator == services->Bindings->ScopedServices.end()) [[likely]] {
+        std::u8string message(u8"Requested service '", 19);
+        std::string::size_type length = std::char_traits<char>::length(serviceType.name());
+        message.append(serviceType.name(), serviceType.name() + length);
+        message.append(u8"' (name may be mangled) has not been registered", 47);
+        throw UnresolvedDependencyError(message);
+      } else {
+        std::u8string message(u8"Requested service '", 19);
+        std::string::size_type length = std::char_traits<char>::length(serviceType.name());
+        message.append(serviceType.name(), serviceType.name() + length);
+        message.append(
+          u8"' (name may be mangled) is a scoped service and cannot be requested from "
+          u8"the root-level service provider",
+          104
+        );
+        throw UnresolvedDependencyError(message);
+      }
     } else {
-      std::u8string message(u8"Requested service '", 19);
-      std::string::size_type length = std::char_traits<char>::length(serviceType.name());
-      message.append(serviceType.name(), serviceType.name() + length);
-      message.append(
-        u8"' (name may be mangled) is a scoped service and cannot be requested from "
-        u8"the root-level service provider",
-        104
-      );
-      throw UnresolvedDependencyError(message);
+      return std::any();
     }
   }
 
@@ -145,9 +155,26 @@ namespace Nuclex::Support::Services {
   std::any StandardServiceProvider::ResolutionContext::TryGetService(
     const std::type_info &serviceType
   ) {
-    (void)serviceType;
-    // TODO: Implement StandardServiceProvider::ResolutionContext::TryGetService() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    const std::type_index serviceIndex(serviceType);
+
+    {
+      std::vector<std::type_index>::const_iterator duplicate = std::find(
+        this->resolutionStack.begin(), this->resolutionStack.end(), serviceIndex
+      );
+      if(duplicate != this->resolutionStack.end()) [[unlikely]] {
+        throw Errors::CyclicDependencyError(u8"Service dependency cycle detected");
+      }
+    }
+
+    this->resolutionStack.emplace_back(serviceIndex);
+    {
+      ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
+      return locateBindingAndProvideServiceInstance<false>(
+        this->services,
+        serviceType,
+        *this, &ResolutionContext::fetchOrActivateSingletonService
+      );
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -173,7 +200,7 @@ namespace Nuclex::Support::Services {
     this->resolutionStack.emplace_back(serviceIndex);
     {
       ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
-      return locateBindingAndProvideServiceInstance(
+      return locateBindingAndProvideServiceInstance<true>(
         this->services,
         serviceType,
         *this, &ResolutionContext::fetchOrActivateSingletonService
@@ -218,8 +245,9 @@ namespace Nuclex::Support::Services {
     }
 
     // This is the service resolution context, meaning that the service provider already
-    // needed to look up the first service and this is a sub-dependency in the dependency
-    // graph. The service provider is still holding the mutex lock
+    // needed to look up the first service and this is a sub-dependency. When this code
+    // runs, the root service provider is currently holding the mutex lock. So we do not
+    // need double-checked locking here and are allowed to modify the instances array.
 
     // If an existing instance was provided, just put it in place without worrying about it
     if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
@@ -256,15 +284,17 @@ namespace Nuclex::Support::Services {
   // ------------------------------------------------------------------------------------------- //
 
   std::any StandardServiceProvider::TryGetService(const std::type_info &serviceType) {
-    (void)serviceType;
-    // TODO: Implement StandardServiceProvider::TryGetService() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    return locateBindingAndProvideServiceInstance<false>(
+      this->services,
+      serviceType,
+      *this, &StandardServiceProvider::fetchOrActivateSingletonService
+    );
   }
 
   // ------------------------------------------------------------------------------------------- //
 
   std::any StandardServiceProvider::GetService(const std::type_info &serviceType) {
-    return locateBindingAndProvideServiceInstance(
+    return locateBindingAndProvideServiceInstance<true>(
       this->services,
       serviceType,
       *this, &StandardServiceProvider::fetchOrActivateSingletonService
