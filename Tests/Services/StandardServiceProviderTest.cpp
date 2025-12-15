@@ -264,4 +264,17 @@ namespace Nuclex::Support::Services::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StandardServiceProviderTest, ServiceScopesCanBeCreated) {
+    StandardServiceCollection services;
+    //services.AddSingleton<GreeterInterface, CyclicDependencyErrorGreeterImplementation>();
+
+    std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
+    ASSERT_TRUE(static_cast<bool>(sp));
+
+    std::shared_ptr<ServiceScope> sc = sp->CreateScope();
+    ASSERT_TRUE(static_cast<bool>(sc));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // namespace Nuclex::Support::Services::Private

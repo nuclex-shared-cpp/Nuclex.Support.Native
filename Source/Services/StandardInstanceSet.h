@@ -26,6 +26,8 @@ limitations under the License.
 #include <cstddef> // for std::size_t
 #include <atomic> // for std::atomic<>
 #include <mutex> // for std::mutex
+#include <typeindex> // for std::type_index
+#include <optional> // for std::optional
 
 namespace Nuclex::Support::Services {
 
@@ -74,13 +76,38 @@ namespace Nuclex::Support::Services {
       const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &service
     );
 
+
+    // TODO: Remove 'serviceProvider' from the CreateOrFetchServiceInstance method.
+    //   Since we're now providing an internal service provider that is necessary to
+    //   catch cyclic dependencies, we can as well avoid even exposing the outer
+    //   service provider to the factory methods. Move the ResolutionContext from
+    //   the StandardServiceProvider here.
+
+    // TODO: Add another CreateOrFetchServiceInstance overload with chaining
+    //   It should get another parameter which is another instance set it will fall
+    //   back to if the original instance set cannot provide the service
+
+    // TODO: Return 'this->emptyAny' instead of throwing an exception on unknown services
+    //   This will allow the caller (either the root service provider or a service scope)
+    //   to decide whether to return the empty std::any (for 'TryGetService()') or whether
+    //   to throw an exception which can be refined by checking for wrong lifetime issues.
+
     /// <summary>Service bindings for which instances are being stored</summary>
+    /// <remarks>
+    ///   This must be stored for the <code>OwnBindings</code> attribute, which points
+    ///   to either the singleton, scoped or transient bindings in this instane, remains
+    ///   valid and doesn't become a dangling reference. It is also used for service
+    ///   activation, of course.
+    /// </remarks>
     public: std::shared_ptr<const StandardBindingSet> Bindings;
     /// <summary>
     ///   Bindings for which instances are managed (references either singleton bindings
-    ///   or scoped bindings inside the referenced standard binding set)
+    ///   or scoped bindings inside the referenced standard binding set).
     /// </summary>
     public: const StandardBindingSet::TypeIndexBindingMultiMap &OwnBindings;
+    /// <summary>An std::any instance that contains nothing</summary>
+    private: const std::any emptyAny;
+
     /// <summary>Mutex that must be held when updating an instance</summary>
     public: std::mutex ChangeMutex;
     /// <summary>Flag for each service that indicates whether it is present</summary>

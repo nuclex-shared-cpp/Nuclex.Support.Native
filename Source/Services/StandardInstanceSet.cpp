@@ -126,6 +126,7 @@ namespace Nuclex::Support::Services {
   ) :
     Bindings(bindings),
     OwnBindings(ownBindings),
+    emptyAny(),
     ChangeMutex(),
     PresenceFlags(nullptr),
     Instances(nullptr) {
@@ -158,7 +159,7 @@ namespace Nuclex::Support::Services {
       }
       // CHECK: If would be cool if we could just memset / std::fill_n() to zero
       //   If there was any guarantee that std::atomic<bool> is just an actual bool,
-      //   the constructor call could theoretically be ommitted...
+      //   the constructor call could theoretically be omitted...
     }
 
     // Behind the presence flags, the array of instances stored as std::any values follow.
