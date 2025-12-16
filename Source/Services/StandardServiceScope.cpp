@@ -166,6 +166,7 @@ namespace Nuclex::Support::Services {
       &StandardServiceScope::fetchOrActivateSingletonService
     );
 #endif
+    throw - 1;
   }
 
   // ------------------------------------------------------------------------------------------- //

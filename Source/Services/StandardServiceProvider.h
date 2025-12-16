@@ -105,6 +105,10 @@ namespace Nuclex::Support::Services {
       /// <returns>A list of <code>std::any</code>s containing each service</returns>
       protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
+      public: void acquireChangeMutex();
+
+      private: void checkForDependencyCycle(const std::type_index &serviceTypeIndex);
+
       /// <summary>Container for the instances of all singleton services</summary>
       private: StandardInstanceSet &services;
       /// <summary>Whether the context has acquired the service state update mutex</summary>
@@ -155,16 +159,6 @@ namespace Nuclex::Support::Services {
     /// <param name="serviceType">Type of service that will be provided</param>
     /// <returns>A list of <code>std::any</code>s containing each service</returns>
     protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
-
-    /// <summary>
-    ///   Throws an exception that indicates that the specified service could not be resovled
-    /// </summary>
-    /// <param nma=e"serviceTypeIndex">
-    ///   The <code>std::type_index</code> of the service that could not be resolved
-    /// </param>
-    private: [[noreturn]] void throwUnresolvedDependencyException(
-      const std::type_index &serviceTypeIndex
-    );
 
     /// <summary>An <code>std::any</code> instance that stays empty</summary>
     private: const std::any emptyAny;

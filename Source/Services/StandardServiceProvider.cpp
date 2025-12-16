@@ -32,6 +32,7 @@ limitations under the License.
 #include <algorithm> // for std::find
 #include <iterator> // for std::prev
 #include <stdexcept> // for std::runtime_error
+#include <cassert> // for assert()
 
 namespace {
 
@@ -66,6 +67,51 @@ namespace {
     }
 
     return std::prev(range.second);
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>
+  ///   Throws an exception that indicates that the specified service could not be resovled
+  /// </summary>
+  /// <param nma=e"serviceTypeIndex">
+  ///   The <code>std::type_index</code> of the service that could not be resolved
+  /// </param>
+  [[noreturn]] void throwUnresolvedDependencyException(
+    const Nuclex::Support::Services::StandardInstanceSet &services,
+    const std::type_index &serviceTypeIndex
+  ) {
+    using Nuclex::Support::Services::StandardBindingSet;
+    using Nuclex::Support::Errors::UnresolvedDependencyError;
+
+    // We could just output a plain "service not registered" message, but a common mistake
+    // users may make is to try and depend on a scoped service from a singleton service,
+    // so if the service type is indeed registered as a scoped service, print an alternative
+    // exception message that may save the user some time and headaches :-)
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      serviceIterator = services.Bindings->ScopedServices.find(serviceTypeIndex)
+    );
+    if(serviceIterator == services.Bindings->ScopedServices.end()) [[likely]] {
+
+      std::u8string message(u8"Requested service '", 19);
+      std::string::size_type length = std::char_traits<char>::length(serviceTypeIndex.name());
+      message.append(serviceTypeIndex.name(), serviceTypeIndex.name() + length);
+      message.append(u8"' (name may be mangled) has not been registered", 47);
+      throw UnresolvedDependencyError(message);
+
+    } else { // ^^ wholly unknown service ^^ // vv singleton depends on scoped vv
+
+      std::u8string message(u8"Requested service '", 19);
+      std::string::size_type length = std::char_traits<char>::length(serviceTypeIndex.name());
+      message.append(serviceTypeIndex.name(), serviceTypeIndex.name() + length);
+      message.append(
+        u8"' (name may be mangled) is a scoped service and cannot be requested from "
+        u8"the root-level service provider",
+        104
+      );
+      throw UnresolvedDependencyError(message);
+
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -107,7 +153,7 @@ namespace Nuclex::Support::Services {
     #endif
 
     throw std::logic_error(
-      reinterpret_cast<const char *>(u8"Cannot create scopes from a service factory")
+      reinterpret_cast<const char *>(u8"Cannot create scopes in a service resolution chain")
     );
   }
 
@@ -116,8 +162,33 @@ namespace Nuclex::Support::Services {
   std::any StandardServiceProvider::ResolutionContext::TryGetService(
     const std::type_info &serviceType
   ) {
-    // TODO: Implement StandardServiceProvider::ResolutionContext::TryGetService() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    std::type_index serviceTypeIndex(serviceType);
+
+    // Look for the last service implemented registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      findLast(this->services.Bindings->SingletonServices, serviceTypeIndex)
+    );
+    if(serviceIterator == this->services.Bindings->SingletonServices.end()) [[unlikely]] {
+      serviceIterator = findLast(this->services.Bindings->TransientServices, serviceTypeIndex);
+      if(serviceIterator == this->services.Bindings->TransientServices.end()) [[unlikely]] {
+        return std::any();
+      } else {
+        return ActivateTransientService(serviceIterator);
+      }
+    }
+
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+    // Check, without locking, if the instance has already been created. If so,
+    // there's no need to enter the mutex since we're not modifying our state.
+    bool isAlreadyCreated = this->services.PresenceFlags[uniqueServiceIndex].load(
+      std::memory_order::consume
+    );
+    if(isAlreadyCreated) [[likely]] {
+      return this->services.Instances[uniqueServiceIndex];
+    } else {
+      return ActivateSingletonService(serviceIterator);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -125,27 +196,33 @@ namespace Nuclex::Support::Services {
   std::any StandardServiceProvider::ResolutionContext::GetService(
     const std::type_info &serviceType
   ) {
-    std::type_index serviceIndex(serviceType);
+    std::type_index serviceTypeIndex(serviceType);
 
-    // Detect circular dependencies
-    {
-      std::vector<std::type_index>::const_iterator duplicate = std::find(
-        this->resolutionStack.begin(), this->resolutionStack.end(), serviceIndex
-      );
-      if(duplicate != this->resolutionStack.end()) [[unlikely]] {
-        throw Errors::CyclicDependencyError(u8"Service dependency cycle detected");
+    // Look for the last service implemented registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      findLast(this->services.Bindings->SingletonServices, serviceTypeIndex)
+    );
+    if(serviceIterator == this->services.Bindings->SingletonServices.end()) [[unlikely]] {
+      serviceIterator = findLast(this->services.Bindings->TransientServices, serviceTypeIndex);
+      if(serviceIterator == this->services.Bindings->TransientServices.end()) [[unlikely]] {
+        // Second and further level dependency failures are still errors for TryGetServicE()
+        throwUnresolvedDependencyException(this->services, serviceTypeIndex);
+      } else {
+        return ActivateTransientService(serviceIterator);
       }
     }
 
-    // Put the next service on the stack and try to resolve it. This guarantees that,
-    // should a dependency cycle involving this service type happen, the cyclic
-    // dependency error is detected.
-    this->resolutionStack.emplace_back(serviceIndex);
-    {
-      ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
-      //ActivateSingletonService(serviceIndex);
-      // TODO: Implement StandardServiceProvider::ResolutionContext::TryGetService() method
-      throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+    // Check, without locking, if the instance has already been created. If so,
+    // there's no need to enter the mutex since we're not modifying our state.
+    bool isAlreadyCreated = this->services.PresenceFlags[uniqueServiceIndex].load(
+      std::memory_order::consume
+    );
+    if(isAlreadyCreated) [[likely]] {
+      return this->services.Instances[uniqueServiceIndex];
+    } else {
+      return ActivateSingletonService(serviceIterator);
     }
   }
 
@@ -174,36 +251,29 @@ namespace Nuclex::Support::Services {
   const std::any &StandardServiceProvider::ResolutionContext::ActivateSingletonService(
     const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
   ) {
+    assert(this->mutexAcquired.load(std::memory_order::relaxed));
+
+    checkForDependencyCycle(serviceIterator->first);
+    this->resolutionStack.emplace_back(serviceIterator->first);
+    ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
+
+    // When this method is called, a requested service instance was not 
     std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-
-    // This is the service resolution context, meaning that the service provider already
-    // needed to look up the first service and this is a sub-dependency. When this code
-    // runs, the root service provider is currently holding the mutex lock. So we do not
-    // need double-checked locking here and are allowed to modify the instances array.
-    bool isAlreadyCreated = this->services.PresenceFlags[uniqueServiceIndex].load(
-      std::memory_order::consume
-    );
-    if(this->mutexAcquired.load(std::memory_order::consume)) {
-      if(!isAlreadyCreated) [[likely]] {
-        if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
-          new(this->services.Instances + uniqueServiceIndex) std::any(
-            serviceIterator->second.CloneFactory(serviceIterator->second.ProvidedInstance)
-          );
-        } else {
-          new(this->services.Instances + uniqueServiceIndex) std::any(
-            std::move(serviceIterator->second.Factory(*this))
-          );
-        }
-
-        this->services.PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
+    {
+      if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
+        new(this->services.Instances + uniqueServiceIndex) std::any(
+          serviceIterator->second.ProvidedInstance
+        );
+      } else {
+        new(this->services.Instances + uniqueServiceIndex) std::any(
+          std::move(serviceIterator->second.Factory(*this))
+        );
       }
 
-      return this->services.Instances[uniqueServiceIndex];
-    } else { // ^^ mutex already held ^^ // vv mutex needs to be acquired vv
-      this->services.ChangeMutex.lock();
-      this->mutexAcquired.store(true, std::memory_order::release);
-      return ActivateSingletonService(serviceIterator); // Re-enter -> double-checked locking
+      this->services.PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
     }
+
+    return this->services.Instances[uniqueServiceIndex];
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -211,10 +281,36 @@ namespace Nuclex::Support::Services {
   std::any StandardServiceProvider::ResolutionContext::ActivateTransientService(
     const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
   ) {
+    checkForDependencyCycle(serviceIterator->first);
+    this->resolutionStack.emplace_back(serviceIterator->first);
+    ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
+
     if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
       return serviceIterator->second.CloneFactory(serviceIterator->second.ProvidedInstance);
     } else {
       return serviceIterator->second.Factory(*this);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void StandardServiceProvider::ResolutionContext::acquireChangeMutex() {
+    if(!this->mutexAcquired.load(std::memory_order::consume)) [[likely]] {
+      this->services.ChangeMutex.lock();
+      this->mutexAcquired.store(true, std::memory_order::release);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void StandardServiceProvider::ResolutionContext::checkForDependencyCycle(
+    const std::type_index &serviceTypeIndex
+  ) {
+    std::vector<std::type_index>::const_iterator duplicate = std::find(
+      this->resolutionStack.begin(), this->resolutionStack.end(), serviceTypeIndex
+    );
+    if(duplicate != this->resolutionStack.end()) [[unlikely]] {
+      throw Errors::CyclicDependencyError(u8"Service dependency cycle detected");
     }
   }
 
@@ -246,6 +342,13 @@ namespace Nuclex::Support::Services {
   std::any StandardServiceProvider::TryGetService(const std::type_info &serviceType) {
     std::type_index serviceTypeIndex(serviceType);
 
+    // The following code block is almost identical to ResolutionContext::TryGetService().
+    // This serves two purposes:
+    //   1) we want the early check to be very quick, directly from the calling application
+    //      via a single vtable-call to the full check.
+    //   2) we need to create the resolution context here. It is what prevents cyclic
+    //      dependencies from getting into a stack overlow.
+
     // Look for the last service implemented registered for the requested service type
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
       findLast(this->services->Bindings->SingletonServices, serviceTypeIndex)
@@ -253,7 +356,7 @@ namespace Nuclex::Support::Services {
     if(serviceIterator == this->services->Bindings->SingletonServices.end()) [[unlikely]] {
       serviceIterator = findLast(this->services->Bindings->TransientServices, serviceTypeIndex);
       if(serviceIterator == this->services->Bindings->TransientServices.end()) [[unlikely]] {
-        return this->emptyAny;
+        return this->emptyAny; // Accept that the service has not been bound
       } else {
         ResolutionContext deepServiceProvider(*this->services);
         return deepServiceProvider.ActivateTransientService(serviceIterator);
@@ -269,6 +372,7 @@ namespace Nuclex::Support::Services {
     );
     if(!isAlreadyCreated) [[unlikely]] {
       ResolutionContext deepServiceProvider(*this->services);
+      deepServiceProvider.acquireChangeMutex();
       deepServiceProvider.ActivateSingletonService(serviceIterator);
     }
 
@@ -280,6 +384,14 @@ namespace Nuclex::Support::Services {
   std::any StandardServiceProvider::GetService(const std::type_info &serviceType) {
     std::type_index serviceTypeIndex(serviceType);
 
+    // The following code block is almost identical to ResolutionContext::GetService().
+    // This serves two purposes:
+    //   1) we want the early check to be very quick, directly from the calling application
+    //      via a single vtable-call to the full check.
+    //   2) we need to create the resolution context here. It is what prevents cyclic
+    //      dependencies from getting into a stack overlow.
+    //
+
     // Look for the last service implemented registered for the requested service type
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
       findLast(this->services->Bindings->SingletonServices, serviceTypeIndex)
@@ -287,7 +399,7 @@ namespace Nuclex::Support::Services {
     if(serviceIterator == this->services->Bindings->SingletonServices.end()) [[unlikely]] {
       serviceIterator = findLast(this->services->Bindings->TransientServices, serviceTypeIndex);
       if(serviceIterator == this->services->Bindings->TransientServices.end()) [[unlikely]] {
-        throwUnresolvedDependencyException(serviceTypeIndex);
+        throwUnresolvedDependencyException(*this->services, serviceTypeIndex);
       } else {
         ResolutionContext deepServiceProvider(*this->services);
         return deepServiceProvider.ActivateTransientService(serviceIterator);
@@ -301,12 +413,13 @@ namespace Nuclex::Support::Services {
     bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
       std::memory_order::consume
     );
-    if(!isAlreadyCreated) [[unlikely]] {
+    if(isAlreadyCreated) [[likely]] {
+      return this->services->Instances[uniqueServiceIndex];
+    } else {
       ResolutionContext deepServiceProvider(*this->services);
-      deepServiceProvider.ActivateSingletonService(serviceIterator);
+      deepServiceProvider.acquireChangeMutex();
+      return deepServiceProvider.ActivateSingletonService(serviceIterator);
     }
-
-    return this->services->Instances[uniqueServiceIndex];
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -325,41 +438,6 @@ namespace Nuclex::Support::Services {
     (void)serviceType;
     // TODO: Implement StandardServiceProvider::GetServices() method
     throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  void StandardServiceProvider::throwUnresolvedDependencyException(
-    const std::type_index &serviceTypeIndex
-  ) {
-    // We could just output a plain "service not registered" message, but a common mistake
-    // users may make is to try and depend on a scoped service from a singleton service,
-    // so if the service type is indeed registered as a scoped service, print an alternative
-    // exception message that may save the user some time and headaches :-)
-    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
-      serviceIterator = services->Bindings->ScopedServices.find(serviceTypeIndex)
-    );
-    if(serviceIterator == services->Bindings->ScopedServices.end()) [[likely]] {
-
-      std::u8string message(u8"Requested service '", 19);
-      std::string::size_type length = std::char_traits<char>::length(serviceTypeIndex.name());
-      message.append(serviceTypeIndex.name(), serviceTypeIndex.name() + length);
-      message.append(u8"' (name may be mangled) has not been registered", 47);
-      throw Errors::UnresolvedDependencyError(message);
-
-    } else { // ^^ wholly unknown service ^^ // vv singleton depends on scoped vv
-
-      std::u8string message(u8"Requested service '", 19);
-      std::string::size_type length = std::char_traits<char>::length(serviceTypeIndex.name());
-      message.append(serviceTypeIndex.name(), serviceTypeIndex.name() + length);
-      message.append(
-        u8"' (name may be mangled) is a scoped service and cannot be requested from "
-        u8"the root-level service provider",
-        104
-      );
-      throw Errors::UnresolvedDependencyError(message);
-
-    }
   }
 
   // ------------------------------------------------------------------------------------------- //
