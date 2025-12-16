@@ -109,136 +109,6 @@ namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  StandardInstanceSet::ResolutionContext::ResolutionContext(
-    StandardInstanceSet &services,
-    const std::type_index &outerServiceType
-  ) :
-    services(services),
-    resolutionStack() {
-    // This ensures a cyclic dependency is also detected if a service depends on itself
-    // even if indirectly through another dependency
-    this->resolutionStack.emplace_back(outerServiceType);
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  StandardInstanceSet::ResolutionContext::~ResolutionContext() = default;
-
-  // ------------------------------------------------------------------------------------------- //
-
-  std::shared_ptr<ServiceScope> StandardInstanceSet::ResolutionContext::CreateScope() {
-    // This would make no sense. Any service scope created inside of a service factory
-    // would have to be gone by the time service resolution finishes (unless you involve
-    // global variables or state passed through lambdas).
-    #if 0
-    return std::make_shared<StandardServiceScope>(
-      StandardInstanceSet::Create(
-        this->services->Bindings, this->services->Bindings->ScopedServices
-      ),
-      this->services
-    );
-    #endif
-
-    throw std::logic_error(
-      reinterpret_cast<const char *>(u8"Cannot create scopes from a service factory")
-    );
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  std::any StandardInstanceSet::ResolutionContext::TryGetService(
-    const std::type_info &serviceType
-  ) {
-    // TODO: Implement StandardInstanceSet::ResolutionContext::TryGetService() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  std::any StandardInstanceSet::ResolutionContext::GetService(
-    const std::type_info &serviceType
-  ) {
-    const std::type_index serviceIndex(serviceType);
-
-    // Detect circular dependencies
-    {
-      std::vector<std::type_index>::const_iterator duplicate = std::find(
-        this->resolutionStack.begin(), this->resolutionStack.end(), serviceIndex
-      );
-      if(duplicate != this->resolutionStack.end()) [[unlikely]] {
-        throw Errors::CyclicDependencyError(u8"Service dependency cycle detected");
-      }
-    }
-
-    // Put the next service on the stack and try to resolve it. This guarantees that,
-    // should a dependency cycle involving this service type happen, the cyclic
-    // dependency error is detected.
-    this->resolutionStack.emplace_back(serviceIndex);
-    {
-      ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
-
-      // TODO: Implement StandardInstanceSet::ResolutionContext::TryGetService() method
-      throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  std::function<std::any()> StandardInstanceSet::ResolutionContext::GetServiceFactory(
-    const std::type_info &serviceType
-  ) const {
-    (void)serviceType;
-    // TODO: Implement StandardInstanceSet::ResolutionContext::GetServiceFactory() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  std::vector<std::any> StandardInstanceSet::ResolutionContext::GetServices(
-    const std::type_info &serviceType
-  ) {
-    (void)serviceType;
-    // TODO: Implement StandardInstanceSet::ResolutionContext::GetServices() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  std::any StandardInstanceSet::ResolutionContext::FetchOrActivateSingletonService(
-    const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
-  ) {
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-
-    // Check, without locking, if the instance has already been created. If so,
-    // there's not need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = this->services.PresenceFlags[uniqueServiceIndex].load(
-      std::memory_order::consume
-    );
-    if(isAlreadyCreated) [[likely]] {
-      return this->services.Instances[uniqueServiceIndex];
-    }
-
-    // This is the service resolution context, meaning that the service provider already
-    // needed to look up the first service and this is a sub-dependency. When this code
-    // runs, the root service provider is currently holding the mutex lock. So we do not
-    // need double-checked locking here and are allowed to modify the instances array.
-
-    // If an existing instance was provided, just put it in place without worrying about it
-    if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
-      this->services.Instances[uniqueServiceIndex] = serviceIterator->second.ProvidedInstance;
-    } else {
-      new(this->services.Instances + uniqueServiceIndex) std::any(
-        std::move(serviceIterator->second.Factory(*this))
-      );
-    }
-
-    this->services.PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
-
-    return this->services.Instances[uniqueServiceIndex];
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   std::shared_ptr<StandardInstanceSet> StandardInstanceSet::Create(
     const std::shared_ptr<const StandardBindingSet> &bindings,
     const StandardBindingSet::TypeIndexBindingMultiMap &ownBindings
@@ -260,7 +130,6 @@ namespace Nuclex::Support::Services {
   ) :
     Bindings(bindings),
     OwnBindings(ownBindings),
-    emptyAny(),
     ChangeMutex(),
     PresenceFlags(nullptr),
     Instances(nullptr) {
@@ -327,7 +196,7 @@ namespace Nuclex::Support::Services {
   }
 
   // ------------------------------------------------------------------------------------------- //
-
+#if 0
   const std::any &StandardInstanceSet::TryFetchOrCreateSingletonServiceInstance(
     const std::type_index &serviceTypeIndex
   ) {
@@ -348,32 +217,22 @@ namespace Nuclex::Support::Services {
     );
     if(!isAlreadyCreated) [[unlikely]] {
       std::unique_lock<std::mutex> changeMutexLockScope(this->ChangeMutex);
-
-      // Before entering the mutex, no instance of the service had been created. However,
-      // another thread could have been faster, so check again from inside the mutex where
-      // only one thread can enter at a time. This ensures the service is only constructed
-      // once and no other threads are in danger of handling the 'std::any' simultaneously.
-      isAlreadyCreated = this->PresenceFlags[uniqueServiceIndex].load(
-        std::memory_order::consume
-      );
-      if(!isAlreadyCreated) [[likely]] {
-        if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
-          new(this->Instances + uniqueServiceIndex) std::any(
-            serviceIterator->second.CloneFactory(serviceIterator->second.ProvidedInstance)
-          );
-        } else {
-          ResolutionContext nestedServiceProvider(*this, serviceTypeIndex);
-          new(this->Instances + uniqueServiceIndex) std::any(
-            std::move(serviceIterator->second.Factory(nestedServiceProvider))
-          );
-        }
-
-        this->PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
-      } // second check inside mutex lock
+      ResolutionContext deepServiceProvider(*this);
+      return deepServiceProvider.ActivateSingletonService(serviceIterator);
     } // first opportunistic check without mutex lock
 
     return this->Instances[uniqueServiceIndex];
   }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  const std::any &StandardInstanceSet::TryFetchOrCreateScopedServiceInstance(
+    const std::type_index &serviceTypeIndex,
+    StandardInstanceSet &fallback
+  ) {
+    throw -1;
+  }
+#endif
 
   // ------------------------------------------------------------------------------------------- //
 

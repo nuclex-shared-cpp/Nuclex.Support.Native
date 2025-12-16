@@ -26,6 +26,7 @@ limitations under the License.
 #include <any> // for std::any, std::any_cast<>
 #include <vector> // for std::vector<>
 #include <functional> // for std::function<>
+#include <typeinfo> // for std::type_info
 
 namespace Nuclex::Support::Services {
   class ServiceProvider;

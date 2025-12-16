@@ -25,10 +25,6 @@ limitations under the License.
 
 #include "./StandardInstanceSet.h"
 
-#include <mutex> // for std::mutex
-#include <typeindex> // for std::type_index
-#include <vector> // for std::vector<>
-
 namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
@@ -52,15 +48,33 @@ namespace Nuclex::Support::Services {
       ///   services will be placed.
       /// </param>
       /// <param name="outerServiceType">
-      ///   Initial service type started the dependency resolution chain
+      ///   Initial service type that started the dependency resolution chain. Provided
+      ///   so it's on record, too, for the dependency cycle detection code.
       /// </param>
       public: explicit ResolutionContext(
-        const std::shared_ptr<StandardInstanceSet> &instanceSet,
-        const std::type_index &outerServiceType
+        StandardInstanceSet &instanceSet
       );
 
       /// <summary>Destroys the service provider and frees all resources</summary>
       public: ~ResolutionContext() override;
+
+      /// <summary>Fetches an already activated singleton service or activates it</summary>
+      /// <param name="serviceIterator">
+      ///   Iterator to the requested service in the singleton service bindings
+      /// </param>
+      /// <returns>An <code>std::any</code> that contains the service instance</returns>
+      public: const std::any &ActivateSingletonService(
+        const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
+      );
+
+      /// <summary>Creates a new instance of a transient service</summary>
+      /// <param name="serviceIterator">
+      ///   Iterator to the requested service in the singleton service bindings
+      /// </param>
+      /// <returns>An <code>std::any</code> that contains the service instance</returns>
+      public: std::any ActivateTransientService(
+        const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
+      );
 
       /// <summary>Creates a new service scope</summary>
       /// <returns>The new service scope</returns>
@@ -91,17 +105,10 @@ namespace Nuclex::Support::Services {
       /// <returns>A list of <code>std::any</code>s containing each service</returns>
       protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
-      /// <summary>Fetches an already activated singleton service or activates it</summary>
-      /// <param name="serviceIterator">
-      ///   Iterator to the requested service in the singleton service bindings
-      /// </param>
-      /// <returns>An <code>std::any</code> that contains the service instance</returns>
-      private: std::any fetchOrActivateSingletonService(
-        const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
-      );
-
       /// <summary>Container for the instances of all singleton services</summary>
-      private: std::shared_ptr<StandardInstanceSet> services;
+      private: StandardInstanceSet &services;
+      /// <summary>Whether the context has acquired the service state update mutex</summary>
+      private: std::atomic<bool> mutexAcquired;
       /// <summary>Stack of services currently being resolved</summary>
       private: std::vector<std::type_index> resolutionStack;
 
@@ -113,7 +120,7 @@ namespace Nuclex::Support::Services {
     ///   Initializes a new service provider providing the specified set of services
     /// </summary>
     /// <param name="services">
-    ///   Bindings and instances of all service that will be made available
+    ///   Bindings and instances of all services that will be made available
     /// </param>
     public: StandardServiceProvider(std::shared_ptr<StandardInstanceSet> &&services);
 
@@ -149,15 +156,18 @@ namespace Nuclex::Support::Services {
     /// <returns>A list of <code>std::any</code>s containing each service</returns>
     protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
-    /// <summary>Fetches an already activated singleton service or activates it</summary>
-    /// <param name="serviceIterator">
-    ///   Iterator to the requested service in the singleton service bindings
+    /// <summary>
+    ///   Throws an exception that indicates that the specified service could not be resovled
+    /// </summary>
+    /// <param nma=e"serviceTypeIndex">
+    ///   The <code>std::type_index</code> of the service that could not be resolved
     /// </param>
-    /// <returns>An <code>std::any</code> that contains the service instance</returns>
-    private: std::any fetchOrActivateSingletonService(
-      const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
+    private: [[noreturn]] void throwUnresolvedDependencyException(
+      const std::type_index &serviceTypeIndex
     );
 
+    /// <summary>An <code>std::any</code> instance that stays empty</summary>
+    private: const std::any emptyAny;
     /// <summary>Service bindings and instances the provider is offering</summary>
     private: std::shared_ptr<StandardInstanceSet> services;
 
