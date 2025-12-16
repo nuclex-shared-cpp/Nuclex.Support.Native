@@ -47,16 +47,13 @@ namespace Nuclex::Support::Services {
       ///   Instance set to check for existing service instances and in which created
       ///   services will be placed.
       /// </param>
-      /// <param name="outerServiceType">
-      ///   Initial service type that started the dependency resolution chain. Provided
-      ///   so it's on record, too, for the dependency cycle detection code.
-      /// </param>
-      public: explicit ResolutionContext(
-        StandardInstanceSet &instanceSet
-      );
+      public: explicit ResolutionContext(StandardInstanceSet &instanceSet);
 
       /// <summary>Destroys the service provider and frees all resources</summary>
       public: ~ResolutionContext() override;
+
+      /// <summary>Acquires the mutex required to alter the singleton services</summary>
+      public: void AcquireSingletonChangeMutex();
 
       /// <summary>Fetches an already activated singleton service or activates it</summary>
       /// <param name="serviceIterator">
@@ -105,8 +102,8 @@ namespace Nuclex::Support::Services {
       /// <returns>A list of <code>std::any</code>s containing each service</returns>
       protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
-      public: void acquireChangeMutex();
-
+      /// <summary>Throws an exception if a dependency cycle is detected</summary>
+      /// <param name="serviceTypeIndex">Service that is going to be resolved</param>
       private: void checkForDependencyCycle(const std::type_index &serviceTypeIndex);
 
       /// <summary>Container for the instances of all singleton services</summary>

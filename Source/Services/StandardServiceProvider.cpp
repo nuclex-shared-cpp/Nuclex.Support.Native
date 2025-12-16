@@ -139,6 +139,62 @@ namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
+  void StandardServiceProvider::ResolutionContext::AcquireSingletonChangeMutex() {
+    if(!this->mutexAcquired.load(std::memory_order::consume)) [[likely]] {
+      this->services.ChangeMutex.lock();
+      this->mutexAcquired.store(true, std::memory_order::release);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  const std::any &StandardServiceProvider::ResolutionContext::ActivateSingletonService(
+    const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
+  ) {
+    assert(this->mutexAcquired.load(std::memory_order::relaxed));
+
+    checkForDependencyCycle(serviceIterator->first);
+    this->resolutionStack.emplace_back(serviceIterator->first);
+    ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
+
+    // When this method is called, a requested service instance was not created yet,
+    // so we definitely need to construct it now.
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+    {
+      if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
+        new(this->services.Instances + uniqueServiceIndex) std::any(
+          serviceIterator->second.ProvidedInstance
+        );
+      } else {
+        new(this->services.Instances + uniqueServiceIndex) std::any(
+          std::move(serviceIterator->second.Factory(*this))
+        );
+      }
+
+      this->services.PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
+    }
+
+    return this->services.Instances[uniqueServiceIndex];
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::any StandardServiceProvider::ResolutionContext::ActivateTransientService(
+    const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
+  ) {
+    checkForDependencyCycle(serviceIterator->first);
+    this->resolutionStack.emplace_back(serviceIterator->first);
+    ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
+
+    if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
+      return serviceIterator->second.CloneFactory(serviceIterator->second.ProvidedInstance);
+    } else {
+      return serviceIterator->second.Factory(*this);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   std::shared_ptr<ServiceScope> StandardServiceProvider::ResolutionContext::CreateScope() {
     // This would make no sense. Any service scope created inside of a service factory
     // would have to be gone by the time service resolution finishes (unless you involve
@@ -248,61 +304,6 @@ namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  const std::any &StandardServiceProvider::ResolutionContext::ActivateSingletonService(
-    const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
-  ) {
-    assert(this->mutexAcquired.load(std::memory_order::relaxed));
-
-    checkForDependencyCycle(serviceIterator->first);
-    this->resolutionStack.emplace_back(serviceIterator->first);
-    ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
-
-    // When this method is called, a requested service instance was not 
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-    {
-      if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
-        new(this->services.Instances + uniqueServiceIndex) std::any(
-          serviceIterator->second.ProvidedInstance
-        );
-      } else {
-        new(this->services.Instances + uniqueServiceIndex) std::any(
-          std::move(serviceIterator->second.Factory(*this))
-        );
-      }
-
-      this->services.PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
-    }
-
-    return this->services.Instances[uniqueServiceIndex];
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  std::any StandardServiceProvider::ResolutionContext::ActivateTransientService(
-    const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
-  ) {
-    checkForDependencyCycle(serviceIterator->first);
-    this->resolutionStack.emplace_back(serviceIterator->first);
-    ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
-
-    if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
-      return serviceIterator->second.CloneFactory(serviceIterator->second.ProvidedInstance);
-    } else {
-      return serviceIterator->second.Factory(*this);
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
-  void StandardServiceProvider::ResolutionContext::acquireChangeMutex() {
-    if(!this->mutexAcquired.load(std::memory_order::consume)) [[likely]] {
-      this->services.ChangeMutex.lock();
-      this->mutexAcquired.store(true, std::memory_order::release);
-    }
-  }
-
-  // ------------------------------------------------------------------------------------------- //
-
   void StandardServiceProvider::ResolutionContext::checkForDependencyCycle(
     const std::type_index &serviceTypeIndex
   ) {
@@ -372,7 +373,7 @@ namespace Nuclex::Support::Services {
     );
     if(!isAlreadyCreated) [[unlikely]] {
       ResolutionContext deepServiceProvider(*this->services);
-      deepServiceProvider.acquireChangeMutex();
+      deepServiceProvider.AcquireSingletonChangeMutex();
       deepServiceProvider.ActivateSingletonService(serviceIterator);
     }
 
@@ -417,7 +418,7 @@ namespace Nuclex::Support::Services {
       return this->services->Instances[uniqueServiceIndex];
     } else {
       ResolutionContext deepServiceProvider(*this->services);
-      deepServiceProvider.acquireChangeMutex();
+      deepServiceProvider.AcquireSingletonChangeMutex();
       return deepServiceProvider.ActivateSingletonService(serviceIterator);
     }
   }

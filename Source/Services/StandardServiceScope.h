@@ -23,7 +23,8 @@ limitations under the License.
 #include "Nuclex/Support/Config.h"
 #include "Nuclex/Support/Services/ServiceScope.h"
 
-#include "./StandardInstanceSet.h"
+#include "./StandardServiceProvider.h"
+//#include "./StandardInstanceSet.h"
 
 namespace Nuclex::Support::Services {
 
@@ -35,7 +36,7 @@ namespace Nuclex::Support::Services {
     #pragma region class ResolutionContext
 
     /// <summary>Proxy that Handles service resolution and </summary>
-    public: class ResolutionContext : public ServiceProvider {
+    public: class ResolutionContext : public StandardServiceProvider::ResolutionContext {
 
       /// <summary>
       ///   Initializes a new service provider providing the specified set of services
