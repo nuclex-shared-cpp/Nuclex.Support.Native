@@ -37,7 +37,7 @@ namespace Nuclex::Support::Services {
 
     #pragma region class ResolutionContext
 
-    /// <summary>Proxy that Handles service resolution and </summary>
+    /// <summary>Proxy that handles service resolution of singleton services</summary>
     public: class ResolutionContext : public ServiceProvider {
 
       /// <summary>
@@ -102,9 +102,13 @@ namespace Nuclex::Support::Services {
       /// <returns>A list of <code>std::any</code>s containing each service</returns>
       protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
+      /// <summary>Accesses the resolution stack that is used to prevent cycles</summary>
+      /// <returns>A stack containing the trail of the requested dependencies</returns>
+      protected: std::vector<std::type_index> &GetResolutionStack();
+
       /// <summary>Throws an exception if a dependency cycle is detected</summary>
       /// <param name="serviceTypeIndex">Service that is going to be resolved</param>
-      private: void checkForDependencyCycle(const std::type_index &serviceTypeIndex);
+      protected: void CheckForDependencyCycle(const std::type_index &serviceTypeIndex);
 
       /// <summary>Container for the instances of all singleton services</summary>
       private: StandardInstanceSet &services;

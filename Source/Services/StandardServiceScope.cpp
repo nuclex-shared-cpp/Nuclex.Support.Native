@@ -24,102 +24,247 @@ limitations under the License.
 
 #include "Nuclex/Support/Errors/UnresolvedDependencyError.h"
 #include "Nuclex/Support/Errors/CyclicDependencyError.h"
+#include "Nuclex/Support/ScopeGuard.h"
 
 #include <stdexcept> // for std::runtime_error
+#include <cassert> // for assert()
 
 namespace {
 
   // ------------------------------------------------------------------------------------------- //
 
-  /// <summary>Alias for the <code>std::type_index</code> binding multi map</summary>
-  typedef Nuclex::Support::Services::StandardBindingSet::TypeIndexBindingMultiMap (
-    TypeIndexBindingMultiMap
-  );
-
-  // ------------------------------------------------------------------------------------------- //
-#if 0 // Nope, this is becoming to confuddled, we'll use chained StandardInstanceSets
-  /// <summary>
-  ///   Locates the services binding for the requested service and provides an instance of
-  ///   the service by either fetching it from the service container or activating it
-  /// </summary>
-  /// <typeparam name="ThrowIfMissing">
-  ///   Whether to throw an exception if the service has not been bound
-  /// </typeparam>
-  /// <typeparam name="TProvider">
-  ///   Service provider on which the service fetch/activaion method is being called
-  /// </typeparam>
-  /// <param name="services">Container in which the service instance will be stored</param>
-  /// <param name="serviceType">
-  ///   Type of service of which an instance needs to be provided
+  /// <summary>Finds the last service binding for a specified service type</summary>
+  /// <param name="services">Service bindings that will be searched</param>
+  /// <param name="serviceTypeIndex">
+  ///   <code>std::type_index</code> of the service type that will be searched
   /// </param>
-  /// <param name="provider">Provider on which the activation method will be called</param>
-  /// <param name="fetchOrActiveService">
-  ///   Method that performs the actual check looking for an existing service in the service
-  ///   container and which created an instance of the service if needed
-  /// </param>
-  /// <returns>The requested service instance wrapped in an <code>std::any</code></returns>
-  template<bool ThrowOnMissing, typename TProvider>
-  std::any locateBindingAndProvideServiceInstance(
-    const std::shared_ptr<Nuclex::Support::Services::StandardInstanceSet> &scopedServices,
-    const std::shared_ptr<Nuclex::Support::Services::StandardInstanceSet> &singletonServices,
-    const std::type_info &serviceType,
-    TProvider &provider,
-    std::any (TProvider::*fetchOrActivateScopedService)(
-      const TypeIndexBindingMultiMap::const_iterator &
-    ),
-    std::any (TProvider::*fetchOrActivateSingletonService)(
-      const TypeIndexBindingMultiMap::const_iterator &
-    )
+  /// <returns>
+  ///   An iterator that points either to the last service binding for the specified type
+  ///   or to the end of the service binding map if not found
+  /// </returns>
+  /// <remarks>
+  ///   As per convenient, when looking up individual services, the latest registered
+  ///   service overrides any earlier registrations. This wrapper method ensures that behavior.
+  /// </remarks>
+  Nuclex::Support::Services::StandardBindingSet::TypeIndexBindingMultiMap::const_iterator
+  findLast(
+    const Nuclex::Support::Services::StandardBindingSet::TypeIndexBindingMultiMap &services,
+    const std::type_index &serviceTypeIndex
   ) {
     using Nuclex::Support::Services::StandardBindingSet;
-    using Nuclex::Support::Errors::UnresolvedDependencyError;
-    const std::type_index serviceIndex(serviceType);
+    std::pair<
+      StandardBindingSet::TypeIndexBindingMultiMap::const_iterator,
+      StandardBindingSet::TypeIndexBindingMultiMap::const_iterator
+    > range = services.equal_range(serviceTypeIndex);
 
-    // First, look for a scoped service that we can deliver. For the same reason we
-    // look for singletons first in the global service provider, for performance reasons
-    // we expect a scoped service to be the most likely request and check for it first.
-    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
-      scopedServices->OwnBindings.find(serviceIndex)
-    );
-    if(serviceIterator != scopedServices->OwnBindings.end()) [[likely]] {
-      return (provider.*fetchOrActivateScopedService)(serviceIterator);
+    if(range.first == range.second) {
+      return services.end();
     }
 
-    // Then try to find a singleton service. This sould be the second most likely
-    // service lifetime for which instances will be requested, though you can argue
-    // that transient services may be equally likely.
-    serviceIterator = singletonServices->OwnBindings.find(serviceIndex);
-    if(serviceIterator != singletonServices->OwnBindings.end()) [[likely]] {
-      return (provider.*fetchOrActivateSingletonService)(serviceIterator);
-    }
-
-    // It was not a registered scoped or singleton service. So next, we'll check if
-    // it is a transient service. These services can be requested at any level.
-    serviceIterator = scopedServices->Bindings->TransientServices.find(serviceIndex);
-    if(serviceIterator != scopedServices->Bindings->TransientServices.end()) [[likely]] {
-      return serviceIterator->second.CloneFactory(serviceIterator->second.ProvidedInstance);
-    }
-
-    // At this point, we know the service cannot be provided by the root level service
-    // provider. However, as a small courtesy to the user, we'll look in the scoped services
-    // to provide a helpful error message if it appears that the user tried to request
-    // a scoped services from the root level service provider.
-    if constexpr(ThrowOnMissing) {
-      std::u8string message(u8"Requested service '", 19);
-      std::string::size_type length = std::char_traits<char>::length(serviceType.name());
-      message.append(serviceType.name(), serviceType.name() + length);
-      message.append(u8"' (name may be mangled) has not been registered", 47);
-      throw UnresolvedDependencyError(message);
-    } else {
-      return std::any();
-    }
+    return std::prev(range.second);
   }
-#endif
+
+  // ------------------------------------------------------------------------------------------- //
+
+  /// <summary>
+  ///   Throws an exception that indicates that the specified service could not be resovled
+  /// </summary>
+  /// <param nma=e"serviceTypeIndex">
+  ///   The <code>std::type_index</code> of the service that could not be resolved
+  /// </param>
+  [[noreturn]] void throwUnresolvedDependencyException(
+    const std::type_index &serviceTypeIndex
+  ) {
+    using Nuclex::Support::Errors::UnresolvedDependencyError;
+
+    std::u8string message(u8"Requested service '", 19);
+    std::string::size_type length = std::char_traits<char>::length(serviceTypeIndex.name());
+    message.append(serviceTypeIndex.name(), serviceTypeIndex.name() + length);
+    message.append(u8"' (name may be mangled) has not been registered", 47);
+    throw UnresolvedDependencyError(message);
+  }
+
   // ------------------------------------------------------------------------------------------- //
 
 } // anonymous namespace
 
 namespace Nuclex::Support::Services {
+
+  // ------------------------------------------------------------------------------------------- //
+
+  StandardServiceScope::ResolutionContext::ResolutionContext(
+    StandardInstanceSet &scopedInstanceSet,
+    StandardInstanceSet &singletonInstanceSet
+  ) :
+    StandardServiceProvider::ResolutionContext(singletonInstanceSet),
+    scopedServices(scopedInstanceSet),
+    mutexAcquired(false),
+    resolutionStack() {}
+
+  // ------------------------------------------------------------------------------------------- //
+
+  StandardServiceScope::ResolutionContext::~ResolutionContext() {
+    if(this->mutexAcquired.load(std::memory_order::consume)) {
+      this->scopedServices.ChangeMutex.unlock();
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  const std::any &StandardServiceScope::ResolutionContext::ActivateScopedService(
+    const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
+  ) {
+    assert(this->mutexAcquired.load(std::memory_order::relaxed));
+/*
+    CheckForDependencyCycle(serviceIterator->first);
+    this->resolutionStack.emplace_back(serviceIterator->first);
+    ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
+
+    // When this method is called, a requested service instance was not created yet,
+    // so we definitely need to construct it now.
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+    {
+      if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
+        new(this->services.Instances + uniqueServiceIndex) std::any(
+          serviceIterator->second.ProvidedInstance
+        );
+      } else {
+        new(this->services.Instances + uniqueServiceIndex) std::any(
+          std::move(serviceIterator->second.Factory(*this))
+        );
+      }
+
+      this->services.PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
+    }
+
+    return this->services.Instances[uniqueServiceIndex];
+*/
+    throw -1;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::shared_ptr<ServiceScope> StandardServiceScope::ResolutionContext::CreateScope() {
+    // This would make no sense. Any service scope created inside of a service factory
+    // would have to be gone by the time service resolution finishes (unless you involve
+    // global variables or state passed through lambdas).
+    #if 0
+    return std::make_shared<StandardServiceScope>(
+      StandardInstanceSet::Create(
+        this->services->Bindings, this->services->Bindings->ScopedServices
+      ),
+      this->services
+    );
+    #endif
+
+    throw std::logic_error(
+      reinterpret_cast<const char *>(u8"Cannot create scopes in a service resolution chain")
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::any StandardServiceScope::ResolutionContext::TryGetService(
+    const std::type_info &serviceType
+  ) {
+    std::type_index serviceTypeIndex(serviceType);
+
+    const StandardBindingSet &bindings = *this->scopedServices.Bindings;
+
+    // Look for the last service implemented registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      findLast(bindings.ScopedServices, serviceTypeIndex)
+    );
+    if(serviceIterator == bindings.SingletonServices.end()) {
+      serviceIterator = findLast(bindings.SingletonServices, serviceTypeIndex);
+      if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
+        serviceIterator = findLast(bindings.TransientServices, serviceTypeIndex);
+        if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
+          return std::any();
+        } else {
+          // TODO: Intering from here, we're not sure the singleton mutex is acquired
+          return ActivateSingletonService(serviceIterator);
+        }
+      } else {
+        return ActivateTransientService(serviceIterator);
+      }
+    }
+
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+    // Check, without locking, if the instance has already been created. If so,
+    // there's no need to enter the mutex since we're not modifying our state.
+    bool isAlreadyCreated = this->scopedServices.PresenceFlags[uniqueServiceIndex].load(
+      std::memory_order::consume
+    );
+    if(isAlreadyCreated) [[likely]] {
+      return this->scopedServices.Instances[uniqueServiceIndex];
+    } else {
+      return ActivateScopedService(serviceIterator);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::any StandardServiceScope::ResolutionContext::GetService(
+    const std::type_info &serviceType
+  ) {
+    std::type_index serviceTypeIndex(serviceType);
+
+    const StandardBindingSet &bindings = *this->scopedServices.Bindings;
+
+    // Look for the last service implemented registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      findLast(bindings.ScopedServices, serviceTypeIndex)
+    );
+    if(serviceIterator == bindings.SingletonServices.end()) {
+      serviceIterator = findLast(bindings.SingletonServices, serviceTypeIndex);
+      if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
+        serviceIterator = findLast(bindings.TransientServices, serviceTypeIndex);
+        if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
+          return std::any();
+        } else {
+          // TODO: Intering from here, we're not sure the singleton mutex is acquired
+          return ActivateSingletonService(serviceIterator);
+        }
+      } else {
+        return ActivateTransientService(serviceIterator);
+      }
+    }
+
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+    // Check, without locking, if the instance has already been created. If so,
+    // there's no need to enter the mutex since we're not modifying our state.
+    bool isAlreadyCreated = this->scopedServices.PresenceFlags[uniqueServiceIndex].load(
+      std::memory_order::consume
+    );
+    if(isAlreadyCreated) [[likely]] {
+      return this->scopedServices.Instances[uniqueServiceIndex];
+    } else {
+      return ActivateScopedService(serviceIterator);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::function<std::any()> StandardServiceScope::ResolutionContext::GetServiceFactory(
+    const std::type_info &serviceType
+  ) const {
+    (void)serviceType;
+    // TODO: Implement StandardServiceScope::ResolutionContext::GetServiceFactory() method
+    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  std::vector<std::any> StandardServiceScope::ResolutionContext::GetServices(
+    const std::type_info &serviceType
+  ) {
+    (void)serviceType;
+    // TODO: Implement StandardServiceScope::ResolutionContext::GetServices() method
+    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+  }
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -136,6 +281,15 @@ namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
+  void StandardServiceScope::ResolutionContext::AcquireScopedChangeMutex() {
+    if(!this->mutexAcquired.load(std::memory_order::consume)) [[likely]] {
+      this->scopedServices.ChangeMutex.lock();
+      this->mutexAcquired.store(true, std::memory_order::release);
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
   std::shared_ptr<ServiceScope> StandardServiceScope::CreateScope() {
     return std::make_shared<StandardServiceScope>(
       StandardInstanceSet::Create(
@@ -148,9 +302,7 @@ namespace Nuclex::Support::Services {
   // ------------------------------------------------------------------------------------------- //
 
   std::any StandardServiceScope::TryGetService(const std::type_info &serviceType) {
-    (void)serviceType;
-    // TODO: Implement StandardServiceScope::TryGetService() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    throw -1;
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -74,7 +74,11 @@ namespace {
   /// <summary>
   ///   Throws an exception that indicates that the specified service could not be resovled
   /// </summary>
-  /// <param nma=e"serviceTypeIndex">
+  /// <param name="services">
+  ///   Service bindings, used to check for a scoped service that, when present, results in
+  ///   a slightly altered error message to clue the user on a possible wrong lifetime.
+  /// </param>
+  /// <param nmae="serviceTypeIndex">
   ///   The <code>std::type_index</code> of the service that could not be resolved
   /// </param>
   [[noreturn]] void throwUnresolvedDependencyException(
@@ -89,7 +93,7 @@ namespace {
     // so if the service type is indeed registered as a scoped service, print an alternative
     // exception message that may save the user some time and headaches :-)
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
-      serviceIterator = services.Bindings->ScopedServices.find(serviceTypeIndex)
+      services.Bindings->ScopedServices.find(serviceTypeIndex)
     );
     if(serviceIterator == services.Bindings->ScopedServices.end()) [[likely]] {
 
@@ -153,7 +157,7 @@ namespace Nuclex::Support::Services {
   ) {
     assert(this->mutexAcquired.load(std::memory_order::relaxed));
 
-    checkForDependencyCycle(serviceIterator->first);
+    CheckForDependencyCycle(serviceIterator->first);
     this->resolutionStack.emplace_back(serviceIterator->first);
     ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
 
@@ -182,7 +186,7 @@ namespace Nuclex::Support::Services {
   std::any StandardServiceProvider::ResolutionContext::ActivateTransientService(
     const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
   ) {
-    checkForDependencyCycle(serviceIterator->first);
+    CheckForDependencyCycle(serviceIterator->first);
     this->resolutionStack.emplace_back(serviceIterator->first);
     ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
 
@@ -261,7 +265,6 @@ namespace Nuclex::Support::Services {
     if(serviceIterator == this->services.Bindings->SingletonServices.end()) [[unlikely]] {
       serviceIterator = findLast(this->services.Bindings->TransientServices, serviceTypeIndex);
       if(serviceIterator == this->services.Bindings->TransientServices.end()) [[unlikely]] {
-        // Second and further level dependency failures are still errors for TryGetServicE()
         throwUnresolvedDependencyException(this->services, serviceTypeIndex);
       } else {
         return ActivateTransientService(serviceIterator);
@@ -304,7 +307,13 @@ namespace Nuclex::Support::Services {
 
   // ------------------------------------------------------------------------------------------- //
 
-  void StandardServiceProvider::ResolutionContext::checkForDependencyCycle(
+  std::vector<std::type_index> &StandardServiceProvider::ResolutionContext::GetResolutionStack() {
+    return this->resolutionStack;
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  void StandardServiceProvider::ResolutionContext::CheckForDependencyCycle(
     const std::type_index &serviceTypeIndex
   ) {
     std::vector<std::type_index>::const_iterator duplicate = std::find(

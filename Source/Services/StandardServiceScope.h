@@ -35,33 +35,39 @@ namespace Nuclex::Support::Services {
 
     #pragma region class ResolutionContext
 
-    /// <summary>Proxy that Handles service resolution and </summary>
+    /// <summary>
+    ///   Proxy that handles service resolution of scoped and singleton services
+    /// </summary>
     public: class ResolutionContext : public StandardServiceProvider::ResolutionContext {
 
       /// <summary>
       ///   Initializes a new service provider providing the specified set of services
       /// </summary>
-      /// <param name="instanceSet">
-      ///   Instance set to check for existing service instances and in which created
-      ///   services will be placed.
+      /// <param name="scopedInstanceSet">
+      ///   Instance set to check for existing scoped service instances and in which
+      ///   created scoped services will be placed.
       /// </param>
-      /// <param name="outerServiceType">
-      ///   Initial service type that started the dependency resolution chain. Provided
-      ///   so it's on record, too, for the dependency cycle detection code.
+      /// <param name="singletonInstanceSet">
+      ///   Instance set to check for existing singleton service instances and in which
+      ///   created singelton services will be placed.
       /// </param>
       public: explicit ResolutionContext(
-        StandardInstanceSet &instanceSet
+        StandardInstanceSet &scopedInstanceSet,
+        StandardInstanceSet &singletonInstanceSet
       );
 
       /// <summary>Destroys the service provider and frees all resources</summary>
       public: ~ResolutionContext() override;
 
-      /// <summary>Fetches an already activated singleton service or activates it</summary>
+      /// <summary>Acquires the mutex required to alter the scoped services</summary>
+      public: void AcquireScopedChangeMutex();
+
+      /// <summary>Fetches an already activated scoped service or activates it</summary>
       /// <param name="serviceIterator">
-      ///   Iterator to the requested service in the singleton service bindings
+      ///   Iterator to the requested service in the scoped service bindings
       /// </param>
       /// <returns>An <code>std::any</code> that contains the service instance</returns>
-      public: const std::any &ActivateSingletonService(
+      public: const std::any &ActivateScopedService(
         const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
       );
 
@@ -95,7 +101,9 @@ namespace Nuclex::Support::Services {
       protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
       /// <summary>Container for the instances of all singleton services</summary>
-      private: StandardInstanceSet &services;
+      private: StandardInstanceSet &scopedServices;
+      /// <summary>Whether the context has acquired the service state update mutex</summary>
+      private: std::atomic<bool> mutexAcquired;
       /// <summary>Stack of services currently being resolved</summary>
       private: std::vector<std::type_index> resolutionStack;
 
