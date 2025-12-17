@@ -411,6 +411,7 @@
     <ClCompile Include="Tests\Services\StandardInstanceSetTest.cpp" />
     <ClCompile Include="Tests\Services\StandardServiceCollectionTest.cpp" />
     <ClCompile Include="Tests\Services\StandardServiceProviderTest.cpp" />
+    <ClCompile Include="Tests\Services\StandardServiceScopeTest.cpp" />
     <ClCompile Include="Tests\Settings\IniDocumentModelTest.cpp" />
     <ClCompile Include="Tests\Settings\IniSettingsStoreTest.cpp" />
     <ClCompile Include="Tests\Settings\MemorySettingsStoreTest.cpp" />

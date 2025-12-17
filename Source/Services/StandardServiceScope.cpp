@@ -115,7 +115,7 @@ namespace Nuclex::Support::Services {
     const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
   ) {
     assert(this->mutexAcquired.load(std::memory_order::relaxed));
-/*
+
     CheckForDependencyCycle(serviceIterator->first);
     this->resolutionStack.emplace_back(serviceIterator->first);
     ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
@@ -125,21 +125,21 @@ namespace Nuclex::Support::Services {
     std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
     {
       if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
-        new(this->services.Instances + uniqueServiceIndex) std::any(
+        new(this->scopedServices.Instances + uniqueServiceIndex) std::any(
           serviceIterator->second.ProvidedInstance
         );
       } else {
-        new(this->services.Instances + uniqueServiceIndex) std::any(
+        new(this->scopedServices.Instances + uniqueServiceIndex) std::any(
           std::move(serviceIterator->second.Factory(*this))
         );
       }
 
-      this->services.PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
+      this->scopedServices.PresenceFlags[uniqueServiceIndex].store(
+        true, std::memory_order::release
+      );
     }
 
-    return this->services.Instances[uniqueServiceIndex];
-*/
-    throw -1;
+    return this->scopedServices.Instances[uniqueServiceIndex];
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -182,11 +182,14 @@ namespace Nuclex::Support::Services {
         if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
           return std::any();
         } else {
-          // TODO: Intering from here, we're not sure the singleton mutex is acquired
-          return ActivateSingletonService(serviceIterator);
+          // Delegate to the base class, the singleton resolution context. This cleverly
+          // enters a wholly different branch which no longer resolved scoped services,
+          // as it should, since singleton services and depend on scoped services.
+          return ActivateTransientService(serviceIterator);
         }
       } else {
-        return ActivateTransientService(serviceIterator);
+        AcquireSingletonChangeMutex();
+        return ActivateSingletonService(serviceIterator);
       }
     }
 
@@ -224,11 +227,14 @@ namespace Nuclex::Support::Services {
         if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
           return std::any();
         } else {
-          // TODO: Intering from here, we're not sure the singleton mutex is acquired
-          return ActivateSingletonService(serviceIterator);
+          // Delegate to the base class, the singleton resolution context. This cleverly
+          // enters a wholly different branch which no longer resolved scoped services,
+          // as it should, since singleton services and depend on scoped services.
+          return ActivateTransientService(serviceIterator);
         }
       } else {
-        return ActivateTransientService(serviceIterator);
+        AcquireSingletonChangeMutex();
+        return ActivateSingletonService(serviceIterator);
       }
     }
 
@@ -308,17 +314,55 @@ namespace Nuclex::Support::Services {
   // ------------------------------------------------------------------------------------------- //
 
   std::any StandardServiceScope::GetService(const std::type_info &serviceType) {
-#if 0
-    return locateBindingAndProvideServiceInstance<true>(
-      this->scopedServices,
-      this->singletonServices,
-      serviceType,
-      *this,
-      &StandardServiceScope::fetchOrActivateScopedService,
-      &StandardServiceScope::fetchOrActivateSingletonService
+    std::type_index serviceTypeIndex(serviceType);
+
+    // The following code block is almost identical to ResolutionContext::GetService().
+    // This serves two purposes:
+    //   1) we want the early check to be very quick, directly from the calling application
+    //      via a single vtable-call to the full check.
+    //   2) we need to create the resolution context here. It is what prevents cyclic
+    //      dependencies from getting into a stack overlow.
+    //
+
+    // Look for the last service implemented registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      findLast(this->scopedServices->Bindings->ScopedServices, serviceTypeIndex)
     );
-#endif
-    throw - 1;
+    if(serviceIterator == this->scopedServices->Bindings->ScopedServices.end()) [[unlikely]] {
+      serviceIterator = findLast(
+        this->singletonServices->Bindings->SingletonServices, serviceTypeIndex
+      );
+      if(serviceIterator == this->singletonServices->Bindings->SingletonServices.end()) [[unlikely]] {
+        serviceIterator = findLast(
+          this->scopedServices->Bindings->TransientServices, serviceTypeIndex
+        );
+        if(serviceIterator == this->scopedServices->Bindings->TransientServices.end()) [[unlikely]] {
+          throwUnresolvedDependencyException(serviceTypeIndex);
+        } else {
+          ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+          return deepServiceProvider.ActivateTransientService(serviceIterator);
+        }
+      } else {
+        ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+        deepServiceProvider.AcquireSingletonChangeMutex();
+        return deepServiceProvider.ActivateSingletonService(serviceIterator);
+      }
+    }
+
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+    // Check, without locking, if the instance has already been created. If so,
+    // there's no need to enter the mutex since we're not modifying our state.
+    bool isAlreadyCreated = this->scopedServices->PresenceFlags[uniqueServiceIndex].load(
+      std::memory_order::consume
+    );
+    if(isAlreadyCreated) [[likely]] {
+      return this->scopedServices->Instances[uniqueServiceIndex];
+    } else {
+      ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+      deepServiceProvider.AcquireScopedChangeMutex();
+      return deepServiceProvider.ActivateScopedService(serviceIterator);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

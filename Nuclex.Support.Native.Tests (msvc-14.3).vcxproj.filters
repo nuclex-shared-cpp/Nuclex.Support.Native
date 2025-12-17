@@ -673,6 +673,9 @@
     <ClCompile Include="Tests\Services\StandardServiceProviderTest.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\Services\StandardServiceScopeTest.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests\Collections\BufferTest.cpp">
