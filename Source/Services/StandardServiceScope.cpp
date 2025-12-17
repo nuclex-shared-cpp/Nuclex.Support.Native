@@ -175,9 +175,9 @@ namespace Nuclex::Support::Services {
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
       findLast(bindings.ScopedServices, serviceTypeIndex)
     );
-    if(serviceIterator == bindings.SingletonServices.end()) {
+    if(serviceIterator == bindings.ScopedServices.end()) {
       serviceIterator = findLast(bindings.SingletonServices, serviceTypeIndex);
-      if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
+      if(serviceIterator == bindings.SingletonServices.end()) [[unlikely]] {
         serviceIterator = findLast(bindings.TransientServices, serviceTypeIndex);
         if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
           return std::any();
@@ -220,9 +220,9 @@ namespace Nuclex::Support::Services {
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
       findLast(bindings.ScopedServices, serviceTypeIndex)
     );
-    if(serviceIterator == bindings.SingletonServices.end()) {
+    if(serviceIterator == bindings.ScopedServices.end()) {
       serviceIterator = findLast(bindings.SingletonServices, serviceTypeIndex);
-      if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
+      if(serviceIterator == bindings.SingletonServices.end()) [[unlikely]] {
         serviceIterator = findLast(bindings.TransientServices, serviceTypeIndex);
         if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
           return std::any();
@@ -278,6 +278,7 @@ namespace Nuclex::Support::Services {
     std::shared_ptr<StandardInstanceSet> &&scopedServices,
     const std::shared_ptr<StandardInstanceSet> &singletonServices
   ) :
+    emptyAny(),
     scopedServices(scopedServices),
     singletonServices(singletonServices) {}
 
@@ -308,7 +309,55 @@ namespace Nuclex::Support::Services {
   // ------------------------------------------------------------------------------------------- //
 
   std::any StandardServiceScope::TryGetService(const std::type_info &serviceType) {
-    throw -1;
+    std::type_index serviceTypeIndex(serviceType);
+
+    // The following code block is almost identical to ResolutionContext::GetService().
+    // This serves two purposes:
+    //   1) we want the early check to be very quick, directly from the calling application
+    //      via a single vtable-call to the full check.
+    //   2) we need to create the resolution context here. It is what prevents cyclic
+    //      dependencies from getting into a stack overlow.
+    //
+
+    // Look for the last service implemented registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      findLast(this->scopedServices->Bindings->ScopedServices, serviceTypeIndex)
+    );
+    if(serviceIterator == this->scopedServices->Bindings->ScopedServices.end()) [[unlikely]] {
+      serviceIterator = findLast(
+        this->singletonServices->Bindings->SingletonServices, serviceTypeIndex
+      );
+      if(serviceIterator == this->singletonServices->Bindings->SingletonServices.end()) [[unlikely]] {
+        serviceIterator = findLast(
+          this->scopedServices->Bindings->TransientServices, serviceTypeIndex
+        );
+        if(serviceIterator == this->scopedServices->Bindings->TransientServices.end()) [[unlikely]] {
+          return this->emptyAny; // Accept that the service has not been bound
+        } else {
+          ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+          return deepServiceProvider.ActivateTransientService(serviceIterator);
+        }
+      } else {
+        ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+        deepServiceProvider.AcquireSingletonChangeMutex();
+        return deepServiceProvider.ActivateSingletonService(serviceIterator);
+      }
+    }
+
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+    // Check, without locking, if the instance has already been created. If so,
+    // there's no need to enter the mutex since we're not modifying our state.
+    bool isAlreadyCreated = this->scopedServices->PresenceFlags[uniqueServiceIndex].load(
+      std::memory_order::consume
+    );
+    if(isAlreadyCreated) [[likely]] {
+      return this->scopedServices->Instances[uniqueServiceIndex];
+    } else {
+      ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+      deepServiceProvider.AcquireScopedChangeMutex();
+      return deepServiceProvider.ActivateScopedService(serviceIterator);
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //

@@ -156,25 +156,9 @@ namespace Nuclex::Support::Services {
     /// <param name="serviceType">Type of service that will be provided</param>
     /// <returns>A list of <code>std::any</code>s containing each service</returns>
     protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
-#if 0
-    /// <summary>Fetches an already activated scoped service or activates it</summary>
-    /// <param name="serviceIterator">
-    ///   Iterator to the requested service in the scoped service bindings
-    /// </param>
-    /// <returns>An <code>std::any</code> that contains the service instance</returns>
-    private: std::any fetchOrActivateScopedService(
-      const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
-    );
 
-    /// <summary>Fetches an already activated singleton service or activates it</summary>
-    /// <param name="serviceIterator">
-    ///   Iterator to the requested service in the singleton service bindings
-    /// </param>
-    /// <returns>An <code>std::any</code> that contains the service instance</returns>
-    private: std::any fetchOrActivateSingletonService(
-      const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
-    );
-#endif
+    /// <summary>An <code>std::any</code> instance that stays empty</summary>
+    private: const std::any emptyAny;
     /// <summary>Service bindings and instances the scope is offering</summary>
     private: std::shared_ptr<StandardInstanceSet> scopedServices;
     /// <summary>Service bindings and instances the global provider is offering</summary>

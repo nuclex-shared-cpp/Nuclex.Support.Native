@@ -163,4 +163,39 @@ namespace Nuclex::Support::Services::Private {
 
   // ------------------------------------------------------------------------------------------- //
 
+  TEST(StandardServiceScopeTest, ScopedServicesCanDependOnSingletonServices) {
+    StandardServiceCollection services;
+    services.AddSingleton<PrintInterface, PrintImplementation>();
+    services.AddScoped<GreeterInterface, GreeterImplementation>();
+
+    std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
+    ASSERT_TRUE(static_cast<bool>(sp));
+
+    std::shared_ptr<ServiceScope> sc = sp->CreateScope();
+    ASSERT_TRUE(static_cast<bool>(sc));
+    std::shared_ptr<GreeterInterface> pi = sc->GetService<GreeterInterface>();
+    ASSERT_TRUE(static_cast<bool>(pi));
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
+  TEST(StandardServiceScopeTest, SingletonServicesMustNotDependOnScopedServices) {
+    StandardServiceCollection services;
+    services.AddScoped<PrintInterface, PrintImplementation>();
+    services.AddSingleton<GreeterInterface, GreeterImplementation>();
+
+    std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
+    ASSERT_TRUE(static_cast<bool>(sp));
+
+    std::shared_ptr<ServiceScope> sc = sp->CreateScope();
+    ASSERT_TRUE(static_cast<bool>(sc));
+
+    EXPECT_THROW(
+      sp->GetService<GreeterInterface>(),
+      Errors::UnresolvedDependencyError
+    );
+  }
+
+  // ------------------------------------------------------------------------------------------- //
+
 } // namespace Nuclex::Support::Services::Private
