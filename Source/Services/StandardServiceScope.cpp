@@ -93,11 +93,11 @@ namespace Nuclex::Support::Services {
   // ------------------------------------------------------------------------------------------- //
 
   StandardServiceScope::ResolutionContext::ResolutionContext(
-    StandardInstanceSet &scopedInstanceSet,
-    StandardInstanceSet &singletonInstanceSet
+    const std::shared_ptr<StandardInstanceSet> &scopedInstanceSet,
+    const std::shared_ptr<StandardInstanceSet> &singletonInstanceSet
   ) :
     StandardServiceProvider::ResolutionContext(singletonInstanceSet),
-    scopedServices(scopedInstanceSet),
+    scopedServices(*scopedInstanceSet),
     mutexAcquired(false),
     resolutionStack() {}
 
@@ -391,11 +391,11 @@ namespace Nuclex::Support::Services {
         if(serviceIterator == this->scopedServices->Bindings->TransientServices.end()) {
           return this->emptyAny; // Accept that the service has not been bound
         } else {
-          ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+          ResolutionContext deepServiceProvider(this->scopedServices, this->singletonServices);
           return deepServiceProvider.ActivateTransientService(serviceIterator);
         }
       } else {
-        ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+        ResolutionContext deepServiceProvider(this->scopedServices, this->singletonServices);
         deepServiceProvider.AcquireSingletonChangeMutex();
         return deepServiceProvider.ActivateSingletonService(serviceIterator);
       }
@@ -411,7 +411,7 @@ namespace Nuclex::Support::Services {
     if(isAlreadyCreated) [[likely]] {
       return this->scopedServices->Instances[uniqueServiceIndex];
     } else {
-      ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+      ResolutionContext deepServiceProvider(this->scopedServices, this->singletonServices);
       deepServiceProvider.AcquireScopedChangeMutex();
       return deepServiceProvider.ActivateScopedService(serviceIterator);
     }
@@ -445,11 +445,11 @@ namespace Nuclex::Support::Services {
         if(serviceIterator == this->scopedServices->Bindings->TransientServices.end()) {
           throwUnresolvedDependencyException(serviceTypeIndex);
         } else {
-          ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+          ResolutionContext deepServiceProvider(this->scopedServices, this->singletonServices);
           return deepServiceProvider.ActivateTransientService(serviceIterator);
         }
       } else {
-        ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+        ResolutionContext deepServiceProvider(this->scopedServices, this->singletonServices);
         deepServiceProvider.AcquireSingletonChangeMutex();
         return deepServiceProvider.ActivateSingletonService(serviceIterator);
       }
@@ -465,7 +465,7 @@ namespace Nuclex::Support::Services {
     if(isAlreadyCreated) [[likely]] {
       return this->scopedServices->Instances[uniqueServiceIndex];
     } else {
-      ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+      ResolutionContext deepServiceProvider(this->scopedServices, this->singletonServices);
       deepServiceProvider.AcquireScopedChangeMutex();
       return deepServiceProvider.ActivateScopedService(serviceIterator);
     }
@@ -505,7 +505,7 @@ namespace Nuclex::Support::Services {
         );
         if(serviceIterator != this->scopedServices->Bindings->TransientServices.end()) {
           do {
-            ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+            ResolutionContext deepServiceProvider(this->scopedServices, this->singletonServices);
             result.push_back(deepServiceProvider.ActivateTransientService(serviceIterator));
 
             ++serviceIterator;
@@ -516,7 +516,7 @@ namespace Nuclex::Support::Services {
         }
       } else {
         do {
-          ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+          ResolutionContext deepServiceProvider(this->scopedServices, this->singletonServices);
           deepServiceProvider.AcquireSingletonChangeMutex();
           result.push_back(deepServiceProvider.ActivateSingletonService(serviceIterator));
 
@@ -538,7 +538,7 @@ namespace Nuclex::Support::Services {
         if(isAlreadyCreated) [[likely]] {
           result.push_back(this->scopedServices->Instances[uniqueServiceIndex]);
         } else {
-          ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+          ResolutionContext deepServiceProvider(this->scopedServices, this->singletonServices);
           deepServiceProvider.AcquireScopedChangeMutex();
           result.push_back(deepServiceProvider.ActivateScopedService(serviceIterator));
         }

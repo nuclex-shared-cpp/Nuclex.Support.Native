@@ -127,7 +127,7 @@ namespace Nuclex::Support::Services {
   // ------------------------------------------------------------------------------------------- //
 
   StandardServiceProvider::ResolutionContext::ResolutionContext(
-    StandardInstanceSet &services
+    const std::shared_ptr<StandardInstanceSet> &services
   ) :
     services(services),
     mutexAcquired(false),
@@ -137,7 +137,7 @@ namespace Nuclex::Support::Services {
 
   StandardServiceProvider::ResolutionContext::~ResolutionContext() {
     if(this->mutexAcquired.load(std::memory_order::consume)) {
-      this->services.ChangeMutex.unlock();
+      this->services->ChangeMutex.unlock();
     }
   }
 
@@ -145,7 +145,7 @@ namespace Nuclex::Support::Services {
 
   void StandardServiceProvider::ResolutionContext::AcquireSingletonChangeMutex() {
     if(!this->mutexAcquired.load(std::memory_order::consume)) [[likely]] {
-      this->services.ChangeMutex.lock();
+      this->services->ChangeMutex.lock();
       this->mutexAcquired.store(true, std::memory_order::release);
     }
   }
@@ -166,19 +166,19 @@ namespace Nuclex::Support::Services {
     std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
     {
       if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
-        new(this->services.Instances + uniqueServiceIndex) std::any(
+        new(this->services->Instances + uniqueServiceIndex) std::any(
           serviceIterator->second.ProvidedInstance
         );
       } else {
-        new(this->services.Instances + uniqueServiceIndex) std::any(
+        new(this->services->Instances + uniqueServiceIndex) std::any(
           std::move(serviceIterator->second.Factory(*this))
         );
       }
 
-      this->services.PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
+      this->services->PresenceFlags[uniqueServiceIndex].store(true, std::memory_order::release);
     }
 
-    return this->services.Instances[uniqueServiceIndex];
+    return this->services->Instances[uniqueServiceIndex];
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -226,11 +226,11 @@ namespace Nuclex::Support::Services {
 
     // Look for the last service implemented registered for the requested service type
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
-      findLast(this->services.Bindings->SingletonServices, serviceTypeIndex)
+      findLast(this->services->Bindings->SingletonServices, serviceTypeIndex)
     );
-    if(serviceIterator == this->services.Bindings->SingletonServices.end()) [[unlikely]] {
-      serviceIterator = findLast(this->services.Bindings->TransientServices, serviceTypeIndex);
-      if(serviceIterator == this->services.Bindings->TransientServices.end()) [[unlikely]] {
+    if(serviceIterator == this->services->Bindings->SingletonServices.end()) [[unlikely]] {
+      serviceIterator = findLast(this->services->Bindings->TransientServices, serviceTypeIndex);
+      if(serviceIterator == this->services->Bindings->TransientServices.end()) [[unlikely]] {
         return std::any();
       } else {
         return ActivateTransientService(serviceIterator);
@@ -241,11 +241,11 @@ namespace Nuclex::Support::Services {
 
     // Check, without locking, if the instance has already been created. If so,
     // there's no need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = this->services.PresenceFlags[uniqueServiceIndex].load(
+    bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
       std::memory_order::consume
     );
     if(isAlreadyCreated) [[likely]] {
-      return this->services.Instances[uniqueServiceIndex];
+      return this->services->Instances[uniqueServiceIndex];
     } else {
       return ActivateSingletonService(serviceIterator);
     }
@@ -260,12 +260,12 @@ namespace Nuclex::Support::Services {
 
     // Look for the last service implemented registered for the requested service type
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
-      findLast(this->services.Bindings->SingletonServices, serviceTypeIndex)
+      findLast(this->services->Bindings->SingletonServices, serviceTypeIndex)
     );
-    if(serviceIterator == this->services.Bindings->SingletonServices.end()) [[unlikely]] {
-      serviceIterator = findLast(this->services.Bindings->TransientServices, serviceTypeIndex);
-      if(serviceIterator == this->services.Bindings->TransientServices.end()) [[unlikely]] {
-        throwUnresolvedDependencyException(this->services, serviceTypeIndex);
+    if(serviceIterator == this->services->Bindings->SingletonServices.end()) [[unlikely]] {
+      serviceIterator = findLast(this->services->Bindings->TransientServices, serviceTypeIndex);
+      if(serviceIterator == this->services->Bindings->TransientServices.end()) [[unlikely]] {
+        throwUnresolvedDependencyException(*this->services, serviceTypeIndex);
       } else {
         return ActivateTransientService(serviceIterator);
       }
@@ -275,11 +275,11 @@ namespace Nuclex::Support::Services {
 
     // Check, without locking, if the instance has already been created. If so,
     // there's no need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = this->services.PresenceFlags[uniqueServiceIndex].load(
+    bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
       std::memory_order::consume
     );
     if(isAlreadyCreated) [[likely]] {
-      return this->services.Instances[uniqueServiceIndex];
+      return this->services->Instances[uniqueServiceIndex];
     } else {
       return ActivateSingletonService(serviceIterator);
     }
@@ -290,9 +290,39 @@ namespace Nuclex::Support::Services {
   std::function<std::any()> StandardServiceProvider::ResolutionContext::GetServiceFactory(
     const std::type_info &serviceType
   ) const {
-    (void)serviceType;
-    // TODO: Implement StandardServiceProvider::ResolutionContext::GetServiceFactory() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    std::type_index serviceTypeIndex(serviceType);
+
+    // Look for the last service implementation registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      findLast(this->services->Bindings->SingletonServices, serviceTypeIndex)
+    );
+    if(serviceIterator == this->services->Bindings->SingletonServices.end()) [[unlikely]] {
+      serviceIterator = findLast(this->services->Bindings->TransientServices, serviceTypeIndex);
+      if(serviceIterator == this->services->Bindings->TransientServices.end()) [[unlikely]] {
+        throwUnresolvedDependencyException(*this->services, serviceTypeIndex);
+      } else {
+        std::shared_ptr<StandardInstanceSet> services = this->services;
+        return [services, serviceIterator]() -> std::any {
+          ResolutionContext deepServiceProvider(services);
+          return deepServiceProvider.ActivateTransientService(serviceIterator);
+        };
+      }
+    }
+
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+    std::shared_ptr<StandardInstanceSet> services = this->services;
+    return [services, serviceIterator, uniqueServiceIndex]() -> std::any {
+      bool isAlreadyCreated = services->PresenceFlags[uniqueServiceIndex].load(
+        std::memory_order::consume
+      );
+      if(isAlreadyCreated) [[likely]] {
+        return services->Instances[uniqueServiceIndex];
+      } else {
+        ResolutionContext deepServiceProvider(services);
+        deepServiceProvider.AcquireSingletonChangeMutex();
+        return deepServiceProvider.ActivateSingletonService(serviceIterator);
+      }
+    };
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -305,15 +335,15 @@ namespace Nuclex::Support::Services {
 
     // Look for the first service implemented registered for the requested service type
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
-      this->services.Bindings->SingletonServices.find(serviceTypeIndex)
+      this->services->Bindings->SingletonServices.find(serviceTypeIndex)
     );
-    if(serviceIterator == this->services.Bindings->SingletonServices.end()) [[unlikely]] {
-      serviceIterator = this->services.Bindings->TransientServices.find(serviceTypeIndex);
-      if(serviceIterator != this->services.Bindings->TransientServices.end()) [[unlikely]] {
+    if(serviceIterator == this->services->Bindings->SingletonServices.end()) [[unlikely]] {
+      serviceIterator = this->services->Bindings->TransientServices.find(serviceTypeIndex);
+      if(serviceIterator != this->services->Bindings->TransientServices.end()) [[unlikely]] {
         do {
           result.push_back(ActivateTransientService(serviceIterator));
           ++serviceIterator;
-          if(serviceIterator == this->services.Bindings->TransientServices.end()) {
+          if(serviceIterator == this->services->Bindings->TransientServices.end()) {
             break;
           }
         } while(serviceIterator->first == serviceTypeIndex);
@@ -324,17 +354,17 @@ namespace Nuclex::Support::Services {
 
         // Check, without locking, if the instance has already been created. If so,
         // there's no need to enter the mutex since we're not modifying our state.
-        bool isAlreadyCreated = this->services.PresenceFlags[uniqueServiceIndex].load(
+        bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
           std::memory_order::consume
         );
         if(isAlreadyCreated) [[likely]] {
-          result.push_back(this->services.Instances[uniqueServiceIndex]);
+          result.push_back(this->services->Instances[uniqueServiceIndex]);
         } else {
           result.push_back(ActivateSingletonService(serviceIterator));
         }
 
         ++serviceIterator;
-        if(serviceIterator == this->services.Bindings->SingletonServices.end()) {
+        if(serviceIterator == this->services->Bindings->SingletonServices.end()) {
           break;
         }
       } while(serviceIterator->first == serviceTypeIndex);
@@ -406,7 +436,7 @@ namespace Nuclex::Support::Services {
       if(serviceIterator == this->services->Bindings->TransientServices.end()) [[unlikely]] {
         return this->emptyAny; // Accept that the service has not been bound
       } else {
-        ResolutionContext deepServiceProvider(*this->services);
+        ResolutionContext deepServiceProvider(this->services);
         return deepServiceProvider.ActivateTransientService(serviceIterator);
       }
     }
@@ -419,7 +449,7 @@ namespace Nuclex::Support::Services {
       std::memory_order::consume
     );
     if(!isAlreadyCreated) [[unlikely]] {
-      ResolutionContext deepServiceProvider(*this->services);
+      ResolutionContext deepServiceProvider(this->services);
       deepServiceProvider.AcquireSingletonChangeMutex();
       deepServiceProvider.ActivateSingletonService(serviceIterator);
     }
@@ -449,7 +479,7 @@ namespace Nuclex::Support::Services {
       if(serviceIterator == this->services->Bindings->TransientServices.end()) [[unlikely]] {
         throwUnresolvedDependencyException(*this->services, serviceTypeIndex);
       } else {
-        ResolutionContext deepServiceProvider(*this->services);
+        ResolutionContext deepServiceProvider(this->services);
         return deepServiceProvider.ActivateTransientService(serviceIterator);
       }
     }
@@ -464,7 +494,7 @@ namespace Nuclex::Support::Services {
     if(isAlreadyCreated) [[likely]] {
       return this->services->Instances[uniqueServiceIndex];
     } else {
-      ResolutionContext deepServiceProvider(*this->services);
+      ResolutionContext deepServiceProvider(this->services);
       deepServiceProvider.AcquireSingletonChangeMutex();
       return deepServiceProvider.ActivateSingletonService(serviceIterator);
     }
@@ -475,9 +505,39 @@ namespace Nuclex::Support::Services {
   std::function<std::any()> StandardServiceProvider::GetServiceFactory(
     const std::type_info &serviceType
   ) const {
-    (void)serviceType;
-    // TODO: Implement StandardServiceProvider::GetServiceFactory() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    std::type_index serviceTypeIndex(serviceType);
+
+    // Look for the last service implementation registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      findLast(this->services->Bindings->SingletonServices, serviceTypeIndex)
+    );
+    if(serviceIterator == this->services->Bindings->SingletonServices.end()) [[unlikely]] {
+      serviceIterator = findLast(this->services->Bindings->TransientServices, serviceTypeIndex);
+      if(serviceIterator == this->services->Bindings->TransientServices.end()) [[unlikely]] {
+        throwUnresolvedDependencyException(*this->services, serviceTypeIndex);
+      } else {
+        std::shared_ptr<StandardInstanceSet> services = this->services;
+        return [services, serviceIterator]() -> std::any {
+          ResolutionContext deepServiceProvider(services);
+          return deepServiceProvider.ActivateTransientService(serviceIterator);
+        };
+      }
+    }
+
+    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+    std::shared_ptr<StandardInstanceSet> services = this->services;
+    return [services, serviceIterator, uniqueServiceIndex]() -> std::any {
+      bool isAlreadyCreated = services->PresenceFlags[uniqueServiceIndex].load(
+        std::memory_order::consume
+      );
+      if(isAlreadyCreated) [[likely]] {
+        return services->Instances[uniqueServiceIndex];
+      } else {
+        ResolutionContext deepServiceProvider(services);
+        deepServiceProvider.AcquireSingletonChangeMutex();
+        return deepServiceProvider.ActivateSingletonService(serviceIterator);
+      }
+    };
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -496,7 +556,7 @@ namespace Nuclex::Support::Services {
       serviceIterator = this->services->Bindings->TransientServices.find(serviceTypeIndex);
       if(serviceIterator != this->services->Bindings->TransientServices.end()) [[unlikely]] {
         do {
-          ResolutionContext deepServiceProvider(*this->services);
+          ResolutionContext deepServiceProvider(this->services);
           result.push_back(deepServiceProvider.ActivateTransientService(serviceIterator));
 
           ++serviceIterator;
@@ -517,7 +577,7 @@ namespace Nuclex::Support::Services {
         if(isAlreadyCreated) [[likely]] {
           result.push_back(this->services->Instances[uniqueServiceIndex]);
         } else {
-          ResolutionContext deepServiceProvider(*this->services);
+          ResolutionContext deepServiceProvider(this->services);
           deepServiceProvider.AcquireSingletonChangeMutex();
           result.push_back(deepServiceProvider.ActivateSingletonService(serviceIterator));
         }

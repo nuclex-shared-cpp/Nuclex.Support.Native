@@ -52,8 +52,8 @@ namespace Nuclex::Support::Services {
       ///   created singelton services will be placed.
       /// </param>
       public: explicit ResolutionContext(
-        StandardInstanceSet &scopedInstanceSet,
-        StandardInstanceSet &singletonInstanceSet
+        const std::shared_ptr<StandardInstanceSet> &scopedInstanceSet,
+        const std::shared_ptr<StandardInstanceSet> &singletonInstanceSet
       );
 
       /// <summary>Destroys the service provider and frees all resources</summary>

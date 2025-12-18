@@ -47,7 +47,9 @@ namespace Nuclex::Support::Services {
       ///   Instance set to check for existing service instances and in which created
       ///   services will be placed.
       /// </param>
-      public: explicit ResolutionContext(StandardInstanceSet &instanceSet);
+      public: explicit ResolutionContext(
+        const std::shared_ptr<StandardInstanceSet> &instanceSet
+      );
 
       /// <summary>Destroys the service provider and frees all resources</summary>
       public: ~ResolutionContext() override;
@@ -111,7 +113,7 @@ namespace Nuclex::Support::Services {
       protected: void CheckForDependencyCycle(const std::type_index &serviceTypeIndex);
 
       /// <summary>Container for the instances of all singleton services</summary>
-      private: StandardInstanceSet &services;
+      private: const std::shared_ptr<StandardInstanceSet> &services;
       /// <summary>Whether the context has acquired the service state update mutex</summary>
       private: std::atomic<bool> mutexAcquired;
       /// <summary>Stack of services currently being resolved</summary>
