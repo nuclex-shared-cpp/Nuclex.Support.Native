@@ -359,7 +359,7 @@ namespace Nuclex::Support::Services {
     //   2) we need to create the resolution context here. It is what prevents cyclic
     //      dependencies from getting into a stack overlow.
 
-    // Look for the last service implemented registered for the requested service type
+    // Look for the last service implementation registered for the requested service type
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
       findLast(this->services->Bindings->SingletonServices, serviceTypeIndex)
     );
@@ -402,7 +402,7 @@ namespace Nuclex::Support::Services {
     //      dependencies from getting into a stack overlow.
     //
 
-    // Look for the last service implemented registered for the requested service type
+    // Look for the last service implementation registered for the requested service type
     StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
       findLast(this->services->Bindings->SingletonServices, serviceTypeIndex)
     );
@@ -445,9 +445,54 @@ namespace Nuclex::Support::Services {
   // ------------------------------------------------------------------------------------------- //
 
   std::vector<std::any> StandardServiceProvider::GetServices(const std::type_info &serviceType) {
-    (void)serviceType;
-    // TODO: Implement StandardServiceProvider::GetServices() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    std::vector<std::any> result;
+
+    std::type_index serviceTypeIndex(serviceType);
+
+    // First, check the singleton services for the requested service type. A service can
+    // only be in one lifetime, so once we find the service, we just need to take all
+    // instances in the scope we find the first one in.
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      this->services->Bindings->SingletonServices.find(serviceTypeIndex)
+    );
+    if(serviceIterator == this->services->Bindings->SingletonServices.end()) [[unlikely]] {
+      serviceIterator = findLast(this->services->Bindings->TransientServices, serviceTypeIndex);
+      if(serviceIterator != this->services->Bindings->TransientServices.end()) [[unlikely]] {
+        do {
+          ResolutionContext deepServiceProvider(*this->services);
+          result.push_back(deepServiceProvider.ActivateTransientService(serviceIterator));
+
+          ++serviceIterator;
+          if(serviceIterator == this->services->Bindings->TransientServices.end()) {
+            break;
+          }
+        } while(serviceIterator->first == serviceTypeIndex);
+      }
+    } else {
+      do {
+        std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+        // Check, without locking, if the instance has already been created. If so,
+        // there's no need to enter the mutex since we're not modifying our state.
+        bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
+          std::memory_order::consume
+        );
+        if(isAlreadyCreated) [[likely]] {
+          result.push_back(this->services->Instances[uniqueServiceIndex]);
+        } else {
+          ResolutionContext deepServiceProvider(*this->services);
+          deepServiceProvider.AcquireSingletonChangeMutex();
+          result.push_back(deepServiceProvider.ActivateSingletonService(serviceIterator));
+        }
+
+        ++serviceIterator;
+        if(serviceIterator == this->services->Bindings->SingletonServices.end()) {
+          break;
+        }
+      } while(serviceIterator->first == serviceTypeIndex);
+    }
+
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
