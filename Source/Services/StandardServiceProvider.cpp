@@ -446,7 +446,6 @@ namespace Nuclex::Support::Services {
 
   std::vector<std::any> StandardServiceProvider::GetServices(const std::type_info &serviceType) {
     std::vector<std::any> result;
-
     std::type_index serviceTypeIndex(serviceType);
 
     // First, check the singleton services for the requested service type. A service can
@@ -456,7 +455,7 @@ namespace Nuclex::Support::Services {
       this->services->Bindings->SingletonServices.find(serviceTypeIndex)
     );
     if(serviceIterator == this->services->Bindings->SingletonServices.end()) [[unlikely]] {
-      serviceIterator = findLast(this->services->Bindings->TransientServices, serviceTypeIndex);
+      serviceIterator = this->services->Bindings->TransientServices.find(serviceTypeIndex);
       if(serviceIterator != this->services->Bindings->TransientServices.end()) [[unlikely]] {
         do {
           ResolutionContext deepServiceProvider(*this->services);

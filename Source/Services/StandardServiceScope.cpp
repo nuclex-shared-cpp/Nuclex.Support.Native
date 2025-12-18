@@ -327,11 +327,11 @@ namespace Nuclex::Support::Services {
       serviceIterator = findLast(
         this->singletonServices->Bindings->SingletonServices, serviceTypeIndex
       );
-      if(serviceIterator == this->singletonServices->Bindings->SingletonServices.end()) [[unlikely]] {
+      if(serviceIterator == this->singletonServices->Bindings->SingletonServices.end()) {
         serviceIterator = findLast(
           this->scopedServices->Bindings->TransientServices, serviceTypeIndex
         );
-        if(serviceIterator == this->scopedServices->Bindings->TransientServices.end()) [[unlikely]] {
+        if(serviceIterator == this->scopedServices->Bindings->TransientServices.end()) {
           return this->emptyAny; // Accept that the service has not been bound
         } else {
           ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
@@ -381,11 +381,11 @@ namespace Nuclex::Support::Services {
       serviceIterator = findLast(
         this->singletonServices->Bindings->SingletonServices, serviceTypeIndex
       );
-      if(serviceIterator == this->singletonServices->Bindings->SingletonServices.end()) [[unlikely]] {
+      if(serviceIterator == this->singletonServices->Bindings->SingletonServices.end()) {
         serviceIterator = findLast(
           this->scopedServices->Bindings->TransientServices, serviceTypeIndex
         );
-        if(serviceIterator == this->scopedServices->Bindings->TransientServices.end()) [[unlikely]] {
+        if(serviceIterator == this->scopedServices->Bindings->TransientServices.end()) {
           throwUnresolvedDependencyException(serviceTypeIndex);
         } else {
           ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
@@ -429,9 +429,71 @@ namespace Nuclex::Support::Services {
   std::vector<std::any> StandardServiceScope::GetServices(
     const std::type_info &serviceType
   ) {
-    (void)serviceType;
-    // TODO: Implement StandardServiceScope::GetServices() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    std::vector<std::any> result;
+    std::type_index serviceTypeIndex(serviceType);
+
+    // First, check the singleton services for the requested service type. A service can
+    // only be in one lifetime, so once we find the service, we just need to take all
+    // instances in the scope we find the first one in.
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      this->scopedServices->Bindings->ScopedServices.find(serviceTypeIndex)
+    );
+    if(serviceIterator == this->scopedServices->Bindings->ScopedServices.end()) [[unlikely]] {
+      serviceIterator = (
+        this->singletonServices->Bindings->SingletonServices.find(serviceTypeIndex)
+      );
+      if(serviceIterator == this->singletonServices->Bindings->SingletonServices.end()) {
+        serviceIterator = this->scopedServices->Bindings->TransientServices.find(
+          serviceTypeIndex
+        );
+        if(serviceIterator != this->scopedServices->Bindings->TransientServices.end()) {
+          do {
+            ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+            result.push_back(deepServiceProvider.ActivateTransientService(serviceIterator));
+
+            ++serviceIterator;
+            if(serviceIterator == this->scopedServices->Bindings->TransientServices.end()) {
+              break;
+            }
+          } while(serviceIterator->first == serviceTypeIndex);
+        }
+      } else {
+        do {
+          ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+          deepServiceProvider.AcquireSingletonChangeMutex();
+          result.push_back(deepServiceProvider.ActivateSingletonService(serviceIterator));
+
+          ++serviceIterator;
+          if(serviceIterator == this->singletonServices->Bindings->SingletonServices.end()) {
+            break;
+          }
+        } while(serviceIterator->first == serviceTypeIndex);
+      }
+    } else {
+      do {
+        std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+        // Check, without locking, if the instance has already been created. If so,
+        // there's no need to enter the mutex since we're not modifying our state.
+        bool isAlreadyCreated = this->scopedServices->PresenceFlags[uniqueServiceIndex].load(
+          std::memory_order::consume
+        );
+        if(isAlreadyCreated) [[likely]] {
+          result.push_back(this->scopedServices->Instances[uniqueServiceIndex]);
+        } else {
+          ResolutionContext deepServiceProvider(*this->scopedServices, *this->singletonServices);
+          deepServiceProvider.AcquireScopedChangeMutex();
+          result.push_back(deepServiceProvider.ActivateScopedService(serviceIterator));
+        }
+
+        ++serviceIterator;
+        if(serviceIterator == this->singletonServices->Bindings->ScopedServices.end()) {
+          break;
+        }
+      } while(serviceIterator->first == serviceTypeIndex);
+    }
+
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
