@@ -104,8 +104,6 @@ namespace Nuclex::Support::Services {
       private: const std::shared_ptr<StandardInstanceSet> &scopedServices;
       /// <summary>Whether the context has acquired the service state update mutex</summary>
       private: std::atomic<bool> mutexAcquired;
-      /// <summary>Stack of services currently being resolved</summary>
-      private: std::vector<std::type_index> resolutionStack;
 
     };
 

@@ -98,8 +98,7 @@ namespace Nuclex::Support::Services {
   ) :
     StandardServiceProvider::ResolutionContext(singletonInstanceSet),
     scopedServices(scopedInstanceSet),
-    mutexAcquired(false),
-    resolutionStack() {}
+    mutexAcquired(false) {}
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -117,8 +116,8 @@ namespace Nuclex::Support::Services {
     assert(this->mutexAcquired.load(std::memory_order::relaxed));
 
     CheckForDependencyCycle(serviceIterator->first);
-    this->resolutionStack.emplace_back(serviceIterator->first);
-    ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
+    GetResolutionStack().emplace_back(serviceIterator->first);
+    ON_SCOPE_EXIT { GetResolutionStack().pop_back(); };
 
     // When this method is called, a requested service instance was not created yet,
     // so we definitely need to construct it now.
