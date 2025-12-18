@@ -267,9 +267,66 @@ namespace Nuclex::Support::Services {
   std::vector<std::any> StandardServiceScope::ResolutionContext::GetServices(
     const std::type_info &serviceType
   ) {
-    (void)serviceType;
-    // TODO: Implement StandardServiceScope::ResolutionContext::GetServices() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    std::vector<std::any> result;
+    std::type_index serviceTypeIndex(serviceType);
+
+    const StandardBindingSet &bindings = *this->scopedServices.Bindings;
+
+    // Look for the last service implemented registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      bindings.ScopedServices.find(serviceTypeIndex)
+    );
+    if(serviceIterator == bindings.ScopedServices.end()) {
+      serviceIterator = bindings.SingletonServices.find(serviceTypeIndex);
+      if(serviceIterator == bindings.SingletonServices.end()) [[unlikely]] {
+        serviceIterator = bindings.TransientServices.find(serviceTypeIndex);
+        if(serviceIterator != bindings.TransientServices.end()) [[unlikely]] {
+          do {
+            // Delegate to the base class, the singleton resolution context. This cleverly
+            // enters a wholly different branch which no longer resolved scoped services,
+            // as it should, since singleton services and depend on scoped services.
+            result.push_back(ActivateTransientService(serviceIterator));
+
+            ++serviceIterator;
+            if(serviceIterator == bindings.TransientServices.end()) {
+              break;
+            }
+          } while(serviceIterator->first == serviceTypeIndex);
+        }
+      } else {
+        AcquireSingletonChangeMutex();
+        do {
+          result.push_back(ActivateSingletonService(serviceIterator));
+
+          ++serviceIterator;
+          if(serviceIterator == bindings.SingletonServices.end()) {
+            break;
+          }
+        } while(serviceIterator->first == serviceTypeIndex);
+      }
+    } else {
+      do {
+        std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+        // Check, without locking, if the instance has already been created. If so,
+        // there's no need to enter the mutex since we're not modifying our state.
+        bool isAlreadyCreated = this->scopedServices.PresenceFlags[uniqueServiceIndex].load(
+          std::memory_order::consume
+        );
+        if(isAlreadyCreated) [[likely]] {
+          result.push_back(this->scopedServices.Instances[uniqueServiceIndex]);
+        } else {
+          result.push_back(ActivateScopedService(serviceIterator));
+        }
+
+        ++serviceIterator;
+        if(serviceIterator == bindings.ScopedServices.end()) {
+          break;
+        }
+      } while(serviceIterator->first == serviceTypeIndex);
+    }
+
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
