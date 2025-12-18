@@ -300,9 +300,47 @@ namespace Nuclex::Support::Services {
   std::vector<std::any> StandardServiceProvider::ResolutionContext::GetServices(
     const std::type_info &serviceType
   ) {
-    (void)serviceType;
-    // TODO: Implement StandardServiceProvider::ResolutionContext::GetServices() method
-    throw std::runtime_error(reinterpret_cast<const char *>(u8"Not implemented yet"));
+    std::vector<std::any> result;
+    std::type_index serviceTypeIndex(serviceType);
+
+    // Look for the first service implemented registered for the requested service type
+    StandardBindingSet::TypeIndexBindingMultiMap::const_iterator serviceIterator = (
+      this->services.Bindings->SingletonServices.find(serviceTypeIndex)
+    );
+    if(serviceIterator == this->services.Bindings->SingletonServices.end()) [[unlikely]] {
+      serviceIterator = this->services.Bindings->TransientServices.find(serviceTypeIndex);
+      if(serviceIterator != this->services.Bindings->TransientServices.end()) [[unlikely]] {
+        do {
+          result.push_back(ActivateTransientService(serviceIterator));
+          ++serviceIterator;
+          if(serviceIterator == this->services.Bindings->TransientServices.end()) {
+            break;
+          }
+        } while(serviceIterator->first == serviceTypeIndex);
+      }
+    } else {
+      do {
+        std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+        // Check, without locking, if the instance has already been created. If so,
+        // there's no need to enter the mutex since we're not modifying our state.
+        bool isAlreadyCreated = this->services.PresenceFlags[uniqueServiceIndex].load(
+          std::memory_order::consume
+        );
+        if(isAlreadyCreated) [[likely]] {
+          result.push_back(this->services.Instances[uniqueServiceIndex]);
+        } else {
+          result.push_back(ActivateSingletonService(serviceIterator));
+        }
+
+        ++serviceIterator;
+        if(serviceIterator == this->services.Bindings->SingletonServices.end()) {
+          break;
+        }
+      } while(serviceIterator->first == serviceTypeIndex);
+    }
+
+    return result;
   }
 
   // ------------------------------------------------------------------------------------------- //
