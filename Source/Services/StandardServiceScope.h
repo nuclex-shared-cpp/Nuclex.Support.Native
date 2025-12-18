@@ -101,7 +101,7 @@ namespace Nuclex::Support::Services {
       protected: std::vector<std::any> GetServices(const std::type_info &typeInfo) override;
 
       /// <summary>Container for the instances of all singleton services</summary>
-      private: StandardInstanceSet &scopedServices;
+      private: const std::shared_ptr<StandardInstanceSet> &scopedServices;
       /// <summary>Whether the context has acquired the service state update mutex</summary>
       private: std::atomic<bool> mutexAcquired;
       /// <summary>Stack of services currently being resolved</summary>
