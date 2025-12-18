@@ -156,15 +156,16 @@ namespace Nuclex::Support::Services {
     const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
   ) {
     assert(this->mutexAcquired.load(std::memory_order::relaxed));
-
-    CheckForDependencyCycle(serviceIterator->first);
-    this->resolutionStack.emplace_back(serviceIterator->first);
-    ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
-
-    // When this method is called, a requested service instance was not created yet,
-    // so we definitely need to construct it now.
     std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-    {
+
+    bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
+      std::memory_order::consume
+    );
+    if(!isAlreadyCreated) [[unlikely]] {
+      CheckForDependencyCycle(serviceIterator->first);
+      this->resolutionStack.emplace_back(serviceIterator->first);
+      ON_SCOPE_EXIT { this->resolutionStack.pop_back(); };
+
       if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
         new(this->services->Instances + uniqueServiceIndex) std::any(
           serviceIterator->second.ProvidedInstance
@@ -193,6 +194,7 @@ namespace Nuclex::Support::Services {
     if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
       return serviceIterator->second.CloneFactory(serviceIterator->second.ProvidedInstance);
     } else {
+      AcquireSingletonChangeMutex(); // CHECK: Can we delay acquiring this even further?
       return serviceIterator->second.Factory(*this);
     }
   }
@@ -235,17 +237,6 @@ namespace Nuclex::Support::Services {
       } else {
         return ActivateTransientService(serviceIterator);
       }
-    }
-
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-
-    // Check, without locking, if the instance has already been created. If so,
-    // there's no need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
-      std::memory_order::consume
-    );
-    if(isAlreadyCreated) [[likely]] {
-      return this->services->Instances[uniqueServiceIndex];
     } else {
       return ActivateSingletonService(serviceIterator);
     }
@@ -269,17 +260,6 @@ namespace Nuclex::Support::Services {
       } else {
         return ActivateTransientService(serviceIterator);
       }
-    }
-
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-
-    // Check, without locking, if the instance has already been created. If so,
-    // there's no need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
-      std::memory_order::consume
-    );
-    if(isAlreadyCreated) [[likely]] {
-      return this->services->Instances[uniqueServiceIndex];
     } else {
       return ActivateSingletonService(serviceIterator);
     }
@@ -307,22 +287,25 @@ namespace Nuclex::Support::Services {
           return deepServiceProvider.ActivateTransientService(serviceIterator);
         };
       }
-    }
+    } else {
+      std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
 
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-    std::shared_ptr<StandardInstanceSet> services = this->services;
-    return [services, serviceIterator, uniqueServiceIndex]() -> std::any {
-      bool isAlreadyCreated = services->PresenceFlags[uniqueServiceIndex].load(
-        std::memory_order::consume
-      );
-      if(isAlreadyCreated) [[likely]] {
-        return services->Instances[uniqueServiceIndex];
-      } else {
-        ResolutionContext deepServiceProvider(services);
-        deepServiceProvider.AcquireSingletonChangeMutex();
-        return deepServiceProvider.ActivateSingletonService(serviceIterator);
-      }
-    };
+      std::shared_ptr<StandardInstanceSet> services = this->services;
+      return [services, serviceIterator, uniqueServiceIndex]() -> std::any {
+        // Careful! When this factory method is called, we are not holding the mutex
+        // anymore and need to start from the beginning with double-checked locking.
+        bool isAlreadyCreated = services->PresenceFlags[uniqueServiceIndex].load(
+          std::memory_order::consume
+        );
+        if(isAlreadyCreated) [[likely]] {
+          return services->Instances[uniqueServiceIndex];
+        } else {
+          ResolutionContext deepServiceProvider(services);
+          deepServiceProvider.AcquireSingletonChangeMutex();
+          return deepServiceProvider.ActivateSingletonService(serviceIterator);
+        }
+      };
+    }
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -342,6 +325,7 @@ namespace Nuclex::Support::Services {
       if(serviceIterator != this->services->Bindings->TransientServices.end()) [[unlikely]] {
         do {
           result.push_back(ActivateTransientService(serviceIterator));
+
           ++serviceIterator;
           if(serviceIterator == this->services->Bindings->TransientServices.end()) {
             break;
@@ -439,22 +423,26 @@ namespace Nuclex::Support::Services {
         ResolutionContext deepServiceProvider(this->services);
         return deepServiceProvider.ActivateTransientService(serviceIterator);
       }
+    } else {
+      std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+      // Check, without locking, if the instance has already been created. If so,
+      // there's no need to enter the mutex since we're not modifying our state.
+      // Check, without locking, if the instance has already been created. If so,
+      // there's no need to enter the mutex since we're not modifying our state.
+      bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
+        std::memory_order::consume
+      );
+      if(isAlreadyCreated) [[likely]] {
+        return this->services->Instances[uniqueServiceIndex];
+      } else {
+        ResolutionContext deepServiceProvider(this->services);
+        deepServiceProvider.AcquireSingletonChangeMutex();
+        deepServiceProvider.ActivateSingletonService(serviceIterator);
+      }
+
+      return this->services->Instances[uniqueServiceIndex];
     }
-
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-
-    // Check, without locking, if the instance has already been created. If so,
-    // there's no need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
-      std::memory_order::consume
-    );
-    if(!isAlreadyCreated) [[unlikely]] {
-      ResolutionContext deepServiceProvider(this->services);
-      deepServiceProvider.AcquireSingletonChangeMutex();
-      deepServiceProvider.ActivateSingletonService(serviceIterator);
-    }
-
-    return this->services->Instances[uniqueServiceIndex];
   }
 
   // ------------------------------------------------------------------------------------------- //
@@ -482,21 +470,21 @@ namespace Nuclex::Support::Services {
         ResolutionContext deepServiceProvider(this->services);
         return deepServiceProvider.ActivateTransientService(serviceIterator);
       }
-    }
-
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-
-    // Check, without locking, if the instance has already been created. If so,
-    // there's no need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
-      std::memory_order::consume
-    );
-    if(isAlreadyCreated) [[likely]] {
-      return this->services->Instances[uniqueServiceIndex];
     } else {
-      ResolutionContext deepServiceProvider(this->services);
-      deepServiceProvider.AcquireSingletonChangeMutex();
-      return deepServiceProvider.ActivateSingletonService(serviceIterator);
+      std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+
+      // Check, without locking, if the instance has already been created. If so,
+      // there's no need to enter the mutex since we're not modifying our state.
+      bool isAlreadyCreated = this->services->PresenceFlags[uniqueServiceIndex].load(
+        std::memory_order::consume
+      );
+      if(isAlreadyCreated) [[likely]] {
+        return this->services->Instances[uniqueServiceIndex];
+      } else {
+        ResolutionContext deepServiceProvider(this->services);
+        deepServiceProvider.AcquireSingletonChangeMutex();
+        return deepServiceProvider.ActivateSingletonService(serviceIterator);
+      }
     }
   }
 
@@ -522,22 +510,22 @@ namespace Nuclex::Support::Services {
           return deepServiceProvider.ActivateTransientService(serviceIterator);
         };
       }
+    } else {
+      std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
+      std::shared_ptr<StandardInstanceSet> services = this->services;
+      return [services, serviceIterator, uniqueServiceIndex]() -> std::any {
+        bool isAlreadyCreated = services->PresenceFlags[uniqueServiceIndex].load(
+          std::memory_order::consume
+        );
+        if(isAlreadyCreated) [[likely]] {
+          return services->Instances[uniqueServiceIndex];
+        } else {
+          ResolutionContext deepServiceProvider(services);
+          deepServiceProvider.AcquireSingletonChangeMutex();
+          return deepServiceProvider.ActivateSingletonService(serviceIterator);
+        }
+      };
     }
-
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-    std::shared_ptr<StandardInstanceSet> services = this->services;
-    return [services, serviceIterator, uniqueServiceIndex]() -> std::any {
-      bool isAlreadyCreated = services->PresenceFlags[uniqueServiceIndex].load(
-        std::memory_order::consume
-      );
-      if(isAlreadyCreated) [[likely]] {
-        return services->Instances[uniqueServiceIndex];
-      } else {
-        ResolutionContext deepServiceProvider(services);
-        deepServiceProvider.AcquireSingletonChangeMutex();
-        return deepServiceProvider.ActivateSingletonService(serviceIterator);
-      }
-    };
   }
 
   // ------------------------------------------------------------------------------------------- //

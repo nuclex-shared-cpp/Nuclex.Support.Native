@@ -35,6 +35,20 @@ namespace Nuclex::Support::Services {
   /// </summary>
   class StandardServiceProvider : public ServiceProvider {
 
+    #if 0 // Idea to perhaps reduce almost identical code in GetService() method variants
+    #pragma region class ResolutionResult
+
+    public: class ResolutionResult {
+
+      public: const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &Iterator;
+      public: const StandardInstanceSet &Instances;
+      public: bool IsTransientBinding;
+
+    };
+
+    #pragma endregion // class ResolutionResult
+    #endif
+
     #pragma region class ResolutionContext
 
     /// <summary>Proxy that handles service resolution of singleton services</summary>

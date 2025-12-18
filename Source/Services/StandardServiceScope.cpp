@@ -114,15 +114,16 @@ namespace Nuclex::Support::Services {
     const StandardBindingSet::TypeIndexBindingMultiMap::const_iterator &serviceIterator
   ) {
     assert(this->mutexAcquired.load(std::memory_order::relaxed));
-
-    CheckForDependencyCycle(serviceIterator->first);
-    GetResolutionStack().emplace_back(serviceIterator->first);
-    ON_SCOPE_EXIT { GetResolutionStack().pop_back(); };
-
-    // When this method is called, a requested service instance was not created yet,
-    // so we definitely need to construct it now.
     std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-    {
+
+    bool isAlreadyCreated = this->scopedServices->PresenceFlags[uniqueServiceIndex].load(
+      std::memory_order::consume
+    );
+    if(!isAlreadyCreated) [[unlikely]] {
+      CheckForDependencyCycle(serviceIterator->first);
+      GetResolutionStack().emplace_back(serviceIterator->first);
+      ON_SCOPE_EXIT { GetResolutionStack().pop_back(); };
+
       if(serviceIterator->second.ProvidedInstance.has_value()) [[unlikely]] {
         new(this->scopedServices->Instances + uniqueServiceIndex) std::any(
           serviceIterator->second.ProvidedInstance
@@ -187,21 +188,11 @@ namespace Nuclex::Support::Services {
           return ActivateTransientService(serviceIterator);
         }
       } else {
-        AcquireSingletonChangeMutex();
+        AcquireSingletonChangeMutex(); // Lock for cross over into the singleton resolver
         return ActivateSingletonService(serviceIterator);
       }
-    }
-
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-
-    // Check, without locking, if the instance has already been created. If so,
-    // there's no need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = this->scopedServices->PresenceFlags[uniqueServiceIndex].load(
-      std::memory_order::consume
-    );
-    if(isAlreadyCreated) [[likely]] {
-      return this->scopedServices->Instances[uniqueServiceIndex];
     } else {
+      // Scoped mutex is already acquired whenever this method is called
       return ActivateScopedService(serviceIterator);
     }
   }
@@ -224,7 +215,7 @@ namespace Nuclex::Support::Services {
       if(serviceIterator == bindings.SingletonServices.end()) [[unlikely]] {
         serviceIterator = findLast(bindings.TransientServices, serviceTypeIndex);
         if(serviceIterator == bindings.TransientServices.end()) [[unlikely]] {
-          return std::any();
+          throwUnresolvedDependencyException(serviceTypeIndex);
         } else {
           // Delegate to the base class, the singleton resolution context. This cleverly
           // enters a wholly different branch which no longer resolved scoped services,
@@ -232,21 +223,11 @@ namespace Nuclex::Support::Services {
           return ActivateTransientService(serviceIterator);
         }
       } else {
-        AcquireSingletonChangeMutex();
+        AcquireSingletonChangeMutex(); // Lock for cross over into the singleton resolver
         return ActivateSingletonService(serviceIterator);
       }
-    }
-
-    std::size_t uniqueServiceIndex = serviceIterator->second.UniqueServiceIndex;
-
-    // Check, without locking, if the instance has already been created. If so,
-    // there's no need to enter the mutex since we're not modifying our state.
-    bool isAlreadyCreated = this->scopedServices->PresenceFlags[uniqueServiceIndex].load(
-      std::memory_order::consume
-    );
-    if(isAlreadyCreated) [[likely]] {
-      return this->scopedServices->Instances[uniqueServiceIndex];
     } else {
+      // Scoped mutex is already acquired whenever this method is called
       return ActivateScopedService(serviceIterator);
     }
   }
@@ -271,6 +252,8 @@ namespace Nuclex::Support::Services {
       return [
         scopedServices, singletonServices, serviceIterator, uniqueServiceIndex
       ]() -> std::any {
+        // Careful! When this factory method is called, we are not holding the mutex
+        // anymore and need to start from the beginning with double-checked locking.
         bool isAlreadyCreated = scopedServices->PresenceFlags[uniqueServiceIndex].load(
           std::memory_order::consume
         );
@@ -292,6 +275,8 @@ namespace Nuclex::Support::Services {
       return [
         scopedServices, singletonServices, serviceIterator, uniqueServiceIndex
       ]() -> std::any {
+        // Careful! When this factory method is called, we are not holding the mutex
+        // anymore and need to start from the beginning with double-checked locking.
         bool isAlreadyCreated = singletonServices->PresenceFlags[uniqueServiceIndex].load(
           std::memory_order::consume
         );
@@ -350,7 +335,7 @@ namespace Nuclex::Support::Services {
           } while(serviceIterator->first == serviceTypeIndex);
         }
       } else {
-        AcquireSingletonChangeMutex();
+        AcquireSingletonChangeMutex(); // We need to cross over to the singleton resolver
         do {
           result.push_back(ActivateSingletonService(serviceIterator));
 
