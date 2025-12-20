@@ -26,7 +26,7 @@ limitations under the License.
 #include <vector> // for std::vector
 #include <filesystem> // for std::filesystem::path
 
-namespace Nuclex { namespace Support { namespace Settings {
+namespace Nuclex::Support::Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -276,6 +276,6 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Settings
+} // namespace Nuclex::Support::Settings
 
 #endif // NUCLEX_SUPPORT_SETTINGS_MEMORYSETTINGSSTORE_H

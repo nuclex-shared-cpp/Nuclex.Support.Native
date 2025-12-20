@@ -26,7 +26,7 @@ limitations under the License.
 
 #include <unordered_map> // for std::unordered_map
 
-namespace Nuclex { namespace Support { namespace Settings {
+namespace Nuclex::Support::Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -181,6 +181,6 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Settings
+} // namespace Nuclex::Support::Settings
 
 #endif // NUCLEX_SUPPORT_SETTINGS_MEMORYSETTINGSSTORE_H

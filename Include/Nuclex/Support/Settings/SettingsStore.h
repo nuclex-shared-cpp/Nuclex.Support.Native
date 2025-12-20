@@ -28,7 +28,7 @@ limitations under the License.
 #include <optional> // for std::optional
 #include <type_traits> // for std::is_same
 
-namespace Nuclex { namespace Support { namespace Settings {
+namespace Nuclex::Support::Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -403,6 +403,6 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Settings
+} // namespace Nuclex::Support::Settings
 
 #endif // NUCLEX_SUPPORT_SETTINGS_SETTINGSSTORE_H

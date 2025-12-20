@@ -28,7 +28,7 @@ limitations under the License.
 
 #include <cstdint> // for std::intptr_t
 
-namespace Nuclex { namespace Support { namespace Settings {
+namespace Nuclex::Support::Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -267,7 +267,7 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Settings
+} // namespace Nuclex::Support::Settings
 
 #endif // defined(NUCLEX_SUPPORT_WINDOWS)
 

@@ -35,7 +35,7 @@ limitations under the License.
 //   This could, perhaps, save on a few allocations
 //   Downside is that the parser would have to support two different allocation models
 
-namespace Nuclex { namespace Support { namespace Settings {
+namespace Nuclex::Support::Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
@@ -346,6 +346,6 @@ namespace Nuclex { namespace Support { namespace Settings {
 
   // ------------------------------------------------------------------------------------------- //
 
-}}} // namespace Nuclex::Support::Settings
+} // namespace Nuclex::Support::Settings
 
 #endif // NUCLEX_SUPPORT_SETTINGS_INIDOCUMENTMODEL_H

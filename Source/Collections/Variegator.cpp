@@ -20,7 +20,7 @@ limitations under the License.
 // If the library is compiled as a DLL, this ensures symbols are exported
 #define NUCLEX_SUPPORT_SOURCE 1
 
-//#include "Nuclex/Support/Collections/Variegator.h"
+#include "Nuclex/Support/Collections/Variegator.h"
 
 // --------------------------------------------------------------------------------------------- //
 
