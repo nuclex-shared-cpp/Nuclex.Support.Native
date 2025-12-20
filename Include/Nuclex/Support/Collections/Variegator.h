@@ -20,6 +20,8 @@ limitations under the License.
 #ifndef NUCLEX_SUPPORT_COLLECTIONS_VARIEGATOR_H
 #define NUCLEX_SUPPORT_COLLECTIONS_VARIEGATOR_H
 
+#if 0 // It's broken, will fix it or remove it at an indeterminate point
+
 #include <cstddef> // for std::size_t
 #include <random> // for std::default_random_engine, std::uniform_int_distribution
 
@@ -339,5 +341,7 @@ namespace Nuclex::Support::Collections {
   // ------------------------------------------------------------------------------------------- //
 
 } // namespace Nuclex::Support::Collections
+
+#endif // it's broken
 
 #endif // NUCLEX_SUPPORT_COLLECTIONS_VARIEGATOR_H
