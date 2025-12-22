@@ -9,12 +9,18 @@ strings, signalling, synchronizing threads, storing settings and more.
 There are unit tests for the whole library, so everything is verifiably
 working on all platforms tested (Linux, Windows, Raspberry).
 
+**Architecture**
+* Extremely lean and fast signal/slot implementation for single threads
+* Extremely lean and fast concurrent signal/slot implementation
+* [Dependency injector with scoped and constructor detection in pure C++](./Documents/Documentation-DependencyInjection.md)
+* A modern ScopeGuard plus a transactional variant
+
 **Text**
-* [Iterate over, read and write UTF-8, UTF-16 and UTF-32](./Documents/Documentation-UnicodeHelper.md)
+* [Encode, decode and Iterate over UTF-8, UTF-16 and UTF-32](./Documents/Documentation-UnicodeHelper.md)
 * Case-insensitive UTF-8 string comparison
 * UTF-8 wildcard matching
-* [Locale-independent string/number conversion](./Documents/Documentation-LexicalCasts.md)
-* Conversion between std::string and std::wstring
+* [Locale-independent `std::u8string`/number conversion](./Documents/Documentation-LexicalCasts.md)
+* Conversion between `std::u8string` and `std::wstring`
 
 **Settings**
 * Retrieve and store application settings in the registry (Windows-only)
@@ -22,17 +28,10 @@ working on all platforms tested (Linux, Windows, Raspberry).
 * Retrieve and store application settings in memory
 
 **Threading**
-* Thread pool for micro tasks with std::future
+* Thread pool for micro tasks with `std::future`
 * Portable, fast Semaphores, Latches and Gates
 * [Cancelable and restartable background jobs](./Documents/Documentation-ConcurrentJob.md)
-* Run child processes and intercept stdin/stdout/stderr
-
-**Helpers**
-* A modern ScopeGuard plus a transactional variant
-* Fast and lightweight signal/slot implementation for single threads
-* Fast and efficient signal/slot implementation for multiple threads
-* Lean dependency injector with automatic constructor detection
-* Scoped temporary file and directory classes
+* Run child processes and intercept `stdout` and `stderr`
 
 **Everything:**
 * Supports Windows, Linux and ARM Linux (Raspberry PI)
@@ -43,9 +42,15 @@ working on all platforms tested (Linux, Windows, Raspberry).
 ![Important](./Documents/images/important.svg) Compiling ![Important](./Documents/images/important.svg)
 -------------------------------------------------------------------------------------------------------
 
-**This is a sub-project!** The CMake build script in this project expects to be in a tree with `../build-system` and `../third-party/nuclex-moodycamelqueues` present.
+**This is a sub-project!** The CMake build script in this project expects to
+be in a tree with `../build-system`, `../third-party/nuclex-moodycamelqueues`,
+`../third-party/nuclex-dragonbox` and `../third-party/nuclex-fastflaot`
+present.
 
-The easiest way to compile the library is to clone my [framework-package](https://github.com/nuclex-shared-cpp/framework-package) repository (with `--recurse-submodules`) which will create the required directory tree.
+The easiest way to compile the library is to clone my
+[framework-package](https://github.com/nuclex-shared-cpp/framework-package)
+repository (with `--recurse-submodules`) which will create the required
+directory tree.
 
 
 Overview
@@ -66,21 +71,22 @@ This is very nice if you have to serialize data (i.e. JSON or XML) on
 multiple platforms because the data is binary-reproducible.
 
 ```cpp
-std::string myString = lexical_cast<std::string>(12.34f);
+std::u8string myString = lexical_cast<std::u8string>(12.34f);
 float myFloat = lexical_cast<float>(u8"43.21");
 ```
 
-Or to append text to an `std::string` or buffer without intermediate copies:
+Or to append text to an `std::u8string` or buffer without intermediate copies:
 
 ```cpp
-std::string scoreText = u8"Current score: ";
+std::u8string scoreText = u8"Current score: ";
 lexical_append(scoreText, 110025);
 ```
 
 Uses [DragonBox](https://github.com/jk-jeon/dragonbox/),
 [James Edward Anhalt III itoa](https://github.com/jeaiii/itoa) and
-[Ryu](https://github.com/ulfjack/ryu) internally, which have licenses that allow this
-use. See Copyright.md in the Documents directory for more details.
+[FastFloat](https://github.com/fastfloat/fast_float) internally, which have
+licenses that allow this use. See Copyright.md in the Documents directory
+for more details.
 
 
 `StringConverter` & `StringMatcher`
@@ -94,7 +100,7 @@ thus creating UTF-16 on Windows and UTF-32 on Linux.
 
 ```cpp
 // This works on any platform, whether wchar_t is UTF-16 or UTF-32
-std::string utf8 = StringConverter::Utf8FromWide(L"Hello World");
+std::u8string utf8 = StringConverter::Utf8FromWide(L"Hello World");
 
 // If you need to read or write UTF-16 to communicate with Windows systems
 std::u16string alwaysUtf16 = StringConverter::Utf16FromUtf8(u8"Hello World");
@@ -125,7 +131,7 @@ allowing you to build associative containers that ignore case:
 
 ```cpp
 typedef std::unordered_map<
-  std::string, int,
+  std::u8string, int,
   CaseInsensitiveUtf8Hash, CaseInsensitiveUtf8EqualTo
 > StringIntegerMap;
 
@@ -174,7 +180,7 @@ SettingsStore &abstractSettings = settings;
 
 // Storing properties is just as simple and everything, including
 // templated methods, is available through the shared base class:
-abstractSettings.Store<bool>(std::string(), u8"FirstLaunch", false);
+abstractSettings.Store<bool>(std::u8string(), u8"FirstLaunch", false);
 ```
 
 
@@ -279,10 +285,10 @@ class CalculatorService {
 
 class BrokenCalculator : public virtual CalculatorService {
   public: int Add(int first, int second) override {
-    return first + second + 1;
+    return first + second + 1; // This is a broken calculator :)
   }
   public: int Multiply(int first, int second) override {
-    return first + first * second;
+    return first + first * second; // Still a broken calculator :)
   };
 };
 
@@ -291,22 +297,33 @@ class CalculatorUser {
     calculator(calculator) {}
 
   public: int CalculateSomething() {
-    return this->calculator->Add(1, 2) + this->calculator->Multiply(2, 2);
+    return this->calculator->Add(
+      this->calculator->Multiply(2, 2),
+      this->calculator->Multiply(3, 3)
+    );
   }
 
   private: std::shared_ptr<CalculatorService> calculator;
 };
 
 int main() {
-  Nuclex::Support::Services::LazyServiceInjector serviceInjector;
+  using Nuclex::Support::Services::StandardServiceCollection;
+  using Nuclex::Support::Services::ServiceProvider;
 
-  // Yep, it detects the constructor arguments, you can add or remove them :)
-  // Yep, it's non-intrusive, standard C++ and statically compiled :)
-  serviceInjector.Bind<CalculatorService>().To<BrokenCalculator>();
-  serviceInjector.Bind<CalculatorUser>().ToSelf();
+  // Yep, it detects the constructor arguments, you can add or remove them
+  // without touching the binding code below!
+  // Yep, it's non-intrusive, standard C++ and statically compiled!
+  StandardServiceCollection services;
+  services.AddSingleton<CalculatorService, BrokenCalculator>();
+  services.AddSingleton<CalculatorUser>();
 
-  std::shared_ptr<CalculatorUser> user = serviceInjector.Get<CalculatorUser>();
-  assert(!!user);
+  // Build the service provider which creates instances and hands them out
+  std::shared_ptr<ServiceProvider> sp = services.BuildServiceProvider();
+
+  // Now fetch the 'CalculatorUser'. Sincei it depends on
+  // the CalculatorService, this will construct the dependency, too
+  std::shared_ptr<CalculatorUser> user = sp->GetService<CalculatorUser>();
+  assert(static_cast<bool>(user));
 
   int result = user->CalculateSomething();
 }
@@ -333,7 +350,7 @@ int main() {
   ThreadPool pool;
 
   std::future<int> future = testPool.Schedule(&testMethod, 12, 34);
-  // Do something else here...
+  // ...do something else in the meantime...
   int result = future.get();
 }
 ```
